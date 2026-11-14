@@ -676,27 +676,6 @@
     </profile>
 
     <profile>
-      <id>below-jdk17</id>
-      <activation>
-        <jdk>(,17)</jdk>
-      </activation>
-
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <configuration>
-              <testExcludes>
-                <exclude>**/AuthenticationFilterPathMatchingTest.java</exclude>
-              </testExcludes>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
-    <profile>
       <id>jdk17-and-onwards</id>
       <activation>
         <jdk>[17,)</jdk>

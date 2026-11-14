@@ -24,6 +24,7 @@
     <module>dataformat-json-jackson</module>
     <module>dataformat-xml-dom</module>
     <module>dataformat-all</module>
+    <module>dataformat-xml-dom-jakarta</module>
   </modules>
 
   <properties>
@@ -186,15 +187,6 @@
           </plugin>
         </plugins>
       </build>
-    </profile>
-    <profile>
-      <id>jdk11</id>
-      <activation>
-        <jdk>[11,)</jdk>
-      </activation>
-      <modules>
-        <module>dataformat-xml-dom-jakarta</module>
-      </modules>
     </profile>
   </profiles>
 

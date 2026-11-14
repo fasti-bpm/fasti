@@ -45,11 +45,11 @@
             <configuration>
               <rules>
                 <requireJavaVersion>
-                  <version>[11,)</version>
+                  <version>[17,)</version>
                   <message>
                     *****************************************************************************************************
                     *                                                                                                   *
-                    *                You must use at least JDK 11 to compile Camunda Platform Wildfly!!!                *
+                    *                You must use at least JDK 17 to compile Camunda Platform Wildfly!!!                *
                     *                                                                                                   *
                     *****************************************************************************************************
                   </message>

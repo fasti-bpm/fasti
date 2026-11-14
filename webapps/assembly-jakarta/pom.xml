@@ -637,31 +637,6 @@
     </profile>
 
     <profile>
-      <id>below-jdk17</id>
-      <activation>
-        <jdk>(,17)</jdk>
-      </activation>
-
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <configuration>
-              <testExcludes>
-                <exclude>**/AuthCacheTest.java</exclude>
-                <exclude>**/ContainerAuthenticationFilterTest.java</exclude>
-                <exclude>**/CsrfPreventionFilterAppPathTest.java</exclude>
-                <exclude>**/CsrfPreventionFilterTest.java</exclude>
-                <exclude>**/UserAuthenticationResourceTest.java</exclude>
-                <exclude>**/UserAuthenticationResourceLoggingTest.java</exclude>
-              </testExcludes>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
-    <profile>
       <id>jdk17-and-onwards</id>
       <activation>
         <jdk>[17,)</jdk>

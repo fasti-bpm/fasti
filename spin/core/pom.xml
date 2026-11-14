@@ -95,26 +95,6 @@
   </dependencies>
 
   <profiles>
-    <profile>
-      <id>disable-javascript-tests</id>
-      <activation>
-        <jdk>(,1.8)</jdk>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <argLine>-XX:PermSize=128m</argLine>
-              <excludes>
-                <exclude>**/javascript/**</exclude>
-              </excludes>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
     <!-- exclude the DataFormatProviderTest until PowerMock 2.0 is released: https://app.camunda.com/jira/browse/CAM-9309 -->
     <profile>
       <id>jdk-9-and-onwards</id>

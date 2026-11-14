@@ -23,6 +23,10 @@
   </description>
 
   <properties>
+    <!-- Java baseline of the fork. Overrides version.java=11 of camunda-bpm-release-parent,
+         which is used as the maven-compiler-plugin release level for all modules. -->
+    <version.java>17</version.java>
+
     <license.includeTransitiveDependencies>false</license.includeTransitiveDependencies>
 
     <!-- These properties are used in both the BOM as well as camunda-parent and subprojects -->

@@ -34,7 +34,9 @@ import static org.junit.Assert.assertTrue;
 @RunWith(Arquillian.class)
 public class Slf4jClassloadingTest extends AbstractFoxPlatformIntegrationTest {
 
-  public static final String JDK14_LOGGER_FACTORY = "org.slf4j.impl.JDK14LoggerFactory";
+  // slf4j-jdk14 2.x (ServiceLoader-based provider); 1.x used org.slf4j.impl.JDK14LoggerFactory
+  public static final String JDK14_LOGGER_FACTORY = "org.slf4j.jul.JDK14LoggerFactory";
+  public static final String JDK14_LEGACY_LOGGER_FACTORY = "org.slf4j.impl.JDK14LoggerFactory";
   public static final String JBOSS_SLF4J_LOGGER_FACTORY = "org.slf4j.impl.Slf4jLoggerFactory";
 
   @Deployment
@@ -60,7 +62,9 @@ public class Slf4jClassloadingTest extends AbstractFoxPlatformIntegrationTest {
     // should either use slf4j-jdk14 or slf4j-jboss-logmanager
     String loggerFactoryClassName = loggerFactory.getClass().getCanonicalName();
     assertTrue("Should use slf4j-jdk14 or slf4j-jboss-logmanager",
-        JDK14_LOGGER_FACTORY.equals(loggerFactoryClassName) || JBOSS_SLF4J_LOGGER_FACTORY.equals(loggerFactoryClassName));
+        JDK14_LOGGER_FACTORY.equals(loggerFactoryClassName)
+            || JDK14_LEGACY_LOGGER_FACTORY.equals(loggerFactoryClassName)
+            || JBOSS_SLF4J_LOGGER_FACTORY.equals(loggerFactoryClassName));
   }
 
   @Test

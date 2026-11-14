@@ -21,8 +21,6 @@
   <properties>
     <commons-codec.version>1.15</commons-codec.version>
     <connect.version.old>7.23.0</connect.version.old>
-    <mockito.version>1.9.5</mockito.version>
-    <wiremock.version>1.58</wiremock.version>
     <maven-bundle-plugin.version>5.1.1</maven-bundle-plugin.version>
 
     <license.includeTransitiveDependencies>false</license.includeTransitiveDependencies>
@@ -59,21 +57,22 @@
       </dependency>
 
       <dependency>
+        <!-- keep the API aligned with the SLF4J 2 providers (logback, slf4j-jdk14);
+             third-party libraries still declare slf4j-api 1.7.x transitively -->
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${version.slf4j}</version>
+      </dependency>
+      <dependency>
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
         <version>${version.logback}</version>
       </dependency>
 
       <dependency>
-        <groupId>com.github.tomakehurst</groupId>
+        <groupId>org.wiremock</groupId>
         <artifactId>wiremock</artifactId>
-        <version>${wiremock.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-core</artifactId>
-        <version>${mockito.version}</version>
+        <version>${version.wiremock}</version>
       </dependency>
 
     </dependencies>

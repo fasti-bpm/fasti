@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.camunda.bpm.engine.impl.scripting.ExecutableScript;
 import org.camunda.bpm.engine.impl.scripting.env.ScriptEnvResolver;
 import org.camunda.bpm.engine.repository.ProcessApplicationDeployment;
@@ -58,7 +59,7 @@ public class EnvScriptResolutionTest extends AbstractScriptEnvironmentTest {
     assertThat(environmentScripts)
       .hasSize(1)
       .containsKey(ECMASCRIPT_LANGUAGE)
-      .extracting(ECMASCRIPT_LANGUAGE)
+      .extractingByKey(ECMASCRIPT_LANGUAGE, InstanceOfAssertFactories.LIST)
         .hasSize(1);
 
     repositoryService.deleteDeployment(deployment.getId(), true);
@@ -80,7 +81,7 @@ public class EnvScriptResolutionTest extends AbstractScriptEnvironmentTest {
       .hasSize(2)
       .containsKeys(ECMASCRIPT_LANGUAGE, SCRIPT_LANGUAGE)
       .containsEntry(SCRIPT_LANGUAGE, Collections.emptyList())
-      .extracting(ECMASCRIPT_LANGUAGE)
+      .extractingByKey(ECMASCRIPT_LANGUAGE, InstanceOfAssertFactories.LIST)
         .hasSize(1);
 
     repositoryService.deleteDeployment(deployment.getId(), true);

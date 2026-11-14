@@ -99,6 +99,13 @@
         <version>${version.assertj}</version>
       </dependency>
       <dependency>
+        <!-- keep the API aligned with the SLF4J 2 providers (logback, slf4j-jdk14);
+             third-party libraries still declare slf4j-api 1.7.x transitively -->
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${version.slf4j}</version>
+      </dependency>
+      <dependency>
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
         <version>${version.logback}</version>
@@ -173,7 +180,7 @@
       <dependency>
         <groupId>org.xmlunit</groupId>
         <artifactId>xmlunit-core</artifactId>
-        <version>2.6.2</version>
+        <version>2.11.0</version>
       </dependency>
 
       <dependency>
@@ -275,17 +282,12 @@
       <!-- licensing dependencies -->
       <dependency>
         <groupId>org.bouncycastle</groupId>
-        <artifactId>bcprov-jdk15on</artifactId>
+        <artifactId>bcprov-jdk18on</artifactId>
         <version>${version.bouncycastle}</version>
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
-        <artifactId>bcprov-ext-jdk15on</artifactId>
-        <version>${version.bouncycastle}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bcpg-jdk15on</artifactId>
+        <artifactId>bcpg-jdk18on</artifactId>
         <version>${version.bouncycastle}</version>
       </dependency>
 
@@ -345,7 +347,7 @@
       </dependency>
 
       <dependency>
-        <groupId>com.github.tomakehurst</groupId>
+        <groupId>org.wiremock</groupId>
         <artifactId>wiremock</artifactId>
         <version>${version.wiremock}</version>
         <scope>test</scope>

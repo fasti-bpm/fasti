@@ -342,6 +342,10 @@
                   <include name="**/module.xml" />
                 </replace>
 
+                <replace dir="target/modules" token="@version.uuid-generator@" value="${version.uuid-generator}">
+                  <include name="**/module.xml" />
+                </replace>
+
                 <replace dir="target/modules" token="@version.feel-scala@" value="${version.feel-scala}">
                   <include name="**/module.xml" />
                 </replace>

@@ -16,9 +16,13 @@
  */
 package org.camunda.bpm.dmn.engine.test.asserts;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.assertj.core.api.AbstractListAssert;
 import org.camunda.bpm.dmn.engine.DmnDecisionRuleResult;
 import org.camunda.bpm.dmn.engine.DmnDecisionTableResult;
+import org.camunda.bpm.dmn.engine.impl.DmnDecisionTableResultImpl;
 
 public class DmnDecisionTableResultAssert extends AbstractListAssert<DmnDecisionTableResultAssert, DmnDecisionTableResult, DmnDecisionRuleResult, DmnDecisionRuleResultAssert> {
 
@@ -39,5 +43,12 @@ public class DmnDecisionTableResultAssert extends AbstractListAssert<DmnDecision
     info.description(description, "");
 
     return new DmnDecisionRuleResultAssert(value);
+  }
+
+  @Override
+  protected DmnDecisionTableResultAssert newAbstractIterableAssert(Iterable<? extends DmnDecisionRuleResult> iterable) {
+    List<DmnDecisionRuleResult> ruleResults = new ArrayList<>();
+    iterable.forEach(ruleResults::add);
+    return new DmnDecisionTableResultAssert(new DmnDecisionTableResultImpl(ruleResults));
   }
 }

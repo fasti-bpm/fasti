@@ -39,7 +39,6 @@ import org.camunda.connect.httpclient.impl.util.ParseUtil;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.internal.util.reflection.Whitebox;
 
 public class HttpRequestConfigTest {
 
@@ -319,7 +318,7 @@ public class HttpRequestConfigTest {
   @Test
   public void shouldNotChangeDefaultConfig() {
     // given
-    HttpClient client = (HttpClient) Whitebox.getInternalState(connector, "httpClient");
+    HttpClient client = (HttpClient) getInternalState(connector, "httpClient");
     connector.createRequest().url(EXAMPLE_URL).get()
         .configOption(RequestConfigOption.CONNECTION_TIMEOUT.getName(), Timeout.ofSeconds(10))
         .configOption(RequestConfigOption.CONNECTION_REQUEST_TIMEOUT.getName(), Timeout.ofSeconds(10))
@@ -328,7 +327,7 @@ public class HttpRequestConfigTest {
         .execute();
 
     // when
-    RequestConfig config = (RequestConfig) Whitebox.getInternalState(client, "defaultConfig");
+    RequestConfig config = (RequestConfig) getInternalState(client, "defaultConfig");
 
     // then
     assertThat(config.getMaxRedirects()).isEqualTo(50);
@@ -417,6 +416,21 @@ public class HttpRequestConfigTest {
       assertThat(e).hasCauseInstanceOf(ClassCastException.class);
       assertThat(e.getCause()).hasMessageContaining("java.lang.Integer cannot be cast to class java.util.Collection");
     }
+  }
+
+  private static Object getInternalState(Object target, String fieldName) {
+    for (Class<?> type = target.getClass(); type != null; type = type.getSuperclass()) {
+      try {
+        java.lang.reflect.Field field = type.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(target);
+      } catch (NoSuchFieldException e) {
+        // look in the superclass
+      } catch (IllegalAccessException e) {
+        throw new IllegalStateException(e);
+      }
+    }
+    throw new IllegalArgumentException("No field '" + fieldName + "' on " + target.getClass());
   }
 
 }

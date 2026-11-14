@@ -32,6 +32,13 @@ public class AstDot extends AstProperty {
 		return property;
 	}
 
+	/**
+	 * @return the name of the property (or method) this node refers to
+	 */
+	public String getPropertyName() {
+		return property;
+	}
+
 	@Override
 	public String toString() {
 		return ". " + property;

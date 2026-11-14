@@ -498,6 +498,11 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
     return isOrQueryActive;
   }
 
+  @Override
+  protected List<HistoricProcessInstanceQueryImpl> getNestedQueries() {
+    return queries;
+  }
+
   public String[] getActiveActivityIds() {
     return activeActivityIds;
   }

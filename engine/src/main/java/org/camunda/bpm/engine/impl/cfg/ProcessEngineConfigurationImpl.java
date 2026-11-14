@@ -162,6 +162,8 @@ import org.camunda.bpm.engine.impl.el.DateTimeFunctions;
 import org.camunda.bpm.engine.impl.el.ElProviderCompatible;
 import org.camunda.bpm.engine.impl.el.ExpressionManager;
 import org.camunda.bpm.engine.impl.el.JuelExpressionManager;
+import org.camunda.bpm.engine.impl.el.QueryExpressionAllowList;
+import org.camunda.bpm.engine.impl.el.QueryExpressionValidator;
 import org.camunda.bpm.engine.impl.errorcode.ExceptionCodeProvider;
 import org.camunda.bpm.engine.impl.event.CompensationEventHandler;
 import org.camunda.bpm.engine.impl.event.ConditionalEventHandler;
@@ -846,6 +848,44 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
   protected boolean enableExpressionsInStoredQueries = true;
 
   /**
+   * If <code>true</code> (default), expressions in queries - adhoc as well as stored ones -
+   * are accepted and evaluated only if they consist of allow-listed functions, methods,
+   * beans and properties, see {@link QueryExpressionAllowList}. This applies on top of
+   * {@link #enableExpressionsInAdhocQueries} and {@link #enableExpressionsInStoredQueries}.
+   * If <code>false</code>, every expression is evaluated by the expression manager without
+   * restrictions, which allows everyone who can create a filter to execute arbitrary code.
+   */
+  protected boolean queryExpressionAllowListEnabled = true;
+
+  /**
+   * Comma-separated names of expression functions and of chained methods that may be used
+   * in query expressions in addition to the built-in ones
+   * ({@link QueryExpressionAllowList#DEFAULT_FUNCTIONS} and, chained to
+   * <code>dateTime()</code>, {@link QueryExpressionAllowList#DEFAULT_DATE_TIME_METHODS}).
+   * A method listed here can be called on every value of a query expression.
+   */
+  protected String allowedExpressionFunctionsInQueries;
+
+  /**
+   * Comma-separated names of the beans that may be referenced in query expressions.
+   * By default no bean, variable or mock can be referenced.
+   */
+  protected String allowedExpressionBeansInQueries;
+
+  /**
+   * Comma-separated names of the properties that may be read in query expressions,
+   * as in <code>${bean.property}</code>. By default no property can be read.
+   */
+  protected String allowedExpressionPropertiesInQueries;
+
+  /**
+   * Decides which query expressions are allowed while {@link #queryExpressionAllowListEnabled}
+   * is <code>true</code>. Defaults to a {@link QueryExpressionAllowList} that is built from
+   * the <code>allowedExpression...InQueries</code> properties.
+   */
+  protected QueryExpressionValidator queryExpressionValidator;
+
+  /**
    * If false, disables XML eXternal Entity (XXE) Processing. This provides protection against XXE Processing attacks.
    */
   protected boolean enableXxeProcessing = false;
@@ -1140,6 +1180,7 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
     initDmnHistoryEventProducer();
     initHistoryEventHandler();
     initExpressionManager();
+    initQueryExpressionValidator();
     initBeans();
     initArtifactFactory();
     initFormEngines();
@@ -2672,6 +2713,15 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
         ReflectUtil.getMethod(DateTimeFunctions.class, DateTimeFunctions.NOW));
     expressionManager.addFunction(DateTimeFunctions.DATE_TIME,
         ReflectUtil.getMethod(DateTimeFunctions.class, DateTimeFunctions.DATE_TIME));
+  }
+
+  protected void initQueryExpressionValidator() {
+    if (queryExpressionValidator == null) {
+      queryExpressionValidator = new QueryExpressionAllowList(
+          QueryExpressionAllowList.parseNames(allowedExpressionFunctionsInQueries),
+          QueryExpressionAllowList.parseNames(allowedExpressionBeansInQueries),
+          QueryExpressionAllowList.parseNames(allowedExpressionPropertiesInQueries));
+    }
   }
 
   protected void initBusinessCalendarManager() {
@@ -4526,6 +4576,51 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
 
   public void setEnableExpressionsInStoredQueries(boolean enableExpressionsInStoredQueries) {
     this.enableExpressionsInStoredQueries = enableExpressionsInStoredQueries;
+  }
+
+  public boolean isQueryExpressionAllowListEnabled() {
+    return queryExpressionAllowListEnabled;
+  }
+
+  public ProcessEngineConfigurationImpl setQueryExpressionAllowListEnabled(boolean queryExpressionAllowListEnabled) {
+    this.queryExpressionAllowListEnabled = queryExpressionAllowListEnabled;
+    return this;
+  }
+
+  public String getAllowedExpressionFunctionsInQueries() {
+    return allowedExpressionFunctionsInQueries;
+  }
+
+  public ProcessEngineConfigurationImpl setAllowedExpressionFunctionsInQueries(String allowedExpressionFunctionsInQueries) {
+    this.allowedExpressionFunctionsInQueries = allowedExpressionFunctionsInQueries;
+    return this;
+  }
+
+  public String getAllowedExpressionBeansInQueries() {
+    return allowedExpressionBeansInQueries;
+  }
+
+  public ProcessEngineConfigurationImpl setAllowedExpressionBeansInQueries(String allowedExpressionBeansInQueries) {
+    this.allowedExpressionBeansInQueries = allowedExpressionBeansInQueries;
+    return this;
+  }
+
+  public String getAllowedExpressionPropertiesInQueries() {
+    return allowedExpressionPropertiesInQueries;
+  }
+
+  public ProcessEngineConfigurationImpl setAllowedExpressionPropertiesInQueries(String allowedExpressionPropertiesInQueries) {
+    this.allowedExpressionPropertiesInQueries = allowedExpressionPropertiesInQueries;
+    return this;
+  }
+
+  public QueryExpressionValidator getQueryExpressionValidator() {
+    return queryExpressionValidator;
+  }
+
+  public ProcessEngineConfigurationImpl setQueryExpressionValidator(QueryExpressionValidator queryExpressionValidator) {
+    this.queryExpressionValidator = queryExpressionValidator;
+    return this;
   }
 
   public boolean isEnableXxeProcessing() {

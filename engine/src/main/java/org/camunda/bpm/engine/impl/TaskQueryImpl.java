@@ -91,6 +91,32 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
    */
 
   private static final long serialVersionUID = 1L;
+
+  /**
+   * the criteria that can be set by an expression, i.e. the criteria
+   * <code>x</code> for which {@link TaskQuery} defines <code>xExpression(String)</code>
+   */
+  protected static final Set<String> EXPRESSION_KEYS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+      "taskAssignee",
+      "taskAssigneeLike",
+      "taskOwner",
+      "taskCandidateUser",
+      "taskInvolvedUser",
+      "taskCandidateGroup",
+      "taskCandidateGroupIn",
+      "processInstanceBusinessKey",
+      "processInstanceBusinessKeyLike",
+      "taskCreatedOn",
+      "taskCreatedBefore",
+      "taskCreatedAfter",
+      "taskUpdatedAfter",
+      "dueDate",
+      "dueBefore",
+      "dueAfter",
+      "followUpDate",
+      "followUpBefore",
+      "followUpBeforeOrNotExistent",
+      "followUpAfter")));
   protected String taskId;
   protected String[] taskIdIn;
   protected String name;
@@ -1234,8 +1260,14 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
   protected void ensureOrExpressionsEvaluated() {
     // skips first query as it has already been evaluated
     for (int i = 1; i < queries.size(); i++) {
-      queries.get(i).validate();
-      queries.get(i).evaluateExpressions();
+      TaskQueryImpl orQuery = queries.get(i);
+      // the expressions of an or query are evaluated on behalf of this query,
+      // so they are subject to this query's validators as well
+      for (Validator<AbstractQuery<?, ?>> validator : validators) {
+        orQuery.validate(validator);
+      }
+      orQuery.validate();
+      orQuery.evaluateExpressions();
     }
   }
 
@@ -1840,6 +1872,16 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
     return isOrQueryActive;
   }
 
+  @Override
+  protected List<TaskQueryImpl> getNestedQueries() {
+    return queries;
+  }
+
+  @Override
+  protected Set<String> getExpressionKeys() {
+    return EXPRESSION_KEYS;
+  }
+
   public void addOrQuery(TaskQueryImpl orQuery) {
     orQuery.isOrQueryActive = true;
     this.queries.add(orQuery);
@@ -2341,14 +2383,14 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
 
     extendedQuery.queries = new ArrayList<>(Arrays.asList(extendedQuery));
 
+    // the or queries are added without modifying the extended and the extending query,
+    // so that both can be used again afterwards
     if (queries.size() > 1) {
-      queries.remove(0);
-      extendedQuery.queries.addAll(queries);
+      extendedQuery.queries.addAll(queries.subList(1, queries.size()));
     }
 
     if (extendingQuery.queries.size() > 1) {
-      extendingQuery.queries.remove(0);
-      extendedQuery.queries.addAll(extendingQuery.queries);
+      extendedQuery.queries.addAll(extendingQuery.queries.subList(1, extendingQuery.queries.size()));
     }
 
     return extendedQuery;

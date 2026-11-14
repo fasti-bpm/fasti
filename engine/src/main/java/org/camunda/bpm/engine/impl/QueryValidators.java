@@ -40,6 +40,7 @@ public class QueryValidators {
         throw new BadUserRequestException("Expressions are forbidden in adhoc queries. This behavior can be toggled"
             + " in the process engine configuration");
       }
+      query.ensureExpressionsAllowed();
     }
 
     @SuppressWarnings("unchecked")
@@ -64,6 +65,7 @@ public class QueryValidators {
         throw new BadUserRequestException("Expressions are forbidden in stored queries. This behavior can be toggled"
             + " in the process engine configuration");
       }
+      query.ensureExpressionsAllowed();
     }
 
     @SuppressWarnings("unchecked")

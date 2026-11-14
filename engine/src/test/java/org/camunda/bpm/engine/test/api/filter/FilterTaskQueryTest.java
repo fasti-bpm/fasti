@@ -44,6 +44,8 @@ import org.camunda.bpm.engine.impl.TaskQueryImpl;
 import org.camunda.bpm.engine.impl.TaskQueryProperty;
 import org.camunda.bpm.engine.impl.TaskQueryVariableValue;
 import org.camunda.bpm.engine.impl.VariableOrderProperty;
+import org.camunda.bpm.engine.impl.el.QueryExpressionAllowList;
+import org.camunda.bpm.engine.impl.el.QueryExpressionValidator;
 import org.camunda.bpm.engine.impl.json.JsonTaskQueryConverter;
 import org.camunda.bpm.engine.impl.persistence.entity.FilterEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.SuspensionState;
@@ -102,6 +104,7 @@ public class FilterTaskQueryTest extends PluggableProcessEngineTest {
   protected Group testGroup;
 
   protected JsonTaskQueryConverter queryConverter;
+  protected QueryExpressionValidator queryExpressionValidator;
 
   @Before
   public void setUp() {
@@ -123,11 +126,17 @@ public class FilterTaskQueryTest extends PluggableProcessEngineTest {
     createTasks();
 
     queryConverter = new JsonTaskQueryConverter();
+
+    // some tests refer to mocks in query expressions
+    queryExpressionValidator = processEngineConfiguration.getQueryExpressionValidator();
+    processEngineConfiguration.setQueryExpressionValidator(
+        new QueryExpressionAllowList(null, Arrays.asList("aBusinessKey", "aBusinessKeyLike"), null));
   }
 
   @After
   public void tearDown() {
     processEngineConfiguration.setEnableExpressionsInAdhocQueries(false);
+    processEngineConfiguration.setQueryExpressionValidator(queryExpressionValidator);
 
     Mocks.reset();
 
@@ -786,6 +795,49 @@ public class FilterTaskQueryTest extends PluggableProcessEngineTest {
     for (Task task : tasks) {
       assertEquals(testUser.getId(), task.getOwner());
     }
+  }
+
+  @Test
+  public void testExtendingByOrQueryRepeatedly() {
+    // given
+    filterService.saveFilter(filter);
+    assertTrue(filterService.count(filter.getId()) > 0);
+
+    TaskQuery extendingQuery = taskService.createTaskQuery()
+        .or()
+          .taskName("aNonExistingTaskName")
+          .taskAssignee("aNonExistingAssignee")
+        .endOr();
+
+    // when the same query extends the filter more than once
+    Long firstCount = filterService.count(filter.getId(), extendingQuery);
+    Long secondCount = filterService.count(filter.getId(), extendingQuery);
+    List<Task> tasks = filterService.list(filter.getId(), extendingQuery);
+
+    // then its or query is applied every time
+    assertEquals(Long.valueOf(0), firstCount);
+    assertEquals(Long.valueOf(0), secondCount);
+    assertTrue(tasks.isEmpty());
+    assertEquals(2, ((TaskQueryImpl) extendingQuery).getQueries().size());
+  }
+
+  @Test
+  public void testExtendingFilterWithOrQueryRepeatedly() {
+    // given
+    filter.setQuery(taskService.createTaskQuery()
+        .or()
+          .taskName("aNonExistingTaskName")
+          .taskAssignee("aNonExistingAssignee")
+        .endOr());
+
+    // when the filter is extended more than once
+    Filter firstExtendedFilter = filter.extend(taskService.createTaskQuery().taskOwner("anOwner"));
+    Filter secondExtendedFilter = filter.extend(taskService.createTaskQuery().taskOwner("anOwner"));
+
+    // then the or query of the filter is a part of every extended query
+    assertEquals(2, ((TaskQueryImpl) firstExtendedFilter.getQuery()).getQueries().size());
+    assertEquals(2, ((TaskQueryImpl) secondExtendedFilter.getQuery()).getQueries().size());
+    assertEquals(2, ((TaskQueryImpl) filter.getQuery()).getQueries().size());
   }
 
   @Test

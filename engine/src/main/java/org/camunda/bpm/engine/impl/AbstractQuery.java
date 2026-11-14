@@ -23,17 +23,24 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.camunda.bpm.engine.BadUserRequestException;
 import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.exception.NotValidException;
 import org.camunda.bpm.engine.impl.QueryValidators.AdhocQueryValidator;
+import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.context.Context;
 import org.camunda.bpm.engine.impl.db.ListQueryParameterObject;
+import org.camunda.bpm.engine.impl.el.ExpressionManager;
+import org.camunda.bpm.engine.impl.el.QueryExpressionAllowList;
+import org.camunda.bpm.engine.impl.el.QueryExpressionValidator;
 import org.camunda.bpm.engine.impl.interceptor.Command;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.interceptor.CommandExecutor;
@@ -268,13 +275,17 @@ public abstract class AbstractQuery<T extends Query<?,?>, U> extends ListQueryPa
       String methodName = entry.getKey();
       String expression = entry.getValue();
 
+      // must be repeated here: this is the only place every query passes
+      // before its expressions are evaluated, whatever it was created from
+      ensureExpressionAllowed(methodName, expression);
+
       Object value;
 
       try {
-        value = Context.getProcessEngineConfiguration()
-          .getExpressionManager()
-          .createExpression(expression)
-          .getValue(null);
+        value = evaluateExpression(expression);
+      }
+      catch (BadUserRequestException e) {
+        throw e;
       }
       catch (ProcessEngineException e) {
         throw new ProcessEngineException("Unable to resolve expression '" + expression + "' for method '" + methodName + "' on class '" + getClass().getCanonicalName() + "'", e);
@@ -294,6 +305,73 @@ public abstract class AbstractQuery<T extends Query<?,?>, U> extends ListQueryPa
         throw new ProcessEngineException("Unable to access method '" + methodName + "' on class '" + getClass().getCanonicalName() + "'", e);
       }
     }
+  }
+
+  /**
+   * Evaluates a query expression. Unless the allow-list for query expressions
+   * is switched off, the expression never reaches the expression manager of
+   * the process engine without having been accepted by the configured
+   * {@link QueryExpressionValidator}; with the default validator it is
+   * evaluated in isolation by {@link QueryExpressionAllowList}.
+   */
+  protected Object evaluateExpression(String expression) {
+    ProcessEngineConfigurationImpl configuration = Context.getProcessEngineConfiguration();
+    ExpressionManager expressionManager = configuration.getExpressionManager();
+
+    if (configuration.isQueryExpressionAllowListEnabled()) {
+      QueryExpressionValidator validator = configuration.getQueryExpressionValidator();
+      if (validator instanceof QueryExpressionAllowList) {
+        return ((QueryExpressionAllowList) validator).evaluate(expression, expressionManager);
+      }
+      ensureNotNull(BadUserRequestException.class,
+          "Query expressions cannot be evaluated without a query expression validator", "queryExpressionValidator", validator);
+      validator.validate(expression);
+    }
+
+    return expressionManager
+        .createExpression(expression)
+        .getValue(null);
+  }
+
+  /**
+   * Ensures that all expressions of this query may be evaluated: every
+   * expression must belong to a criterion that supports expressions (see
+   * {@link #getExpressionKeys()}) and, unless the allow-list for query
+   * expressions is switched off, must be accepted by the configured
+   * {@link QueryExpressionValidator}.
+   *
+   * @throws BadUserRequestException if an expression is not allowed
+   */
+  public void ensureExpressionsAllowed() {
+    for (Map.Entry<String, String> entry : new ArrayList<>(expressions.entrySet())) {
+      ensureExpressionAllowed(entry.getKey(), entry.getValue());
+    }
+  }
+
+  protected void ensureExpressionAllowed(String key, String expression) {
+    if (!getExpressionKeys().contains(key)) {
+      throw new BadUserRequestException("The criterion '" + key + "' of query type '" + getClass().getSimpleName()
+          + "' cannot be set by an expression.");
+    }
+
+    ProcessEngineConfigurationImpl configuration = Context.getProcessEngineConfiguration();
+    if (configuration.isQueryExpressionAllowListEnabled()) {
+      QueryExpressionValidator validator = configuration.getQueryExpressionValidator();
+      ensureNotNull(BadUserRequestException.class,
+          "Query expressions cannot be used without a query expression validator", "queryExpressionValidator", validator);
+      validator.validate(expression);
+    }
+  }
+
+  /**
+   * Returns the names of the criteria of this query that can be set by an
+   * expression. The name of such a criterion is the name of the method that
+   * is invoked with the value of the expression; no other method is ever
+   * invoked on behalf of an expression, in particular not because a stored
+   * query names it.
+   */
+  protected Set<String> getExpressionKeys() {
+    return Collections.emptySet();
   }
 
   protected Method getMethod(String methodName) {
@@ -337,8 +415,45 @@ public abstract class AbstractQuery<T extends Query<?,?>, U> extends ListQueryPa
     }
   }
 
+  /**
+   * Applies the given validator to this query and to every query nested in it
+   * (see {@link #getNestedQueries()}), however deep the nesting is. A nested
+   * query is a part of the query it belongs to and therefore must never be
+   * subject to weaker rules than the query that is actually executed, stored
+   * or used to extend another query.
+   */
   public void validate(Validator<AbstractQuery<?, ?>> validator) {
+    Set<AbstractQuery<?, ?>> validatedQueries = Collections.newSetFromMap(new IdentityHashMap<>());
+    validate(validator, validatedQueries);
+  }
+
+  protected final void validate(Validator<AbstractQuery<?, ?>> validator, Set<AbstractQuery<?, ?>> validatedQueries) {
+    if (!validatedQueries.add(this)) {
+      // nested queries may refer back to the query they belong to
+      return;
+    }
+
     validator.validate(this);
+
+    List<? extends AbstractQuery<?, ?>> nestedQueries = getNestedQueries();
+    if (nestedQueries != null) {
+      // iterate on a copy, the list may be shared with the nested queries
+      for (AbstractQuery<?, ?> nestedQuery : new ArrayList<>(nestedQueries)) {
+        if (nestedQuery != null) {
+          nestedQuery.validate(validator, validatedQueries);
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns the queries that are a part of this query, e.g. the queries created by
+   * <code>or()</code> or attached as OR queries. Query types that support nested
+   * queries must return them here so that they are validated together with this
+   * query; the returned list may contain this query itself.
+   */
+  protected List<? extends AbstractQuery<?, ?>> getNestedQueries() {
+    return Collections.emptyList();
   }
 
   public void addValidator(Validator<AbstractQuery<?, ?>> validator) {

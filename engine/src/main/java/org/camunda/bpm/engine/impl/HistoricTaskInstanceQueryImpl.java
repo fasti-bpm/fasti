@@ -1024,6 +1024,11 @@ public class HistoricTaskInstanceQueryImpl extends AbstractQuery<HistoricTaskIns
     return isOrQueryActive;
   }
 
+  @Override
+  protected List<HistoricTaskInstanceQueryImpl> getNestedQueries() {
+    return queries;
+  }
+
   public void addOrQuery(HistoricTaskInstanceQueryImpl orQuery) {
     orQuery.isOrQueryActive = true;
     this.queries.add(orQuery);

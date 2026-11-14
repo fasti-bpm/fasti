@@ -29,6 +29,10 @@
     <!-- enable expressions in adhoc queries -->
     <property name="enableExpressionsInAdhocQueries" value="true" />
 
+    <!-- what the tests use in addition to the built-in functions and methods -->
+    <property name="allowedExpressionFunctionsInQueries" value="concat" />
+    <property name="allowedExpressionBeansInQueries" value="aBusinessKey, aBusinessKeyLike" />
+
     <property name="enforceHistoryTimeToLive" value="false" />
 
   </bean>

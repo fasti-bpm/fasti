@@ -402,6 +402,11 @@ public class ProcessInstanceQueryImpl extends AbstractVariableQueryImpl<ProcessI
     return isOrQueryActive;
   }
 
+  @Override
+  protected List<ProcessInstanceQueryImpl> getNestedQueries() {
+    return queries;
+  }
+
   public String[] getActivityIds() {
     return activityIds;
   }

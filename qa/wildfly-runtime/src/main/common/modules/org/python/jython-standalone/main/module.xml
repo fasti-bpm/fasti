@@ -1,14 +1,17 @@
-<module xmlns="urn:jboss:module:1.0" name="org.python.jython">
+<module xmlns="urn:jboss:module:1.0" name="org.python.jython-standalone">
   <resources>
-    <resource-root path="jython-2.5.3.jar" />
+    <resource-root path="jython-standalone-2.7.4.jar" />
   </resources>
 
   <dependencies>
     <module name="java.base" />
     <module name="java.desktop" />
+    <module name="java.logging" />
+    <module name="java.management" />
     <module name="java.naming" />
     <module name="java.scripting" />
     <module name="java.sql" />
+    <module name="java.xml" />
     <module name="jdk.unsupported" />
     <module name="jdk.xml.dom"/>
     <module name="org.camunda.spin.camunda-spin-core" />

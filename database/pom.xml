@@ -24,10 +24,10 @@
     <version.h2-v1>1.4.200</version.h2-v1><!-- used for instance migration qa -->
     <version.oracle>23.5.0.24.07</version.oracle>
     <version.mysql>8.3.0</version.mysql>
-    <version.sqlserver>8.4.1.jre8</version.sqlserver>
+    <version.sqlserver>13.4.0.jre11</version.sqlserver>
     <version.db2-11.5>11.5.0.0</version.db2-11.5>
     <version.db2>${version.db2-11.5}</version.db2>
-    <version.postgresql>42.5.5</version.postgresql>
+    <version.postgresql>42.7.14</version.postgresql>
     <version.liquibase>4.8.0</version.liquibase>
 
     <!-- needed for sql script and backward compatibility checks -->
@@ -343,7 +343,7 @@
         <database.driver>com.microsoft.sqlserver.jdbc.SQLServerDriver</database.driver>
         <database.datasource.class>com.microsoft.sqlserver.jdbc.SQLServerDataSource</database.datasource.class>
         <database.tc.url>camsqlserver:2019</database.tc.url>
-        <database.tc.params>;DatabaseName=${database.name};user=${database.username};password=${database.password};</database.tc.params>
+        <database.tc.params>;DatabaseName=${database.name};user=${database.username};password=${database.password};trustServerCertificate=true;</database.tc.params>
       </properties>
 
       <dependencies>

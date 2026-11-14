@@ -47,7 +47,7 @@ public class PythonPaClassImportTest extends AbstractFoxPlatformIntegrationTest 
     + "<jboss-deployment-structure>"
     + "  <deployment>"
     + "    <dependencies>"
-    + "      <module name=\"org.python.jython\" services=\"import\" />"
+    + "      <module name=\"org.python.jython-standalone\" services=\"import\" />"
     + "    </dependencies>"
     + "  </deployment>"
     + "</jboss-deployment-structure>";

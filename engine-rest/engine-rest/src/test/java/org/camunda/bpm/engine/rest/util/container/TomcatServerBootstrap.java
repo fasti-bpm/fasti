@@ -74,6 +74,8 @@ public abstract class TomcatServerBootstrap extends AbstractServerBootstrap {
     tomcat = new Tomcat();
     tomcat.setPort(port);
     tomcat.setBaseDir(getWorkingDir());
+    // Tomcat 9 no longer creates the default HTTP connector implicitly on start
+    tomcat.getConnector();
 
     tomcat.getHost().setAppBase(getWorkingDir());
     tomcat.getHost().setAutoDeploy(true);

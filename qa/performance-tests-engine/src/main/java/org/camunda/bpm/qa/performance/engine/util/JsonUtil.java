@@ -19,10 +19,9 @@ package org.camunda.bpm.qa.performance.engine.util;
 import java.io.File;
 
 import org.camunda.bpm.qa.performance.engine.framework.PerfTestException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * @author Daniel Meyer
@@ -69,11 +68,8 @@ public class JsonUtil {
   public static ObjectMapper getMapper() {
     if(mapper == null) {
       mapper = new ObjectMapper();
-      SerializationConfig config = mapper
-          .getSerializationConfig()
-          .withSerializationInclusion(Inclusion.NON_EMPTY)
-          .without(SerializationConfig.Feature.FAIL_ON_EMPTY_BEANS);
-      mapper.setSerializationConfig(config);
+      mapper.setSerializationInclusion(Include.NON_EMPTY);
+      mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
     }
     return mapper;

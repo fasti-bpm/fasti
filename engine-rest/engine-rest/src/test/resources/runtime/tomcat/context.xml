@@ -1,4 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
-<Context antiJARLocking="true" antiResourceLocking="true">
+<Context antiResourceLocking="true">
+
+  <!-- The test web application is deployed next to a test classpath that already contains its
+       classes and libraries. Tomcat 8+ loads web application classes first by default, which
+       would define them twice; delegate to the test classpath as Tomcat 7 did. -->
+  <Loader delegate="true" />
+
+  <!-- Do not follow Class-Path manifest entries of the jars on the test classpath -->
+  <JarScanner scanManifest="false" />
 
 </Context>

@@ -21,10 +21,8 @@
     <!-- default os -->
     <os.type>linux64</os.type>
 
-    <version.jersey-json>1.15</version.jersey-json>
-    <version.jersey-apache-client>1.15</version.jersey-apache-client>
+    <!-- imported only for its JNA dependency management; httpclient5 itself is managed by Spring Boot -->
     <version.httpcomponents>5.3.1</version.httpcomponents>
-    <version.junit>4.13.1</version.junit>
     <version.rest-assured6>6.3.0</version.rest-assured6>
     <version.chromedriver>112.0.5615.49</version.chromedriver>
   </properties>

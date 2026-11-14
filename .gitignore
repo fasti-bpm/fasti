@@ -23,3 +23,6 @@ faces-config.NavData
 camunda-h2-dbs
 
 *.DS_Store
+
+# package cache written by Jython 2.7 during tests
+.jython_cache

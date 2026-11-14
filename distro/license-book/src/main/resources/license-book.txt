@@ -1,7 +1,7 @@
 License Book for Camunda Platform 7.24.0
 
 This is a license book. It contains licensing information for third-party libraries which are used in this release of Camunda Platform 7.24.0
-(Document generated on: 2025-09-29; list of third-party Java libraries updated on: 2026-11-14)
+(Document generated on: 2025-09-29; list of third-party Java libraries updated on: 2026-11-15)
 
 Introduction
 This Licensing Information document is a part of the program documentation and is intended to help you understand the license terms and copyright for third-party libraries associated with the Camunda Platform software.
@@ -968,35 +968,6 @@ Copyright 2015 jmrozanec
 Licensed under Apache 2.0
 
 ===========================================================================================
-com.fasterxml.jackson.core:jackson-annotations:jar:2.19.4
-https://github.com/FasterXML/jackson-annotations
-Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
-Copyright 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
-Notice file (META-INF/NOTICE):
-# Jackson JSON processor
-
-Jackson is a high-performance, Free/Open Source JSON processing library.
-It was originally written by Tatu Saloranta (tatu.saloranta@iki.fi), and has
-been in development since 2007.
-It is currently developed by a community of developers.
-
-## Copyright
-
-Copyright 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
-
-## Licensing
-
-Jackson 2.x core and extension components are licensed under Apache License 2.0
-To find the details that apply to this artifact see the accompanying LICENSE file.
-
-## Credits
-
-A list of contributors may be found from CREDITS(-2.x) file, which is included
-in some artifacts (usually source distributions); but is always available
-from the source code management (SCM) system project uses.
-Licensed under Apache 2.0
-
-===========================================================================================
 com.fasterxml.jackson.core:jackson-annotations:jar:2.21
 https://github.com/FasterXML/jackson-annotations
 Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
@@ -1026,47 +997,7 @@ from the source code management (SCM) system project uses.
 Licensed under Apache 2.0
 
 ===========================================================================================
-com.fasterxml.jackson.core:jackson-core:jar:2.19.4
-https://github.com/FasterXML/jackson-core
-Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
-Copyright 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
-Notice file (META-INF/NOTICE):
-# Jackson JSON processor
-
-Jackson is a high-performance, Free/Open Source JSON processing library.
-It was originally written by Tatu Saloranta (tatu.saloranta@iki.fi), and has
-been in development since 2007.
-It is currently developed by a community of developers.
-
-## Copyright
-
-Copyright 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
-
-## Licensing
-
-Jackson 2.x core and extension components are licensed under Apache License 2.0
-To find the details that apply to this artifact see the accompanying LICENSE file.
-
-## Credits
-
-A list of contributors may be found from CREDITS(-2.x) file, which is included
-in some artifacts (usually source distributions); but is always available
-from the source code management (SCM) system project uses.
-
-## FastDoubleParser
-
-jackson-core bundles a shaded copy of FastDoubleParser <https://github.com/wrandelshofer/FastDoubleParser>.
-That code is available under an MIT license <https://github.com/wrandelshofer/FastDoubleParser/blob/main/LICENSE>
-under the following copyright.
-
-Copyright © 2023 Werner Randelshofer, Switzerland. MIT License.
-
-See FastDoubleParser-NOTICE for details of other source code included in FastDoubleParser
-and the licenses and copyrights that apply to that code.
-Licensed under Apache 2.0
-
-===========================================================================================
-com.fasterxml.jackson.core:jackson-core:jar:2.21.7
+com.fasterxml.jackson.core:jackson-core:jar:2.21.8
 https://github.com/FasterXML/jackson-core
 Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
 Copyright 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
@@ -1116,7 +1047,7 @@ See Schubfach-LICENSE.
 Licensed under Apache 2.0
 
 ===========================================================================================
-com.fasterxml.jackson.core:jackson-databind:jar:2.19.4
+com.fasterxml.jackson.core:jackson-databind:jar:2.21.8
 https://github.com/FasterXML/jackson-databind
 Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
 Copyright 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
@@ -1145,36 +1076,7 @@ from the source code management (SCM) system project uses.
 Licensed under Apache 2.0
 
 ===========================================================================================
-com.fasterxml.jackson.core:jackson-databind:jar:2.21.7
-https://github.com/FasterXML/jackson-databind
-Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
-Copyright 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
-Notice file (META-INF/NOTICE):
-# Jackson JSON processor
-
-Jackson is a high-performance, Free/Open Source JSON processing library.
-It was originally written by Tatu Saloranta (tatu.saloranta@iki.fi), and has
-been in development since 2007.
-It is currently developed by a community of developers.
-
-## Copyright
-
-Copyright 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
-
-## Licensing
-
-Jackson 2.x core and extension components are licensed under Apache License 2.0
-To find the details that apply to this artifact see the accompanying LICENSE file.
-
-## Credits
-
-A list of contributors may be found from CREDITS(-2.x) file, which is included
-in some artifacts (usually source distributions); but is always available
-from the source code management (SCM) system project uses.
-Licensed under Apache 2.0
-
-===========================================================================================
-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:jar:2.21.7
+com.fasterxml.jackson.datatype:jackson-datatype-jdk8:jar:2.21.8
 http://github.com/FasterXML/jackson-modules-java8
 Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
 Notice file (META-INF/NOTICE):
@@ -1198,7 +1100,7 @@ from the source code management (SCM) system project uses.
 Licensed under Apache 2.0
 
 ===========================================================================================
-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.19.4
+com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.21.8
 http://github.com/FasterXML/jackson-modules-java8
 Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
 Notice file (META-INF/NOTICE):
@@ -1222,43 +1124,13 @@ from the source code management (SCM) system project uses.
 Licensed under Apache 2.0
 
 ===========================================================================================
-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.21.7
-http://github.com/FasterXML/jackson-modules-java8
-Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
-Notice file (META-INF/NOTICE):
-# Jackson JSON processor
-
-Jackson is a high-performance, Free/Open Source JSON processing library.
-It was originally written by Tatu Saloranta (tatu.saloranta@iki.fi), and has
-been in development since 2007.
-It is currently developed by a community of developers.
-
-## Licensing
-
-Jackson components are licensed under Apache (Software) License, version 2.0,
-as per accompanying LICENSE file.
-
-## Credits
-
-A list of contributors may be found from CREDITS file, which is included
-in some artifacts (usually source distributions); but is always available
-from the source code management (SCM) system project uses.
-Licensed under Apache 2.0
-
-===========================================================================================
-com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-base:jar:2.19.4
+com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-base:jar:2.21.8
 https://github.com/FasterXML/jackson-jakarta-rs-providers
 Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
 Licensed under Apache 2.0
 
 ===========================================================================================
-com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-base:jar:2.21.7
-https://github.com/FasterXML/jackson-jakarta-rs-providers
-Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
-Licensed under Apache 2.0
-
-===========================================================================================
-com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-json-provider:jar:2.19.4
+com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-json-provider:jar:2.21.8
 https://github.com/FasterXML/jackson-jakarta-rs-providers
 Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
 Notice file (META-INF/NOTICE):
@@ -1285,34 +1157,7 @@ from the source code management (SCM) system project uses.
 Licensed under Apache 2.0
 
 ===========================================================================================
-com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-json-provider:jar:2.21.7
-https://github.com/FasterXML/jackson-jakarta-rs-providers
-Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
-Notice file (META-INF/NOTICE):
-# Jackson JSON processor
-
-Jackson is a high-performance, Free/Open Source JSON processing library.
-It was originally written by Tatu Saloranta (tatu.saloranta@iki.fi), and has
-been in development since 2007.
-It is currently developed by a community of developers, as well as supported
-commercially by FasterXML.com.
-
-## Licensing
-
-Jackson core and extension components may be licensed under different licenses.
-To find the details that apply to this artifact see the accompanying LICENSE file.
-For more information, including possible other licensing options, contact
-FasterXML.com (http://fasterxml.com).
-
-## Credits
-
-A list of contributors may be found from CREDITS file, which is included
-in some artifacts (usually source distributions); but is always available
-from the source code management (SCM) system project uses.
-Licensed under Apache 2.0
-
-===========================================================================================
-com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:jar:2.19.4
+com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:jar:2.21.8
 https://github.com/FasterXML/jackson-jaxrs-providers
 Copyright 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
 Jackson is a high-performance, Free/Open Source JSON processing library.
@@ -1322,7 +1167,7 @@ It is currently developed by a community of developers: https://github.com/Faste
 Licensed under Apache 2.0
 
 ===========================================================================================
-com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:jar:2.19.4
+com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:jar:2.21.8
 https://github.com/FasterXML/jackson-jaxrs-providers
 Copyright 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
 Notice file (META-INF/NOTICE):
@@ -1349,19 +1194,13 @@ from the source code management (SCM) system project uses.
 Licensed under Apache 2.0
 
 ===========================================================================================
-com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations:jar:2.19.4
+com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations:jar:2.21.8
 https://github.com/FasterXML/jackson-modules-base
 Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
 Licensed under Apache 2.0
 
 ===========================================================================================
-com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations:jar:2.21.7
-https://github.com/FasterXML/jackson-modules-base
-Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
-Licensed under Apache 2.0
-
-===========================================================================================
-com.fasterxml.jackson.module:jackson-module-jaxb-annotations:jar:2.19.4
+com.fasterxml.jackson.module:jackson-module-jaxb-annotations:jar:2.21.8
 https://github.com/FasterXML/jackson-modules-base
 Copyright 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
 Notice file (META-INF/NOTICE):
@@ -1388,7 +1227,7 @@ from the source code management (SCM) system project uses.
 Licensed under Apache 2.0
 
 ===========================================================================================
-com.fasterxml.jackson.module:jackson-module-parameter-names:jar:2.21.7
+com.fasterxml.jackson.module:jackson-module-parameter-names:jar:2.21.8
 http://github.com/FasterXML/jackson-modules-java8
 Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
 Notice file (META-INF/NOTICE):

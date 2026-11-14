@@ -513,8 +513,8 @@
       </activation>
 
       <properties>
-        <version.netty>4.1.89.Final</version.netty>
-        <version.undertow>2.3.0.Final</version.undertow>
+        <version.netty>4.1.140.Final</version.netty>
+        <version.undertow>2.3.27.Final</version.undertow>
       </properties>
 
       <dependencies>
@@ -595,8 +595,8 @@
       <id>wildfly-compatibility</id>
 
       <properties>
-        <version.netty>4.1.89.Final</version.netty>
-        <version.undertow>2.3.0.Final</version.undertow>
+        <version.netty>4.1.140.Final</version.netty>
+        <version.undertow>2.3.27.Final</version.undertow>
         <!-- Test with Resteasy version used by Wildfly 27.0.0.Final -->
         <version.resteasy>6.2.1.Final</version.resteasy>
       </properties>

@@ -21,6 +21,14 @@
 
   <dependencyManagement>
     <dependencies>
+      <!-- Jackson 2: imported before the Spring Boot BOM so that all distributions share ${version.jackson} -->
+      <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${version.jackson}</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
       <dependency>
         <!-- Import dependency management from Spring Boot -->
         <groupId>org.springframework.boot</groupId>

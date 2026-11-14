@@ -297,7 +297,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>28.2-jre</version>
+      <version>33.8.0-jre</version>
       <scope>test</scope>
     </dependency>
 
@@ -309,7 +309,7 @@
 
     <dependency>
       <groupId>org.python</groupId>
-      <artifactId>jython</artifactId>
+      <artifactId>jython-standalone</artifactId>
       <scope>test</scope>
     </dependency>
 

@@ -23,13 +23,14 @@ import java.util.List;
 import org.camunda.bpm.run.CamundaBpmRun;
 import org.camunda.bpm.run.test.AbstractRestTest;
 import org.camunda.bpm.run.test.util.TestUtils;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,8 +44,10 @@ public class HttpsConfigurationEnabledTest extends AbstractRestTest {
   @Rule
   public ExpectedException exceptionRule = ExpectedException.none();
 
-  @Before
-  public void init() throws Exception {
+  // has to run before the TestRestTemplate is created: since Spring Boot 4 it is backed by the JDK HttpClient,
+  // which reads the default SSLContext once when it is built
+  @BeforeClass
+  public static void init() throws Exception {
     TestUtils.trustSelfSignedSSL();
   }
 
@@ -54,7 +57,7 @@ public class HttpsConfigurationEnabledTest extends AbstractRestTest {
     String url = "https://localhost:" + localPort + CONTEXT_PATH + "/task";
 
     // when
-    ResponseEntity<List> response = testRestTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(null), List.class);
+    ResponseEntity<List> response = testRestTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>((HttpHeaders) null), List.class);
 
     // then
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -70,6 +73,6 @@ public class HttpsConfigurationEnabledTest extends AbstractRestTest {
     exceptionRule.expectMessage("I/O error on GET request for \"http://localhost:8080/engine-rest/task\":");
 
     // then
-    ResponseEntity<String> response = testRestTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(null), String.class);
+    ResponseEntity<String> response = testRestTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>((HttpHeaders) null), String.class);
   }
 }

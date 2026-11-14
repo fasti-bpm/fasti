@@ -19,7 +19,7 @@
       <dependency>
         <groupId>jakarta.platform</groupId>
         <artifactId>jakarta.jakartaee-bom</artifactId>
-        <version>${version.jakarta-ee-spec}</version>
+        <version>${version.jakarta-ee11-spec}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -76,6 +76,12 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter</artifactId>
     </dependency>
+    <!-- DataSource and transaction manager auto-configuration; part of
+      spring-boot-autoconfigure up to Spring Boot 3, a module of its own since 4 -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-jdbc</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -88,7 +94,7 @@
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
+      <artifactId>spring-boot-starter-webmvc</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>

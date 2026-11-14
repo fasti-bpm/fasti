@@ -25,6 +25,7 @@
     <version.jersey-apache-client>1.15</version.jersey-apache-client>
     <version.httpcomponents>5.3.1</version.httpcomponents>
     <version.junit>4.13.1</version.junit>
+    <version.rest-assured6>6.3.0</version.rest-assured6>
     <version.chromedriver>112.0.5615.49</version.chromedriver>
   </properties>
 
@@ -43,6 +44,14 @@
         <groupId>org.seleniumhq.selenium</groupId>
         <artifactId>selenium-java</artifactId>
         <version>4.10.0</version>
+      </dependency>
+
+      <!-- no longer managed by spring-boot-dependencies since Spring Boot 4;
+        6.x is the line built against Groovy 5 (the version Spring Boot 4 manages) -->
+      <dependency>
+        <groupId>io.rest-assured</groupId>
+        <artifactId>rest-assured</artifactId>
+        <version>${version.rest-assured6}</version>
       </dependency>
 
       <!-- using 4.13 in order to have @BeforeParam/@AfterParam for parameterized 

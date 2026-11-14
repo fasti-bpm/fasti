@@ -75,11 +75,14 @@
       </exclusions>
     </dependency>
 
-    <!-- spring-webmvc is not a direct requirement of run-core, but is required by modules/webapps.
-      To avoid having it on the classpath twice, it is included here and becomes part of the uberjar.-->
+    <!-- Spring MVC is not a direct requirement of run-core, but is required by modules/webapps.
+      To avoid having it on the classpath twice, it is included here and becomes part of the uberjar.
+      Since Spring Boot 4 the MVC auto-configuration (DispatcherServlet, JSON error responses, static
+      resource handling) is no longer part of spring-boot-autoconfigure, so the starter is needed
+      instead of the bare spring-webmvc jar to keep that behaviour when only the REST API is enabled. -->
     <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-webmvc</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webmvc</artifactId>
     </dependency>
     
     <!-- Graal.js -->
@@ -119,6 +122,18 @@
       </exclusions>
     </dependency>
     
+    <!-- TestRestTemplate is no longer part of spring-boot-test since Spring Boot 4 -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-resttestclient</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-restclient</artifactId>
+      <scope>test</scope>
+    </dependency>
+
     <!-- Required to Run JUnit4 tests -->
     <dependency>
       <groupId>org.junit.vintage</groupId>

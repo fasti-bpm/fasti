@@ -413,4 +413,26 @@
     </plugins>
   </build>
 
+  <profiles>
+    <!-- camunda-engine-spring-6 is compiled against Spring Framework 6.2 (the baseline for Tomcat 10 and
+      WildFly, Jakarta EE 10) and the same jar is used with Spring Framework 7 by the Spring Boot 4 starter
+      and Camunda Run. This profile compiles and tests the module against Spring Framework 7 to check that
+      it stays compatible with both lines: mvn -pl engine-spring/core-6 -Pspring-7 verify -->
+    <profile>
+      <id>spring-7</id>
+      <properties>
+        <version.spring.framework6>${version.spring.framework7}</version.spring.framework6>
+      </properties>
+      <dependencies>
+        <!-- spring-orm 7 is built against Jakarta Persistence 3.2 -->
+        <dependency>
+          <groupId>jakarta.persistence</groupId>
+          <artifactId>jakarta.persistence-api</artifactId>
+          <version>3.2.0</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+
 </project>

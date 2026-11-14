@@ -27,8 +27,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -65,7 +65,7 @@ public class CamundaBpmSecurityAutoConfigOauth2ApplicationIT extends AbstractSpr
   @Autowired
   private ClientRegistrationRepository registrations;
 
-  @MockBean
+  @MockitoBean
   private OAuth2AuthorizedClientService authorizedClientService;
 
   @Rule
@@ -97,8 +97,9 @@ public class CamundaBpmSecurityAutoConfigOauth2ApplicationIT extends AbstractSpr
         .andDo(MockMvcResultHandlers.print())
         // then oauth2 redirection occurs
         .andExpect(MockMvcResultMatchers.status().isFound())
+        // Spring Security 7 redirects to the login page with a relative URI by default
         .andExpect(MockMvcResultMatchers.header().exists("Location"))
-        .andExpect(MockMvcResultMatchers.header().string("Location", baseUrl + "/oauth2/authorization/" + PROVIDER));
+        .andExpect(MockMvcResultMatchers.header().string("Location", "/oauth2/authorization/" + PROVIDER));
   }
 
   @Test
@@ -130,7 +131,7 @@ public class CamundaBpmSecurityAutoConfigOauth2ApplicationIT extends AbstractSpr
         // then authorization fails and redirection occurs
         .andExpect(MockMvcResultMatchers.status().isFound())
         .andExpect(MockMvcResultMatchers.header().exists("Location"))
-        .andExpect(MockMvcResultMatchers.header().string("Location", baseUrl + "/oauth2/authorization/" + PROVIDER));
+        .andExpect(MockMvcResultMatchers.header().string("Location", "/oauth2/authorization/" + PROVIDER));
 
     String expectedWarn = "Authorize failed for '" + UNAUTHORIZED_USER + "'";
     assertThat(loggingRule.getFilteredLog(expectedWarn)).hasSize(1);

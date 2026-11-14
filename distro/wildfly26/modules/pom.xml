@@ -289,6 +289,14 @@
 
                 <copy todir="target/modules" flatten="false">
                   <fileset dir="src/main/modules" />
+                  <!-- Jackson descriptors are kept in a "slot" directory and placed
+                       next to the jars in the slot named after the Jackson version -->
+                  <mapper>
+                    <firstmatchmapper>
+                      <regexpmapper from="^(com/fasterxml/jackson/.*)/slot/([^/]*)$$" to="\1/${version.jackson}/\2" handledirsep="yes" />
+                      <regexpmapper from="^(.*)$$" to="\1" handledirsep="yes" />
+                    </firstmatchmapper>
+                  </mapper>
                 </copy>
 
                 <replace dir="target/modules" token="@project.version@" value="${project.version}">

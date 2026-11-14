@@ -42,11 +42,8 @@
         <include>org.apache.groovy:groovy-templates:jar:*</include>
         <include>org.apache.groovy:groovy-dateutil:jar:*</include>
         <include>org.apache.groovy:groovy-datetime:jar:*</include>
-        <include>org.graalvm.js:*</include>
-        <include>org.graalvm.regex:regex:jar:*</include>
-        <include>org.graalvm.truffle:truffle-api:jar:*</include>
-        <include>org.graalvm.sdk:graal-sdk:jar:*</include>
-        <include>com.ibm.icu:icu4j:jar:*</include>
+        <!-- GraalJS: script engine, language, Truffle, polyglot SDK and shadowed ICU4J/XZ -->
+        <include>org.graalvm.*:*:jar:*</include>
         <include>org.slf4j:slf4j-api:jar:*</include>
 
         <include>org.camunda.bpm:camunda-engine-plugin-*:jar</include>
@@ -85,11 +82,8 @@
         <include>org.apache.groovy:groovy-templates:jar:*</include>
         <include>org.apache.groovy:groovy-dateutil:jar:*</include>
         <include>org.apache.groovy:groovy-datetime:jar:*</include>
-        <include>org.graalvm.js:*</include>
-        <include>org.graalvm.regex:regex:jar:*</include>
-        <include>org.graalvm.truffle:truffle-api:jar:*</include>
-        <include>org.graalvm.sdk:graal-sdk:jar:*</include>
-        <include>com.ibm.icu:icu4j:jar:*</include>
+        <!-- GraalJS: script engine, language, Truffle, polyglot SDK and shadowed ICU4J/XZ -->
+        <include>org.graalvm.*:*:jar:*</include>
         <include>org.slf4j:slf4j-api:jar:*</include>
 
         <include>org.camunda.bpm:camunda-engine-plugin-*:jar</include>

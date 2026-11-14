@@ -112,8 +112,9 @@
     </dependency>
 
     <dependency>
-      <groupId>org.graalvm.js</groupId>
+      <groupId>org.graalvm.polyglot</groupId>
       <artifactId>js</artifactId>
+      <type>pom</type>
     </dependency>
     <dependency>
       <groupId>org.graalvm.js</groupId>
@@ -262,6 +263,14 @@
                   </mapper>
                 </copy>
 
+                <!-- GraalJS is split over many jars (language, Truffle, polyglot SDK, shadowed ICU4J/XZ)
+                     that discover each other via ServiceLoader: copy all of them to a single module dir -->
+                <delete dir="target/modules/org/graalvm" />
+                <copy todir="target/modules" flatten="false">
+                  <fileset refid="maven.project.dependencies" />
+                  <regexpmapper from="^org/graalvm/.*/([^/]*\.jar)$$" to="org/graalvm/js/js-scriptengine/main/\1" handledirsep="yes" />
+                </copy>
+
                 <copy todir="target/modules" flatten="false">
                   <fileset dir="src/main/modules" />
                 </copy>
@@ -335,10 +344,6 @@
                 </replace>
 
                 <replace dir="target/modules" token="@version.graal.js@" value="${version.graal.js}">
-                  <include name="**/module.xml" />
-                </replace>
-
-                <replace dir="target/modules" token="@version.icu.icu4j@" value="${version.icu.icu4j}">
                   <include name="**/module.xml" />
                 </replace>
 

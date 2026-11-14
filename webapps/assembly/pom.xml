@@ -267,8 +267,9 @@
           <version>${version.xml.jaxb-impl}</version>
         </dependency>
         <dependency>
-          <groupId>org.graalvm.js</groupId>
+          <groupId>org.graalvm.polyglot</groupId>
           <artifactId>js</artifactId>
+          <type>pom</type>
         </dependency>
         <dependency>
           <groupId>org.graalvm.js</groupId>

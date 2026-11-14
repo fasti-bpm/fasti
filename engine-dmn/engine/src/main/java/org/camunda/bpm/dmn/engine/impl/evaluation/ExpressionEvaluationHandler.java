@@ -29,12 +29,14 @@ import org.camunda.bpm.dmn.engine.impl.CachedExpressionSupport;
 import org.camunda.bpm.dmn.engine.impl.DefaultDmnEngineConfiguration;
 import org.camunda.bpm.dmn.engine.impl.DmnEngineLogger;
 import org.camunda.bpm.dmn.engine.impl.DmnExpressionImpl;
+import org.camunda.bpm.dmn.engine.impl.el.GraalJsScriptSession;
 import org.camunda.bpm.dmn.engine.impl.el.VariableContextScriptBindings;
 import org.camunda.bpm.dmn.engine.impl.spi.el.DmnScriptEngineResolver;
 import org.camunda.bpm.dmn.engine.impl.spi.el.ElExpression;
 import org.camunda.bpm.dmn.engine.impl.spi.el.ElProvider;
 import org.camunda.bpm.dmn.feel.impl.FeelEngine;
 import org.camunda.bpm.engine.variable.context.VariableContext;
+import org.camunda.bpm.engine.variable.value.TypedValue;
 import org.camunda.commons.utils.StringUtil;
 
 public class ExpressionEvaluationHandler {
@@ -71,6 +73,10 @@ public class ExpressionEvaluationHandler {
 
   protected Object evaluateScriptExpression(String expressionLanguage, VariableContext variableContext, String expressionText, CachedCompiledScriptSupport cachedCompiledScriptSupport) {
     ScriptEngine scriptEngine = getScriptEngineForName(expressionLanguage);
+    if (GraalJsScriptSession.isSupported(scriptEngine)) {
+      return evaluateGraalJsExpression(scriptEngine, variableContext, expressionText);
+    }
+
     // wrap script engine bindings + variable context and pass enhanced
     // bindings to the script engine.
     Bindings bindings = VariableContextScriptBindings.wrap(scriptEngine.createBindings(), variableContext);
@@ -98,6 +104,29 @@ public class ExpressionEvaluationHandler {
       else {
         return scriptEngine.eval(expressionText, bindings);
       }
+    }
+    catch (ScriptException e) {
+      throw LOG.unableToEvaluateExpression(expressionText, scriptEngine.getFactory().getLanguageName(), e);
+    }
+  }
+
+  /**
+   * Evaluates the expression in the polyglot Context of a GraalJS script
+   * engine and closes the Context afterwards. The script is not compiled by
+   * the script engine since a compiled script could not be used without its
+   * engine. GraalJS shares the parsed code of the script between the
+   * script engines of a factory as long as one of them is in use.
+   */
+  protected Object evaluateGraalJsExpression(ScriptEngine scriptEngine, VariableContext variableContext, String expressionText) {
+    try (GraalJsScriptSession session = GraalJsScriptSession.open(scriptEngine)) {
+      for (String variableName : variableContext.keySet()) {
+        TypedValue value = variableContext.resolve(variableName);
+        session.bind(variableName, value != null ? value.getValue() : null);
+      }
+      session.bind("variableContext", variableContext);
+
+      Object result = scriptEngine.eval(expressionText, session.getBindings());
+      return session.detach(result);
     }
     catch (ScriptException e) {
       throw LOG.unableToEvaluateExpression(expressionText, scriptEngine.getFactory().getLanguageName(), e);

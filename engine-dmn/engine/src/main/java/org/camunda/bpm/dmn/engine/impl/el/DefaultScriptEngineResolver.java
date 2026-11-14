@@ -50,12 +50,23 @@ public class DefaultScriptEngineResolver implements DmnScriptEngineResolver {
         scriptEngine = scriptEngineCache.get(language);
         if (scriptEngine == null) {
           scriptEngine = scriptEngineManager.getEngineByName(language);
-          scriptEngineCache.put(language, scriptEngine);
+          if (isCachable(scriptEngine)) {
+            scriptEngineCache.put(language, scriptEngine);
+          }
         }
       }
     }
 
     return scriptEngine;
+  }
+
+  /**
+   * @return false for a script engine that is closed after every evaluation
+   *   (see {@link GraalJsScriptSession}), so that every evaluation gets a
+   *   script engine of its own
+   */
+  protected boolean isCachable(ScriptEngine scriptEngine) {
+    return !GraalJsScriptSession.isSupported(scriptEngine);
   }
 
 }

@@ -22,6 +22,7 @@ import javax.script.Bindings;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
+import javax.script.SimpleBindings;
 
 import org.camunda.bpm.application.AbstractProcessApplication;
 import org.camunda.bpm.application.ProcessApplicationInterface;
@@ -150,6 +151,17 @@ public class ScriptingEngines implements DmnScriptEngineResolver {
    * @param scriptEngine */
   public Bindings createBindings(ScriptEngine scriptEngine, VariableScope variableScope) {
     return scriptBindingsFactory.createBindings(variableScope, scriptEngine.createBindings());
+  }
+
+  /**
+   * Creates bindings that are not connected to a script engine. They resolve
+   * the variables of the variable scope and all other names that are
+   * available to a script.
+   *
+   * @param variableScope the scope in which a script is executed
+   */
+  public Bindings createBindings(VariableScope variableScope) {
+    return scriptBindingsFactory.createBindings(variableScope, new SimpleBindings());
   }
 
   public ScriptBindingsFactory getScriptBindingsFactory() {

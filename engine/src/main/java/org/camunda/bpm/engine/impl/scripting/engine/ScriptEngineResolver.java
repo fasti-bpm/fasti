@@ -28,6 +28,14 @@ public interface ScriptEngineResolver {
 
   /**
    * Returns a cached script engine or creates a new script engine if no such engine is currently cached.
+   * <p>
+   * A GraalJS script engine is closed by the process engine after it has
+   * evaluated a script and should therefore be created whenever this method
+   * is invoked, whatever the value of <code>resolveFromCache</code> is. If the
+   * same GraalJS script engine is returned again, it is only used as template
+   * for the configuration of the context in which a script is evaluated.
+   * See {@link org.camunda.bpm.dmn.engine.impl.el.GraalJsScriptSession}.
+   * </p>
    *
    * @param language the language (such as 'groovy' for the script engine)
    * @return the cached engine or null if no script engine can be created for the given language

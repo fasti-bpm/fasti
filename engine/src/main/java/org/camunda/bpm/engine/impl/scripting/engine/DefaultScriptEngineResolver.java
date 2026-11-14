@@ -110,6 +110,9 @@ public class DefaultScriptEngineResolver implements ScriptEngineResolver {
    * @return true if the script engine may be cached.
    */
   protected boolean isCachable(ScriptEngine scriptEngine) {
+    // A GraalJS script engine does not declare to support multithreading and is
+    // therefore not cached. It is closed after it has evaluated a script, see
+    // ScriptingEnvironment#execute(ExecutableScript, VariableScope).
     // Check if script-engine supports multithreading. If true it can be cached.
     Object threadingParameter = scriptEngine.getFactory().getParameter("THREADING");
     return threadingParameter != null;

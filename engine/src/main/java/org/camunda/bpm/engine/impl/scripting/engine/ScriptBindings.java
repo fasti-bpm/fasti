@@ -27,6 +27,7 @@ import java.util.Set;
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
 
+import org.camunda.bpm.dmn.engine.impl.el.GraalJsScriptSession;
 import org.camunda.bpm.engine.delegate.VariableScope;
 import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.context.Context;
@@ -40,9 +41,17 @@ import org.camunda.bpm.engine.impl.context.Context;
  * <li>additional bindings provided through a set of {@link Resolver Resolvers}.</li>
  * </ul>
  *
+ * <p>The keys that GraalJS reserves for the configuration of a script engine
+ * (see {@link GraalJsScriptSession#isReservedKey(Object)}) are neither resolved
+ * from the variable scope or a resolver nor stored in the variable scope, so
+ * that a variable cannot change the privileges of a script.</p>
+ *
  * <p><strong>Note on backwards compatibility:</strong> before 7.2 the Script
  * bindings behaved in a way that all script variables were automatically exposed
  * as process variables. You can enable this behavior by setting {@link #autoStoreScriptVariables}.
+ * The variables of a script that is evaluated by GraalJS are stored by the
+ * {@link org.camunda.bpm.engine.impl.scripting.env.ScriptingEnvironment}, since
+ * GraalJS does not write them to the bindings.
  * </p>
  *
  *
@@ -74,6 +83,15 @@ public class ScriptBindings implements Bindings {
       "__doc__" // do not export python doc string
       ));
 
+  /**
+   * @return true if a script variable with the given name is never stored in
+   *   the variable scope, because it is provided by the process engine or by
+   *   a script engine
+   */
+  public static boolean isUnstoredKey(String name) {
+    return UNSTORED_KEYS.contains(name);
+  }
+
   protected List<Resolver> scriptResolvers;
   protected VariableScope variableScope;
 
@@ -98,9 +116,11 @@ public class ScriptBindings implements Bindings {
   }
 
   public boolean containsKey(Object key) {
-    for (Resolver scriptResolver: scriptResolvers) {
-      if (scriptResolver.containsKey(key)) {
-        return true;
+    if (!GraalJsScriptSession.isReservedKey(key)) {
+      for (Resolver scriptResolver: scriptResolvers) {
+        if (scriptResolver.containsKey(key)) {
+          return true;
+        }
       }
     }
     return wrappedBindings.containsKey(key);
@@ -112,7 +132,7 @@ public class ScriptBindings implements Bindings {
     if(wrappedBindings.containsKey(key)) {
       result = wrappedBindings.get(key);
 
-    } else {
+    } else if (!GraalJsScriptSession.isReservedKey(key)) {
       for (Resolver scriptResolver: scriptResolvers) {
         if (scriptResolver.containsKey(key)) {
           result = scriptResolver.get(key);
@@ -126,7 +146,7 @@ public class ScriptBindings implements Bindings {
   public Object put(String name, Object value) {
 
     if(autoStoreScriptVariables) {
-      if (!UNSTORED_KEYS.contains(name)) {
+      if (!UNSTORED_KEYS.contains(name) && !GraalJsScriptSession.isReservedKey(name)) {
         Object oldValue = variableScope.getVariable(name);
         variableScope.setVariable(name, value);
         return oldValue;
@@ -183,7 +203,9 @@ public class ScriptBindings implements Bindings {
 
     for (Resolver resolver : scriptResolvers) {
       for (String key : resolver.keySet()) {
-        bindingMap.put(key, resolver.get(key));
+        if (!GraalJsScriptSession.isReservedKey(key)) {
+          bindingMap.put(key, resolver.get(key));
+        }
       }
     }
 

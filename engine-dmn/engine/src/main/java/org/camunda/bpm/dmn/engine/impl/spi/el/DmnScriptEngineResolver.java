@@ -25,6 +25,14 @@ public interface DmnScriptEngineResolver {
 
   /**
    * Get a script engine by script engine language.
+   * <p>
+   * A GraalJS script engine is closed by the DMN engine after it has
+   * evaluated an expression and should therefore be created whenever this
+   * method is invoked. If the same GraalJS script engine is returned again,
+   * it is only used as template for the configuration of the context in
+   * which an expression is evaluated.
+   * See {@link org.camunda.bpm.dmn.engine.impl.el.GraalJsScriptSession}.
+   * </p>
    *
    * @param language the language of the script engine
    * @return the script engine or null if no script engine for this language exists

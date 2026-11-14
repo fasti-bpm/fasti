@@ -119,4 +119,16 @@ public class DmnEngineLogger extends DmnLogger {
     );
   }
 
+  public void logDetachingScriptValueFailed(Throwable e) {
+    logDebug(
+      "014",
+      "Failed to detach the result of a script evaluation from its script engine: {}", e.getMessage());
+  }
+
+  public void logClosingScriptEngineFailed(Throwable e) {
+    logWarn(
+      "015",
+      "Failed to close a script engine after the evaluation of a script: {}", e.getMessage(), e);
+  }
+
 }

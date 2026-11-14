@@ -33,6 +33,10 @@ import org.camunda.bpm.engine.variable.value.TypedValue;
  * The variables are treated as read only: all mutating operations write through to the
  * wrapped {@link Bindings}.
  *
+ * Variables are not resolved for the keys that GraalJS reserves for the
+ * configuration of a script engine (see {@link GraalJsScriptSession#isReservedKey(Object)}),
+ * so that a variable cannot change the privileges of a script.
+ *
  * @author Daniel Meyer
  *
  */
@@ -54,7 +58,7 @@ public class VariableContextScriptBindings implements Bindings {
     if(wrappedBindings.containsKey(key)) {
       return true;
     }
-    if (key instanceof String) {
+    if (key instanceof String && !GraalJsScriptSession.isReservedKey(key)) {
       return variableContext.containsVariable((String) key);
     }
     else {
@@ -72,7 +76,7 @@ public class VariableContextScriptBindings implements Bindings {
       result = wrappedBindings.get(key);
     }
     else {
-      if (key instanceof String) {
+      if (key instanceof String && !GraalJsScriptSession.isReservedKey(key)) {
         TypedValue resolvedValue = variableContext.resolve((String) key);
         result = unpack(resolvedValue);
       }
@@ -133,6 +137,9 @@ public class VariableContextScriptBindings implements Bindings {
 
     Set<String> keySet = variableContext.keySet();
     for (String variableName : keySet) {
+      if (GraalJsScriptSession.isReservedKey(variableName)) {
+        continue;
+      }
       bindingMap.put(variableName, unpack(variableContext.resolve(variableName)));
     }
 

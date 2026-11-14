@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.camunda.bpm.dmn.engine.impl.el.ScriptValueDetacher;
 import org.camunda.bpm.engine.delegate.VariableScope;
 import org.camunda.bpm.engine.impl.ProcessEngineLogger;
 import org.camunda.bpm.engine.impl.context.Context;
@@ -315,13 +316,26 @@ public abstract class AbstractVariableScope implements Serializable, VariableSco
   }
 
   public void setVariable(String variableName, Object value, boolean skipJavaSerializationFormatCheck) {
-    TypedValue typedValue = Variables.untypedValue(value);
+    TypedValue typedValue = Variables.untypedValue(detachFromScriptEngine(value));
     setVariable(variableName, typedValue, getSourceActivityVariableScope(), skipJavaSerializationFormatCheck);
   }
 
   @Override
   public void setVariable(String variableName, Object value) {
     setVariable(variableName, value, false);
+  }
+
+  /**
+   * A script may set an object of its language as variable, e.g. a JavaScript
+   * object. Such an object is bound to the script engine that created it and
+   * cannot be used anymore once the engine is closed, which happens before
+   * the variable is flushed. It is therefore replaced by a copy made of Java
+   * collections. All other values are returned as they are.
+   *
+   * @see ScriptValueDetacher
+   */
+  protected Object detachFromScriptEngine(Object value) {
+    return ScriptValueDetacher.detach(value);
   }
 
   protected void setVariable(String variableName,
@@ -434,7 +448,7 @@ public abstract class AbstractVariableScope implements Serializable, VariableSco
   }
 
   public void setVariableLocal(String variableName, Object value, boolean skipJavaSerializationFormatCheck) {
-    TypedValue typedValue = Variables.untypedValue(value);
+    TypedValue typedValue = Variables.untypedValue(detachFromScriptEngine(value));
     setVariableLocal(variableName, typedValue, getSourceActivityVariableScope(), skipJavaSerializationFormatCheck);
   }
 

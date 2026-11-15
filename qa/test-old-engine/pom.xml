@@ -2,18 +2,18 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.camunda.bpm.qa</groupId>
-    <artifactId>camunda-qa</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.qa</groupId>
+    <artifactId>fasti-qa</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>camunda-qa-old-engine</artifactId>
+  <artifactId>fasti-qa-old-engine</artifactId>
   <packaging>jar</packaging>
 
   <description>
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
-  <name>Camunda Platform - QA - test new schema with old engine</name>
+  <name>Fasti BPM Platform - QA - test new schema with old engine</name>
 
   <properties>
     <camunda.old.engine.version>7.23.0</camunda.old.engine.version>
@@ -178,8 +178,8 @@
         </dependency>
 
         <dependency>
-          <groupId>org.camunda.bpm.distro</groupId>
-          <artifactId>camunda-sql-scripts</artifactId>
+          <groupId>dev.fasti.platform.distro</groupId>
+          <artifactId>fasti-sql-scripts</artifactId>
           <version>${project.version}</version>
           <type>test-jar</type>
         </dependency>
@@ -294,8 +294,8 @@
                 <configuration>
                   <artifactItems>
                     <artifactItem>
-                      <groupId>org.camunda.bpm.distro</groupId>
-                      <artifactId>camunda-sql-scripts</artifactId>
+                      <groupId>dev.fasti.platform.distro</groupId>
+                      <artifactId>fasti-sql-scripts</artifactId>
                       <version>${project.version}</version>
                       <type>test-jar</type>
                       <outputDirectory>${project.build.directory}/scripts-current</outputDirectory>
@@ -323,8 +323,8 @@
                 </goals>
                 <configuration>
                   <srcFiles>
-                    <srcFile>${project.build.directory}/scripts-current/sql/drop/${database.type}_engine_${project.version}.sql</srcFile>
-                    <srcFile>${project.build.directory}/scripts-current/sql/drop/${database.type}_identity_${project.version}.sql</srcFile>
+                    <srcFile>${project.build.directory}/scripts-current/sql/drop/${database.type}_engine_${camunda.schema.version}.sql</srcFile>
+                    <srcFile>${project.build.directory}/scripts-current/sql/drop/${database.type}_identity_${camunda.schema.version}.sql</srcFile>
                   </srcFiles>
                   <autocommit>true</autocommit>
                   <onError>continue</onError>
@@ -340,8 +340,8 @@
                 </goals>
                 <configuration>
                   <srcFiles>
-                    <srcFile>${project.build.directory}/scripts-current/sql/create/${database.type}_engine_${project.version}.sql</srcFile>
-                    <srcFile>${project.build.directory}/scripts-current/sql/create/${database.type}_identity_${project.version}.sql</srcFile>
+                    <srcFile>${project.build.directory}/scripts-current/sql/create/${database.type}_engine_${camunda.schema.version}.sql</srcFile>
+                    <srcFile>${project.build.directory}/scripts-current/sql/create/${database.type}_identity_${camunda.schema.version}.sql</srcFile>
                   </srcFiles>
                 </configuration>
               </execution>
@@ -355,8 +355,8 @@
                 </goals>
                 <configuration>
                   <srcFiles>
-                    <srcFile>${project.build.directory}/scripts-current/sql/drop/${database.type}_engine_${project.version}.sql</srcFile>
-                    <srcFile>${project.build.directory}/scripts-current/sql/drop/${database.type}_identity_${project.version}.sql</srcFile>
+                    <srcFile>${project.build.directory}/scripts-current/sql/drop/${database.type}_engine_${camunda.schema.version}.sql</srcFile>
+                    <srcFile>${project.build.directory}/scripts-current/sql/drop/${database.type}_identity_${camunda.schema.version}.sql</srcFile>
                   </srcFiles>
                 </configuration>
               </execution>

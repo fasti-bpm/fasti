@@ -5,20 +5,20 @@
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
 
-  <artifactId>camunda-qa-integration-tests-webapps-shared-engine</artifactId>
-  <name>Camunda Platform - QA Integration Tests - Webapps Shared Engine</name>
+  <artifactId>fasti-qa-integration-tests-webapps-shared-engine</artifactId>
+  <name>Fasti BPM Platform - QA Integration Tests - Webapps Shared Engine</name>
 
   <parent>
-    <groupId>org.camunda.bpm.qa</groupId>
-    <artifactId>camunda-qa-integration-tests-webapps-root</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.qa</groupId>
+    <artifactId>fasti-qa-integration-tests-webapps-root</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
     <relativePath>../</relativePath>
   </parent>
 
   <dependencies>
     <dependency>
-      <groupId>org.camunda.bpm.qa</groupId>
-      <artifactId>camunda-qa-integration-tests-webapps</artifactId>
+      <groupId>dev.fasti.platform.qa</groupId>
+      <artifactId>fasti-qa-integration-tests-webapps</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -34,29 +34,29 @@
       <dependencies>
         <dependency>
           <!-- make sure it comes after assembly in the build -->
-          <groupId>org.camunda.bpm.qa</groupId>
-          <artifactId>camunda-qa-wildfly-runtime</artifactId>
+          <groupId>dev.fasti.platform.qa</groupId>
+          <artifactId>fasti-qa-wildfly-runtime</artifactId>
           <version>${project.version}</version>
           <type>pom</type>
         </dependency>
         <dependency>
-          <groupId>org.camunda.bpm.webapp</groupId>
-          <artifactId>camunda-webapp-wildfly</artifactId>
+          <groupId>dev.fasti.platform.webapp</groupId>
+          <artifactId>fasti-webapp-wildfly</artifactId>
           <version>${project.version}</version>
           <type>war</type>
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>org.camunda.bpm</groupId>
-          <artifactId>camunda-engine-rest-jakarta</artifactId>
+          <groupId>dev.fasti.platform</groupId>
+          <artifactId>fasti-engine-rest-jakarta</artifactId>
           <version>${project.version}</version>
           <classifier>wildfly</classifier>
           <scope>test</scope>
           <type>war</type>
         </dependency>
         <dependency>
-          <groupId>org.camunda.bpm.example</groupId>
-          <artifactId>camunda-example-invoice-jakarta</artifactId>
+          <groupId>dev.fasti.platform.example</groupId>
+          <artifactId>fasti-example-invoice-jakarta</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
           <type>war</type>
@@ -103,23 +103,23 @@
               </configuration>
               <deployables>
                 <deployable>
-                  <groupId>org.camunda.bpm.example</groupId>
-                  <artifactId>camunda-example-invoice-jakarta</artifactId>
+                  <groupId>dev.fasti.platform.example</groupId>
+                  <artifactId>fasti-example-invoice-jakarta</artifactId>
                   <type>war</type>
                   <pingURL>http://localhost:${jboss.http.port}/engine-rest/engine/default/user/demo/profile</pingURL>
                   <pingTimeout>${cargo.deploy.timeout}</pingTimeout>
                 </deployable>
                 <deployable>
-                  <groupId>org.camunda.bpm</groupId>
-                  <artifactId>camunda-engine-rest-jakarta</artifactId>
+                  <groupId>dev.fasti.platform</groupId>
+                  <artifactId>fasti-engine-rest-jakarta</artifactId>
                   <classifier>wildfly</classifier>
                   <type>war</type>
                   <pingURL>http://localhost:${jboss.http.port}/engine-rest/engine/default/process-definition</pingURL>
                   <pingTimeout>${cargo.deploy.timeout}</pingTimeout>
                 </deployable>
                 <deployable>
-                  <groupId>org.camunda.bpm.webapp</groupId>
-                  <artifactId>camunda-webapp-wildfly</artifactId>
+                  <groupId>dev.fasti.platform.webapp</groupId>
+                  <artifactId>fasti-webapp-wildfly</artifactId>
                   <type>war</type>
                   <pingURL>http://localhost:${jboss.http.port}/camunda</pingURL>
                   <pingTimeout>${cargo.deploy.timeout}</pingTimeout>
@@ -150,29 +150,29 @@
       <dependencies>
         <dependency>
           <!-- make sure it comes after assembly in the build -->
-          <groupId>org.camunda.bpm.qa</groupId>
-          <artifactId>camunda-qa-wildfly26-runtime</artifactId>
+          <groupId>dev.fasti.platform.qa</groupId>
+          <artifactId>fasti-qa-wildfly26-runtime</artifactId>
           <version>${project.version}</version>
           <type>pom</type>
         </dependency>
         <dependency>
-          <groupId>org.camunda.bpm.webapp</groupId>
-          <artifactId>camunda-webapp-jboss</artifactId>
+          <groupId>dev.fasti.platform.webapp</groupId>
+          <artifactId>fasti-webapp-jboss</artifactId>
           <version>${project.version}</version>
           <type>war</type>
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>org.camunda.bpm</groupId>
-          <artifactId>camunda-engine-rest</artifactId>
+          <groupId>dev.fasti.platform</groupId>
+          <artifactId>fasti-engine-rest</artifactId>
           <version>${project.version}</version>
           <classifier>wildfly</classifier>
           <scope>test</scope>
           <type>war</type>
         </dependency>
         <dependency>
-          <groupId>org.camunda.bpm</groupId>
-          <artifactId>camunda-engine</artifactId>
+          <groupId>dev.fasti.platform</groupId>
+          <artifactId>fasti-engine</artifactId>
           <scope>test</scope>
           <exclusions>
             <exclusion>
@@ -223,23 +223,23 @@
               </configuration>
               <deployables>
                 <deployable>
-                  <groupId>org.camunda.bpm.example</groupId>
-                  <artifactId>camunda-example-invoice</artifactId>
+                  <groupId>dev.fasti.platform.example</groupId>
+                  <artifactId>fasti-example-invoice</artifactId>
                   <type>war</type>
                   <pingURL>http://localhost:${jboss.http.port}/engine-rest/engine/default/user/demo/profile</pingURL>
                   <pingTimeout>${cargo.deploy.timeout}</pingTimeout>
                 </deployable>
                 <deployable>
-                  <groupId>org.camunda.bpm</groupId>
-                  <artifactId>camunda-engine-rest</artifactId>
+                  <groupId>dev.fasti.platform</groupId>
+                  <artifactId>fasti-engine-rest</artifactId>
                   <classifier>wildfly</classifier>
                   <type>war</type>
                   <pingURL>http://localhost:${jboss.http.port}/engine-rest/engine/default/process-definition</pingURL>
                   <pingTimeout>${cargo.deploy.timeout}</pingTimeout>
                 </deployable>
                 <deployable>
-                  <groupId>org.camunda.bpm.webapp</groupId>
-                  <artifactId>camunda-webapp-jboss</artifactId>
+                  <groupId>dev.fasti.platform.webapp</groupId>
+                  <artifactId>fasti-webapp-jboss</artifactId>
                   <type>war</type>
                   <pingURL>http://localhost:${jboss.http.port}/camunda</pingURL>
                   <pingTimeout>${cargo.deploy.timeout}</pingTimeout>
@@ -270,8 +270,8 @@
       <dependencies>
         <dependency>
           <!-- make sure it comes after assembly in the build -->
-          <groupId>org.camunda.bpm.qa</groupId>
-          <artifactId>camunda-qa-tomcat9-runtime</artifactId>
+          <groupId>dev.fasti.platform.qa</groupId>
+          <artifactId>fasti-qa-tomcat9-runtime</artifactId>
           <version>${project.version}</version>
           <type>pom</type>
         </dependency>
@@ -283,8 +283,8 @@
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>org.camunda.bpm</groupId>
-          <artifactId>camunda-engine-rest</artifactId>
+          <groupId>dev.fasti.platform</groupId>
+          <artifactId>fasti-engine-rest</artifactId>
           <scope>test</scope>
           <type>war</type>
           <classifier>tomcat</classifier>
@@ -332,8 +332,8 @@
               </configuration>
               <deployables>
                 <deployable>
-                  <groupId>org.camunda.bpm</groupId>
-                  <artifactId>camunda-engine-rest</artifactId>
+                  <groupId>dev.fasti.platform</groupId>
+                  <artifactId>fasti-engine-rest</artifactId>
                   <type>war</type>
                   <classifier>tomcat</classifier>
                   <pingURL>http://localhost:${tomcat.connector.http.port}/engine-rest/engine/default/process-definition</pingURL>
@@ -353,8 +353,8 @@
                   </properties>
                 </deployable>
                 <deployable>
-                  <groupId>org.camunda.bpm.example</groupId>
-                  <artifactId>camunda-example-invoice</artifactId>
+                  <groupId>dev.fasti.platform.example</groupId>
+                  <artifactId>fasti-example-invoice</artifactId>
                   <type>war</type>
                   <properties>
                     <context>invoice</context>
@@ -376,29 +376,29 @@
       <dependencies>
         <dependency>
           <!-- make sure it comes after assembly in the build -->
-          <groupId>org.camunda.bpm.qa</groupId>
-          <artifactId>camunda-qa-tomcat-runtime</artifactId>
+          <groupId>dev.fasti.platform.qa</groupId>
+          <artifactId>fasti-qa-tomcat-runtime</artifactId>
           <version>${project.version}</version>
           <type>pom</type>
         </dependency>
         <dependency>
-          <groupId>org.camunda.bpm.webapp</groupId>
-          <artifactId>camunda-webapp-tomcat-jakarta</artifactId>
+          <groupId>dev.fasti.platform.webapp</groupId>
+          <artifactId>fasti-webapp-tomcat-jakarta</artifactId>
           <version>${project.version}</version>
           <type>war</type>
           <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>org.camunda.bpm</groupId>
-          <artifactId>camunda-engine-rest-jakarta</artifactId>
+          <groupId>dev.fasti.platform</groupId>
+          <artifactId>fasti-engine-rest-jakarta</artifactId>
           <version>${project.version}</version>
           <type>war</type>
           <scope>test</scope>
           <classifier>tomcat</classifier>
         </dependency>
         <dependency>
-          <groupId>org.camunda.bpm.example</groupId>
-          <artifactId>camunda-example-invoice-jakarta</artifactId>
+          <groupId>dev.fasti.platform.example</groupId>
+          <artifactId>fasti-example-invoice-jakarta</artifactId>
           <version>${project.version}</version>
           <type>war</type>
           <scope>test</scope>
@@ -445,8 +445,8 @@
               </configuration>
               <deployables>
                 <deployable>
-                  <groupId>org.camunda.bpm</groupId>
-                  <artifactId>camunda-engine-rest-jakarta</artifactId>
+                  <groupId>dev.fasti.platform</groupId>
+                  <artifactId>fasti-engine-rest-jakarta</artifactId>
                   <type>war</type>
                   <classifier>tomcat</classifier>
                   <pingURL>http://localhost:${tomcat.connector.http.port}/engine-rest/engine/default/process-definition</pingURL>
@@ -456,8 +456,8 @@
                   </properties>
                 </deployable>
                 <deployable>
-                  <groupId>org.camunda.bpm.webapp</groupId>
-                  <artifactId>camunda-webapp-tomcat-jakarta</artifactId>
+                  <groupId>dev.fasti.platform.webapp</groupId>
+                  <artifactId>fasti-webapp-tomcat-jakarta</artifactId>
                   <type>war</type>
                   <pingURL>http://localhost:${tomcat.connector.http.port}/camunda</pingURL>
                   <pingTimeout>${cargo.deploy.timeout}</pingTimeout>
@@ -466,8 +466,8 @@
                   </properties>
                 </deployable>
                 <deployable>
-                  <groupId>org.camunda.bpm.example</groupId>
-                  <artifactId>camunda-example-invoice-jakarta</artifactId>
+                  <groupId>dev.fasti.platform.example</groupId>
+                  <artifactId>fasti-example-invoice-jakarta</artifactId>
                   <type>war</type>
                   <properties>
                     <context>invoice</context>
@@ -507,7 +507,7 @@
             <configuration>
               <redirectTestOutputToFile>true</redirectTestOutputToFile>
               <dependenciesToScan>
-                <dependency>org.camunda.bpm.qa:camunda-qa-integration-tests-webapps</dependency>
+                <dependency>dev.fasti.platform.qa:fasti-qa-integration-tests-webapps</dependency>
               </dependenciesToScan>
               <systemPropertyVariables>
                 <selenium.screenshot.directory>${project.build.directory}/selenium-screenshots</selenium.screenshot.directory>
@@ -536,8 +536,8 @@
                 <configuration>
                   <artifactItems>
                     <artifactItem>
-                      <groupId>org.camunda.bpm</groupId>
-                      <artifactId>camunda-engine</artifactId>
+                      <groupId>dev.fasti.platform</groupId>
+                      <artifactId>fasti-engine</artifactId>
                       <outputDirectory>${project.build.directory}/sql-scripts/engine</outputDirectory>
                       <overWrite>true</overWrite>
                     </artifactItem>
@@ -595,7 +595,7 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
               <dependenciesToScan>
-                <dependency>org.camunda.bpm.qa:camunda-qa-integration-tests-webapps</dependency>
+                <dependency>dev.fasti.platform.qa:fasti-qa-integration-tests-webapps</dependency>
               </dependenciesToScan>
               <skipTests>false</skipTests>
               <includes>

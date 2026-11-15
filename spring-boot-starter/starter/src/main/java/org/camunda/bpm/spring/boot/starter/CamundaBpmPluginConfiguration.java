@@ -40,9 +40,9 @@ import org.springframework.context.annotation.Configuration;
 public class CamundaBpmPluginConfiguration {
 
   /*
-     When `camunda-spin-dataformat-all` is used as a dependency,
+     When `fasti-spin-dataformat-all` is used as a dependency,
      SpinDataFormatConfigurationJSR310, SpinDataFormatConfigurationParameterNames
-     and SpinDataFormatConfigurationJdk8 are not used. The `camunda-spin-dataformat-all`
+     and SpinDataFormatConfigurationJdk8 are not used. The `fasti-spin-dataformat-all`
      artifact comes with a shaded Jackson ObjectMapper (prefixed with `spinjar`),
      which breaks auto-configuration for Jackson Java 8 modules.
   */

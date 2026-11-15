@@ -17,7 +17,11 @@
 package org.camunda.bpm.engine.rest.util.container;
 
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenFormatStage;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenResolverSystemBase;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenStrategyStage;
 import org.jboss.shrinkwrap.resolver.api.maven.PomEquippedResolveStage;
+import org.jboss.shrinkwrap.resolver.api.maven.PomlessResolveStage;
 import org.jboss.shrinkwrap.resolver.api.maven.ScopeType;
 import org.jboss.shrinkwrap.resolver.api.maven.coordinate.MavenDependencies;
 
@@ -29,7 +33,8 @@ public class ResteasyTomcatServerBootstrap extends TomcatServerBootstrap {
   }
 
   @Override
-  protected void addRuntimeSpecificLibraries(WebArchive wa, PomEquippedResolveStage resolver) {
+  protected void addRuntimeSpecificLibraries(WebArchive wa,
+      MavenResolverSystemBase<PomEquippedResolveStage, PomlessResolveStage, MavenStrategyStage, MavenFormatStage> resolver) {
     // inject rest easy version to differentiate between resteasy and wildfly-compatibility profile
     String restEasyVersion = System.getProperty("restEasyVersion");
 

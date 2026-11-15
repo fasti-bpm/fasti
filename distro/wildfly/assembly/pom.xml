@@ -2,15 +2,15 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.camunda.bpm.wildfly</groupId>
-    <artifactId>camunda-wildfly</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.wildfly</groupId>
+    <artifactId>fasti-wildfly</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>camunda-wildfly-assembly</artifactId>
+  <artifactId>fasti-wildfly-assembly</artifactId>
   <packaging>pom</packaging>
 
-  <name>Camunda Platform - Wildfly Assembly</name>
+  <name>Fasti BPM Platform - Wildfly Assembly</name>
 
   <description>
     Assembles the Camunda Platform and makes it ready for qa.
@@ -34,39 +34,39 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.javaee</groupId>
-      <artifactId>camunda-ejb-client-jakarta</artifactId>
+      <groupId>dev.fasti.platform.javaee</groupId>
+      <artifactId>fasti-ejb-client-jakarta</artifactId>
     </dependency>
     
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.identity</groupId>
-      <artifactId>camunda-identity-ldap</artifactId>
+      <groupId>dev.fasti.platform.identity</groupId>
+      <artifactId>fasti-identity-ldap</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine-cdi-jakarta</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-cdi-jakarta</artifactId>
     </dependency>
     
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine-spring-6</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-spring-6</artifactId>
     </dependency>
     
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine-rest-jakarta</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-rest-jakarta</artifactId>
       <classifier>classes</classifier>
       <version>${project.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
+      <groupId>dev.fasti.platform</groupId>
       <artifactId>license-book</artifactId>
       <version>${project.version}</version>
       <type>zip</type>
@@ -119,8 +119,8 @@
     <dependency>
       <!-- this dependency is to make sure that we are executed after camunda-modules 
         in the reactor -->
-      <groupId>org.camunda.bpm.wildfly</groupId>
-      <artifactId>camunda-wildfly-modules</artifactId>
+      <groupId>dev.fasti.platform.wildfly</groupId>
+      <artifactId>fasti-wildfly-modules</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>

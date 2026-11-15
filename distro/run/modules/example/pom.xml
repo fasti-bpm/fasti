@@ -7,13 +7,13 @@
   </description>
 
   <parent>
-    <groupId>org.camunda.bpm.run</groupId>
-    <artifactId>camunda-bpm-run-modules</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.run</groupId>
+    <artifactId>fasti-bpm-run-modules</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>camunda-bpm-run-modules-example-invoice</artifactId>
-  <name>Camunda Platform - Run - Module Example Invoice</name>
+  <artifactId>fasti-bpm-run-modules-example-invoice</artifactId>
+  <name>Fasti BPM Platform - Run - Module Example Invoice</name>
   
   <properties>
     <!-- generate a bom of compile time dependencies for the license book.
@@ -25,14 +25,14 @@
   <dependencies>
 
     <dependency>
-      <groupId>org.camunda.bpm.springboot</groupId>
-      <artifactId>camunda-bpm-spring-boot-starter-webapp</artifactId>
+      <groupId>dev.fasti.platform.springboot</groupId>
+      <artifactId>fasti-bpm-spring-boot-starter-webapp</artifactId>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.example</groupId>
-      <artifactId>camunda-example-invoice-jakarta</artifactId>
+      <groupId>dev.fasti.platform.example</groupId>
+      <artifactId>fasti-example-invoice-jakarta</artifactId>
       <version>${project.version}</version>
       <classifier>classes</classifier>
       <scope>provided</scope>
@@ -57,8 +57,8 @@
             <configuration>
               <artifactItems>
                 <artifactItem>
-                  <groupId>org.camunda.bpm.example</groupId>
-                  <artifactId>camunda-example-invoice-jakarta</artifactId>
+                  <groupId>dev.fasti.platform.example</groupId>
+                  <artifactId>fasti-example-invoice-jakarta</artifactId>
                   <version>${project.version}</version>
                   <type>war</type>
                   <outputDirectory>${project.build.directory}/classes</outputDirectory>

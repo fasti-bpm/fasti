@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  <name>Camunda Platform - Java External Task Client - CLIENT</name>
+  <name>Fasti BPM Platform - Java External Task Client - CLIENT</name>
 
-  <artifactId>camunda-external-task-client</artifactId>
+  <artifactId>fasti-external-task-client</artifactId>
 
   <packaging>jar</packaging>
 
@@ -12,9 +12,9 @@
   </description>
 
   <parent>
-    <groupId>org.camunda.bpm</groupId>
-    <artifactId>camunda-external-task-client-root</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform</groupId>
+    <artifactId>fasti-external-task-client-root</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
   <properties>
@@ -35,8 +35,8 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-core-internal-dependencies</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-core-internal-dependencies</artifactId>
         <version>${project.version}</version>
         <scope>import</scope>
         <type>pom</type>
@@ -55,13 +55,13 @@
 
     <!-- mandatory dependencies -->
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-logging</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-logging</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-typed-values</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-typed-values</artifactId>
     </dependency>
 
     <dependency>
@@ -96,8 +96,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.model</groupId>
-      <artifactId>camunda-bpmn-model</artifactId>
+      <groupId>dev.fasti.platform.model</groupId>
+      <artifactId>fasti-bpmn-model</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -108,13 +108,13 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.spin</groupId>
-      <artifactId>camunda-spin-dataformat-all</artifactId>
+      <groupId>dev.fasti.platform.spin</groupId>
+      <artifactId>fasti-spin-dataformat-all</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.qa</groupId>
+      <groupId>dev.fasti.platform.qa</groupId>
       <artifactId>engine-variable-test</artifactId>
       <version>${project.version}</version>
       <classifier>classes</classifier>
@@ -122,8 +122,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.tomcat</groupId>
-      <artifactId>camunda-tomcat-assembly</artifactId>
+      <groupId>dev.fasti.platform.tomcat</groupId>
+      <artifactId>fasti-tomcat-assembly</artifactId>
       <version>${project.version}</version>
       <type>tar.gz</type>
       <scope>test</scope>
@@ -136,8 +136,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine-rest-jakarta</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-rest-jakarta</artifactId>
       <scope>test</scope>
       <type>war</type>
       <classifier>tomcat</classifier>
@@ -145,7 +145,7 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.qa</groupId>
+      <groupId>dev.fasti.platform.qa</groupId>
       <artifactId>engine-variable-test</artifactId>
       <scope>test</scope>
       <type>war</type>
@@ -210,8 +210,8 @@
               <skip>${skipTests}</skip>
               <artifactItems>
                 <artifactItem>
-                  <groupId>org.camunda.bpm.tomcat</groupId>
-                  <artifactId>camunda-tomcat-assembly</artifactId>
+                  <groupId>dev.fasti.platform.tomcat</groupId>
+                  <artifactId>fasti-tomcat-assembly</artifactId>
                   <version>${project.version}</version>
                   <type>tar.gz</type>
                   <outputDirectory>${engine.runtime}</outputDirectory>
@@ -287,8 +287,8 @@
           </configuration>
           <deployables>
             <deployable>
-              <groupId>org.camunda.bpm</groupId>
-              <artifactId>camunda-engine-rest-jakarta</artifactId>
+              <groupId>dev.fasti.platform</groupId>
+              <artifactId>fasti-engine-rest-jakarta</artifactId>
               <type>war</type>
               <classifier>tomcat</classifier>
               <pingURL>
@@ -300,7 +300,7 @@
               </properties>
             </deployable>
             <deployable>
-              <groupId>org.camunda.bpm.qa</groupId>
+              <groupId>dev.fasti.platform.qa</groupId>
               <artifactId>engine-variable-test</artifactId>
               <type>war</type>
             </deployable>

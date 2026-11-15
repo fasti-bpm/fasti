@@ -2,19 +2,19 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.camunda.bpm.qa.upgrade</groupId>
-    <artifactId>camunda-qa-db-rolling-update</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.qa.upgrade</groupId>
+    <artifactId>fasti-qa-db-rolling-update</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
 
-  <artifactId>camunda-qa-db-test-old-engine</artifactId>
+  <artifactId>fasti-qa-db-test-old-engine</artifactId>
   <packaging>jar</packaging>
 
   <description>
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
-  <name>Camunda Platform - QA - upgrade - rolling update - test old engine</name>
+  <name>Fasti BPM Platform - QA - upgrade - rolling update - test old engine</name>
 
   <dependencyManagement>
     <dependencies>
@@ -35,8 +35,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.qa.upgrade</groupId>
-      <artifactId>camunda-qa-db-rolling-update-util</artifactId>
+      <groupId>dev.fasti.platform.qa.upgrade</groupId>
+      <artifactId>fasti-qa-db-rolling-update-util</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -109,8 +109,8 @@
                 <configuration>
                   <artifactItems>
                     <artifactItem>
-                      <groupId>org.camunda.bpm.distro</groupId>
-                      <artifactId>camunda-sql-scripts</artifactId>
+                      <groupId>dev.fasti.platform.distro</groupId>
+                      <artifactId>fasti-sql-scripts</artifactId>
                       <version>${project.version}</version>
                       <type>test-jar</type>
                       <outputDirectory>${project.build.directory}/scripts-current</outputDirectory>
@@ -135,8 +135,8 @@
                 <configuration>
                   <srcFiles>
                     <!-- finally drop db -->
-                    <srcFile>${project.build.directory}/scripts-current/sql/drop/${database.type}_engine_${project.version}.sql</srcFile>
-                    <srcFile>${project.build.directory}/scripts-current/sql/drop/${database.type}_identity_${project.version}.sql</srcFile>
+                    <srcFile>${project.build.directory}/scripts-current/sql/drop/${database.type}_engine_${camunda.schema.version}.sql</srcFile>
+                    <srcFile>${project.build.directory}/scripts-current/sql/drop/${database.type}_identity_${camunda.schema.version}.sql</srcFile>
                   </srcFiles>
                 </configuration>
               </execution>

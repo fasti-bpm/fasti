@@ -2,18 +2,18 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.camunda.bpm.qa.upgrade</groupId>
-    <artifactId>camunda-qa-db-rolling-update</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.qa.upgrade</groupId>
+    <artifactId>fasti-qa-db-rolling-update</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>camunda-qa-db-create-new-engine</artifactId>
+  <artifactId>fasti-qa-db-create-new-engine</artifactId>
   <packaging>jar</packaging>
 
   <description>
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
-  <name>Camunda Platform - QA - upgrade - rolling update - create new engine</name>
+  <name>Fasti BPM Platform - QA - upgrade - rolling update - create new engine</name>
 
   <properties>
     <camunda.version.current>${project.version}</camunda.version.current>
@@ -24,14 +24,22 @@
     <!-- NOTE: this pulls transitive dependencies of version ${project.version} in unless
       you declare them to be ${camunda.version.current} here -->
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.qa.upgrade</groupId>
-      <artifactId>camunda-qa-db-rolling-update-util</artifactId>
+      <groupId>dev.fasti.platform.qa.upgrade</groupId>
+      <artifactId>fasti-qa-db-rolling-update-util</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <!-- the util is compiled against the old engine. That engine has the original coordinates,
+          so Maven does not replace it by the engine of this build -->
+        <exclusion>
+          <groupId>org.camunda.bpm</groupId>
+          <artifactId>camunda-engine</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 
@@ -106,8 +114,8 @@
                 <configuration>
                   <artifactItems>
                     <artifactItem>
-                      <groupId>org.camunda.bpm.distro</groupId>
-                      <artifactId>camunda-sql-scripts</artifactId>
+                      <groupId>dev.fasti.platform.distro</groupId>
+                      <artifactId>fasti-sql-scripts</artifactId>
                       <version>${camunda.version.current}</version>
                       <type>test-jar</type>
                       <outputDirectory>${project.build.directory}/scripts-current</outputDirectory>
@@ -131,7 +139,8 @@
                 </goals>
                 <configuration>
                   <propertyPrefix>camunda.current</propertyPrefix>
-                  <versionString>${camunda.version.current}</versionString>
+                  <!-- the upgrade scripts are named after the schema version, not the project version -->
+                  <versionString>${camunda.schema.version}</versionString>
                 </configuration>
               </execution>
               <execution>

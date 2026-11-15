@@ -7,36 +7,36 @@
   </description>
 
   <parent>
-    <groupId>org.camunda.bpm.dmn</groupId>
-    <artifactId>camunda-engine-dmn-root</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.dmn</groupId>
+    <artifactId>fasti-engine-dmn-root</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>camunda-engine-feel-juel</artifactId>
-  <name>camunda DMN - engine FEEL - JUEL</name>
+  <artifactId>fasti-engine-feel-juel</artifactId>
+  <name>Fasti BPM Platform - DMN - engine FEEL - JUEL</name>
 
   <properties>
     <camunda.artifact>org.camunda.bpm.dmn.feel.impl.juel</camunda.artifact>
   </properties>
   <dependencies>
     <dependency>
-      <groupId>org.camunda.bpm.dmn</groupId>
-      <artifactId>camunda-engine-feel-api</artifactId>
+      <groupId>dev.fasti.platform.dmn</groupId>
+      <artifactId>fasti-engine-feel-api</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-logging</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-logging</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-typed-values</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-typed-values</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.juel</groupId>
-      <artifactId>camunda-juel</artifactId>
+      <groupId>dev.fasti.platform.juel</groupId>
+      <artifactId>fasti-juel</artifactId>
     </dependency>
 
     <dependency>
@@ -90,7 +90,14 @@
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>clirr-maven-plugin</artifactId>
             <configuration>
-              <comparisonVersion>${camunda.version.old}</comparisonVersion>
+              <!-- the release to compare with was published with the original coordinates -->
+              <comparisonArtifacts>
+                <comparisonArtifact>
+                  <groupId>org.camunda.bpm.dmn</groupId>
+                  <artifactId>camunda-engine-feel-juel</artifactId>
+                  <version>${camunda.version.old}</version>
+                </comparisonArtifact>
+              </comparisonArtifacts>
               <logResults>true</logResults>
               <excludes>
                 <exclude>org/camunda/bpm/dmn/feel/impl/**</exclude>

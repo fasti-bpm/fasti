@@ -6,19 +6,19 @@
   </description>
 
   <parent>
-    <groupId>org.camunda.connect</groupId>
-    <artifactId>camunda-connect-root</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.connect</groupId>
+    <artifactId>fasti-connect-root</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>camunda-connect-soap-http-client</artifactId>
-  <name>Camunda Platform - connect - soap http client</name>
+  <artifactId>fasti-connect-soap-http-client</artifactId>
+  <name>Fasti BPM Platform - connect - soap http client</name>
 
   <dependencies>
 
     <dependency>
-      <groupId>org.camunda.connect</groupId>
-      <artifactId>camunda-connect-http-client</artifactId>
+      <groupId>dev.fasti.platform.connect</groupId>
+      <artifactId>fasti-connect-http-client</artifactId>
     </dependency>
 
     <dependency>
@@ -79,7 +79,14 @@
             <artifactId>clirr-maven-plugin</artifactId>
             <version>2.8</version>
             <configuration>
-              <comparisonVersion>${connect.version.old}</comparisonVersion>
+              <!-- the release to compare with was published with the original coordinates -->
+              <comparisonArtifacts>
+                <comparisonArtifact>
+                  <groupId>org.camunda.connect</groupId>
+                  <artifactId>camunda-connect-soap-http-client</artifactId>
+                  <version>${connect.version.old}</version>
+                </comparisonArtifact>
+              </comparisonArtifacts>
               <logResults>true</logResults>
               <excludes>
                 <exclude>org/camunda/connect/httpclient/soap/impl/**</exclude>

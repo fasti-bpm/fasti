@@ -67,7 +67,7 @@ public class EmbeddedEngineRest_WILDFLY {
   }
 
   private static JavaArchive[] getEngineRestClasses() {
-    String coordinates = "org.camunda.bpm:camunda-engine-rest:jar:classes:" + System.getProperty("projectversion");
+    String coordinates = "dev.fasti.platform:fasti-engine-rest:jar:classes:" + System.getProperty("projectversion");
 
     JavaArchive[] resolvedArchives = Maven.configureResolver()
           .workOffline()

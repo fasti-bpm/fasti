@@ -3,14 +3,14 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.camunda.bpm.run</groupId>
-    <artifactId>camunda-bpm-run-qa</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.run</groupId>
+    <artifactId>fasti-bpm-run-qa</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
-  <artifactId>camunda-bpm-run-qa-integration-tests</artifactId>
-  <name>Camunda Platform - Run - QA - Integration Tests</name>
+  <artifactId>fasti-bpm-run-qa-integration-tests</artifactId>
+  <name>Fasti BPM Platform - Run - QA - Integration Tests</name>
   <packaging>jar</packaging>
 
   <description>
@@ -59,14 +59,14 @@
 
     <!-- Webapps -->
     <dependency>
-      <groupId>org.camunda.bpm.qa</groupId>
-      <artifactId>camunda-qa-integration-tests-webapps</artifactId>
+      <groupId>dev.fasti.platform.qa</groupId>
+      <artifactId>fasti-qa-integration-tests-webapps</artifactId>
       <version>${project.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.model</groupId>
-      <artifactId>camunda-bpmn-model</artifactId>
+      <groupId>dev.fasti.platform.model</groupId>
+      <artifactId>fasti-bpmn-model</artifactId>
       <scope>test</scope>
     </dependency>
 

@@ -1,4 +1,4 @@
-camunda-cmmn-model
+fasti-cmmn-model
 ==================
 
 CMMN model API written in Java.

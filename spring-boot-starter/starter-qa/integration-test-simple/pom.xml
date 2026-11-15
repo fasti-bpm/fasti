@@ -8,26 +8,26 @@
   </description>
 
   <parent>
-    <groupId>org.camunda.bpm.springboot.project</groupId>
-    <artifactId>camunda-bpm-spring-boot-starter-qa</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.springboot.project</groupId>
+    <artifactId>fasti-bpm-spring-boot-starter-qa</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>qa-simple</artifactId>
-  <name>Camunda Platform - Spring Boot Starter - QA - Simple</name>
+  <name>Fasti BPM Platform - Spring Boot Starter - QA - Simple</name>
 
   <dependencies>
 
     <dependency>
-      <groupId>org.camunda.bpm.springboot</groupId>
-      <artifactId>camunda-bpm-spring-boot-starter</artifactId>
+      <groupId>dev.fasti.platform.springboot</groupId>
+      <artifactId>fasti-bpm-spring-boot-starter</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.springboot</groupId>
-      <artifactId>camunda-bpm-spring-boot-starter-test</artifactId>
+      <groupId>dev.fasti.platform.springboot</groupId>
+      <artifactId>fasti-bpm-spring-boot-starter-test</artifactId>
       <version>${project.version}</version>
     </dependency>
 

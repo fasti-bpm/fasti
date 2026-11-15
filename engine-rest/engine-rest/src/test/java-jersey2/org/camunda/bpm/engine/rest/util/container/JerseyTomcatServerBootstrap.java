@@ -17,7 +17,11 @@
 package org.camunda.bpm.engine.rest.util.container;
 
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenFormatStage;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenResolverSystemBase;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenStrategyStage;
 import org.jboss.shrinkwrap.resolver.api.maven.PomEquippedResolveStage;
+import org.jboss.shrinkwrap.resolver.api.maven.PomlessResolveStage;
 
 public class JerseyTomcatServerBootstrap extends TomcatServerBootstrap {
 
@@ -25,7 +29,8 @@ public class JerseyTomcatServerBootstrap extends TomcatServerBootstrap {
     super(webXmlPath);
   }
 
-  protected void addRuntimeSpecificLibraries(WebArchive wa, PomEquippedResolveStage resolver) {
+  protected void addRuntimeSpecificLibraries(WebArchive wa,
+      MavenResolverSystemBase<PomEquippedResolveStage, PomlessResolveStage, MavenStrategyStage, MavenFormatStage> resolver) {
     wa.addAsLibraries(resolver.resolve("org.glassfish.jersey.containers:jersey-container-servlet:2.25.1").withTransitivity().asFile());
   }
 }

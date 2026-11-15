@@ -46,6 +46,8 @@ import freemarker.template.TemplateException;
 
 public class TemplateParser {
 
+  protected static final String DOCS_VERSION = "7.24";
+
   public static void main(String[] args) throws IOException, TemplateException {
 
     if (args.length != 4) {
@@ -125,28 +127,17 @@ public class TemplateParser {
   }
 
   /**
-   * Resolve the Camunda Platform version and the respective documentation version used in the links.
+   * Resolve the product version and the documentation version used in the links.
    */
   protected static void resolveVersions(Map<String, Object> templateData) {
     String version = TemplateParser.class.getPackage().getImplementationVersion();
-  
-    if (version != null) {
-      // cambpmVersion = 7.X.Y
-      templateData.put("cambpmVersion", version);
-  
-      if (version.contains("SNAPSHOT")) {
-        templateData.put("docsVersion", "develop");
-      } else if (version.contains("alpha")) {
-        templateData.put("docsVersion", "latest");
-      } else {
-        // docsVersion = 7.X
-        templateData.put("docsVersion", version.substring(0, version.lastIndexOf(".")));
-      }
-    } else {
-      // only for debug cases 
-      templateData.put("cambpmVersion", "develop");
-      templateData.put("docsVersion", "develop");
-    }
+
+    // the product version; "develop" only for debug cases
+    templateData.put("cambpmVersion", version != null ? version : "develop");
+
+    // the links point to the manual of the Camunda 7 line that the REST API is compatible with,
+    // which does not follow the product version
+    templateData.put("docsVersion", DOCS_VERSION);
   }
 
   /**

@@ -109,7 +109,8 @@ public class SchemaLogEnsureSqlScriptTest extends SchemaLogTestCase {
   }
 
   protected String getCurrentMinorVersion() {
-    String version = TestconfigProperties.getEngineVersion();
+    // the schema version is independent of the product version
+    String version = TestconfigProperties.getSchemaVersion();
     // remove the patch version, and create a "clean" minor version
     int lastPos = version.lastIndexOf(".");
     version = version.substring(0, lastPos);

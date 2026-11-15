@@ -1,19 +1,19 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <!-- HEADS-UP: Do not use camunda-parent as parent,
+  <!-- HEADS-UP: Do not use fasti-parent as parent,
   it would introduce a cyclic dependency to this bom -->
   <parent>
-    <groupId>org.camunda.bpm</groupId>
-    <artifactId>camunda-root</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform</groupId>
+    <artifactId>fasti-root</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
-  <groupId>org.camunda.connect</groupId>
-  <artifactId>camunda-connect-bom</artifactId>
-  <version>7.24.0</version>
-  <name>Camunda Platform - connect - bom</name>
+  <groupId>dev.fasti.platform.connect</groupId>
+  <artifactId>fasti-connect-bom</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <name>Fasti BPM Platform - connect - bom</name>
   <packaging>pom</packaging>
 
   <description>
@@ -24,26 +24,26 @@
     <dependencies>
 
       <dependency>
-        <groupId>org.camunda.connect</groupId>
-        <artifactId>camunda-connect-core</artifactId>
+        <groupId>dev.fasti.platform.connect</groupId>
+        <artifactId>fasti-connect-core</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>org.camunda.connect</groupId>
-        <artifactId>camunda-connect-http-client</artifactId>
+        <groupId>dev.fasti.platform.connect</groupId>
+        <artifactId>fasti-connect-http-client</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>org.camunda.connect</groupId>
-        <artifactId>camunda-connect-soap-http-client</artifactId>
+        <groupId>dev.fasti.platform.connect</groupId>
+        <artifactId>fasti-connect-soap-http-client</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>org.camunda.connect</groupId>
-        <artifactId>camunda-connect-connectors-all</artifactId>
+        <groupId>dev.fasti.platform.connect</groupId>
+        <artifactId>fasti-connect-connectors-all</artifactId>
         <version>${project.version}</version>
       </dependency>
 

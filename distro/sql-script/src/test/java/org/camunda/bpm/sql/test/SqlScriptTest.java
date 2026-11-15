@@ -72,7 +72,7 @@ public class SqlScriptTest {
   protected Properties properties;
   protected Database database;
   protected String databaseType;
-  protected String projectVersion;
+  protected String schemaVersion;
   protected Liquibase liquibase;
   protected DiffGeneratorFactory databaseDiffer;
 
@@ -83,7 +83,7 @@ public class SqlScriptTest {
     properties.load(is);
 
     databaseType = properties.getProperty("database.type");
-    projectVersion = properties.getProperty("project.version");
+    schemaVersion = properties.getProperty("schema.version");
 
     database = getDatabase();
     liquibase = getLiquibase();
@@ -177,7 +177,7 @@ public class SqlScriptTest {
   }
 
   protected void executeSqlScript(String sqlFolder, String sqlScript) throws LiquibaseException {
-    executeSqlScript("", sqlFolder, sqlScript + "_" + projectVersion);
+    executeSqlScript("", sqlFolder, sqlScript + "_" + schemaVersion);
   }
 
   protected void executeSqlScript(String baseDirectory, String sqlFolder, String sqlScript) throws LiquibaseException {

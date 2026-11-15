@@ -5,14 +5,14 @@
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
   <parent>
-    <groupId>org.camunda.bpm.springboot.project</groupId>
-    <artifactId>camunda-bpm-spring-boot-starter-root</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.springboot.project</groupId>
+    <artifactId>fasti-bpm-spring-boot-starter-root</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>org.camunda.bpm.springboot</groupId>
-  <artifactId>camunda-bpm-spring-boot-starter</artifactId>
-  <name>Camunda Platform - Spring Boot Starter</name>
+  <groupId>dev.fasti.platform.springboot</groupId>
+  <artifactId>fasti-bpm-spring-boot-starter</artifactId>
+  <name>Fasti BPM Platform - Spring Boot Starter</name>
 
   <dependencyManagement>
     <dependencies>
@@ -28,11 +28,11 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine-spring-6</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-spring-6</artifactId>
     </dependency>
 
-    <!-- Spring dependencies required by camunda-engine-spring -->
+    <!-- Spring dependencies required by fasti-engine-spring -->
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
@@ -51,20 +51,20 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine-plugin-spin</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-plugin-spin</artifactId>
       <optional>true</optional>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.spin</groupId>
-      <artifactId>camunda-spin-dataformat-json-jackson</artifactId>
+      <groupId>dev.fasti.platform.spin</groupId>
+      <artifactId>fasti-spin-dataformat-json-jackson</artifactId>
       <optional>true</optional>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine-plugin-connect</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-plugin-connect</artifactId>
       <optional>true</optional>
     </dependency>
 
@@ -122,14 +122,14 @@
     </dependency>
 
     <dependency>
-      <artifactId>camunda-bpm-spring-boot-starter-test</artifactId>
+      <artifactId>fasti-bpm-spring-boot-starter-test</artifactId>
       <groupId>${project.groupId}</groupId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-testing</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-testing</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

@@ -2,25 +2,25 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.camunda.bpm.wildfly</groupId>
-    <artifactId>camunda-wildfly</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.wildfly</groupId>
+    <artifactId>fasti-wildfly</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>camunda-wildfly-subsystem</artifactId>
+  <artifactId>fasti-wildfly-subsystem</artifactId>
   <packaging>jar</packaging>
 
   <description>
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
 
-  <name>Camunda Platform - Wildfly Subsystem</name>
+  <name>Fasti BPM Platform - Wildfly Subsystem</name>
 
   <dependencies>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine</artifactId>
       <exclusions>
         <exclusion>
           <groupId>org.springframework</groupId>

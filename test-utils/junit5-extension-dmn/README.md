@@ -9,9 +9,9 @@ Add the dependency to your pom.xml
 
 ```xml
     <dependency>
-      <groupId>org.camunda.bpm.dmn</groupId>
-      <artifactId>camunda-dmn-junit5</artifactId>
-      <version>7.20.0</version>
+      <groupId>dev.fasti.platform.dmn</groupId>
+      <artifactId>fasti-dmn-junit5</artifactId>
+      <version>${fasti.version}</version>
       <scope>test</scope>
     </dependency>
 ```

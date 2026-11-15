@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>camunda-engine-rest</artifactId>
-  <name>Camunda Platform - engine - REST - Assembly</name>
+  <artifactId>fasti-engine-rest</artifactId>
+  <name>Fasti BPM Platform - engine - REST - Assembly</name>
   <packaging>war</packaging>
 
   <description>
@@ -9,10 +9,10 @@
   </description>
 
   <parent>
-    <groupId>org.camunda.bpm</groupId>
-    <artifactId>camunda-engine-rest-root</artifactId>
+    <groupId>dev.fasti.platform</groupId>
+    <artifactId>fasti-engine-rest-root</artifactId>
     <relativePath>../</relativePath>
-    <version>7.24.0</version>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
   
   <properties>
@@ -26,23 +26,23 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine-rest-core</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-rest-core</artifactId>
       <version>${project.version}</version>
     </dependency>
 
     <!-- dependencies only used for assemblies should be scope provided -->
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine-rest-core</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-rest-core</artifactId>
       <version>${project.version}</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine-rest-core</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-rest-core</artifactId>
       <version>${project.version}</version>
       <classifier>tests</classifier>
       <scope>provided</scope>
@@ -92,7 +92,7 @@
               <descriptors>
                 <descriptor>assembly-war-wildfly.xml</descriptor>
               </descriptors>
-              <finalName>camunda-engine-rest-${project.version}</finalName>
+              <finalName>fasti-engine-rest-${project.version}</finalName>
               <attach>true</attach>
               <classifier>wildfly</classifier>
               <outputDirectory>target/</outputDirectory>
@@ -110,7 +110,7 @@
               <descriptors>
                 <descriptor>assembly-war-tomcat.xml</descriptor>
               </descriptors>
-              <finalName>camunda-engine-rest-${project.version}</finalName>
+              <finalName>fasti-engine-rest-${project.version}</finalName>
               <attach>true</attach>
               <classifier>tomcat</classifier>
               <outputDirectory>target/</outputDirectory>
@@ -128,7 +128,7 @@
               <descriptors>
                 <descriptor>assembly-war-wls.xml</descriptor>
               </descriptors>
-              <finalName>camunda-engine-rest-${project.version}</finalName>
+              <finalName>fasti-engine-rest-${project.version}</finalName>
               <attach>true</attach>
               <classifier>wls</classifier>
               <outputDirectory>target/</outputDirectory>
@@ -146,7 +146,7 @@
               <descriptors>
                 <descriptor>assembly-classes.xml</descriptor>
               </descriptors>
-              <finalName>camunda-engine-rest-${project.version}</finalName>
+              <finalName>fasti-engine-rest-${project.version}</finalName>
               <attach>true</attach>
               <outputDirectory>target/</outputDirectory>
               <workDirectory>target/assembly/work</workDirectory>
@@ -163,7 +163,7 @@
               <descriptors>
                 <descriptor>assembly-sources.xml</descriptor>
               </descriptors>
-              <finalName>camunda-engine-rest-${project.version}</finalName>
+              <finalName>fasti-engine-rest-${project.version}</finalName>
               <attach>true</attach>
               <outputDirectory>target/</outputDirectory>
               <workDirectory>target/assembly/work</workDirectory>
@@ -180,7 +180,7 @@
               <descriptors>
                 <descriptor>assembly-tests.xml</descriptor>
               </descriptors>
-              <finalName>camunda-engine-rest-${project.version}</finalName>
+              <finalName>fasti-engine-rest-${project.version}</finalName>
               <attach>true</attach>
               <outputDirectory>target/</outputDirectory>
               <workDirectory>target/assembly/work</workDirectory>

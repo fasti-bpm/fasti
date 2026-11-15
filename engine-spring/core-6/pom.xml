@@ -5,22 +5,22 @@
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
 
-  <name>Camunda Platform - engine - Spring 6</name>
-  <artifactId>camunda-engine-spring-6</artifactId>
+  <name>Fasti BPM Platform - engine - Spring 6</name>
+  <artifactId>fasti-engine-spring-6</artifactId>
 
   <parent>
-    <groupId>org.camunda.bpm</groupId>
-    <artifactId>camunda-database-settings</artifactId>
+    <groupId>dev.fasti.platform</groupId>
+    <artifactId>fasti-database-settings</artifactId>
     <relativePath>../../database</relativePath>
-    <version>7.24.0</version>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
   <dependencyManagement>
     <dependencies>
 
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-core-internal-dependencies</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-core-internal-dependencies</artifactId>
         <version>${project.version}</version>
         <scope>import</scope>
         <type>pom</type>
@@ -47,8 +47,8 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
@@ -165,8 +165,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-bpm-archunit</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-bpm-archunit</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -310,7 +310,7 @@
         <configuration>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
           <dependenciesToScan>
-            <dependency>org.camunda.bpm:camunda-bpm-archunit</dependency>
+            <dependency>dev.fasti.platform:fasti-bpm-archunit</dependency>
           </dependenciesToScan>
         </configuration>
       </plugin>
@@ -414,7 +414,7 @@
   </build>
 
   <profiles>
-    <!-- camunda-engine-spring-6 is compiled against Spring Framework 6.2 (the baseline for Tomcat 10 and
+    <!-- fasti-engine-spring-6 is compiled against Spring Framework 6.2 (the baseline for Tomcat 10 and
       WildFly, Jakarta EE 10) and the same jar is used with Spring Framework 7 by the Spring Boot 4 starter
       and Camunda Run. This profile compiles and tests the module against Spring Framework 7 to check that
       it stays compatible with both lines: mvn -pl engine-spring/core-6 -Pspring-7 verify -->

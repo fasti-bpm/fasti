@@ -6,24 +6,24 @@
   </description>
 
   <parent>
-    <groupId>org.camunda.connect</groupId>
-    <artifactId>camunda-connect-root</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.connect</groupId>
+    <artifactId>fasti-connect-root</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>camunda-connect-core</artifactId>
-  <name>Camunda Platform - connect - core</name>
+  <artifactId>fasti-connect-core</artifactId>
+  <name>Fasti BPM Platform - connect - core</name>
 
   <dependencies>
 
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-logging</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-logging</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-utils</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-utils</artifactId>
     </dependency>
 
     <dependency>
@@ -78,7 +78,14 @@
             <artifactId>clirr-maven-plugin</artifactId>
             <version>2.8</version>
             <configuration>
-              <comparisonVersion>${connect.version.old}</comparisonVersion>
+              <!-- the release to compare with was published with the original coordinates -->
+              <comparisonArtifacts>
+                <comparisonArtifact>
+                  <groupId>org.camunda.connect</groupId>
+                  <artifactId>camunda-connect-core</artifactId>
+                  <version>${connect.version.old}</version>
+                </comparisonArtifact>
+              </comparisonArtifacts>
               <logResults>true</logResults>
               <excludes>
                 <exclude>org/camunda/connect/impl/**</exclude>

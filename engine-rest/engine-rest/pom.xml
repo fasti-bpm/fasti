@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>camunda-engine-rest-core</artifactId>
-  <name>Camunda Platform - engine - REST</name>
+  <artifactId>fasti-engine-rest-core</artifactId>
+  <name>Fasti BPM Platform - engine - REST</name>
   <packaging>jar</packaging>
 
   <description>
@@ -9,10 +9,10 @@
   </description>
 
   <parent>
-    <groupId>org.camunda.bpm</groupId>
-    <artifactId>camunda-engine-rest-root</artifactId>
+    <groupId>dev.fasti.platform</groupId>
+    <artifactId>fasti-engine-rest-root</artifactId>
     <relativePath>../</relativePath>
-    <version>7.24.0</version>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
   <properties>
@@ -85,8 +85,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine</artifactId>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
@@ -97,8 +97,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-logging</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-logging</artifactId>
       <scope>provided</scope>
     </dependency>
 
@@ -115,21 +115,9 @@
       <scope>test</scope>
     </dependency>
 
-    <!--
-      needed for offline shrinkwrap (in particular CustomJacksonDateFormatTest),
-      BOMs must be installed before this module is built
-    -->
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-bom</artifactId>
-      <version>${project.version}</version>
-      <type>pom</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-core-internal-dependencies</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-core-internal-dependencies</artifactId>
       <version>${project.version}</version>
       <type>pom</type>
       <scope>test</scope>
@@ -228,8 +216,8 @@
    </dependency>
 
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-testing</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-testing</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -290,6 +278,9 @@
         <configuration>
           <systemPropertyVariables>
             <restEasyVersion>${version.resteasy}</restEasyVersion>
+            <!-- version of the mockito-core library that Shrinkwrap resolves for the test web application
+              (see TomcatServerBootstrap) -->
+            <mockitoVersion>${version.mockito}</mockitoVersion>
           </systemPropertyVariables>
           <argLine>-Xmx2g</argLine>
         </configuration>

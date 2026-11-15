@@ -3,14 +3,14 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.camunda.bpm.run</groupId>
-    <artifactId>camunda-bpm-run-modules</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.run</groupId>
+    <artifactId>fasti-bpm-run-modules</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
-  <artifactId>camunda-bpm-run-modules-webapps</artifactId>
-  <name>Camunda Platform - Run - Module Webapps</name>
+  <artifactId>fasti-bpm-run-modules-webapps</artifactId>
+  <name>Fasti BPM Platform - Run - Module Webapps</name>
   <packaging>pom</packaging>
 
   <description>
@@ -27,8 +27,8 @@
   <dependencies>
 
     <dependency>
-      <groupId>org.camunda.bpm.springboot</groupId>
-      <artifactId>camunda-bpm-spring-boot-starter-webapp</artifactId>
+      <groupId>dev.fasti.platform.springboot</groupId>
+      <artifactId>fasti-bpm-spring-boot-starter-webapp</artifactId>
     </dependency>
 
     <dependency>

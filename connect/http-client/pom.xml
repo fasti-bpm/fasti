@@ -2,9 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <parent>
-    <artifactId>camunda-connect-root</artifactId>
-    <groupId>org.camunda.connect</groupId>
-    <version>7.24.0</version>
+    <artifactId>fasti-connect-root</artifactId>
+    <groupId>dev.fasti.platform.connect</groupId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -12,14 +12,14 @@
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
 
-  <artifactId>camunda-connect-http-client</artifactId>
-  <name>Camunda Platform - connect - http client</name>
+  <artifactId>fasti-connect-http-client</artifactId>
+  <name>Fasti BPM Platform - connect - http client</name>
 
   <dependencies>
 
     <dependency>
-      <groupId>org.camunda.connect</groupId>
-      <artifactId>camunda-connect-core</artifactId>
+      <groupId>dev.fasti.platform.connect</groupId>
+      <artifactId>fasti-connect-core</artifactId>
     </dependency>
 
     <dependency>
@@ -85,7 +85,14 @@
             <artifactId>clirr-maven-plugin</artifactId>
             <version>2.8</version>
             <configuration>
-              <comparisonVersion>${connect.version.old}</comparisonVersion>
+              <!-- the release to compare with was published with the original coordinates -->
+              <comparisonArtifacts>
+                <comparisonArtifact>
+                  <groupId>org.camunda.connect</groupId>
+                  <artifactId>camunda-connect-http-client</artifactId>
+                  <version>${connect.version.old}</version>
+                </comparisonArtifact>
+              </comparisonArtifacts>
               <logResults>true</logResults>
               <excludes>
                 <exclude>org/camunda/connect/httpclient/impl/**</exclude>

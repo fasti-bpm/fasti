@@ -2,63 +2,63 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.camunda.bpm.wildfly</groupId>
-    <artifactId>camunda-wildfly</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.wildfly</groupId>
+    <artifactId>fasti-wildfly</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>camunda-bpm-wildfly</artifactId>
+  <artifactId>fasti-bpm-wildfly</artifactId>
   <packaging>pom</packaging>
 
   <description>
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
 
-  <name>Camunda Platform - Wildfly Distro</name>
+  <name>Fasti BPM Platform - Wildfly Distro</name>
 
   <dependencies>
     <dependency>
       <!-- this dependency is to make sure that we are executed after the
         integration tests have passed in the reactor -->
-      <groupId>org.camunda.bpm.qa</groupId>
-      <artifactId>camunda-qa</artifactId>
+      <groupId>dev.fasti.platform.qa</groupId>
+      <artifactId>fasti-qa</artifactId>
       <version>${project.version}</version>
       <type>pom</type>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.wildfly</groupId>
-      <artifactId>camunda-wildfly-assembly</artifactId>
+      <groupId>dev.fasti.platform.wildfly</groupId>
+      <artifactId>fasti-wildfly-assembly</artifactId>
       <version>${project.version}</version>
       <type>tar.gz</type>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.distro</groupId>
-      <artifactId>camunda-sql-scripts</artifactId>
+      <groupId>dev.fasti.platform.distro</groupId>
+      <artifactId>fasti-sql-scripts</artifactId>
       <version>${project.version}</version>
       <type>jar</type>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine-rest-jakarta</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-rest-jakarta</artifactId>
       <version>${project.version}</version>
       <classifier>wildfly</classifier>
       <type>war</type>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.webapp</groupId>
-      <artifactId>camunda-webapp-wildfly</artifactId>
+      <groupId>dev.fasti.platform.webapp</groupId>
+      <artifactId>fasti-webapp-wildfly</artifactId>
       <version>${project.version}</version>
       <type>war</type>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.example</groupId>
-      <artifactId>camunda-example-invoice-jakarta</artifactId>
+      <groupId>dev.fasti.platform.example</groupId>
+      <artifactId>fasti-example-invoice-jakarta</artifactId>
       <version>${project.version}</version>
       <type>war</type>
     </dependency>
@@ -82,7 +82,7 @@
               <descriptors>
                 <descriptor>assembly.xml</descriptor>
               </descriptors>
-              <finalName>camunda-bpm-wildfly-${project.version}</finalName>
+              <finalName>fasti-bpm-wildfly-${project.version}</finalName>
               <attach>true</attach>
               <appendAssemblyId>false</appendAssemblyId>
               <outputDirectory>target/</outputDirectory>

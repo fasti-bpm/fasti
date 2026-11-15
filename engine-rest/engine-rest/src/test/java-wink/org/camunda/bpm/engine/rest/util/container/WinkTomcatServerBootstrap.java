@@ -17,7 +17,11 @@
 package org.camunda.bpm.engine.rest.util.container;
 
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenFormatStage;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenResolverSystemBase;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenStrategyStage;
 import org.jboss.shrinkwrap.resolver.api.maven.PomEquippedResolveStage;
+import org.jboss.shrinkwrap.resolver.api.maven.PomlessResolveStage;
 
 public class WinkTomcatServerBootstrap extends TomcatServerBootstrap {
 
@@ -27,7 +31,7 @@ public class WinkTomcatServerBootstrap extends TomcatServerBootstrap {
 
   @Override
   protected void addRuntimeSpecificLibraries(WebArchive wa,
-      PomEquippedResolveStage resolver) {
+      MavenResolverSystemBase<PomEquippedResolveStage, PomlessResolveStage, MavenStrategyStage, MavenFormatStage> resolver) {
     wa.addAsLibraries(resolver.resolve("org.apache.wink:wink-server:1.1.1-incubating").withTransitivity().asFile());
   }
 }

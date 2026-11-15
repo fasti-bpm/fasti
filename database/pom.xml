@@ -3,15 +3,15 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.camunda.bpm</groupId>
-    <artifactId>camunda-parent</artifactId>
+    <groupId>dev.fasti.platform</groupId>
+    <artifactId>fasti-parent</artifactId>
     <relativePath>../parent</relativePath>
-    <version>7.24.0</version>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>camunda-database-settings</artifactId>
+  <artifactId>fasti-database-settings</artifactId>
   <packaging>pom</packaging>
-  <name>Camunda Platform - database settings</name>
+  <name>Fasti BPM Platform - database settings</name>
   <description>
     Provides general dependencies and profiles for database testing.
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
@@ -29,6 +29,11 @@
     <version.db2>${version.db2-11.5}</version.db2>
     <version.postgresql>42.7.14</version.postgresql>
     <version.liquibase>4.8.0</version.liquibase>
+
+    <!-- version of the database schema that this code base creates and expects. It names the SQL
+      create and drop scripts and selects the upgrade and patch scripts. It is independent of the
+      project version on purpose: the schema is the one of the 7.24 line -->
+    <camunda.schema.version>7.24.0</camunda.schema.version>
 
     <!-- needed for sql script and backward compatibility checks -->
     <camunda.version.old>7.23.0</camunda.version.old>

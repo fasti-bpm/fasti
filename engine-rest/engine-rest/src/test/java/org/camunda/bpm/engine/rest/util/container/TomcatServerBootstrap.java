@@ -29,13 +29,23 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.ClassLoaderAsset;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.resolver.api.maven.ConfigurableMavenResolverSystem;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenFormatStage;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenResolverSystemBase;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenStrategyStage;
 import org.jboss.shrinkwrap.resolver.api.maven.PomEquippedResolveStage;
+import org.jboss.shrinkwrap.resolver.api.maven.PomlessResolveStage;
 import org.jboss.shrinkwrap.resolver.api.maven.ScopeType;
 import org.jboss.shrinkwrap.resolver.api.maven.coordinate.MavenDependencies;
 
 
 public abstract class TomcatServerBootstrap extends AbstractServerBootstrap {
+
+  /** set by the Surefire configuration to the version of mockito-core that the build uses */
+  protected static final String MOCKITO_VERSION_PROPERTY = "mockitoVersion";
+  /** set by the Shrinkwrap Maven plugin to the settings.xml of the Maven build */
+  protected static final String USER_SETTINGS_PROPERTY = "maven.execution.user-settings";
 
   private Tomcat tomcat;
   private String workingDir;
@@ -83,16 +93,12 @@ public abstract class TomcatServerBootstrap extends AbstractServerBootstrap {
 
     String contextPath = "/" + getContextPath();
 
-    // 1) Must not use shrinkwrap offline mode (see longer explanation at the end of the file)
-    // 2) Must use configuration via Shrinkwrap Maven plugin (see pom.xml for plugin definition);
-    //    This forwards things like the location of the settings.xml file to Shrinkwrap. We need
-    //    that for our CI where settings.xml is not in the default location.
-    PomEquippedResolveStage resolver = Maven.configureResolver()
-      .useLegacyLocalRepo(true).configureViaPlugin();
+    MavenResolverSystemBase<PomEquippedResolveStage, PomlessResolveStage, MavenStrategyStage, MavenFormatStage> resolver =
+        createResolver();
 
     WebArchive wa = ShrinkWrap.create(WebArchive.class, "rest-test.war").setWebXML(webXmlPath)
         .addAsLibraries(resolver.addDependencies(
-            MavenDependencies.createDependency("org.mockito:mockito-core", ScopeType.TEST, false,
+            MavenDependencies.createDependency("org.mockito:mockito-core:" + getMockitoVersion(), ScopeType.TEST, false,
             MavenDependencies.createExclusion("org.hamcrest:hamcrest-core"))).resolve()
               .withTransitivity().asFile())
 
@@ -124,7 +130,34 @@ public abstract class TomcatServerBootstrap extends AbstractServerBootstrap {
     }
   }
 
-  protected abstract void addRuntimeSpecificLibraries(WebArchive wa, PomEquippedResolveStage resolver);
+  /**
+   * Creates a resolver for the libraries of the test web application that does not read the
+   * pom.xml of this module: the libraries are requested with their versions (see below).
+   * The settings.xml of the Maven build is used if the Shrinkwrap Maven plugin provides it
+   * (see pom.xml for the plugin definition); this is needed where settings.xml is not in the
+   * default location.
+   */
+  protected MavenResolverSystemBase<PomEquippedResolveStage, PomlessResolveStage, MavenStrategyStage, MavenFormatStage> createResolver() {
+    ConfigurableMavenResolverSystem resolver = Maven.configureResolver().useLegacyLocalRepo(true);
+
+    String userSettings = System.getProperty(USER_SETTINGS_PROPERTY);
+    if (userSettings != null && new File(userSettings).canRead()) {
+      return resolver.fromFile(userSettings);
+    }
+    return resolver;
+  }
+
+  protected String getMockitoVersion() {
+    String mockitoVersion = System.getProperty(MOCKITO_VERSION_PROPERTY);
+    if (mockitoVersion == null || mockitoVersion.isEmpty()) {
+      throw new IllegalStateException("System property '" + MOCKITO_VERSION_PROPERTY + "' must be set to the version of "
+          + "mockito-core that is added to the test web application (see the Surefire configuration in pom.xml)");
+    }
+    return mockitoVersion;
+  }
+
+  protected abstract void addRuntimeSpecificLibraries(WebArchive wa,
+      MavenResolverSystemBase<PomEquippedResolveStage, PomlessResolveStage, MavenStrategyStage, MavenFormatStage> resolver);
 
   protected String getContextPath() {
     return "rest-test";
@@ -142,28 +175,27 @@ public abstract class TomcatServerBootstrap extends AbstractServerBootstrap {
   }
 
   /*
-   * Must not use Shrinkwrap offline mode or else some Maven builds can fail. In particular, a
-   * Maven build will fail with offline mode in the following circumstances:
+   * Must not read the pom.xml of this module with Shrinkwrap (loadPomFromFile, configureViaPlugin)
+   * or else some Maven builds can fail. In particular, a Maven build will fail in the following
+   * circumstances:
    *
    * - The BOM is part of the Maven reactor (e.g. if we build the root pom)
    * - The Maven build does not install its modules (e.g. we run mvn clean verify)
-   * - There is no BOM snapshot in the local repository yet (this is mostly the case in CI)
+   * - The BOM is neither in the local repository nor in a remote repository
    *
    * Why?
    *
-   * - The BOM is imported in the dependencyManagement section of this pom (via camunda-parent)
+   * - The BOM is imported in the dependencyManagement section of this pom (via the parent pom)
    * - As the BOM is part of the reactor, it will not be fetched from remote by the Maven build
    * - As we do not run "install", Maven does not put the BOM into the local repository
-   * - Shrinkwrap will not be able to resolve the BOM then; note: this is different if a pom is referenced
-   *   as a parent; in that case, Shrinkwrap will navigate the relativePaths towards the local pom
+   * - Shrinkwrap does not see the reactor and will not be able to resolve the BOM then; note:
+   *   this is different if a pom is referenced as a parent; in that case, Shrinkwrap will
+   *   navigate the relativePaths towards the local pom
    *
-   * Impact
+   * Solution
    *
-   * - By enabling remote fetching in Shrinkwrap, a remote snapshot BOM will be fetched in this case
-   * - While counter-intuitive, we consider this an ok solution; other solution options were disallowing
-   *   "mvn clean verify" in these circumstances (and changing CI builds accordingly), or reverting the
-   *   changes made in CAM-11345.
-   *
-   * This change was made with CAM-11345. See the discussion there for more details.
+   * - The pom.xml is only needed to look up versions of the libraries. The versions are
+   *   passed to the tests as system properties instead and the libraries, which are
+   *   third-party libraries from a repository, are resolved by their complete coordinates.
    */
 }

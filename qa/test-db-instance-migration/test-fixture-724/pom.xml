@@ -2,18 +2,18 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.camunda.bpm.qa.upgrade</groupId>
-    <artifactId>camunda-qa-db-instance-migration</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.qa.upgrade</groupId>
+    <artifactId>fasti-qa-db-instance-migration</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>camunda-qa-upgrade-test-fixture-724</artifactId>
+  <artifactId>fasti-qa-upgrade-test-fixture-724</artifactId>
   <packaging>jar</packaging>
 
   <description>
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
-  <name>camunda BPM - QA - upgrade - instance migration - test fixture - 7.24.0</name>
+  <name>Fasti BPM Platform - QA - upgrade - instance migration - test fixture - 7.24.0</name>
 
   <properties>
     <!-- delete when 7.24 is released -->
@@ -36,23 +36,23 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.spin</groupId>
-      <artifactId>camunda-spin-dataformat-json-jackson</artifactId>
+      <groupId>dev.fasti.platform.spin</groupId>
+      <artifactId>fasti-spin-dataformat-json-jackson</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine-plugin-spin</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-plugin-spin</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.qa.upgrade</groupId>
-      <artifactId>camunda-qa-upgrade-scenario-util</artifactId>
+      <groupId>dev.fasti.platform.qa.upgrade</groupId>
+      <artifactId>fasti-qa-upgrade-scenario-util</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>
@@ -108,8 +108,8 @@
                 <configuration>
                   <artifactItems>
                     <artifactItem>
-                      <groupId>org.camunda.bpm.distro</groupId>
-                      <artifactId>camunda-sql-scripts</artifactId>
+                      <groupId>dev.fasti.platform.distro</groupId>
+                      <artifactId>fasti-sql-scripts</artifactId>
                       <!-- Replace after 7.24.0 release -->
                       <version>${camunda.version.current}</version>
                       <!--<version>7.24.0</version>-->

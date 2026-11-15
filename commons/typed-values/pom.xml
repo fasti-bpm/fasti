@@ -6,22 +6,22 @@
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
 
-  <groupId>org.camunda.commons</groupId>
-  <artifactId>camunda-commons-typed-values</artifactId>
-  <name>camunda Commons - Typed Values</name>
+  <groupId>dev.fasti.platform.commons</groupId>
+  <artifactId>fasti-commons-typed-values</artifactId>
+  <name>Fasti BPM Platform - Commons - Typed Values</name>
 
   <parent>
-    <groupId>org.camunda.bpm</groupId>
-    <artifactId>camunda-database-settings</artifactId>
+    <groupId>dev.fasti.platform</groupId>
+    <artifactId>fasti-database-settings</artifactId>
     <relativePath>../../database</relativePath>
-    <version>7.24.0</version>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-core-internal-dependencies</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-core-internal-dependencies</artifactId>
         <version>${project.version}</version>
         <scope>import</scope>
         <type>pom</type>
@@ -37,8 +37,8 @@
   <dependencies>
 
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-utils</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-utils</artifactId>
     </dependency>
 
     <dependency>
@@ -61,8 +61,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-bpm-archunit</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-bpm-archunit</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -75,7 +75,14 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>clirr-maven-plugin</artifactId>
         <configuration>
-          <comparisonVersion>${camunda.version.old}</comparisonVersion>
+          <!-- the release to compare with was published with the original coordinates -->
+          <comparisonArtifacts>
+            <comparisonArtifact>
+              <groupId>org.camunda.commons</groupId>
+              <artifactId>camunda-commons-typed-values</artifactId>
+              <version>${camunda.version.old}</version>
+            </comparisonArtifact>
+          </comparisonArtifacts>
           <logResults>true</logResults>
           <excludes>
             <exclude>org/camunda/bpm/engine/impl/**</exclude>
@@ -171,7 +178,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <dependenciesToScan>
-            <dependency>org.camunda.bpm:camunda-bpm-archunit</dependency>
+            <dependency>dev.fasti.platform:fasti-bpm-archunit</dependency>
           </dependenciesToScan>
         </configuration>
       </plugin>

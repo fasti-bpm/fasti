@@ -2,20 +2,20 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.camunda.bpm</groupId>
-    <artifactId>camunda-database-settings</artifactId>
+    <groupId>dev.fasti.platform</groupId>
+    <artifactId>fasti-database-settings</artifactId>
     <relativePath>../database</relativePath>
-    <version>7.24.0</version>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>camunda-cdi-compatibility-root</artifactId>
+  <artifactId>fasti-cdi-compatibility-root</artifactId>
 
   <packaging>pom</packaging>
 
   <description>
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
-  <name>Camunda Platform - engine - CDI - Root</name>
+  <name>Fasti BPM Platform - engine - CDI - Root</name>
 
   <modules>
     <module>core</module>

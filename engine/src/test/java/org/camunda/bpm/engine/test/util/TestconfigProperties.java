@@ -24,6 +24,7 @@ public class TestconfigProperties {
 
   protected static final String PROPERTIES_FILE_PATH = "/testconfig.properties";
   protected static final String VERSION_PROPERTY = "camunda.version";
+  protected static final String SCHEMA_VERSION_PROPERTY = "camunda.schema.version";
   protected static final Properties INSTANCE = PropertiesUtil.getProperties(PROPERTIES_FILE_PATH);
 
   protected TestconfigProperties() {
@@ -31,6 +32,10 @@ public class TestconfigProperties {
 
   public static String getEngineVersion() {
     return INSTANCE.getProperty(VERSION_PROPERTY);
+  }
+
+  public static String getSchemaVersion() {
+    return INSTANCE.getProperty(SCHEMA_VERSION_PROPERTY);
   }
 
 }

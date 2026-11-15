@@ -3,15 +3,15 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.camunda.bpm</groupId>
-    <artifactId>camunda-bom-root</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform</groupId>
+    <artifactId>fasti-bom-root</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
     <relativePath>../</relativePath>
   </parent>
 
-  <artifactId>camunda-bom</artifactId>
+  <artifactId>fasti-bom</artifactId>
   <packaging>pom</packaging>
-  <name>Camunda Platform - Bom</name>
+  <name>Fasti BPM Platform - Bom</name>
   <url>http://camunda.org</url>
 
   <description>
@@ -51,8 +51,8 @@
       </dependency>
       <!-- Camunda Platform public artifacts -->
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-only-bom</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-only-bom</artifactId>
         <version>${project.version}</version>
         <scope>import</scope>
         <type>pom</type>

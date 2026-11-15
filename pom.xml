@@ -9,11 +9,11 @@
     <relativePath />
   </parent>
 
-  <groupId>org.camunda.bpm</groupId>
-  <artifactId>camunda-root</artifactId>
-  <version>7.24.0</version>
+  <groupId>dev.fasti.platform</groupId>
+  <artifactId>fasti-root</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Camunda Platform - Root Pom</name>
+  <name>Fasti BPM Platform - Root Pom</name>
   <inceptionYear>2013</inceptionYear>
 
   <description>
@@ -29,7 +29,7 @@
 
     <license.includeTransitiveDependencies>false</license.includeTransitiveDependencies>
 
-    <!-- These properties are used in both the BOM as well as camunda-parent and subprojects -->
+    <!-- These properties are used in both the BOM as well as fasti-parent and subprojects -->
     <version.mybatis>3.5.19</version.mybatis>
     <version.joda-time>2.12.5</version.joda-time>
     <version.uuid-generator>5.2.0</version.uuid-generator>
@@ -168,8 +168,8 @@
                 <additionalJOption>--ignore-source-errors</additionalJOption>
                 <additionalJOption>--allow-script-in-comments</additionalJOption>
               </additionalJOptions>
-              <doctitle>Camunda Platform Javadocs ${project.version}</doctitle>
-              <windowtitle>Camunda Platform Javadocs ${project.version}</windowtitle>
+              <doctitle>Fasti BPM Platform Javadocs ${project.version}</doctitle>
+              <windowtitle>Fasti BPM Platform Javadocs ${project.version}</windowtitle>
             </configuration>
           </plugin>
         </plugins>

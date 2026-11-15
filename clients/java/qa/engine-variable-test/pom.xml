@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  <name>Camunda Platform - Java External Task Client - QA VARIABLE TEST</name>
+  <name>Fasti BPM Platform - Java External Task Client - QA VARIABLE TEST</name>
 
   <artifactId>engine-variable-test</artifactId>
 
@@ -13,15 +13,15 @@
   </description>
 
   <parent>
-    <groupId>org.camunda.bpm.qa</groupId>
-    <artifactId>camunda-external-task-client-qa</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.qa</groupId>
+    <artifactId>fasti-external-task-client-qa</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
   <dependencies>
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine</artifactId>
       <scope>provided</scope>
     </dependency>
 

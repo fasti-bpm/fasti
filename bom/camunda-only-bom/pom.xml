@@ -3,15 +3,15 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.camunda.bpm</groupId>
-    <artifactId>camunda-bom-root</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform</groupId>
+    <artifactId>fasti-bom-root</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
     <relativePath>../</relativePath>
   </parent>
 
-  <artifactId>camunda-only-bom</artifactId>
+  <artifactId>fasti-only-bom</artifactId>
   <packaging>pom</packaging>
-  <name>Camunda Platform Only - Bom</name>
+  <name>Fasti BPM Platform Only - Bom</name>
   <url>http://camunda.org</url>
 
   <description>
@@ -35,129 +35,129 @@
     <dependencies>
       <!-- Camunda Platform public artifacts -->
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-engine</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-engine</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-engine-cdi</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-engine-cdi</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-engine-cdi-jakarta</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-engine-cdi-jakarta</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-engine-spring</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-engine-spring</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-engine-spring-6</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-engine-spring-6</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-engine-rest-core</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-engine-rest-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-engine-rest-core-jakarta</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-engine-rest-core-jakarta</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.identity</groupId>
-        <artifactId>camunda-identity-ldap</artifactId>
+        <groupId>dev.fasti.platform.identity</groupId>
+        <artifactId>fasti-identity-ldap</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-engine-plugin-spin</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-engine-plugin-spin</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-engine-plugin-connect</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-engine-plugin-connect</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.javaee</groupId>
-        <artifactId>camunda-ejb-client</artifactId>
+        <groupId>dev.fasti.platform.javaee</groupId>
+        <artifactId>fasti-ejb-client</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.javaee</groupId>
-        <artifactId>camunda-ejb-client-jakarta</artifactId>
+        <groupId>dev.fasti.platform.javaee</groupId>
+        <artifactId>fasti-ejb-client-jakarta</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.juel</groupId>
-        <artifactId>camunda-juel</artifactId>
+        <groupId>dev.fasti.platform.juel</groupId>
+        <artifactId>fasti-juel</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.model</groupId>
-        <artifactId>camunda-xml-model</artifactId>
+        <groupId>dev.fasti.platform.model</groupId>
+        <artifactId>fasti-xml-model</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.model</groupId>
-        <artifactId>camunda-bpmn-model</artifactId>
+        <groupId>dev.fasti.platform.model</groupId>
+        <artifactId>fasti-bpmn-model</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.model</groupId>
-        <artifactId>camunda-cmmn-model</artifactId>
+        <groupId>dev.fasti.platform.model</groupId>
+        <artifactId>fasti-cmmn-model</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.model</groupId>
-        <artifactId>camunda-dmn-model</artifactId>
+        <groupId>dev.fasti.platform.model</groupId>
+        <artifactId>fasti-dmn-model</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-engine-rest</artifactId>
-        <version>${project.version}</version>
-        <classifier>classes</classifier>
-      </dependency>
-      <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-engine-rest-jakarta</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-engine-rest</artifactId>
         <version>${project.version}</version>
         <classifier>classes</classifier>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.webapp</groupId>
-        <artifactId>camunda-webapp-webjar</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-engine-rest-jakarta</artifactId>
+        <version>${project.version}</version>
+        <classifier>classes</classifier>
+      </dependency>
+      <dependency>
+        <groupId>dev.fasti.platform.webapp</groupId>
+        <artifactId>fasti-webapp-webjar</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.webapp</groupId>
-        <artifactId>camunda-webapp</artifactId>
+        <groupId>dev.fasti.platform.webapp</groupId>
+        <artifactId>fasti-webapp</artifactId>
         <version>${project.version}</version>
         <type>war</type>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.webapp</groupId>
-        <artifactId>camunda-webapp-jakarta</artifactId>
+        <groupId>dev.fasti.platform.webapp</groupId>
+        <artifactId>fasti-webapp-jakarta</artifactId>
         <version>${project.version}</version>
         <type>war</type>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.webapp</groupId>
-        <artifactId>camunda-webapp</artifactId>
+        <groupId>dev.fasti.platform.webapp</groupId>
+        <artifactId>fasti-webapp</artifactId>
         <version>${project.version}</version>
         <type>jar</type>
         <classifier>classes</classifier>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.webapp</groupId>
-        <artifactId>camunda-webapp-jakarta</artifactId>
+        <groupId>dev.fasti.platform.webapp</groupId>
+        <artifactId>fasti-webapp-jakarta</artifactId>
         <version>${project.version}</version>
         <type>jar</type>
         <classifier>classes</classifier>
@@ -168,23 +168,23 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.springboot</groupId>
-        <artifactId>camunda-bpm-spring-boot-starter</artifactId>
+        <groupId>dev.fasti.platform.springboot</groupId>
+        <artifactId>fasti-bpm-spring-boot-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.springboot</groupId>
-        <artifactId>camunda-bpm-spring-boot-starter-rest</artifactId>
+        <groupId>dev.fasti.platform.springboot</groupId>
+        <artifactId>fasti-bpm-spring-boot-starter-rest</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.springboot</groupId>
-        <artifactId>camunda-bpm-spring-boot-starter-webapp</artifactId>
+        <groupId>dev.fasti.platform.springboot</groupId>
+        <artifactId>fasti-bpm-spring-boot-starter-webapp</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.springboot</groupId>
-        <artifactId>camunda-bpm-spring-boot-starter-security</artifactId>
+        <groupId>dev.fasti.platform.springboot</groupId>
+        <artifactId>fasti-bpm-spring-boot-starter-security</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -193,47 +193,47 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.springboot</groupId>
-        <artifactId>camunda-bpm-spring-boot-starter-test</artifactId>
+        <groupId>dev.fasti.platform.springboot</groupId>
+        <artifactId>fasti-bpm-spring-boot-starter-test</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.quarkus</groupId>
-        <artifactId>camunda-bpm-quarkus-engine</artifactId>
+        <groupId>dev.fasti.platform.quarkus</groupId>
+        <artifactId>fasti-bpm-quarkus-engine</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-bpm-junit5</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-bpm-junit5</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-bpm-assert</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-bpm-assert</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.spin</groupId>
-        <artifactId>camunda-spin-bom</artifactId>
-        <version>${project.version}</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
-      <dependency>
-        <groupId>org.camunda.commons</groupId>
-        <artifactId>camunda-commons-bom</artifactId>
+        <groupId>dev.fasti.platform.spin</groupId>
+        <artifactId>fasti-spin-bom</artifactId>
         <version>${project.version}</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
       <dependency>
-        <groupId>org.camunda.template-engines</groupId>
-        <artifactId>camunda-template-engines-freemarker</artifactId>
+        <groupId>dev.fasti.platform.commons</groupId>
+        <artifactId>fasti-commons-bom</artifactId>
+        <version>${project.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>dev.fasti.platform.template-engines</groupId>
+        <artifactId>fasti-template-engines-freemarker</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.connect</groupId>
-        <artifactId>camunda-connect-bom</artifactId>
+        <groupId>dev.fasti.platform.connect</groupId>
+        <artifactId>fasti-connect-bom</artifactId>
         <version>${project.version}</version>
         <scope>import</scope>
         <type>pom</type>
@@ -242,40 +242,40 @@
       <!-- dmn engine dependencies
        -->
       <dependency>
-        <groupId>org.camunda.bpm.dmn</groupId>
-        <artifactId>camunda-engine-dmn</artifactId>
+        <groupId>dev.fasti.platform.dmn</groupId>
+        <artifactId>fasti-engine-dmn</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.dmn</groupId>
-        <artifactId>camunda-engine-feel-api</artifactId>
+        <groupId>dev.fasti.platform.dmn</groupId>
+        <artifactId>fasti-engine-feel-api</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.dmn</groupId>
-        <artifactId>camunda-engine-feel-juel</artifactId>
+        <groupId>dev.fasti.platform.dmn</groupId>
+        <artifactId>fasti-engine-feel-juel</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.dmn</groupId>
-        <artifactId>camunda-engine-feel-scala</artifactId>
+        <groupId>dev.fasti.platform.dmn</groupId>
+        <artifactId>fasti-engine-feel-scala</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <!-- Java External Task Client -->
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-external-task-client</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-external-task-client</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-external-task-client-spring</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-external-task-client-spring</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.camunda.bpm.springboot</groupId>
-        <artifactId>camunda-bpm-spring-boot-starter-external-task-client</artifactId>
+        <groupId>dev.fasti.platform.springboot</groupId>
+        <artifactId>fasti-bpm-spring-boot-starter-external-task-client</artifactId>
         <version>${project.version}</version>
       </dependency>
     </dependencies>

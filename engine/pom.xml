@@ -6,22 +6,22 @@
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
 
-  <name>Camunda Platform - engine</name>
-  <artifactId>camunda-engine</artifactId>
+  <name>Fasti BPM Platform - engine</name>
+  <artifactId>fasti-engine</artifactId>
 
   <parent>
-    <groupId>org.camunda.bpm</groupId>
-    <artifactId>camunda-database-settings</artifactId>
+    <groupId>dev.fasti.platform</groupId>
+    <artifactId>fasti-database-settings</artifactId>
     <relativePath>../database</relativePath>
-    <version>7.24.0</version>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
   <dependencyManagement>
     <dependencies>
 
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-core-internal-dependencies</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-core-internal-dependencies</artifactId>
         <version>${project.version}</version>
         <scope>import</scope>
         <type>pom</type>
@@ -51,23 +51,23 @@
     <!-- camunda dependencies -->
 
     <dependency>
-      <groupId>org.camunda.bpm.model</groupId>
-      <artifactId>camunda-bpmn-model</artifactId>
+      <groupId>dev.fasti.platform.model</groupId>
+      <artifactId>fasti-bpmn-model</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.model</groupId>
-      <artifactId>camunda-cmmn-model</artifactId>
+      <groupId>dev.fasti.platform.model</groupId>
+      <artifactId>fasti-cmmn-model</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.juel</groupId>
-      <artifactId>camunda-juel</artifactId>
+      <groupId>dev.fasti.platform.juel</groupId>
+      <artifactId>fasti-juel</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.dmn</groupId>
-      <artifactId>camunda-engine-dmn</artifactId>
+      <groupId>dev.fasti.platform.dmn</groupId>
+      <artifactId>fasti-engine-dmn</artifactId>
       <exclusions>
         <!-- these exclusions are needed when building with Maven >= 3.3
           see CAM-11822 for details -->
@@ -91,13 +91,13 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-logging</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-logging</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-typed-values</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-typed-values</artifactId>
     </dependency>
 
     <dependency>
@@ -252,14 +252,14 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-testing</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-testing</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-test-utils-testcontainers</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-test-utils-testcontainers</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -333,8 +333,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-bpm-archunit</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-bpm-archunit</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -439,7 +439,7 @@
             <exclude>%regex[.*(${test.excludes}).*Test.*.class]</exclude>
           </excludes>
           <dependenciesToScan>
-            <dependency>org.camunda.bpm:camunda-bpm-archunit</dependency>
+            <dependency>dev.fasti.platform:fasti-bpm-archunit</dependency>
           </dependenciesToScan>
         </configuration>
       </plugin>
@@ -483,10 +483,10 @@
           <keepDependenciesWithProvidedScope>true</keepDependenciesWithProvidedScope>
           <artifactSet>
             <excludes>
-              <exclude>org.camunda.bpm.model:*</exclude>
-              <exclude>org.camunda.bpm.dmn:*</exclude>
-              <exclude>org.camunda.bpm.juel:*</exclude>
-              <exclude>org.camunda.commons:*</exclude>
+              <exclude>dev.fasti.platform.model:*</exclude>
+              <exclude>dev.fasti.platform.dmn:*</exclude>
+              <exclude>dev.fasti.platform.juel:*</exclude>
+              <exclude>dev.fasti.platform.commons:*</exclude>
               <exclude>org.camunda.feel:*</exclude>
 
               <exclude>org.springframework:*</exclude>
@@ -719,7 +719,14 @@
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>clirr-maven-plugin</artifactId>
             <configuration>
-              <comparisonVersion>${camunda.version.old}</comparisonVersion>
+              <!-- the release to compare with was published with the original coordinates -->
+              <comparisonArtifacts>
+                <comparisonArtifact>
+                  <groupId>org.camunda.bpm</groupId>
+                  <artifactId>camunda-engine</artifactId>
+                  <version>${camunda.version.old}</version>
+                </comparisonArtifact>
+              </comparisonArtifacts>
               <logResults>true</logResults>
               <excludes>
                 <exclude>org/camunda/bpm/*/impl/**</exclude>
@@ -762,28 +769,28 @@
       <id>check-plugins</id>
       <dependencies>
         <dependency>
-          <groupId>org.camunda.bpm</groupId>
-          <artifactId>camunda-engine-plugin-spin</artifactId>
+          <groupId>dev.fasti.platform</groupId>
+          <artifactId>fasti-engine-plugin-spin</artifactId>
         </dependency>
         <dependency>
-          <groupId>org.camunda.spin</groupId>
-          <artifactId>camunda-spin-dataformat-all</artifactId>
+          <groupId>dev.fasti.platform.spin</groupId>
+          <artifactId>fasti-spin-dataformat-all</artifactId>
         </dependency>
         <dependency>
-          <groupId>org.camunda.bpm</groupId>
-          <artifactId>camunda-engine-plugin-connect</artifactId>
+          <groupId>dev.fasti.platform</groupId>
+          <artifactId>fasti-engine-plugin-connect</artifactId>
         </dependency>
         <dependency>
-          <groupId>org.camunda.connect</groupId>
-          <artifactId>camunda-connect-connectors-all</artifactId>
+          <groupId>dev.fasti.platform.connect</groupId>
+          <artifactId>fasti-connect-connectors-all</artifactId>
           <exclusions>
             <exclusion>
-              <groupId>org.camunda.connect</groupId>
-              <artifactId>camunda-connect-http-client</artifactId>
+              <groupId>dev.fasti.platform.connect</groupId>
+              <artifactId>fasti-connect-http-client</artifactId>
             </exclusion>
             <exclusion>
-              <groupId>org.camunda.connect</groupId>
-              <artifactId>camunda-connect-soap-http-client</artifactId>
+              <groupId>dev.fasti.platform.connect</groupId>
+              <artifactId>fasti-connect-soap-http-client</artifactId>
             </exclusion>
           </exclusions>
         </dependency>

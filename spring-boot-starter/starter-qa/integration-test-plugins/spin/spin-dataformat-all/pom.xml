@@ -8,31 +8,31 @@
   </description>
 
   <parent>
-    <groupId>org.camunda.bpm.springboot.project</groupId>
+    <groupId>dev.fasti.platform.springboot.project</groupId>
     <artifactId>qa-plugins-spin</artifactId>
-    <version>7.24.0</version>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>qa-plugins-spin-dataformat-all</artifactId>
-  <name>Camunda Platform - Spring Boot Starter - QA - Plugins - Spin All</name>
+  <name>Fasti BPM Platform - Spring Boot Starter - QA - Plugins - Spin All</name>
 
   <dependencies>
 
     <dependency>
-      <groupId>org.camunda.bpm.springboot.project</groupId>
+      <groupId>dev.fasti.platform.springboot.project</groupId>
       <artifactId>qa-plugins-spin-dataformat-json-jackson</artifactId>
       <version>${project.version}</version>
       <exclusions>
         <exclusion>
-          <groupId>org.camunda.spin</groupId>
-          <artifactId>camunda-spin-dataformat-json-jackson</artifactId>
+          <groupId>dev.fasti.platform.spin</groupId>
+          <artifactId>fasti-spin-dataformat-json-jackson</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.spin</groupId>
-      <artifactId>camunda-spin-dataformat-all</artifactId>
+      <groupId>dev.fasti.platform.spin</groupId>
+      <artifactId>fasti-spin-dataformat-all</artifactId>
     </dependency>
 
     <dependency>

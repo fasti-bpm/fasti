@@ -73,7 +73,7 @@ public class CockpitPluginAutoDeploymentIT {
   @Test
   public void shouldAutoDeployCockpitPlugin() throws IOException {
     // given
-    deployPlugin("camunda-bpm-run-example-plugin.jar");
+    deployPlugin("fasti-bpm-run-example-plugin.jar");
     runStartScript();
 
     // when

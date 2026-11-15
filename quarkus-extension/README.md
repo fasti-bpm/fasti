@@ -1,6 +1,6 @@
 # Camunda Platform Quarkus Extensions
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.camunda.bpm.quarkus/camunda-bpm-quarkus-engine/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.camunda.bpm.quarkus/camunda-bpm-quarkus-engine) [![camunda manual latest](https://img.shields.io/badge/manual-latest-brown.svg)](https://docs.camunda.org/manual/develop/user-guide/quarkus-integration/)
+[![camunda manual latest](https://img.shields.io/badge/manual-latest-brown.svg)](https://docs.camunda.org/manual/develop/user-guide/quarkus-integration/)
 
 This sub-project provides Camunda Platform Quarkus Extensions that allow you to add behavior to your Quarkus 
 application by adding dependencies to the classpath.
@@ -14,8 +14,8 @@ We also provide some useful examples at our
 ```xml
 <dependency>
   <dependency>
-    <groupId>org.camunda.bpm.quarkus</groupId>
-    <artifactId>camunda-bpm-quarkus-engine</artifactId>
+    <groupId>dev.fasti.platform.quarkus</groupId>
+    <artifactId>fasti-bpm-quarkus-engine</artifactId>
     <version>${version.camunda}</version><!-- place Camunda version here -->
   </dependency>
 </dependency>

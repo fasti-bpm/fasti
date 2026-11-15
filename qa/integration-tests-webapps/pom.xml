@@ -1,8 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>camunda-qa-integration-tests-webapps-root</artifactId>
-  <name>Camunda Platform - QA Integration Tests - Webapps Root</name>
+  <artifactId>fasti-qa-integration-tests-webapps-root</artifactId>
+  <name>Fasti BPM Platform - QA Integration Tests - Webapps Root</name>
 
   <packaging>pom</packaging>
 
@@ -11,9 +11,9 @@
   </description>
 
   <parent>
-    <groupId>org.camunda.bpm.qa</groupId>
-    <artifactId>camunda-qa</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.qa</groupId>
+    <artifactId>fasti-qa</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
   <properties>
@@ -152,28 +152,28 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-logging</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-logging</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.example</groupId>
-      <artifactId>camunda-example-invoice</artifactId>
+      <groupId>dev.fasti.platform.example</groupId>
+      <artifactId>fasti-example-invoice</artifactId>
       <version>${project.version}</version>
       <type>war</type>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine-rest</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-rest</artifactId>
       <type>jar</type>
       <classifier>classes</classifier>
       <scope>test</scope>

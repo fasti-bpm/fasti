@@ -1,4 +1,4 @@
-﻿camunda-template-engines-freemarker
+﻿fasti-template-engines-freemarker
 ===============================
 
 <p>

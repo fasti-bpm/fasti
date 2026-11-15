@@ -1,7 +1,5 @@
 # camunda commons
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.camunda.commons/camunda-commons-bom/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.camunda.commons/camunda-commons-bom)
-
 
 camunda commons is a collection of shared libraries used by camunda open source projects.
 
@@ -14,15 +12,15 @@ camunda commons is a collection of shared libraries used by camunda open source 
 
 ## Getting started
 
-If your project is a maven project, start by importing the `camunda-commons-bom`.
+If your project is a maven project, start by importing the `fasti-commons-bom`.
 This will ensure that your project uses all commons libraries in the same version:
 
 ```xml
 <dependencyManagement>
   <dependencies>
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-bom</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-bom</artifactId>
       <version>${version}</version>
       <type>pom</type>
       <scope>import</scope>
@@ -35,8 +33,8 @@ Now you can reference individual commons projects:
 
 ```xml
 <dependency>
-  <groupId>org.camunda.commons</groupId>
-  <artifactId>camunda-commons-logging</artifactId>
+  <groupId>dev.fasti.platform.commons</groupId>
+  <artifactId>fasti-commons-logging</artifactId>
 </dependency>
 ```
 

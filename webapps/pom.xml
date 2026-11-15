@@ -4,20 +4,20 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.camunda.bpm</groupId>
-    <artifactId>camunda-database-settings</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform</groupId>
+    <artifactId>fasti-database-settings</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
     <relativePath>../database</relativePath>
   </parent>
 
-  <artifactId>camunda-webapp-root</artifactId>
-  <groupId>org.camunda.bpm.webapp</groupId>
+  <artifactId>fasti-webapp-root</artifactId>
+  <groupId>dev.fasti.platform.webapp</groupId>
   <packaging>pom</packaging>
 
   <description>
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
-  <name>Camunda Platform - Webapp - Root</name>
+  <name>Fasti BPM Platform - Webapp - Root</name>
 
   <properties>
     <version.jetty>9.4.58.v20250814</version.jetty>
@@ -50,8 +50,8 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-core-internal-dependencies</artifactId>
+        <groupId>dev.fasti.platform</groupId>
+        <artifactId>fasti-core-internal-dependencies</artifactId>
         <version>${project.version}</version>
         <scope>import</scope>
         <type>pom</type>
@@ -62,14 +62,14 @@
   <dependencies>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine</artifactId>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-logging</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-logging</artifactId>
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
@@ -81,8 +81,8 @@
     <!-- tests -->
 
     <dependency>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>camunda-commons-testing</artifactId>
+      <groupId>dev.fasti.platform.commons</groupId>
+      <artifactId>fasti-commons-testing</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

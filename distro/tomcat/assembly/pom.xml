@@ -7,20 +7,20 @@
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
 
-  <artifactId>camunda-tomcat-assembly</artifactId>
+  <artifactId>fasti-tomcat-assembly</artifactId>
   <packaging>pom</packaging>
 
   <parent>
-    <groupId>org.camunda.bpm.tomcat</groupId>
-    <artifactId>camunda-tomcat</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.tomcat</groupId>
+    <artifactId>fasti-tomcat</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
   
   <properties>
     <skip-third-party-bom>false</skip-third-party-bom>
   </properties>
 
-  <name>Camunda Platform - tomcat Assembly</name>
+  <name>Fasti BPM Platform - tomcat Assembly</name>
 
   <dependencies>
     <dependency>
@@ -85,8 +85,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine</artifactId>
       <exclusions>
         <exclusion>
           <groupId>org.springframework</groupId>
@@ -100,67 +100,67 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine-cdi-jakarta</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-cdi-jakarta</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.identity</groupId>
-      <artifactId>camunda-identity-ldap</artifactId>
+      <groupId>dev.fasti.platform.identity</groupId>
+      <artifactId>fasti-identity-ldap</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.spin</groupId>
-      <artifactId>camunda-spin-core</artifactId>
+      <groupId>dev.fasti.platform.spin</groupId>
+      <artifactId>fasti-spin-core</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine-plugin-spin</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-plugin-spin</artifactId>
       <version>${project.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.spin</groupId>
-      <artifactId>camunda-spin-dataformat-all</artifactId>
+      <groupId>dev.fasti.platform.spin</groupId>
+      <artifactId>fasti-spin-dataformat-all</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.connect</groupId>
-      <artifactId>camunda-connect-core</artifactId>
+      <groupId>dev.fasti.platform.connect</groupId>
+      <artifactId>fasti-connect-core</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>camunda-engine-plugin-connect</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-plugin-connect</artifactId>
       <version>${project.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.connect</groupId>
-      <artifactId>camunda-connect-connectors-all</artifactId>
+      <groupId>dev.fasti.platform.connect</groupId>
+      <artifactId>fasti-connect-connectors-all</artifactId>
       <exclusions>
         <exclusion>
-          <groupId>org.camunda.connect</groupId>
-          <artifactId>camunda-connect-http-client</artifactId>
+          <groupId>dev.fasti.platform.connect</groupId>
+          <artifactId>fasti-connect-http-client</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.camunda.connect</groupId>
-          <artifactId>camunda-connect-soap-http-client</artifactId>
+          <groupId>dev.fasti.platform.connect</groupId>
+          <artifactId>fasti-connect-soap-http-client</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm</groupId>
+      <groupId>dev.fasti.platform</groupId>
       <artifactId>license-book</artifactId>
       <version>${project.version}</version>
       <type>zip</type>
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.template-engines</groupId>
-      <artifactId>camunda-template-engines-freemarker</artifactId>
+      <groupId>dev.fasti.platform.template-engines</groupId>
+      <artifactId>fasti-template-engines-freemarker</artifactId>
     </dependency>
 
     <dependency>

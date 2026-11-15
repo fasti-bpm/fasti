@@ -1,19 +1,19 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>camunda-qa-wildfly26-runtime</artifactId>
+  <artifactId>fasti-qa-wildfly26-runtime</artifactId>
   <packaging>jar</packaging>
 
   <description>
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
 
-  <name>Camunda Platform - QA Wildfly 26 Test Runtime</name>
+  <name>Fasti BPM Platform - QA Wildfly 26 Test Runtime</name>
 
   <parent>
-    <groupId>org.camunda.bpm.qa</groupId>
-    <artifactId>camunda-qa</artifactId>
-    <version>7.24.0</version>
+    <groupId>dev.fasti.platform.qa</groupId>
+    <artifactId>fasti-qa</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
   <dependencies>
@@ -39,8 +39,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.camunda.bpm.qa</groupId>
-      <artifactId>camunda-qa-ensure-clean-db</artifactId>
+      <groupId>dev.fasti.platform.qa</groupId>
+      <artifactId>fasti-qa-ensure-clean-db</artifactId>
       <version>${project.version}</version>
       <scope>runtime</scope>
     </dependency>
@@ -136,8 +136,8 @@
       <dependencies>
         <dependency>
           <!-- make sure it comes after WildFly 26 modules in the build -->
-          <groupId>org.camunda.bpm.wildfly</groupId>
-          <artifactId>camunda-wildfly26-modules</artifactId>
+          <groupId>dev.fasti.platform.wildfly</groupId>
+          <artifactId>fasti-wildfly26-modules</artifactId>
           <version>${project.version}</version>
           <type>pom</type>
           <scope>test</scope>
@@ -200,8 +200,8 @@
                       <excludes>**/h2database/**</excludes>
                     </artifactItem>
                     <artifactItem>
-                      <groupId>org.camunda.bpm.wildfly</groupId>
-                      <artifactId>camunda-wildfly26-modules</artifactId>
+                      <groupId>dev.fasti.platform.wildfly</groupId>
+                      <artifactId>fasti-wildfly26-modules</artifactId>
                       <version>${project.version}</version>
                       <type>tar.gz</type>
                       <overWrite>true</overWrite>
@@ -270,18 +270,13 @@
                       <regexpmapper from="^(.*)/([^/]+)/([^/]*)$$" to="\1/main/\3" handledirsep="yes" />
                     </copy>
 
-                    <delete>
-                      <fileset dir="${wildfly26.runtime.location}/modules/org/camunda/bpm/qa" includes="**/*.jar" />
-                    </delete>
-                    <!-- copy all files again, but this only matches fox files and this treatment makes is maven 2/3 compatible => timestamped snapshot -->
+                    <!-- the jars of this build were copied by their group IDs dev.fasti.platform(.*), but belong
+                      to modules that keep the names org.camunda.bpm.(.*) -->
+                    <delete dir="${wildfly26.runtime.location}/modules/dev/fasti/platform" />
+                    <!-- copy the QA jars again to their modules; this treatment makes is maven 2/3 compatible => timestamped snapshot -->
                     <copy todir="${wildfly26.runtime.location}/modules" flatten="false" verbose="true">
                       <fileset refid="maven.project.dependencies" />
-                      <mapper>
-                        <chainedmapper>
-                          <regexpmapper from="^(.*)/([^/]+)/([^/]*)$$" to="\1/main/\3" handledirsep="yes" />
-                          <regexpmapper from="^(org.camunda.bpm.qa.*)/((camunda-[A-Za-z-]*)[0-9\.]*).*.jar$$" to="\1/\3${project.version}.jar" handledirsep="yes" />
-                        </chainedmapper>
-                      </mapper>
+                      <regexpmapper from="^dev/fasti/platform/qa/fasti-([^/]+)/[^/]+/[^/]+\.jar$$" to="org/camunda/bpm/qa/camunda-\1/main/fasti-\1-${project.version}.jar" handledirsep="yes" />
                     </copy>
 
                     <!-- replace database versions -->
@@ -305,8 +300,8 @@
       <dependencies>
         <dependency>
           <!-- make sure it comes after WildFly 26 modules in the build -->
-          <groupId>org.camunda.bpm.wildfly</groupId>
-          <artifactId>camunda-wildfly26-modules</artifactId>
+          <groupId>dev.fasti.platform.wildfly</groupId>
+          <artifactId>fasti-wildfly26-modules</artifactId>
           <version>${project.version}</version>
           <type>pom</type>
           <scope>test</scope>
@@ -339,8 +334,8 @@
                       <excludes>**/h2database/**</excludes>
                     </artifactItem>
                     <artifactItem>
-                      <groupId>org.camunda.bpm.wildfly</groupId>
-                      <artifactId>camunda-wildfly26-modules</artifactId>
+                      <groupId>dev.fasti.platform.wildfly</groupId>
+                      <artifactId>fasti-wildfly26-modules</artifactId>
                       <version>${project.version}</version>
                       <type>tar.gz</type>
                       <overWrite>true</overWrite>
@@ -409,18 +404,13 @@
                       <regexpmapper from="^(.*)/([^/]+)/([^/]*)$$" to="\1/main/\3" handledirsep="yes" />
                     </copy>
 
-                    <delete>
-                      <fileset dir="${wildfly26.runtime.location}/modules/org/camunda/bpm/qa" includes="**/*.jar" />
-                    </delete>
-                    <!-- copy all files again, but this only matches fox files and this treatment makes is maven 2/3 compatible => timestamped snapshot -->
+                    <!-- the jars of this build were copied by their group IDs dev.fasti.platform(.*), but belong
+                      to modules that keep the names org.camunda.bpm.(.*) -->
+                    <delete dir="${wildfly26.runtime.location}/modules/dev/fasti/platform" />
+                    <!-- copy the QA jars again to their modules; this treatment makes is maven 2/3 compatible => timestamped snapshot -->
                     <copy todir="${wildfly26.runtime.location}/modules" flatten="false" verbose="true">
                       <fileset refid="maven.project.dependencies" />
-                      <mapper>
-                        <chainedmapper>
-                          <regexpmapper from="^(.*)/([^/]+)/([^/]*)$$" to="\1/main/\3" handledirsep="yes" />
-                          <regexpmapper from="^(org.camunda.bpm.qa.*)/((camunda-[A-Za-z-]*)[0-9\.]*).*.jar$$" to="\1/\3${project.version}.jar" handledirsep="yes" />
-                        </chainedmapper>
-                      </mapper>
+                      <regexpmapper from="^dev/fasti/platform/qa/fasti-([^/]+)/[^/]+/[^/]+\.jar$$" to="org/camunda/bpm/qa/camunda-\1/main/fasti-\1-${project.version}.jar" handledirsep="yes" />
                     </copy>
 
                     <!-- replace database versions -->

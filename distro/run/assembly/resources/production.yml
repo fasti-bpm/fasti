@@ -6,6 +6,9 @@ camunda.bpm:
 # https://docs.camunda.org/manual/latest/user-guide/security/#http-header-security-in-webapps
 # https://docs.camunda.org/manual/latest/webapps/shared-options/header-security/
   webapp:
+# The web applications are served below /fasti; /camunda is redirected there.
+# Uncomment to serve them below /camunda again, without redirect:
+#    application-path: /camunda
     csrf:
       enable-same-site-cookie: true
       same-site-cookie-option: STRICT

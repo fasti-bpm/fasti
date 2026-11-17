@@ -298,7 +298,7 @@
             <artifactId>jetty-maven-plugin</artifactId>
             <configuration>
               <webAppConfig>
-                <contextPath>/camunda</contextPath>
+                <contextPath>/fasti</contextPath>
                 <defaultsDescriptor>${project.basedir}/src/main/runtime/develop/jetty/webdefault.xml</defaultsDescriptor>
                 <resourceBases>
                   <resourceBase>${project.basedir}/target/webapp</resourceBase>
@@ -397,7 +397,7 @@
             <version>${version.jetty}</version>
             <configuration>
               <webAppConfig>
-                <contextPath>/camunda</contextPath>
+                <contextPath>/fasti</contextPath>
                 <defaultsDescriptor>${project.basedir}/src/main/runtime/test/jetty/webdefault.xml</defaultsDescriptor>
                 <resourceBases>
                   <resourceBase>${project.basedir}/target/webapp</resourceBase>

@@ -34,8 +34,6 @@ import org.springframework.util.StringUtils;
 
 public class ResourceLoadingProcessEnginesFilter extends ProcessEnginesFilter implements ResourceLoaderDependingFilter {
 
-  protected static final String DEFAULT_REDIRECT_APP = "tasklist";
-
   protected ResourceLoader resourceLoader;
   protected WebappProperty webappProperty;
 
@@ -50,7 +48,8 @@ public class ResourceLoadingProcessEnginesFilter extends ProcessEnginesFilter im
     if (requestUri.equals(appPath)) {
       // only redirect from index ("/") if index redirect is enabled
       if(!requestUri.isEmpty() || webappProperty.isIndexRedirectEnabled()) {
-        response.sendRedirect(String.format("%s%s/app/%s/", contextPath, applicationPath, DEFAULT_REDIRECT_APP));
+        // "/app/" picks the configured default app (the new web UI unless opted out)
+        response.sendRedirect(String.format("%s%s/app/", contextPath, applicationPath));
         return;
       }
     }

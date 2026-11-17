@@ -34,7 +34,7 @@ import org.junit.Test;
 public class CockpitPluginAutoDeploymentIT {
 
   static final String EXAMPLE_PLUGIN_HOME = "example.plugin.home";
-  static final String PLUGIN_ENDPOINT = "/camunda/api/cockpit/plugin/test-cockpit-plugin/test-string";
+  static final String PLUGIN_ENDPOINT = "/fasti/api/cockpit/plugin/test-cockpit-plugin/test-string";
 
   static SpringBootManagedContainer container;
   static String baseDirectory = SpringBootManagedContainer.getRunHome();

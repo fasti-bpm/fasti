@@ -48,7 +48,7 @@ import static org.camunda.bpm.webapp.impl.security.filter.util.CookieConstants.S
 @RunWith(Parameterized.class)
 public class CsrfPreventionFilterTest {
 
-  protected static final String SERVICE_PATH = "/camunda";
+  protected static final String SERVICE_PATH = "/fasti";
   protected static final String CSRF_COOKIE_NAME = "XSRF-TOKEN";
   protected static final String CSRF_HEADER_NAME = "X-XSRF-TOKEN";
   protected static final String CSRF_HEADER_REQUIRED = "Required";

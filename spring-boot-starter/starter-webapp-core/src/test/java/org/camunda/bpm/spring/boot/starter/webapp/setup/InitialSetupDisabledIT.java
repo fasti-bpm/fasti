@@ -44,7 +44,7 @@ public class InitialSetupDisabledIT extends AbstractInitialSetupIT {
     assertThat(redirect == null || !redirect.contains("setup")).isTrue();
 
     // and the setup page is not served
-    assertThat(requestSetupPage()).endsWith("/camunda/app/admin/default/");
+    assertThat(requestSetupPage()).endsWith("/fasti/app/admin/default/");
   }
 
   @Test

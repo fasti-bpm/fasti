@@ -29,6 +29,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
@@ -47,10 +48,16 @@ public class CamundaBpmWebappAutoConfiguration implements WebMvcConfigurer {
   @Autowired
   private CamundaBpmProperties properties;
 
+  @Autowired
+  private Environment environment;
+
 
   @Bean
   public CamundaBpmWebappInitializer camundaBpmWebappInitializer() {
-    return new CamundaBpmWebappInitializer(properties);
+    return new CamundaBpmWebappInitializer(properties,
+        environment.getProperty(CamundaBpmWebappInitializer.DEFAULT_APP_PROPERTY),
+        environment.getProperty(CamundaBpmWebappInitializer.LEGACY_PATH_REDIRECT_PROPERTY,
+            Boolean.class, true));
   }
 
   @Bean(name = "resourceLoaderDependingInitHook")

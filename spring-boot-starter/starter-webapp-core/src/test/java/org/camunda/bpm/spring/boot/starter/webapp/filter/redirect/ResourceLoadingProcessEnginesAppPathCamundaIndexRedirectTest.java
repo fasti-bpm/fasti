@@ -53,6 +53,6 @@ public class ResourceLoadingProcessEnginesAppPathCamundaIndexRedirectTest {
 
     // then
     // the request should have been redirected to Tasklist
-    assertThat(con.getURL().toString()).isEqualTo("http://localhost:" + port + "/camunda/app/tasklist/default/");
+    assertThat(con.getURL().toString()).isEqualTo("http://localhost:" + port + "/camunda/app/next/default/");
   }
 }

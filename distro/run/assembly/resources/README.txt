@@ -29,8 +29,14 @@ Contents:
         and one for Linux/Mac (.sh). After executing it, you can access the 
         following web applications:
 
-        webapps: http://localhost:8080/
+        webapps: http://localhost:8080/fasti/
         rest: http://localhost:8080/engine-rest/
+
+        The former path http://localhost:8080/camunda/ redirects to /fasti/.
+        To serve the web applications below /camunda again, set
+        camunda.bpm.webapp.application-path: /camunda in
+        configuration/default.yml (the redirect then turns off by itself);
+        fasti.webapp.legacy-path-redirect: false turns off only the redirect.
 
   internal/
         This directory contains the Java application and optional components

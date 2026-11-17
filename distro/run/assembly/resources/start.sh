@@ -26,7 +26,7 @@ if [ $# -eq 0 ]; then
   if [ -z "$BROWSER" ]; then
     (sleep 5; echo -e "Could not find a default browser.\nOpen http://localhost:8080/fasti/ in your browser to use Fasti BPM Run.";) &
   else
-    (sleep 10; $BROWSER "http://localhost:8080/camunda-welcome/index.html";) &
+    (sleep 10; $BROWSER "http://localhost:8080/fasti/";) &
   fi
 
   # start Camunda Run in the background

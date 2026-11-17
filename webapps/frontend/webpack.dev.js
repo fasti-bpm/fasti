@@ -31,18 +31,18 @@ module.exports = (_env, argv = {}) => {
 
   const addEngines = engines => {
     return engines.reduce((acc, engine) => {
-      acc[`/camunda/app/*/${engine}/`] = {
+      acc[`/fasti/app/*/${engine}/`] = {
         target: 'http://localhost:8081/',
         pathRewrite: path => {
-          return path.replace(`/${engine}`, '').replace('/camunda', '');
+          return path.replace(`/${engine}`, '').replace('/fasti', '');
         }
       };
-      acc[`/camunda/app/*/${engine}/setup/`] = {
+      acc[`/fasti/app/*/${engine}/setup/`] = {
         target: 'http://localhost:8081/',
         pathRewrite: path => {
           return path
             .replace(`/${engine}`, '')
-            .replace('/camunda', '')
+            .replace('/fasti', '')
             .replace('/setup', '');
         }
       };
@@ -67,7 +67,7 @@ module.exports = (_env, argv = {}) => {
       https: false,
       proxy: {
         '/api': {
-          target: 'http://localhost:8080/camunda/api',
+          target: 'http://localhost:8080/fasti/api',
           logLevel: 'debug',
           pathRewrite: {
             '^/api': ''
@@ -78,22 +78,22 @@ module.exports = (_env, argv = {}) => {
           logLevel: 'debug'
         },
         ...addEngines(['default', 'engine2', 'engine3']),
-        '/camunda/*': {
+        '/fasti/*': {
           target: 'http://localhost:8081/',
           logLevel: 'debug',
           pathRewrite: path => {
-            return path.replace('/camunda', '');
+            return path.replace('/fasti', '');
           }
         },
-        '/camunda/api/*': {
+        '/fasti/api/*': {
           target: 'http://localhost:8081/',
           logLevel: 'debug',
           pathRewrite: path => {
-            return path.replace('/camunda', '');
+            return path.replace('/fasti', '');
           }
         }
       },
-      open: ['/camunda/app/cockpit/default/']
+      open: ['/fasti/app/cockpit/default/']
     }
   };
 
@@ -140,9 +140,9 @@ module.exports = (_env, argv = {}) => {
       const options = plugin.options;
       plugin.options = {
         ...options,
-        publicPath: '/camunda',
-        appRoot: '/camunda',
-        appBase: `/camunda/app/${options['appName']}/{ENGINE}/`,
+        publicPath: '/fasti',
+        appRoot: '/fasti',
+        appBase: `/fasti/app/${options['appName']}/{ENGINE}/`,
         pluginDeps: getPluginDeps(options['appName']),
         pluginPackages: getPluginPackages(options['appName'])
       };

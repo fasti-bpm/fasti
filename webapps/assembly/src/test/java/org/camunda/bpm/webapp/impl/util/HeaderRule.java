@@ -58,7 +58,7 @@ public class HeaderRule extends ExternalResource {
   }
 
   public void startServer(String webDescriptor, String scope) {
-    startServer(webDescriptor, scope, "/camunda");
+    startServer(webDescriptor, scope, "/fasti");
   }
 
   public void startServer(String webDescriptor, String scope, String contextPath) {
@@ -102,7 +102,7 @@ public class HeaderRule extends ExternalResource {
   public void performRequestWithHeader(String name, String value, String path, String method) {
     try {
       connection =
-        (HttpURLConnection) new URL("http://localhost:" + SERVER_PORT + "/camunda" + path)
+        (HttpURLConnection) new URL("http://localhost:" + SERVER_PORT + "/fasti" + path)
           .openConnection();
     } catch (IOException e) {
       throw new RuntimeException(e);

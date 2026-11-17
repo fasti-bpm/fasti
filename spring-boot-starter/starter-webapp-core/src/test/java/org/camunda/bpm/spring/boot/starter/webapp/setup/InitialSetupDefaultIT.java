@@ -37,7 +37,7 @@ public class InitialSetupDefaultIT extends AbstractInitialSetupIT {
     assertThat(identityService.createUserQuery().count()).isZero();
 
     // then users are sent to the setup page
-    assertThat(requestTasklist()).endsWith("/camunda/app/admin/default/setup/#/setup");
+    assertThat(requestTasklist()).endsWith("/fasti/app/admin/default/setup/#/setup");
 
     // when
     int status = createInitialUser();
@@ -48,7 +48,7 @@ public class InitialSetupDefaultIT extends AbstractInitialSetupIT {
         .isEqualTo(1);
 
     // and the setup is closed
-    assertThat(requestSetupPage()).endsWith("/camunda/app/admin/default/");
+    assertThat(requestSetupPage()).endsWith("/fasti/app/admin/default/");
     assertThat(createInitialUser()).isEqualTo(403);
   }
 

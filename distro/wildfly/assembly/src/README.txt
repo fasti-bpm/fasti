@@ -45,8 +45,14 @@ Contents:
         After starting the server, you can access the 
         following web applications:
 
-        http://localhost:8080/camunda
+        http://localhost:8080/fasti
         http://localhost:8080/engine-rest
+
+        The former path http://localhost:8080/camunda redirects to /fasti
+        (standalone/deployments/camunda.war). To serve the web applications
+        below /camunda again, delete camunda.war and camunda.war.dodeploy
+        and set <context-root>/camunda</context-root> in
+        WEB-INF/jboss-web.xml of the web application WAR.
 
     sql/
         This directory contains the create and upgrade sql script

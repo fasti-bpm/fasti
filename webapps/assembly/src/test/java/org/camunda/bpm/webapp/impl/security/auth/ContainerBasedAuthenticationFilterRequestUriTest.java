@@ -31,7 +31,7 @@ import org.springframework.mock.web.MockServletContext;
 public class ContainerBasedAuthenticationFilterRequestUriTest {
 
   protected static final String CONTEXT_PATH = "/ctx";
-  protected static final String APPLICATION_PATH = "/camunda";
+  protected static final String APPLICATION_PATH = "/fasti";
 
   protected MockServletContext servletContext;
   protected ContainerBasedAuthenticationFilter filter;
@@ -74,19 +74,19 @@ public class ContainerBasedAuthenticationFilterRequestUriTest {
 
   @Test
   public void shouldAuthenticateRequestToWebapps() throws Exception {
-    assertAuthenticationRequired(CONTEXT_PATH + "/camunda/app/cockpit/default/", "/camunda/app/cockpit/default/");
-    assertAuthenticationRequired(CONTEXT_PATH + "/camunda/api/engine/engine/default/task", "/camunda/api/engine/engine/default/task");
-    assertAuthenticationRequired(CONTEXT_PATH + "/camunda/api/cockpit/plugin/base/default/incident", "/camunda/api/cockpit/plugin/base/default/incident");
+    assertAuthenticationRequired(CONTEXT_PATH + "/fasti/app/cockpit/default/", "/fasti/app/cockpit/default/");
+    assertAuthenticationRequired(CONTEXT_PATH + "/fasti/api/engine/engine/default/task", "/fasti/api/engine/engine/default/task");
+    assertAuthenticationRequired(CONTEXT_PATH + "/fasti/api/cockpit/plugin/base/default/incident", "/fasti/api/cockpit/plugin/base/default/incident");
   }
 
   @Test
   public void shouldAuthenticateRequestToWebappsWithUnnormalizedUri() throws Exception {
     // the container resolves all of these to resources of the web applications
-    assertAuthenticationRequired(CONTEXT_PATH + "/camunda;foo/app/cockpit/default/", "/camunda/app/cockpit/default/");
-    assertAuthenticationRequired(CONTEXT_PATH + "/x/../camunda/api/engine/engine/default/task", "/camunda/api/engine/engine/default/task");
-    assertAuthenticationRequired(CONTEXT_PATH + "//camunda/api/engine/engine/default/task", "/camunda/api/engine/engine/default/task");
-    assertAuthenticationRequired(CONTEXT_PATH + "/camunda/api/engine;foo/engine/default/task", "/camunda/api/engine/engine/default/task");
-    assertAuthenticationRequired(CONTEXT_PATH + "/%63amunda/api/engine/engine/default/task", "/camunda/api/engine/engine/default/task");
+    assertAuthenticationRequired(CONTEXT_PATH + "/fasti;foo/app/cockpit/default/", "/fasti/app/cockpit/default/");
+    assertAuthenticationRequired(CONTEXT_PATH + "/x/../camunda/api/engine/engine/default/task", "/fasti/api/engine/engine/default/task");
+    assertAuthenticationRequired(CONTEXT_PATH + "//fasti/api/engine/engine/default/task", "/fasti/api/engine/engine/default/task");
+    assertAuthenticationRequired(CONTEXT_PATH + "/fasti/api/engine;foo/engine/default/task", "/fasti/api/engine/engine/default/task");
+    assertAuthenticationRequired(CONTEXT_PATH + "/%66asti/api/engine/engine/default/task", "/fasti/api/engine/engine/default/task");
   }
 
   protected void assertPassed(String requestUri, String resolvedPath) throws Exception {

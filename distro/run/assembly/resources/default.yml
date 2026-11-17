@@ -26,35 +26,6 @@ camunda.bpm:
 #  webapp:
 #    application-path: /camunda
 
-# Embedded HTML forms run in a sandboxed frame without a session (default); the web UI
-# performs only the REST calls of their own task or start event for them. Alternatives:
-# separate-origin (with fasti.webapp.forms-origin) and same-origin (forms can act with the
-# session of the user; only if every process deployer is trusted).
-#fasti.webapp:
-#  forms-isolation: sandboxed
-#  forms-origin: https://forms.example.com
-
-# The classic Cockpit, Tasklist, Admin and Welcome (AngularJS 1.8.2 and Bootstrap 3, both end of
-# life) are deprecated. Uncomment to serve only the new web UI, as the container image does;
-# pages of the classic applications then redirect to the new web UI:
-#fasti.webapp.classic.enabled: false
-
-# Bearer tokens (JWT access tokens of an OpenID Connect provider) on the REST API. When enabled,
-# every REST request needs a valid token (401 otherwise); the user, groups and tenants of the
-# token become the engine identity. Basic authentication keeps working only together with
-# camunda.bpm.run.auth.enabled: true.
-#fasti.security.oidc:
-#  rest:
-#    bearer-enabled: true
-#    issuer-uri: https://idp.example.com/realms/fasti
-#    audiences: fasti-rest
-#    jwk-set-uri: https://idp.example.com/realms/fasti/protocol/openid-connect/certs  # optional
-#    jws-algorithms: RS256
-#    user-id-claim: sub
-#    groups-claim: groups
-#  tenants:
-#    claim: tenants
-
 # datasource configuration is required
 spring.datasource:
   url: jdbc:h2:./camunda-h2-default/process-engine;TRACE_LEVEL_FILE=0;DB_CLOSE_ON_EXIT=FALSE

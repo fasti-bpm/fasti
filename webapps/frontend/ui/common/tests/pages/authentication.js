@@ -20,7 +20,7 @@
 var Page = require('./page');
 
 module.exports = Page.extend({
-  url: '/camunda/app/:webapp/default/#/login',
+  url: '/fasti/app/:webapp/default/#/login',
 
   formElement: function() {
     return element(by.css('form[name="signinForm"]'));

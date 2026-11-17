@@ -52,13 +52,13 @@ public class AppendTrailingSlashFilterTest {
   @Test
   public void shouldRedirectLocalPathWithTrailingSlash() throws Exception {
     // given
-    when(request.getRequestURI()).thenReturn("/camunda/app");
+    when(request.getRequestURI()).thenReturn("/fasti/app");
 
     // when
     filter.doFilter(request, response, chain);
 
     // then
-    verify(response).sendRedirect("/camunda/app/");
+    verify(response).sendRedirect("/fasti/app/");
     verify(chain, never()).doFilter(request, response);
   }
 
@@ -87,13 +87,13 @@ public class AppendTrailingSlashFilterTest {
   @Test
   public void shouldRedirectNestedLocalPath() throws Exception {
     // given
-    when(request.getRequestURI()).thenReturn("/camunda/app/cockpit");
+    when(request.getRequestURI()).thenReturn("/fasti/app/cockpit");
 
     // when
     filter.doFilter(request, response, chain);
 
     // then
-    verify(response).sendRedirect("/camunda/app/cockpit/");
+    verify(response).sendRedirect("/fasti/app/cockpit/");
     verify(chain, never()).doFilter(request, response);
   }
 
@@ -105,8 +105,8 @@ public class AppendTrailingSlashFilterTest {
 
   @Test
   public void shouldNotRedirectBackslashAnywhereInPath() throws Exception {
-    assertNoRedirect("/camunda\\app");
-    assertNoRedirect("/camunda/app\\");
+    assertNoRedirect("/fasti\\app");
+    assertNoRedirect("/fasti/app\\");
   }
 
   @Test
@@ -117,9 +117,9 @@ public class AppendTrailingSlashFilterTest {
     assertNoRedirect("/\r/example.org/camunda/app");
     assertNoRedirect("\t//example.org/camunda/app");
     assertNoRedirect(" //example.org/camunda/app");
-    assertNoRedirect("/camunda/app\r\nSet-Cookie: a=b");
-    assertNoRedirect("/camunda/app" + (char) 0);
-    assertNoRedirect("/camunda/app" + (char) 127);
+    assertNoRedirect("/fasti/app\r\nSet-Cookie: a=b");
+    assertNoRedirect("/fasti/app" + (char) 0);
+    assertNoRedirect("/fasti/app" + (char) 127);
   }
 
   @Test

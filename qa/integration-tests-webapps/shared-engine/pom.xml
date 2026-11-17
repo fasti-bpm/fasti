@@ -121,7 +121,7 @@
                   <groupId>dev.fasti.platform.webapp</groupId>
                   <artifactId>fasti-webapp-wildfly</artifactId>
                   <type>war</type>
-                  <pingURL>http://localhost:${jboss.http.port}/camunda</pingURL>
+                  <pingURL>http://localhost:${jboss.http.port}/fasti</pingURL>
                   <pingTimeout>${cargo.deploy.timeout}</pingTimeout>
                 </deployable>
               </deployables>
@@ -241,7 +241,7 @@
                   <groupId>dev.fasti.platform.webapp</groupId>
                   <artifactId>fasti-webapp-jboss</artifactId>
                   <type>war</type>
-                  <pingURL>http://localhost:${jboss.http.port}/camunda</pingURL>
+                  <pingURL>http://localhost:${jboss.http.port}/fasti</pingURL>
                   <pingTimeout>${cargo.deploy.timeout}</pingTimeout>
                 </deployable>
               </deployables>
@@ -346,10 +346,10 @@
                   <groupId>org.camunda.bpm.webapp</groupId>
                   <artifactId>camunda-webapp-tomcat</artifactId>
                   <type>war</type>
-                  <pingURL>http://localhost:${tomcat.connector.http.port}/camunda</pingURL>
+                  <pingURL>http://localhost:${tomcat.connector.http.port}/fasti</pingURL>
                   <pingTimeout>${cargo.deploy.timeout}</pingTimeout>
                   <properties>
-                    <context>camunda</context>
+                    <context>fasti</context>
                   </properties>
                 </deployable>
                 <deployable>
@@ -459,10 +459,10 @@
                   <groupId>dev.fasti.platform.webapp</groupId>
                   <artifactId>fasti-webapp-tomcat-jakarta</artifactId>
                   <type>war</type>
-                  <pingURL>http://localhost:${tomcat.connector.http.port}/camunda</pingURL>
+                  <pingURL>http://localhost:${tomcat.connector.http.port}/fasti</pingURL>
                   <pingTimeout>${cargo.deploy.timeout}</pingTimeout>
                   <properties>
-                    <context>camunda</context>
+                    <context>fasti</context>
                   </properties>
                 </deployable>
                 <deployable>

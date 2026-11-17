@@ -41,7 +41,7 @@ public abstract class AbstractInitialSetupIT {
    *         <code>null</code> if the request is not redirected
    */
   protected String requestTasklist() {
-    return httpClientRule.performRequest(url("/camunda/app/tasklist/default/")).getHeaderField("Location");
+    return httpClientRule.performRequest(url("/fasti/app/tasklist/default/")).getHeaderField("Location");
   }
 
   /**
@@ -49,7 +49,7 @@ public abstract class AbstractInitialSetupIT {
    *         <code>null</code> if the request is not redirected
    */
   protected String requestSetupPage() {
-    return httpClientRule.performRequest(url("/camunda/app/admin/default/setup/")).getHeaderField("Location");
+    return httpClientRule.performRequest(url("/fasti/app/admin/default/setup/")).getHeaderField("Location");
   }
 
   /**
@@ -59,7 +59,7 @@ public abstract class AbstractInitialSetupIT {
    */
   protected int createInitialUser() throws IOException {
     // obtain a session and a CSRF token, otherwise the request does not reach the setup endpoint
-    httpClientRule.performRequest(url("/camunda/api/engine/engine/"));
+    httpClientRule.performRequest(url("/fasti/api/engine/engine/"));
 
     Map<String, String> headers = new HashMap<>();
     headers.put("X-XSRF-TOKEN", httpClientRule.getHeaderXsrfToken());
@@ -68,7 +68,7 @@ public abstract class AbstractInitialSetupIT {
     headers.put("Accept", "application/json");
 
     HttpURLConnection connection = httpClientRule.performPostRequest(
-        url("/camunda/api/admin/setup/default/user/create"), headers, INITIAL_USER);
+        url("/fasti/api/admin/setup/default/user/create"), headers, INITIAL_USER);
     return connection.getResponseCode();
   }
 

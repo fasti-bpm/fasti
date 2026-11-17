@@ -63,6 +63,11 @@
       <directory>../../camunda-welcome</directory>
       <outputDirectory>server/wildfly-${version.wildfly}/standalone/deployments/camunda-welcome.war</outputDirectory>
     </fileSet>
+    <!-- redirects the former path /camunda to /fasti -->
+    <fileSet>
+      <directory>../../legacy-path-redirect</directory>
+      <outputDirectory>server/wildfly-${version.wildfly}/standalone/deployments/camunda.war</outputDirectory>
+    </fileSet>
   </fileSets>
   
   <files>
@@ -70,6 +75,11 @@
       <source>src/EMPTY_FILE</source>
       <outputDirectory>server/wildfly-${version.wildfly}/standalone/deployments/</outputDirectory>
       <destName>camunda-welcome.war.dodeploy</destName>
+    </file>
+    <file>
+      <source>src/EMPTY_FILE</source>
+      <outputDirectory>server/wildfly-${version.wildfly}/standalone/deployments/</outputDirectory>
+      <destName>camunda.war.dodeploy</destName>
     </file>  
   </files>
   

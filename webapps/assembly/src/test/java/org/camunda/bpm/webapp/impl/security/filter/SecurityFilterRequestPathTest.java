@@ -35,7 +35,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 @RunWith(Parameterized.class)
 public class SecurityFilterRequestPathTest {
 
-  protected static final String CONTEXT_PATH = "/camunda";
+  protected static final String CONTEXT_PATH = "/fasti";
 
   /** a resource of the engine API, as resolved by the container */
   protected static final String SERVLET_PATH = "/api/engine";

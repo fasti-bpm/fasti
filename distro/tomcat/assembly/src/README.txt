@@ -40,8 +40,13 @@ Contents:
         After starting the server, you can access the 
         following web applications:
 
-        http://localhost:8080/camunda
+        http://localhost:8080/fasti
         http://localhost:8080/engine-rest
+
+        The former path http://localhost:8080/camunda redirects to /fasti
+        (webapps/camunda). To serve the web applications below /camunda
+        again, delete webapps/camunda and rename webapps/fasti to
+        webapps/camunda.
 
   sql/
         This directory contains the create and upgrade sql script

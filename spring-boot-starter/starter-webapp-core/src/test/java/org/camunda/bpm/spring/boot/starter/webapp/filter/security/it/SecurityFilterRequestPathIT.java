@@ -37,48 +37,48 @@ public class SecurityFilterRequestPathIT {
 
   @Test
   public void shouldRejectAnonymousRequestToEngineApi() throws IOException {
-    assertThat(request("/camunda/api/engine/engine/default/user")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api/engine/engine/default/user")).isEqualTo(UNAUTHORIZED);
   }
 
   @Test
   public void shouldRejectAnonymousRequestWithPathParameters() throws IOException {
-    assertThat(request("/camunda/api/engine/engine;foo=bar/default/user")).isEqualTo(UNAUTHORIZED);
-    assertThat(request("/camunda/api/engine/engine;/default/user")).isEqualTo(UNAUTHORIZED);
-    assertThat(request("/camunda/api/engine/engine;jsessionid=42/default/user")).isEqualTo(UNAUTHORIZED);
-    assertThat(request("/camunda/api/engine;foo=bar/engine/default/user")).isEqualTo(UNAUTHORIZED);
-    assertThat(request("/camunda/api;foo/engine/engine/default/user")).isEqualTo(UNAUTHORIZED);
-    assertThat(request("/camunda/api/engine/engine/default;foo/user")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api/engine/engine;foo=bar/default/user")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api/engine/engine;/default/user")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api/engine/engine;jsessionid=42/default/user")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api/engine;foo=bar/engine/default/user")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api;foo/engine/engine/default/user")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api/engine/engine/default;foo/user")).isEqualTo(UNAUTHORIZED);
   }
 
   @Test
   public void shouldRejectAnonymousRequestWithUnnormalizedPath() throws IOException {
-    assertThat(request("/camunda//api/engine/engine/default/user")).isEqualTo(UNAUTHORIZED);
-    assertThat(request("/camunda/api//engine/engine/default/user")).isEqualTo(UNAUTHORIZED);
-    assertThat(request("/camunda/api/engine//engine/default/user")).isEqualTo(UNAUTHORIZED);
-    assertThat(request("/camunda/api/./engine/engine/default/user")).isEqualTo(UNAUTHORIZED);
-    assertThat(request("/camunda/app/../api/engine/engine/default/user")).isEqualTo(UNAUTHORIZED);
-    assertThat(request("/camunda/api/cockpit/plugin/base/static/../../../../engine/engine/default/user")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti//api/engine/engine/default/user")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api//engine/engine/default/user")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api/engine//engine/default/user")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api/./engine/engine/default/user")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/app/../api/engine/engine/default/user")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api/cockpit/plugin/base/static/../../../../engine/engine/default/user")).isEqualTo(UNAUTHORIZED);
   }
 
   @Test
   public void shouldRejectAnonymousRequestWithEncodedPath() throws IOException {
-    assertThat(request("/camunda/api/%65ngine/engine/default/user")).isEqualTo(UNAUTHORIZED);
-    assertThat(request("/camunda/%61pi/engine/engine/default/user")).isEqualTo(UNAUTHORIZED);
-    assertThat(request("/camunda/api/engine/%65ngine/default/user")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api/%65ngine/engine/default/user")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/%61pi/engine/engine/default/user")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api/engine/%65ngine/default/user")).isEqualTo(UNAUTHORIZED);
   }
 
   @Test
   public void shouldRejectAnonymousRequestToPluginApis() throws IOException {
-    assertThat(request("/camunda/api/cockpit/plugin/base/default/process-definition/statistics-count")).isEqualTo(UNAUTHORIZED);
-    assertThat(request("/camunda/api/cockpit/plugin/base;foo/default/process-definition/statistics-count")).isEqualTo(UNAUTHORIZED);
-    assertThat(request("/camunda/api/cockpit/plugin;foo/base/default/process-definition/statistics-count")).isEqualTo(UNAUTHORIZED);
-    assertThat(request("/camunda/api/cockpit;foo/plugin/base/default/process-definition/statistics-count")).isEqualTo(UNAUTHORIZED);
-    assertThat(request("/camunda/api/admin;foo/plugin/adminPlugins/default/metrics/aggregated")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api/cockpit/plugin/base/default/process-definition/statistics-count")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api/cockpit/plugin/base;foo/default/process-definition/statistics-count")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api/cockpit/plugin;foo/base/default/process-definition/statistics-count")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api/cockpit;foo/plugin/base/default/process-definition/statistics-count")).isEqualTo(UNAUTHORIZED);
+    assertThat(request("/fasti/api/admin;foo/plugin/adminPlugins/default/metrics/aggregated")).isEqualTo(UNAUTHORIZED);
   }
 
   @Test
   public void shouldServeEngineNamesToAnonymousRequest() throws IOException {
-    assertThat(request("/camunda/api/engine/engine/")).isEqualTo(200);
+    assertThat(request("/fasti/api/engine/engine/")).isEqualTo(200);
   }
 
   protected int request(String path) throws IOException {

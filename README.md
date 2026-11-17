@@ -406,6 +406,33 @@ dựng bằng các class của thư viện gốc, vốn không có bước kiể
 dùng Spring Boot starter của Fasti mới được chặn lại; với các cách tích hợp khác hãy tự rà
 soát dependency như mô tả ở trên.
 
+## Đường dẫn web app: `/fasti`
+
+Cockpit, Tasklist, Admin và giao diện web mới nằm dưới `/fasti` (trước đây `/camunda`) trên
+mọi bản phân phối: `http://localhost:8080/fasti/` mở giao diện mới
+(`/fasti/app/next/default/`), các ứng dụng cổ điển ở `/fasti/app/cockpit/...`,
+`/fasti/app/tasklist/...`, `/fasti/app/admin/...`. REST API vẫn ở `/engine-rest`.
+
+Đường dẫn cũ vẫn dùng được: mọi yêu cầu tới `/camunda/...` được chuyển hướng tới cùng
+đường dẫn dưới `/fasti/...`, giữ nguyên phần còn lại của đường dẫn và query. GET/HEAD nhận
+`301`; các phương thức khác (POST, PUT, DELETE, ví dụ client cũ gọi `/camunda/api/...`) nhận
+`308`, nên client gửi lại đúng phương thức và nội dung. Phản hồi chuyển hướng có
+`Cache-Control: no-store`, để có thể quay lại `/camunda` bất cứ lúc nào.
+
+Quay lại `/camunda`:
+
+- **Spring Boot, Run:** `camunda.bpm.webapp.application-path: /camunda` (khi đó không còn
+  chuyển hướng). Chỉ tắt chuyển hướng: `fasti.webapp.legacy-path-redirect: false`.
+- **Tomcat:** xoá `webapps/camunda` (ứng dụng chuyển hướng) rồi đổi tên `webapps/fasti`
+  thành `webapps/camunda`.
+- **WildFly:** xoá `standalone/deployments/camunda.war` (và `camunda.war.dodeploy`), rồi
+  đặt `<context-root>/camunda</context-root>` trong `WEB-INF/jboss-web.xml` của WAR web app.
+
+**Reverse proxy:** nếu proxy chỉ chuyển tiếp `/camunda/` (hoặc viết lại đường dẫn, đặt
+cookie path, CSP, health check theo `/camunda`), hãy thêm `/fasti/` — hoặc chuyển hẳn sang
+`/fasti/`. Cookie `XSRF-TOKEN` (và `JSESSIONID` trên Tomcat, WildFly) giờ có path `/fasti`,
+nên người dùng phải đăng nhập lại một lần. Bookmark và liên kết cũ vẫn chạy nhờ chuyển hướng.
+
 ## Build
 
 Yêu cầu: JDK 17 trở lên (khuyến nghị 21).
@@ -847,6 +874,34 @@ Limitation: if the original engine library precedes `fasti-engine` on the class 
 engine is built by the classes of the original library, which do not contain this check.
 In that case only applications that use the Fasti Spring Boot starter are stopped; with
 other integrations, review the dependencies as described above.
+
+### Web application path: `/fasti`
+
+Cockpit, Tasklist, Admin and the new web UI are served below `/fasti` (formerly `/camunda`)
+by every distribution: `http://localhost:8080/fasti/` opens the new UI
+(`/fasti/app/next/default/`), the classic applications live at `/fasti/app/cockpit/...`,
+`/fasti/app/tasklist/...` and `/fasti/app/admin/...`. The REST API stays at `/engine-rest`.
+
+The old path keeps working: every request for `/camunda/...` is redirected to the same path
+below `/fasti/...`, keeping the rest of the path and the query string. GET and HEAD get
+`301`; all other methods (POST, PUT, DELETE, e.g. old clients calling `/camunda/api/...`)
+get `308`, so that clients repeat the request with the same method and body. The redirects
+carry `Cache-Control: no-store`, so switching back to `/camunda` takes effect at once.
+
+To restore `/camunda`:
+
+- **Spring Boot, Run:** `camunda.bpm.webapp.application-path: /camunda` (no redirect then).
+  To turn off only the redirect: `fasti.webapp.legacy-path-redirect: false`.
+- **Tomcat:** delete `webapps/camunda` (the redirect application) and rename
+  `webapps/fasti` to `webapps/camunda`.
+- **WildFly:** delete `standalone/deployments/camunda.war` (and `camunda.war.dodeploy`) and
+  set `<context-root>/camunda</context-root>` in `WEB-INF/jboss-web.xml` of the web
+  application WAR.
+
+**Reverse proxies:** if a proxy forwards only `/camunda/` (or rewrites paths, sets cookie
+paths, CSP or health checks for `/camunda`), add `/fasti/` or move to `/fasti/` entirely.
+The `XSRF-TOKEN` cookie (and `JSESSIONID` on Tomcat and WildFly) now has the path `/fasti`,
+so users sign in once more. Bookmarks and old links keep working through the redirect.
 
 ### Build
 

@@ -27,6 +27,7 @@ import jakarta.servlet.ServletRegistration;
 import jakarta.servlet.SessionTrackingMode;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Map;
 import org.camunda.bpm.admin.impl.web.AdminApplication;
 import org.camunda.bpm.admin.impl.web.bootstrap.AdminContainerBootstrap;
@@ -38,6 +39,7 @@ import org.camunda.bpm.spring.boot.starter.property.CamundaBpmProperties;
 import org.camunda.bpm.spring.boot.starter.property.WebappProperty;
 import org.camunda.bpm.spring.boot.starter.webapp.filter.AppendTrailingSlashFilter;
 import org.camunda.bpm.spring.boot.starter.webapp.filter.LazyProcessEnginesFilter;
+import org.camunda.bpm.spring.boot.starter.webapp.filter.LegacyPathRedirectFilter;
 import org.camunda.bpm.spring.boot.starter.webapp.filter.LazySecurityFilter;
 import org.camunda.bpm.tasklist.impl.web.TasklistApplication;
 import org.camunda.bpm.tasklist.impl.web.bootstrap.TasklistContainerBootstrap;
@@ -68,10 +70,42 @@ public class CamundaBpmWebappInitializer implements ServletContextInitializer {
 
   private ServletContext servletContext;
 
+  /**
+   * The web application that requests to the root of the web applications are
+   * sent to: <code>next</code> (default, the new web UI), <code>welcome</code> (the classic
+   * Welcome application), <code>tasklist</code>, <code>cockpit</code> or <code>admin</code>.
+   */
+  public static final String DEFAULT_APP_PROPERTY = "fasti.webapp.default-app";
+
+  /**
+   * Whether requests for the former application path <code>/camunda</code>
+   * are redirected to the application path (default: <code>true</code>).
+   * Has no effect if the application path is <code>/camunda</code>.
+   */
+  public static final String LEGACY_PATH_REDIRECT_PROPERTY = "fasti.webapp.legacy-path-redirect";
+
+  /** The application path of the web applications before Fasti. */
+  public static final String LEGACY_APP_PATH = "/camunda";
+
   private final CamundaBpmProperties properties;
 
+  private final String defaultApp;
+
+  private final boolean legacyPathRedirect;
+
   public CamundaBpmWebappInitializer(CamundaBpmProperties properties) {
+    this(properties, null);
+  }
+
+  public CamundaBpmWebappInitializer(CamundaBpmProperties properties, String defaultApp) {
+    this(properties, defaultApp, true);
+  }
+
+  public CamundaBpmWebappInitializer(CamundaBpmProperties properties, String defaultApp,
+                                     boolean legacyPathRedirect) {
     this.properties = properties;
+    this.defaultApp = defaultApp;
+    this.legacyPathRedirect = legacyPathRedirect;
   }
 
   @Override
@@ -91,6 +125,15 @@ public class CamundaBpmWebappInitializer implements ServletContextInitializer {
 
     ServletContextUtil.setAppPath(applicationPath, servletContext);
     ServletContextUtil.setInitialSetupEnabled(webapp.isInitialSetupEnabled(), servletContext);
+
+    // must come first: the requests it answers are not seen by any other filter
+    if (legacyPathRedirect && !LEGACY_APP_PATH.equals(applicationPath)) {
+      Map<String, String> redirectParams = new HashMap<>();
+      redirectParams.put(LegacyPathRedirectFilter.LEGACY_PATH_PARAM, LEGACY_APP_PATH);
+      redirectParams.put(LegacyPathRedirectFilter.TARGET_PATH_PARAM, applicationPath);
+      registerFilter("LegacyPathRedirectFilter", LegacyPathRedirectFilter.class,
+          redirectParams, LEGACY_APP_PATH + "/*");
+    }
 
     // make sure that trailing slashes are added for the registered patterns
     // see AppendTrailingSlashFilter for details

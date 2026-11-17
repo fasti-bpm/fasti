@@ -29,7 +29,7 @@ import org.springframework.test.context.junit4.SpringRunner;
     properties = { "camunda.bpm.webapp.session-cookie.enable-secure-cookie=true" })
 public class RejectedRequestIT {
 
-  protected static final String PROTECTED_RESOURCE = "/camunda/api/engine/engine/default/user";
+  protected static final String PROTECTED_RESOURCE = "/fasti/api/engine/engine/default/user";
 
   @Rule
   public HttpClientRule httpClientRule = new HttpClientRule();
@@ -62,7 +62,7 @@ public class RejectedRequestIT {
   @Test
   public void shouldSetSecurityHeadersOnStaticResources() throws IOException {
     // when
-    HttpURLConnection connection = request("/camunda/lib/deps.js");
+    HttpURLConnection connection = request("/fasti/lib/deps.js");
 
     // then
     assertThat(connection.getResponseCode()).isEqualTo(200);

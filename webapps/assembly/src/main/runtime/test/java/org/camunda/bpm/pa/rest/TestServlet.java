@@ -51,7 +51,7 @@ import org.camunda.bpm.engine.rest.dto.identity.UserProfileDto;
  * This servlet allows the testsuite to check whether the database is clean.
  * If the database is not clean the schema is dropped and re-created.
  *
- * Invoke using GET /camunda/ensureCleanDb/{engineName}
+ * Invoke using GET /fasti/ensureCleanDb/{engineName}
  *
  * Response is JSON: {"clean":true}
  *

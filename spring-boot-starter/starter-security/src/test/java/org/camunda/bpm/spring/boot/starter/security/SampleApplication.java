@@ -34,7 +34,7 @@ public class SampleApplication {
   }
 
   @RestController
-  @RequestMapping("/camunda/api/engine/engine")
+  @RequestMapping("/fasti/api/engine/engine")
   public static class TestController {
 
     @GetMapping("/{username}/user")

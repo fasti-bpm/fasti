@@ -78,6 +78,19 @@
     <dispatcher>REQUEST</dispatcher>
   </filter-mapping>
 
+  <!-- Single sign-on (OpenID Connect): login, logout and back-channel logout below /sso/.
+       Does nothing unless fasti-oidc.properties exists (see the README of the distribution);
+       init-param config-file names another location. -->
+  <filter>
+    <filter-name>OIDC Login Filter</filter-name>
+    <filter-class>org.camunda.bpm.oidc.web.OidcLoginFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>OIDC Login Filter</filter-name>
+    <url-pattern>/*</url-pattern>
+    <dispatcher>REQUEST</dispatcher>
+  </filter-mapping>
+
   <!-- Container Based Authentication filter -->
   <!-- <filter>
     <filter-name>Container Based Authentication Filter</filter-name>
@@ -105,6 +118,18 @@
   </filter>
   <filter-mapping>
     <filter-name>Authentication Filter</filter-name>
+    <url-pattern>/*</url-pattern>
+    <dispatcher>REQUEST</dispatcher>
+  </filter-mapping>
+
+  <!-- Single sign-on: turns the login of the session into the authentication of the web
+       applications; must follow the Authentication Filter -->
+  <filter>
+    <filter-name>OIDC Authentication Filter</filter-name>
+    <filter-class>org.camunda.bpm.oidc.web.OidcAuthenticationFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>OIDC Authentication Filter</filter-name>
     <url-pattern>/*</url-pattern>
     <dispatcher>REQUEST</dispatcher>
   </filter-mapping>

@@ -19,6 +19,7 @@
 
   <modules>
     <module>identity-ldap</module>
+    <module>identity-oidc</module>
     <module>connect-plugin</module>
     <module>spin-plugin</module>
   </modules>

@@ -1,0 +1,58 @@
+# Single sign-on (OpenID Connect) for Tomcat and WildFly
+# Dang nhap mot lan (OpenID Connect) cho Tomcat va WildFly
+#
+# Copy this file to fasti-oidc.properties in the same directory and restart the server:
+#   Tomcat:  <tomcat>/conf/fasti-oidc.properties
+#   WildFly: <wildfly>/standalone/configuration/fasti-oidc.properties
+# (or point the system property fasti.oidc.config / the variable FASTI_OIDC_CONFIG to it).
+# Without that file nothing changes: users sign in with a password.
+#
+# Values may use ${NAME} or ${NAME:default} for system properties and environment variables.
+# The keys match fasti.security.oidc.* of Run and Spring Boot where they mean the same.
+
+# ---- Provider and client (web applications) -------------------------------------------
+fasti.security.oidc.issuer-uri=https://sso.example.com/realms/fasti
+fasti.security.oidc.client-id=fasti
+fasti.security.oidc.client-secret=${FASTI_OIDC_CLIENT_SECRET}
+# client_secret_basic (default) or client_secret_post
+#fasti.security.oidc.client-authentication-method=client_secret_basic
+#fasti.security.oidc.scope=openid profile email
+# text of the button "Sign in with <label>"
+fasti.security.oidc.login-label=Keycloak
+# claim that becomes the user id of the engine (default sub)
+fasti.security.oidc.user-name-claim=preferred_username
+# The provider must allow the redirect URI <base>/fasti/sso/callback and, for back-channel
+# logout, call <base>/fasti/sso/backchannel-logout. Behind a proxy set the public base URL:
+#fasti.security.oidc.base-url=https://bpm.example.com
+# RP-initiated logout at the provider (default true) and the page to come back to
+#fasti.security.oidc.logout.provider-logout=true
+#fasti.security.oidc.logout.post-logout-redirect-uri=https://bpm.example.com/fasti/
+# also read the user info endpoint (default true)
+#fasti.security.oidc.userinfo=true
+#fasti.security.oidc.clock-skew-seconds=60
+# how often the applications a user may open are recomputed from the authorizations
+#fasti.security.oidc.authorization-refresh-seconds=300
+
+# ---- Groups, administrators, tenants ----------------------------------------------------
+# claim with the groups (Keycloak: mapper "Group Membership", "Full group path" off);
+# nested claims with dots, e.g. realm_access.roles
+fasti.security.oidc.groups-claim=groups
+# claim values that make the user a member of camunda-admin (never the value camunda-admin itself)
+fasti.security.oidc.groups.admin=fasti-admins
+# claim value -> engine group
+#fasti.security.oidc.groups.mapping.0f6c6e5a-entra-object-id=accounting
+#fasti.security.oidc.groups.include-unmapped=true
+#fasti.security.oidc.tenants.claim=tenants
+# Install the OidcIdentityProviderPlugin (bpm-platform.xml / standalone.xml) so that the engine
+# also answers queries about these groups and tenants of the signed-in user.
+
+# ---- REST API (/engine-rest): bearer tokens ----------------------------------------------
+#fasti.security.oidc.rest.bearer-enabled=true
+#fasti.security.oidc.rest.issuer-uri=https://sso.example.com/realms/fasti
+#fasti.security.oidc.rest.audiences=fasti-rest
+#fasti.security.oidc.rest.user-id-claim=preferred_username
+#fasti.security.oidc.rest.groups-claim=groups
+#fasti.security.oidc.rest.jws-algorithms=RS256
+#fasti.security.oidc.rest.jwk-set-uri=https://sso.example.com/realms/fasti/protocol/openid-connect/certs
+# basic authentication against the engine users as well (default true)
+#fasti.security.oidc.rest.basic-enabled=true

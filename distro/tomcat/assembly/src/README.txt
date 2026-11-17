@@ -71,7 +71,7 @@ Dang nhap mot lan (OpenID Connect) / Single sign-on (OpenID Connect):
 
 ==================
 
-Fasti BPM Platform version: ${project.version}
+Camunda Platform version: ${project.version}
 Apache Tomcat Server version: ${version.tomcat}
 
 =================

@@ -1,4 +1,7 @@
 /*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,6 +15,8 @@
  * limitations under the License.
  */
 package org.camunda.bpm.spring.boot.starter.security.oauth2.impl;
+
+import org.camunda.bpm.oidc.web.SsoRequests;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -77,7 +82,7 @@ public class SsoLoginSupportFilter extends OncePerRequestFilter {
       config.put("label", label);
       config.put("loginUrl", contextPath + base + "login");
       config.put("logoutUrl", contextPath + "/logout");
-      SsoJson.write(response, config);
+      SsoRequests.writeJson(response, config);
       return;
     }
 
@@ -96,45 +101,10 @@ public class SsoLoginSupportFilter extends OncePerRequestFilter {
   }
 
   /**
-   * Only absolute paths below the new web application of this server, without
-   * dot segments, percent-encoding, doubled slashes, back slashes or control
-   * characters. A fragment ({@code #/tasklist?...}) is allowed: it names the
-   * page of the application, stays in the browser and cannot change the
-   * target of the redirect; it must start with {@code #/} and may contain
-   * percent-encoding, but no back slash and no second {@code #}.
+   * Only pages of the new web application on this server; see
+   * {@link SsoRequests#isAllowedReturnUrl(String, String)}.
    */
   protected boolean isAllowedReturnUrl(String contextPath, String url) {
-    if (url == null || url.isEmpty() || url.length() > MAX_RETURN_URL_LENGTH) {
-      return false;
-    }
-    int hash = url.indexOf('#');
-    String path = hash < 0 ? url : url.substring(0, hash);
-    if (hash >= 0 && !isAllowedFragment(url.substring(hash + 1))) {
-      return false;
-    }
-    if (!path.startsWith(contextPath + applicationPath + "/app/next/")) {
-      return false;
-    }
-    for (int i = 0; i < path.length(); i++) {
-      char c = path.charAt(i);
-      if (c < 0x21 || c >= 0x7f || c == '\\' || c == '%') {
-        return false;
-      }
-    }
-    return !path.contains("//") && !path.contains("/./") && !path.contains("/../")
-        && !path.endsWith("/.") && !path.endsWith("/..");
-  }
-
-  protected boolean isAllowedFragment(String fragment) {
-    if (!fragment.startsWith("/") || fragment.startsWith("//")) {
-      return false;
-    }
-    for (int i = 0; i < fragment.length(); i++) {
-      char c = fragment.charAt(i);
-      if (c < 0x21 || c >= 0x7f || c == '\\' || c == '#') {
-        return false;
-      }
-    }
-    return true;
+    return SsoRequests.isAllowedReturnUrl(contextPath + applicationPath + "/app/next/", url);
   }
 }

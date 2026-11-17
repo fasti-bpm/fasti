@@ -52,6 +52,12 @@
     </dependency>
 
     <dependency>
+      <groupId>dev.fasti.platform.identity</groupId>
+      <artifactId>fasti-identity-oidc</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>dev.fasti.platform</groupId>
       <artifactId>fasti-engine-plugin-spin</artifactId>
     </dependency>

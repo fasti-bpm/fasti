@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>dev.fasti.platform</groupId>
+    <artifactId>fasti-engine-plugins</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>dev.fasti.platform.identity</groupId>
+  <artifactId>fasti-identity-oidc</artifactId>
+  <packaging>jar</packaging>
+  <name>Fasti BPM Platform - engine plugins - identity - OpenID Connect</name>
+  <description>
+    Identity provider for single sign-on in a servlet container: the groups and tenants of the
+    signed-in user come from the authentication of the request (the claims), everything else from
+    the database.
+  </description>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

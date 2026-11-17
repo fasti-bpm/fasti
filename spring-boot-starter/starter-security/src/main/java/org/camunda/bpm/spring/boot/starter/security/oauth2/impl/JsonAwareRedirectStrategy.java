@@ -1,4 +1,7 @@
 /*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,6 +15,8 @@
  * limitations under the License.
  */
 package org.camunda.bpm.spring.boot.starter.security.oauth2.impl;
+
+import org.camunda.bpm.oidc.web.SsoRequests;
 
 import java.io.IOException;
 import java.util.Map;
@@ -32,14 +37,13 @@ public class JsonAwareRedirectStrategy extends DefaultRedirectStrategy {
   public void sendRedirect(HttpServletRequest request, HttpServletResponse response, String url) throws IOException {
     if (wantsJson(request)) {
       String target = calculateRedirectUrl(request.getContextPath(), url);
-      SsoJson.write(response, Map.of("redirectUrl", target == null ? "/" : target));
+      SsoRequests.writeJson(response, Map.of("redirectUrl", target == null ? "/" : target));
       return;
     }
     super.sendRedirect(request, response, url);
   }
 
   protected static boolean wantsJson(HttpServletRequest request) {
-    String accept = request.getHeader("Accept");
-    return accept != null && accept.contains("application/json");
+    return SsoRequests.wantsJson(request);
   }
 }

@@ -366,6 +366,7 @@
   <modules>
     <module>assembly</module>
     <module>assembly-jakarta</module>
+    <module>oidc</module>
   </modules>
 
   <profiles>

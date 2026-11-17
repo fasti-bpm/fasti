@@ -54,6 +54,13 @@
       <version>${project.version}</version>
     </dependency>
 
+    <!-- bearer tokens (OpenID Connect) on the REST API, inactive without fasti-oidc.properties -->
+    <dependency>
+      <groupId>dev.fasti.platform.webapp</groupId>
+      <artifactId>fasti-webapp-oidc</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
     <!-- dependencies only used for assemblies should be scope provided -->
     <dependency>
       <groupId>dev.fasti.platform</groupId>

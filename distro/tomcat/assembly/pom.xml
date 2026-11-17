@@ -108,6 +108,11 @@
       <groupId>dev.fasti.platform.identity</groupId>
       <artifactId>fasti-identity-ldap</artifactId>
     </dependency>
+    <dependency>
+      <groupId>dev.fasti.platform.identity</groupId>
+      <artifactId>fasti-identity-oidc</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>dev.fasti.platform.spin</groupId>

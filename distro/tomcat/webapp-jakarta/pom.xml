@@ -23,6 +23,13 @@
   </properties>
 
   <dependencies>
+    <!-- single sign-on (OpenID Connect), inactive without fasti-oidc.properties -->
+    <dependency>
+      <groupId>dev.fasti.platform.webapp</groupId>
+      <artifactId>fasti-webapp-oidc</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
 
     <dependency>
       <groupId>dev.fasti.platform.webapp</groupId>

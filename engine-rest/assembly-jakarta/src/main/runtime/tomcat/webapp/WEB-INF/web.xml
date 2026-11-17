@@ -48,6 +48,24 @@
     <url-pattern>/*</url-pattern>
   </filter-mapping>
 
+  <!-- Bearer tokens of an OpenID Connect provider (and basic authentication): active when
+       fasti.security.oidc.rest.bearer-enabled=true is set in fasti-oidc.properties (see the
+       README of the distribution); does nothing otherwise. Use either this filter or the
+       basic authentication filter below. -->
+  <filter>
+    <filter-name>fasti-oidc-auth</filter-name>
+    <filter-class>org.camunda.bpm.oidc.rest.OidcRestAuthenticationFilter</filter-class>
+    <async-supported>true</async-supported>
+    <init-param>
+      <param-name>rest-url-pattern-prefix</param-name>
+      <param-value></param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>fasti-oidc-auth</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
   <!-- Http Basic Authentication Filter -->
   <!-- <filter>
     <filter-name>camunda-auth</filter-name>

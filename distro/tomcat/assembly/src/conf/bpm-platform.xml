@@ -35,6 +35,15 @@
         <class>org.camunda.connect.plugin.impl.ConnectProcessEnginePlugin</class>
       </plugin>
 
+    <!-- SINGLE SIGN-ON (OpenID Connect, see conf/fasti-oidc.properties.example) -->
+    <!-- Uncomment so that the engine takes the groups and tenants of the signed-in user from the
+         claims of the token (e.g. in Admin and in queries for "my groups") -->
+    <!--
+      <plugin>
+        <class>org.camunda.bpm.identity.impl.oidc.OidcIdentityProviderPlugin</class>
+      </plugin>
+    -->
+
     <!-- LDAP CONFIGURATION -->
     <!-- Uncomment this section in order to enable LDAP support for this process engine -->
     <!-- Adjust configuration, see ( http://docs.camunda.org/latest/guides/user-guide/#process-engine-identity-service-the-ldap-identity-service ) -->

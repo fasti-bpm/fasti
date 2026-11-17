@@ -437,7 +437,8 @@ nên người dùng phải đăng nhập lại một lần. Bookmark và liên k
 
 Hỗ trợ trên **Run** (`./start.sh --oauth2`, module `internal/oauth2`) và ứng dụng **Spring
 Boot** dùng `fasti-bpm-spring-boot-starter-security`. Bật bằng cách khai báo một client
-registration của Spring Security (`spring.security.oauth2.client.*`).
+registration của Spring Security (`spring.security.oauth2.client.*`). Trên **Tomcat** và
+**WildFly** xem đoạn cuối mục này.
 
 - **Đăng nhập:** trang đăng nhập của giao diện mới hiện nút "Đăng nhập bằng &lt;nhà cung
   cấp&gt;" thay cho ô mật khẩu (nhãn: `fasti.security.oidc.login-label`, mặc định là
@@ -534,10 +535,19 @@ fasti.security.oidc:
     user-id-claim: preferred_username
 ```
 
-**Tomcat, WildFly (WAR):** chưa có tích hợp OIDC sẵn. Có thể dùng xác thực của container
-(ví dụ WildFly Elytron OIDC) cùng `ContainerBasedAuthenticationProvider` của web app (cấu hình
-trong `web.xml`), nhưng nhóm, đăng xuất và trang đăng nhập mới phải tự cấu hình và Fasti chưa
-kiểm thử cách này. Đường được hỗ trợ là Run hoặc Spring Boot.
+**Tomcat, WildFly (WAR):** cùng tính năng, cấu hình bằng tệp `fasti-oidc.properties` (Tomcat:
+`conf/`, WildFly: `standalone/configuration/`; mẫu có chú thích là
+`fasti-oidc.properties.example` ở cùng chỗ). Không có tệp thì không có gì thay đổi. Khoá giống
+`fasti.security.oidc.*` của Run; thêm `issuer-uri`, `client-id`, `client-secret`,
+`user-name-claim`, `groups-claim`. Nhà cung cấp phải cho phép redirect URI
+`<gốc>/fasti/sso/callback`; URL back-channel logout là `<gốc>/fasti/sso/backchannel-logout`.
+Bearer token trên `/engine-rest` bật bằng `fasti.security.oidc.rest.bearer-enabled=true` (basic
+auth vẫn dùng được trừ khi `rest.basic-enabled=false`; danh sách engine `/engine` cũng cần xác
+thực). Người dùng không cần có trong cơ sở dữ liệu. Để engine trả lời truy vấn về nhóm/tenant
+của người đang đăng nhập theo claim, bật `OidcIdentityProviderPlugin` (có sẵn dạng chú thích
+trong `bpm-platform.xml` / `standalone.xml`). Giới hạn: danh sách phiên cho back-channel logout
+nằm trong bộ nhớ của từng server (không chia sẻ giữa các node của cụm); ứng dụng cổ điển chỉ
+được chuyển tới nhà cung cấp, đăng xuất đầy đủ dùng giao diện mới.
 
 ## Build
 
@@ -1013,7 +1023,8 @@ so users sign in once more. Bookmarks and old links keep working through the red
 
 Supported on **Run** (`./start.sh --oauth2`, module `internal/oauth2`) and on **Spring Boot**
 applications with `fasti-bpm-spring-boot-starter-security`. It is enabled by declaring a
-Spring Security client registration (`spring.security.oauth2.client.*`).
+Spring Security client registration (`spring.security.oauth2.client.*`). For **Tomcat** and
+**WildFly** see the end of this section.
 
 - **Login:** the login page of the new web application shows "Sign in with &lt;provider&gt;"
   instead of the password form (label: `fasti.security.oidc.login-label`, defaults to the
@@ -1055,11 +1066,19 @@ Spring Security client registration (`spring.security.oauth2.client.*`).
 
 The Keycloak and Microsoft Entra ID examples in the Vietnamese section above apply unchanged.
 
-**Tomcat, WildFly (WAR):** no built-in OIDC integration. Container authentication (for
-example WildFly Elytron OIDC) together with the web applications'
-`ContainerBasedAuthenticationProvider` (configured in `web.xml`) can work, but groups, logout
-and the new login page must be configured by hand and Fasti does not test it. The supported
-path is Run or Spring Boot.
+**Tomcat, WildFly (WAR):** the same features, configured in `fasti-oidc.properties` (Tomcat:
+`conf/`, WildFly: `standalone/configuration/`; an annotated `fasti-oidc.properties.example`
+sits next to it). Without the file nothing changes. The keys match `fasti.security.oidc.*` of
+Run, plus `issuer-uri`, `client-id`, `client-secret`, `user-name-claim`, `groups-claim`. The
+provider must allow the redirect URI `<base>/fasti/sso/callback`; the back-channel logout URL is
+`<base>/fasti/sso/backchannel-logout`. Bearer tokens on `/engine-rest` are enabled with
+`fasti.security.oidc.rest.bearer-enabled=true` (basic authentication keeps working unless
+`rest.basic-enabled=false`; the engine list `/engine` requires credentials too). Users need not
+exist in the database. For the engine to answer queries about the groups and tenants of the
+signed-in user from the claims, enable the `OidcIdentityProviderPlugin` (commented out in
+`bpm-platform.xml` / `standalone.xml`). Limits: the sessions known for back-channel logout are
+kept in memory per server (not shared across cluster nodes); classic applications are only sent
+to the provider, a complete logout goes through the new web UI.
 
 ### Build
 

@@ -25,6 +25,7 @@
       <scope>provided</scope>
       <includes>
         <include>dev.fasti.platform:fasti-engine-rest-core-jakarta:jar</include>
+        <include>dev.fasti.platform.webapp:fasti-webapp-oidc:jar</include>
       </includes>
       <excludes>
         <exclude>dev.fasti.platform:fasti-engine-rest-core-jakarta:jar:tests</exclude>

@@ -77,7 +77,7 @@ Dang nhap mot lan (OpenID Connect) / Single sign-on (OpenID Connect):
 
 ==================
 
-Fasti BPM Platform version: ${project.version}
+Camunda Platform version: ${project.version}
 Wildfly Application Server version: ${version.wildfly}
 
 =================

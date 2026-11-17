@@ -1,4 +1,7 @@
 /*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,6 +15,8 @@
  * limitations under the License.
  */
 package org.camunda.bpm.spring.boot.starter.security.oauth2.impl;
+
+import org.camunda.bpm.oidc.web.SsoRequests;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -40,16 +45,6 @@ public class SameOriginPostRequestMatcher implements RequestMatcher {
     if (!path.equals(uri)) {
       return false;
     }
-    String fetchSite = request.getHeader("Sec-Fetch-Site");
-    if (fetchSite != null) {
-      return "same-origin".equals(fetchSite);
-    }
-    // browsers without fetch metadata: a cross-site request carries a foreign Origin
-    String origin = request.getHeader("Origin");
-    if (origin == null) {
-      return true;
-    }
-    String host = request.getHeader("Host");
-    return host != null && (origin.equals("https://" + host) || origin.equals("http://" + host));
+    return SsoRequests.isSameOriginPost(request);
   }
 }

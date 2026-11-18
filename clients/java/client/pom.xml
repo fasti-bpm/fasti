@@ -314,6 +314,17 @@
     <testResources>
       <testResource>
         <directory>src/it/resources</directory>
+        <excludes>
+          <exclude>integration-rules.properties</exclude>
+        </excludes>
+      </testResource>
+      <!-- filtered, so the test container port can be set with -Dtomcat.connector.http.port -->
+      <testResource>
+        <directory>src/it/resources</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>integration-rules.properties</include>
+        </includes>
       </testResource>
       <testResource>
         <directory>src/test/resources</directory>

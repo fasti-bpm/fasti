@@ -23,6 +23,7 @@ import javax.ws.rs.core.Response.Status;
 import org.camunda.bpm.engine.AuthorizationException;
 import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.exception.NullValueException;
 import org.camunda.bpm.engine.history.HistoricProcessInstance;
@@ -112,6 +113,30 @@ public class ProcessInstanceCommentResourceImpl implements ProcessInstanceCommen
       throw e;
     } catch (NullValueException e) {
       throw new InvalidRequestException(Status.BAD_REQUEST, e.getMessage());
+    }
+  }
+
+  @Override
+  public CommentDto createComment(CommentDto comment) {
+    ensureHistoryEnabled(Status.FORBIDDEN);
+    if (comment == null || comment.getMessage() == null || comment.getMessage().isBlank()) {
+      throw new InvalidRequestException(Status.BAD_REQUEST, "A comment needs a message");
+    }
+    ensureRunningProcessInstanceExists();
+
+    try {
+      return CommentDto.fromComment(engine.getTaskService().createComment(null, processInstanceId, comment.getMessage()));
+    } catch (AuthorizationException e) {
+      throw e;
+    } catch (ProcessEngineException e) {
+      throw new InvalidRequestException(Status.BAD_REQUEST, e, "The comment could not be added");
+    }
+  }
+
+  private void ensureRunningProcessInstanceExists() {
+    long running = engine.getRuntimeService().createProcessInstanceQuery().processInstanceId(processInstanceId).count();
+    if (running == 0) {
+      throw new InvalidRequestException(Status.NOT_FOUND, "No running process instance found for id " + processInstanceId);
     }
   }
 

@@ -830,6 +830,94 @@ public class ProcessInstanceRestServiceInteractionTest extends AbstractRestServi
     verify(taskServiceMock).getProcessInstanceComments(EXAMPLE_PROCESS_INSTANCE_ID);
   }
 
+  protected void mockRunningInstance(long count) {
+    ProcessInstanceQuery query = mock(ProcessInstanceQuery.class);
+    when(runtimeServiceMock.createProcessInstanceQuery()).thenReturn(query);
+    when(query.processInstanceId(EXAMPLE_PROCESS_INSTANCE_ID)).thenReturn(query);
+    when(query.count()).thenReturn(count);
+  }
+
+  @Test
+  public void shouldCreateProcessInstanceComment() {
+    mockHistoryFull();
+    mockRunningInstance(1);
+    org.camunda.bpm.engine.task.Comment comment = mockTaskComments.get(0);
+    when(taskServiceMock.createComment(null, EXAMPLE_PROCESS_INSTANCE_ID, "Customer called back")).thenReturn(comment);
+
+    given().pathParam("id", EXAMPLE_PROCESS_INSTANCE_ID)
+        .body(Map.of("message", "Customer called back", "taskId", "ignored"))
+        .contentType(ContentType.JSON)
+        .header("accept", MediaType.APPLICATION_JSON)
+        .expect()
+        .statusCode(Status.OK.getStatusCode())
+        .body("id", equalTo(comment.getId()))
+        .when()
+        .post(PROCESS_INSTANCE_COMMENTS_URL + "/create");
+
+    verify(taskServiceMock).createComment(null, EXAMPLE_PROCESS_INSTANCE_ID, "Customer called back");
+  }
+
+  @Test
+  public void shouldRejectProcessInstanceCommentWithoutMessage() {
+    mockHistoryFull();
+    mockRunningInstance(1);
+
+    given().pathParam("id", EXAMPLE_PROCESS_INSTANCE_ID)
+        .body(Map.of("message", "  "))
+        .contentType(ContentType.JSON)
+        .expect()
+        .statusCode(Status.BAD_REQUEST.getStatusCode())
+        .when()
+        .post(PROCESS_INSTANCE_COMMENTS_URL + "/create");
+
+    verify(taskServiceMock, never()).createComment(any(), any(), any());
+  }
+
+  @Test
+  public void shouldNotCommentOnInstanceThatIsNotRunningOrNotVisible() {
+    mockHistoryFull();
+    mockRunningInstance(0);
+
+    given().pathParam("id", EXAMPLE_PROCESS_INSTANCE_ID)
+        .body(Map.of("message", "hello"))
+        .contentType(ContentType.JSON)
+        .expect()
+        .statusCode(Status.NOT_FOUND.getStatusCode())
+        .when()
+        .post(PROCESS_INSTANCE_COMMENTS_URL + "/create");
+
+    verify(taskServiceMock, never()).createComment(any(), any(), any());
+  }
+
+  @Test
+  public void shouldNotCommentOnInstanceWithoutUpdatePermission() {
+    mockHistoryFull();
+    mockRunningInstance(1);
+    when(taskServiceMock.createComment(null, EXAMPLE_PROCESS_INSTANCE_ID, "hello"))
+        .thenThrow(new AuthorizationException("not allowed"));
+
+    given().pathParam("id", EXAMPLE_PROCESS_INSTANCE_ID)
+        .body(Map.of("message", "hello"))
+        .contentType(ContentType.JSON)
+        .expect()
+        .statusCode(Status.FORBIDDEN.getStatusCode())
+        .when()
+        .post(PROCESS_INSTANCE_COMMENTS_URL + "/create");
+  }
+
+  @Test
+  public void shouldNotCommentOnInstanceWithHistoryDisabled() {
+    mockHistoryDisabled();
+
+    given().pathParam("id", EXAMPLE_PROCESS_INSTANCE_ID)
+        .body(Map.of("message", "hello"))
+        .contentType(ContentType.JSON)
+        .expect()
+        .statusCode(Status.FORBIDDEN.getStatusCode())
+        .when()
+        .post(PROCESS_INSTANCE_COMMENTS_URL + "/create");
+  }
+
   @Test
   public void testGetProcessInstanceCommentsWithHistoryDisabled() {
     mockHistoryDisabled();

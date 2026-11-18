@@ -43,6 +43,10 @@
   </delete>
 
   <!-- SCHEMALOGENTRY SELECT -->
+
+  <select id="selectSchemaLogVersions" resultType="string">
+    select VERSION_ from ${prefix}ACT_GE_SCHEMA_LOG
+  </select>
   
   <resultMap id="schemaLogEntryResultMap" type="org.camunda.bpm.engine.impl.persistence.entity.SchemaLogEntryEntity">
     <id property="id" column="ID_" jdbcType="VARCHAR" />

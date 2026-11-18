@@ -858,6 +858,14 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
   protected boolean queryExpressionAllowListEnabled = true;
 
   /**
+   * If <code>true</code> (default), the engine refuses to start on a database whose schema
+   * log (<code>ACT_GE_SCHEMA_LOG</code>) shows a schema older than the one this engine
+   * needs, see {@link org.camunda.bpm.engine.impl.db.DatabaseSchemaVersionCheck}. If
+   * <code>false</code>, it only logs a warning. A newer schema always only causes a warning.
+   */
+  protected boolean enforceDatabaseSchemaVersion = true;
+
+  /**
    * Comma-separated names of expression functions and of chained methods that may be used
    * in query expressions in addition to the built-in ones
    * ({@link QueryExpressionAllowList#DEFAULT_FUNCTIONS} and, chained to
@@ -1182,6 +1190,7 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
   // init /////////////////////////////////////////////////////////////////////
 
   protected void init() {
+    checkEngineLibraries();
     invokePreInit();
     initDefaultCharset();
     initHistoryLevel();
@@ -2524,6 +2533,14 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
     if (valueTypeResolver == null) {
       valueTypeResolver = new ValueTypeResolverImpl();
     }
+  }
+
+  /**
+   * Refuses to start if more than one process engine library is on the class
+   * path, see {@link DuplicateEngineLibraryCheck}.
+   */
+  protected void checkEngineLibraries() {
+    DuplicateEngineLibraryCheck.check();
   }
 
   protected void initDefaultCharset() {
@@ -4600,6 +4617,15 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
 
   public ProcessEngineConfigurationImpl setQueryExpressionAllowListEnabled(boolean queryExpressionAllowListEnabled) {
     this.queryExpressionAllowListEnabled = queryExpressionAllowListEnabled;
+    return this;
+  }
+
+  public boolean isEnforceDatabaseSchemaVersion() {
+    return enforceDatabaseSchemaVersion;
+  }
+
+  public ProcessEngineConfigurationImpl setEnforceDatabaseSchemaVersion(boolean enforceDatabaseSchemaVersion) {
+    this.enforceDatabaseSchemaVersion = enforceDatabaseSchemaVersion;
     return this;
   }
 

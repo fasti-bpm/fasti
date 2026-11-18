@@ -807,6 +807,47 @@ public class EnginePersistenceLogger extends ProcessEngineLogger {
     );
   }
 
+  public ProcessEngineException databaseSchemaTooOld(String schemaVersion, String requiredVersion, String databaseType) {
+    return new ProcessEngineException(exceptionMessage(
+      "111",
+      "The database schema has version {} (latest entry of ACT_GE_SCHEMA_LOG), but this engine needs a {} schema. "
+      + "The engine does not upgrade a schema by itself. Back up the database, then run the upgrade scripts "
+      + "sql/upgrade/{}_engine_<from>_to_<to>.sql of the distribution in order, from {} up to {}, "
+      + "including the patch scripts of your current minor version. To start anyway, which is not supported, "
+      + "set the engine property enforceDatabaseSchemaVersion to false.",
+      schemaVersion, requiredVersion, databaseType, schemaVersion, requiredVersion));
+  }
+
+  public void databaseSchemaTooOldIgnored(String schemaVersion, String requiredVersion) {
+    logWarn(
+      "112",
+      "The database schema has version {}, but this engine needs a {} schema. Starting anyway because "
+      + "enforceDatabaseSchemaVersion is false. Apply the upgrade scripts before using the engine.",
+      schemaVersion, requiredVersion);
+  }
+
+  public void databaseSchemaNewer(String schemaVersion, String requiredVersion) {
+    logWarn(
+      "113",
+      "The database schema has version {}, which is newer than the {} schema of this engine. "
+      + "Newer schemas are not tested with this engine.",
+      schemaVersion, requiredVersion);
+  }
+
+  public void databaseSchemaVersionUnknown(String reason) {
+    logWarn(
+      "114",
+      "Cannot determine the version of the database schema: {}",
+      reason);
+  }
+
+  public void databaseSchemaVersionMatches(String schemaVersion) {
+    logInfo(
+      "115",
+      "Database schema version {} matches this engine.",
+      schemaVersion);
+  }
+
   // exception code 110 is already taken. See requiredCamundaAdminOrPermissionException() for details.
 
   public static List<SQLException> findRelatedSqlExceptions(Throwable exception) {

@@ -16,10 +16,14 @@
  */
 package org.camunda.bpm.engine.impl;
 
+import java.util.List;
+
 import org.camunda.bpm.engine.ProcessEngineConfiguration;
 import org.camunda.bpm.engine.SchemaOperationsCommand;
 import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.context.Context;
+import org.camunda.bpm.engine.impl.db.AbstractPersistenceSession;
+import org.camunda.bpm.engine.impl.db.DatabaseSchemaVersionCheck;
 import org.camunda.bpm.engine.impl.db.EnginePersistenceLogger;
 import org.camunda.bpm.engine.impl.db.PersistenceSession;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
@@ -52,10 +56,34 @@ public class SchemaOperationsProcessEngineBuild implements SchemaOperationsComma
       persistenceSession.dbSchemaCreate();
     } else if (ProcessEngineConfiguration.DB_SCHEMA_UPDATE_FALSE.equals(databaseSchemaUpdate)) {
       persistenceSession.dbSchemaCheckVersion();
+      checkSchemaVersion(persistenceSession);
     } else if (ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE.equals(databaseSchemaUpdate)) {
+      // check an existing schema before anything is created in it: creating the tables that
+      // are missing in an outdated schema would leave it half upgraded
+      boolean existing = !(persistenceSession instanceof AbstractPersistenceSession)
+          || ((AbstractPersistenceSession) persistenceSession).isEngineTablePresent();
+      if (existing) {
+        checkSchemaVersion(persistenceSession);
+      }
       persistenceSession.dbSchemaUpdate();
     }
 
     return null;
+  }
+
+  protected void checkSchemaVersion(PersistenceSession persistenceSession) {
+    ProcessEngineConfigurationImpl configuration = Context.getProcessEngineConfiguration();
+    List<String> versions;
+    try {
+      versions = persistenceSession.getSchemaLogVersions();
+    } catch (RuntimeException e) {
+      // for example no permission to read the table: report, but do not decide on a guess
+      LOG.databaseSchemaVersionUnknown(e.getMessage());
+      return;
+    }
+    new DatabaseSchemaVersionCheck().check(
+        versions,
+        configuration.isEnforceDatabaseSchemaVersion(),
+        configuration.getDatabaseType());
   }
 }

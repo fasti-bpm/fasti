@@ -461,6 +461,15 @@ public abstract class DbSqlSession extends AbstractPersistenceSession {
   }
 
   @Override
+  public List<String> getSchemaLogVersions() {
+    if (!isTablePresent("ACT_GE_SCHEMA_LOG")) {
+      return new ArrayList<>();
+    }
+    String statement = dbSqlSessionFactory.mapStatement("selectSchemaLogVersions");
+    return ExceptionUtil.doWithExceptionWrapper(() -> sqlSession.selectList(statement));
+  }
+
+  @Override
   protected String getDbVersion() {
     String selectSchemaVersionStatement = dbSqlSessionFactory.mapStatement("selectDbSchemaVersion");
     return ExceptionUtil.doWithExceptionWrapper(() -> sqlSession.selectOne(selectSchemaVersionStatement));

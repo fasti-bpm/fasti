@@ -74,6 +74,14 @@ public interface PersistenceSession extends Session {
 
   void dbSchemaCheckVersion();
 
+  /**
+   * @return the versions recorded in the schema log table, an empty list if the table does
+   *         not exist, or <code>null</code> if this session cannot tell
+   */
+  default java.util.List<String> getSchemaLogVersions() {
+    return null;
+  }
+
   void dbSchemaCreate();
 
   void dbSchemaDrop();

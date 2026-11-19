@@ -345,6 +345,40 @@ public class SecurityFilterRulesTest {
   }
 
   @Test
+  public void shouldRejectUserPreferences_LOGGED_OUT() throws Exception {
+    for (String method : new String[] {"GET", "PUT"}) {
+      Authorization authorization =
+        getAuthorization(method, applicationPath + "/api/admin/auth/user/default/preferences");
+
+      assertThat(authorization.isGranted()).isFalse();
+      assertThat(authorization.isAuthenticated()).isFalse();
+    }
+  }
+
+  @Test
+  public void shouldPassUserPreferences_LOGGED_IN() throws Exception {
+    authenticatedForEngine("default", () -> {
+      for (String method : new String[] {"GET", "PUT"}) {
+        Authorization authorization =
+          getAuthorization(method, applicationPath + "/api/admin/auth/user/default/preferences");
+
+        assertThat(authorization.isGranted()).isTrue();
+        assertThat(authorization.isAuthenticated()).isTrue();
+      }
+    });
+  }
+
+  @Test
+  public void shouldRejectUserPreferencesOfOtherEngine_LOGGED_IN() throws Exception {
+    authenticatedForEngine("otherEngine", () -> {
+      Authorization authorization =
+        getAuthorization("PUT", applicationPath + "/api/admin/auth/user/default/preferences");
+
+      assertThat(authorization.isGranted()).isFalse();
+    });
+  }
+
+  @Test
   public void shouldRejectUnknownAdminApi_GET_LOGGED_IN() throws Exception {
 
     authenticatedForApp("default", "admin", new Runnable() {
@@ -526,6 +560,64 @@ public class SecurityFilterRulesTest {
         assertThat(authorization.isGranted()).isFalse();
       }
     });
+  }
+
+  /*
+   * The new web UI is served below /app/next. It consists of static files
+   * and the index page only, which are public like those of the other apps:
+   * no rule exists for it and none must be needed.
+   */
+
+  @Test
+  public void shouldPassNextApp_GET_LOGGED_OUT() {
+    String[] resources = {
+      "/app/next/",
+      "/app/next/default/",
+      "/app/next/non-existing-engine/",
+      "/app/next/config.json",
+      "/app/next/assets/index-abc123.js",
+      "/app/next/assets/index-abc123.css"
+    };
+
+    for (String resource : resources) {
+      Authorization authorization = getAuthorization("GET", applicationPath + resource);
+
+      assertThat(authorization.isGranted()).as(resource).isTrue();
+      assertThat(authorization.isAuthenticated()).as(resource).isFalse();
+    }
+  }
+
+  @Test
+  public void shouldPassNextApp_GET_LOGGED_IN() {
+    // the page is not bound to the authorization for one of the classic apps
+    authenticatedForApp("default", "welcome", new Runnable() {
+
+      @Override
+      public void run() {
+        assertThat(isAuthorized("GET", applicationPath + "/app/next/default/")).isTrue();
+        assertThat(isAuthorized("GET", applicationPath + "/app/next/assets/index-abc123.js")).isTrue();
+      }
+    });
+  }
+
+  @Test
+  public void shouldRejectApiUsedByNextApp_LOGGED_OUT() {
+    // serving the new web UI opens none of the resources it calls
+    assertThat(isAuthorized("GET", applicationPath + "/api/engine/engine/default/task")).isFalse();
+    assertThat(isAuthorized("POST", applicationPath + "/api/engine/engine/default/filter/foo/list")).isFalse();
+    assertThat(isAuthorized("POST", applicationPath + "/api/engine/engine/default/task/foo/claim")).isFalse();
+    assertThat(isAuthorized("POST", applicationPath + "/api/engine/engine/default/task/foo/submit-form")).isFalse();
+    assertThat(isAuthorized("GET", applicationPath + "/api/engine/engine/default/process-definition")).isFalse();
+    assertThat(isAuthorized("GET", applicationPath + "/api/engine/engine/default/user/demo/profile")).isFalse();
+    assertThat(isAuthorized("GET", applicationPath + "/api/tasklist/plugin/foo/default/bar")).isFalse();
+  }
+
+  @Test
+  public void shouldRejectApiBelowNextAppPath_LOGGED_OUT() {
+    // no API resource is reachable below the path of the new web UI
+    assertThat(isAuthorized("GET", applicationPath + "/api/engine/engine/default/app/next/")).isFalse();
+    assertThat(isAuthorized("GET", applicationPath + "/api/engine/app/next/default/")).isFalse();
+    assertThat(isAuthorized("GET", applicationPath + "/api/engine/next/default/user")).isFalse();
   }
 
   protected Authorization getAuthorization(String method, String uri) {

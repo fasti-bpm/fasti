@@ -46,6 +46,15 @@ public class ServletContextUtil {
   protected static final String INITIAL_SETUP_ENABLED_ATTR_NAME =
     "org.camunda.bpm.webapp.initial.setup.enabled";
 
+  protected static final String DEFAULT_APP_ATTR_NAME =
+    "org.camunda.bpm.webapp.default.app";
+
+  protected static final String FORMS_ISOLATION_ATTR_NAME =
+    "dev.fasti.webapp.forms.isolation";
+
+  protected static final String FORMS_ORIGIN_ATTR_NAME =
+    "dev.fasti.webapp.forms.origin";
+
   /**
    * Consumed by Camunda Platform CE & EE Webapp:
    * Retrieves the application path from Spring Boot's servlet context.
@@ -138,6 +147,56 @@ public class ServletContextUtil {
    */
   public static boolean isInitialSetupEnabled(ServletContext servletContext) {
     return !Boolean.FALSE.equals(servletContext.getAttribute(INITIAL_SETUP_ENABLED_ATTR_NAME));
+  }
+
+  /**
+   * Sets the web application that requests to the root of the web
+   * applications (<code>/</code> and <code>/app/</code>) are sent to. See the
+   * init parameter
+   * {@link org.camunda.bpm.webapp.impl.engine.ProcessEnginesFilter#DEFAULT_APP_INIT_PARAM_NAME}
+   * of the engines filter.
+   */
+  public static void setDefaultApp(String defaultApp, ServletContext servletContext) {
+    servletContext.setAttribute(DEFAULT_APP_ATTR_NAME, defaultApp);
+  }
+
+  /**
+   * @return the web application that requests to the root of the web
+   *         applications are sent to, or <code>null</code> if nothing has
+   *         been configured for the given servlet context.
+   */
+  public static String getDefaultApp(ServletContext servletContext) {
+    return (String) servletContext.getAttribute(DEFAULT_APP_ATTR_NAME);
+  }
+
+  /**
+   * Sets how embedded forms are isolated from the new web UI, and the origin
+   * the form frame is served from in mode
+   * {@link FormsIsolation#SEPARATE_ORIGIN} (<code>null</code> otherwise).
+   */
+  public static void setFormsIsolation(FormsIsolation isolation, String origin, ServletContext servletContext) {
+    servletContext.setAttribute(FORMS_ISOLATION_ATTR_NAME, isolation);
+    servletContext.setAttribute(FORMS_ORIGIN_ATTR_NAME, origin);
+  }
+
+  /**
+   * @return how embedded forms are isolated, {@link FormsIsolation#DEFAULT}
+   *         if nothing has been configured for the given servlet context
+   */
+  public static FormsIsolation getFormsIsolation(ServletContext servletContext) {
+    Object isolation = servletContext.getAttribute(FORMS_ISOLATION_ATTR_NAME);
+    return isolation instanceof FormsIsolation ? (FormsIsolation) isolation : FormsIsolation.DEFAULT;
+  }
+
+  /**
+   * @return the origin the form frame is served from in mode
+   *         {@link FormsIsolation#SEPARATE_ORIGIN}, otherwise <code>null</code>
+   */
+  public static String getFormsOrigin(ServletContext servletContext) {
+    if (getFormsIsolation(servletContext) != FormsIsolation.SEPARATE_ORIGIN) {
+      return null;
+    }
+    return (String) servletContext.getAttribute(FORMS_ORIGIN_ATTR_NAME);
   }
 
 }

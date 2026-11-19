@@ -19,6 +19,7 @@ package org.camunda.bpm.cockpit.impl.plugin.base.dto.query;
 import org.camunda.bpm.cockpit.impl.plugin.base.dto.ProcessDefinitionStatisticsDto;
 import org.camunda.bpm.cockpit.rest.dto.AbstractRestQueryParametersDto;
 import org.camunda.bpm.engine.rest.dto.CamundaQueryParam;
+import org.camunda.bpm.engine.rest.dto.converter.StringArrayConverter;
 
 import javax.ws.rs.core.MultivaluedMap;
 import java.util.HashMap;
@@ -40,6 +41,7 @@ public class ProcessDefinitionStatisticsQueryDto extends AbstractRestQueryParame
   protected String keyLike;
   protected String name;
   protected String nameLike;
+  protected String[] tenantIdIn;
 
   public ProcessDefinitionStatisticsQueryDto(MultivaluedMap<String, String> queryParameters) {
     super(queryParameters);
@@ -63,6 +65,16 @@ public class ProcessDefinitionStatisticsQueryDto extends AbstractRestQueryParame
   @CamundaQueryParam("nameLike")
   public void setNameLike(String nameLike) {
     this.nameLike = nameLike;
+  }
+
+  public String[] getTenantIdIn() {
+    return tenantIdIn;
+  }
+
+  /** Narrows the definitions to these tenants, within the tenants the user may see. */
+  @CamundaQueryParam(value = "tenantIdIn", converter = StringArrayConverter.class)
+  public void setTenantIdIn(String[] tenantIdIn) {
+    this.tenantIdIn = tenantIdIn;
   }
 
   @Override

@@ -28,6 +28,7 @@ import org.camunda.bpm.engine.rest.exception.ExceptionHandler;
 import org.camunda.bpm.engine.rest.exception.RestExceptionHandler;
 import org.camunda.bpm.engine.rest.mapper.JacksonConfigurator;
 import org.camunda.bpm.webapp.impl.security.auth.UserAuthenticationResource;
+import org.camunda.bpm.webapp.impl.security.auth.UserPreferencesResource;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
@@ -48,6 +49,7 @@ public class AdminApplication extends Application {
     classes.add(ExceptionHandler.class);
 
     classes.add(UserAuthenticationResource.class);
+    classes.add(UserPreferencesResource.class);
     classes.add(SetupResource.class);
 
     addPluginResourceClasses(classes);

@@ -60,6 +60,7 @@ public abstract class AbstractProcessInstanceQueryDto<T extends ProcessInstanceD
   protected Date startedBefore;
   protected Date startedAfter;
   protected Boolean withIncident;
+  protected String[] tenantIdIn;
 
   private List<VariableQueryParameterDto> variables;
 
@@ -113,6 +114,16 @@ public abstract class AbstractProcessInstanceQueryDto<T extends ProcessInstanceD
   @CamundaQueryParam(value="parentProcessInstanceId")
   public void setParentProcessInstanceId(String parentProcessInstanceId) {
     this.parentProcessInstanceId = parentProcessInstanceId;
+  }
+
+  public String[] getTenantIdIn() {
+    return tenantIdIn;
+  }
+
+  /** Narrows the instances to these tenants, within the tenants the user may see. */
+  @CamundaQueryParam(value="tenantIdIn", converter = StringArrayConverter.class)
+  public void setTenantIdIn(String[] tenantIdIn) {
+    this.tenantIdIn = tenantIdIn;
   }
 
   public String[] getActivityIdIn() {

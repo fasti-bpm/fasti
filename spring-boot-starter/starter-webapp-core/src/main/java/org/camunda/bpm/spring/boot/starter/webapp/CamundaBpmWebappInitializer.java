@@ -41,14 +41,17 @@ import org.camunda.bpm.spring.boot.starter.webapp.filter.AppendTrailingSlashFilt
 import org.camunda.bpm.spring.boot.starter.webapp.filter.LazyProcessEnginesFilter;
 import org.camunda.bpm.spring.boot.starter.webapp.filter.LegacyPathRedirectFilter;
 import org.camunda.bpm.spring.boot.starter.webapp.filter.LazySecurityFilter;
+import org.camunda.bpm.spring.boot.starter.webapp.filter.HashedAssetCacheFilter;
 import org.camunda.bpm.tasklist.impl.web.TasklistApplication;
 import org.camunda.bpm.tasklist.impl.web.bootstrap.TasklistContainerBootstrap;
 import org.camunda.bpm.webapp.impl.engine.EngineRestApplication;
+import org.camunda.bpm.webapp.impl.engine.ProcessEnginesFilter;
 import org.camunda.bpm.webapp.impl.security.auth.AuthenticationFilter;
 import org.camunda.bpm.webapp.impl.security.filter.CsrfPreventionFilter;
 import org.camunda.bpm.webapp.impl.security.filter.SessionCookieFilter;
 import org.camunda.bpm.webapp.impl.security.filter.headersec.HttpHeaderSecurityFilter;
 import org.camunda.bpm.webapp.impl.security.filter.util.HttpSessionMutexListener;
+import org.camunda.bpm.webapp.impl.util.FormsIsolation;
 import org.camunda.bpm.webapp.impl.util.ServletContextUtil;
 import org.camunda.bpm.welcome.impl.web.WelcomeApplication;
 import org.camunda.bpm.welcome.impl.web.bootstrap.WelcomeContainerBootstrap;
@@ -84,6 +87,19 @@ public class CamundaBpmWebappInitializer implements ServletContextInitializer {
    */
   public static final String LEGACY_PATH_REDIRECT_PROPERTY = "fasti.webapp.legacy-path-redirect";
 
+  /**
+   * How the new web UI isolates embedded HTML forms: <code>sandboxed</code>
+   * (default), <code>separate-origin</code> or <code>same-origin</code>. See
+   * {@link FormsIsolation}.
+   */
+  public static final String FORMS_ISOLATION_PROPERTY = "fasti.webapp.forms-isolation";
+
+  /**
+   * The origin the form frame is served from in mode
+   * <code>separate-origin</code>, e.g. <code>https://forms.example.com</code>.
+   */
+  public static final String FORMS_ORIGIN_PROPERTY = "fasti.webapp.forms-origin";
+
   /** The application path of the web applications before Fasti. */
   public static final String LEGACY_APP_PATH = "/camunda";
 
@@ -93,19 +109,30 @@ public class CamundaBpmWebappInitializer implements ServletContextInitializer {
 
   private final boolean legacyPathRedirect;
 
+  private FormsIsolation formsIsolation = FormsIsolation.DEFAULT;
+
+  private String formsOrigin;
+
   public CamundaBpmWebappInitializer(CamundaBpmProperties properties) {
     this(properties, null);
   }
 
   public CamundaBpmWebappInitializer(CamundaBpmProperties properties, String defaultApp) {
-    this(properties, defaultApp, true);
-  }
-
-  public CamundaBpmWebappInitializer(CamundaBpmProperties properties, String defaultApp,
-                                     boolean legacyPathRedirect) {
     this.properties = properties;
     this.defaultApp = defaultApp;
-    this.legacyPathRedirect = legacyPathRedirect;
+  }
+
+  /**
+   * Configures the isolation of embedded forms; fails for values that are
+   * not valid, so that a misspelled value cannot weaken the isolation.
+   */
+  public CamundaBpmWebappInitializer formsIsolation(String isolation, String origin) {
+    FormsIsolation parsedIsolation = FormsIsolation.parse(isolation, FORMS_ISOLATION_PROPERTY);
+    String parsedOrigin = FormsIsolation.parseOrigin(origin, FORMS_ORIGIN_PROPERTY);
+    FormsIsolation.check(parsedIsolation, parsedOrigin, FORMS_ORIGIN_PROPERTY);
+    this.formsIsolation = parsedIsolation;
+    this.formsOrigin = parsedOrigin;
+    return this;
   }
 
   @Override
@@ -125,6 +152,10 @@ public class CamundaBpmWebappInitializer implements ServletContextInitializer {
 
     ServletContextUtil.setAppPath(applicationPath, servletContext);
     ServletContextUtil.setInitialSetupEnabled(webapp.isInitialSetupEnabled(), servletContext);
+    if (defaultApp != null && !defaultApp.isBlank()) {
+      ServletContextUtil.setDefaultApp(ProcessEnginesFilter.validDefaultApp(defaultApp), servletContext);
+    }
+    ServletContextUtil.setFormsIsolation(formsIsolation, formsOrigin, servletContext);
 
     // must come first: the requests it answers are not seen by any other filter
     if (legacyPathRedirect && !LEGACY_APP_PATH.equals(applicationPath)) {
@@ -142,7 +173,8 @@ public class CamundaBpmWebappInitializer implements ServletContextInitializer {
         applicationPath + "/app/cockpit",
         applicationPath + "/app/admin",
         applicationPath + "/app/tasklist",
-        applicationPath + "/app/welcome");
+        applicationPath + "/app/welcome",
+        applicationPath + "/app/next");
 
     // Filters are invoked in the order of their registration. The filters
     // that set the security headers and the attributes of the session cookie
@@ -172,6 +204,10 @@ public class CamundaBpmWebappInitializer implements ServletContextInitializer {
     registerFilter("CsrfPreventionFilter", CsrfPreventionFilter.class,
         webapp.getCsrf().getInitParams(),
         applicationPath + "/api/*", applicationPath + "/app/*");
+
+    // before the engines filter, which writes the index page of the new web UI
+    registerFilter("HashedAssetCacheFilter", HashedAssetCacheFilter.class,
+        applicationPath + "/app/next/*");
 
     registerFilter("Engines Filter", LazyProcessEnginesFilter.class,
         applicationPath + "/api/*",

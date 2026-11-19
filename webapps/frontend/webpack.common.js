@@ -66,6 +66,11 @@ module.exports = (_env, argv = {}) => {
         import: path.resolve(__dirname, 'ui/admin/plugins/adminPlugins.js')
       },
 
+      /* Form frame of the new web UI: renders embedded forms */
+      'app/forms/fasti-form-frame': {
+        import: path.resolve(__dirname, 'ui/forms/client/scripts/fasti-form-frame.js')
+      },
+
       /* Welcome */
       'app/welcome/camunda-welcome-bootstrap': {
         import: path.resolve(
@@ -183,6 +188,17 @@ module.exports = (_env, argv = {}) => {
         template: path.resolve(__dirname, 'ui/welcome/client/scripts/index.html'),
         filename: 'app/welcome/index.html',
         chunks: ['app/welcome/camunda-welcome-bootstrap'],
+        favicon: path.resolve(__dirname, 'ui/common/images/favicon.ico'),
+        publicPath: '$APP_ROOT',
+        version
+      }),
+      new HtmlWebPackPlugin({
+        minify: false,
+        inject: false,
+        appName: 'forms',
+        template: path.resolve(__dirname, 'ui/forms/client/index.html'),
+        filename: 'app/forms/index.html',
+        chunks: ['app/forms/fasti-form-frame'],
         favicon: path.resolve(__dirname, 'ui/common/images/favicon.ico'),
         publicPath: '$APP_ROOT',
         version

@@ -1,0 +1,103 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ */
+// Embedded forms are written against the Bootstrap 3 classes of the classic
+// Tasklist (form-horizontal, form-group, col-md-*, ...).
+@import "~camunda-commons-ui/resources/less/shared/_variables.less";
+@import "~camunda-commons-ui/resources/less/shared/bootstrap.less";
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  // the frame shows the background of the page around it
+  background: transparent;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+}
+
+html,
+body {
+  // the host sizes the frame to the form; rows of Bootstrap overhang by
+  // their gutter and must not cause scroll bars
+  overflow-x: hidden;
+}
+
+.form-frame {
+  // contains the margins of the form, so that its height is the full height;
+  // room for focus rings and for the overhanging rows of Bootstrap
+  display: flow-root;
+  padding: 4px 16px 4px 4px;
+}
+
+.form-frame__fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.injected-form-wrapper .help-block.error,
+.injected-form-wrapper .ng-invalid.ng-dirty + .help-block {
+  color: @brand-danger;
+}
+
+.injected-form-wrapper .help-block {
+  display: none;
+}
+
+.injected-form-wrapper .help-block.error {
+  display: block;
+}
+
+.injected-form-wrapper input.ng-invalid.ng-dirty,
+.injected-form-wrapper input.ng-invalid.ng-touched,
+.injected-form-wrapper select.ng-invalid.ng-dirty {
+  border-color: @brand-danger;
+}
+
+// a dark page around the frame: dark controls, too
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  body {
+    color: #e6e6e6;
+  }
+
+  a {
+    color: #8ab4f8;
+  }
+
+  .form-control,
+  .input-group-addon {
+    background-color: #1e1f22;
+    border-color: #4a4d52;
+    color: #e6e6e6;
+  }
+
+  .form-control[readonly],
+  .form-control[disabled],
+  fieldset[disabled] .form-control {
+    background-color: #2a2c30;
+    color: #c4c4c4;
+  }
+
+  .help,
+  .help-block,
+  .text-muted {
+    color: #a0a0a0;
+  }
+
+  .table > thead > tr > th,
+  .table > tbody > tr > td {
+    border-color: #3a3d42;
+  }
+}

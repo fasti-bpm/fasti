@@ -57,7 +57,10 @@ public class CamundaBpmWebappAutoConfiguration implements WebMvcConfigurer {
     return new CamundaBpmWebappInitializer(properties,
         environment.getProperty(CamundaBpmWebappInitializer.DEFAULT_APP_PROPERTY),
         environment.getProperty(CamundaBpmWebappInitializer.LEGACY_PATH_REDIRECT_PROPERTY,
-            Boolean.class, true));
+            Boolean.class, true))
+        .formsIsolation(
+            environment.getProperty(CamundaBpmWebappInitializer.FORMS_ISOLATION_PROPERTY),
+            environment.getProperty(CamundaBpmWebappInitializer.FORMS_ORIGIN_PROPERTY));
   }
 
   @Bean(name = "resourceLoaderDependingInitHook")

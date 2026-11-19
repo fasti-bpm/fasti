@@ -271,6 +271,47 @@ public class ProcessEnginesFilterSetupTest {
   }
 
   @Test
+  public void shouldRedirectNewWebUiToItsOwnSetupPage() throws Exception {
+    // given
+    initFilter(null);
+
+    // when
+    MockHttpServletResponse response = request("/app/next/" + ENGINE_NAME + "/");
+
+    // then
+    assertThat(response.getRedirectedUrl()).isEqualTo("/app/next/" + ENGINE_NAME + "/setup/#/setup");
+    assertThat(servedIndexPages).isEmpty();
+  }
+
+  @Test
+  public void shouldServeSetupPageOfNewWebUiWhenInitialUserIsNeeded() throws Exception {
+    // given
+    initFilter(null);
+
+    // when
+    MockHttpServletResponse response = request("/app/next/" + ENGINE_NAME + "/setup/");
+
+    // then
+    assertThat(response.getRedirectedUrl()).isNull();
+    assertThat(servedIndexPages).containsExactly("next");
+  }
+
+  @Test
+  public void shouldLeaveSetupPageOfNewWebUiOnceAnAdministratorExists() throws Exception {
+    // given
+    initFilter(null);
+    createUser("admin");
+    processEngineConfiguration.getAdminUsers().add("admin");
+
+    // when
+    MockHttpServletResponse response = request("/app/next/" + ENGINE_NAME + "/setup/");
+
+    // then
+    assertThat(response.getRedirectedUrl()).isEqualTo("/app/next/" + ENGINE_NAME + "/");
+    assertThat(servedIndexPages).isEmpty();
+  }
+
+  @Test
   public void shouldNotRedirectToSetupPageWhenInitialSetupIsSwitchedOff() throws Exception {
     // given no administrator is defined, but the setup is switched off
     initFilter("false");

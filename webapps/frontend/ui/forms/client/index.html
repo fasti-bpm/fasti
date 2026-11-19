@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0"/>
+  <meta name="referrer" content="same-origin"/>
+
+  <title>Form</title>
+
+  <base href="<%= htmlWebpackPlugin.options.appBase %>"
+        engine-api="<%= htmlWebpackPlugin.options.appRoot %>/api/engine/"
+        app-root="<%= htmlWebpackPlugin.options.appRoot %>"
+        app-name="forms"/>
+
+  <%= htmlWebpackPlugin.tags.headTags %>
+</head>
+
+<!--
+  Renders one embedded HTML form of a task or start event for the new web
+  UI. The page is only meant to be shown in a frame of that UI; it receives
+  what to render from its parent window.
+-->
+<body>
+<div class="form-frame" ng-controller="fastiFormFrameCtrl">
+  <fieldset class="form-frame__fields" ng-disabled="disabled">
+    <div class="form-container"></div>
+  </fieldset>
+</div>
+</body>
+</html>

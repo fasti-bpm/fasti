@@ -187,6 +187,46 @@
       <param-value>false</param-value>
     </init-param>
     -->
+
+    <!--
+    Requests to the root of the web applications (/ and /app/) are sent to
+    the new web UI (app/next). The classic applications stay reachable at
+    their own URLs. To send these requests to the classic Welcome application
+    again, uncomment the configuration below. Allowed values: next (default),
+    welcome, tasklist, cockpit, admin.
+    -->
+
+    <!--
+    <init-param>
+      <param-name>defaultApp</param-name>
+      <param-value>welcome</param-value>
+    </init-param>
+    -->
+
+    <!--
+    Embedded HTML forms are shown by the new web UI in a frame that is
+    sandboxed without a session (formsIsolation=sandboxed, default): scripts
+    of forms can only reach the REST calls of their own task or start event,
+    which the web UI performs for them. Alternatives:
+    - separate-origin: the frame is served from another origin (formsOrigin,
+      e.g. https://forms.example.com, a second host name of this server);
+      local storage, modules and fonts of forms work as usual, REST calls are
+      still performed by the web UI.
+    - same-origin: the behaviour before this isolation: the frame shares the
+      session of the user. Scripts of forms can then act with that session
+      beyond the form. Only use it if every process deployer is trusted.
+    -->
+
+    <!--
+    <init-param>
+      <param-name>formsIsolation</param-name>
+      <param-value>sandboxed</param-value>
+    </init-param>
+    <init-param>
+      <param-name>formsOrigin</param-name>
+      <param-value>https://forms.example.com</param-value>
+    </init-param>
+    -->
   </filter>
   <filter-mapping>
     <filter-name>Engines Filter</filter-name>

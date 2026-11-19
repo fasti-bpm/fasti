@@ -140,6 +140,14 @@
       and RES.BUSINESS_KEY_ = #{businessKey}
       </if>
 
+      <!-- tenantIdIn -->
+      <if test="tenantIdIn != null &amp;&amp; tenantIdIn.length > 0">
+      and RES.TENANT_ID_ in
+        <foreach item="tenantId" index="index" collection="tenantIdIn" open="(" separator="," close=")">
+          #{tenantId}
+        </foreach>
+      </if>
+
       <!-- startedBefore -->
       <if test="historyEnabled &amp;&amp; startedBefore != null">
         and HISTORY.START_TIME_ &lt;= #{startedBefore}

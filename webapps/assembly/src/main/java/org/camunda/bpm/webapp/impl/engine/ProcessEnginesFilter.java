@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,6 +42,7 @@ import org.camunda.bpm.engine.rest.util.WebApplicationUtil;
 import org.camunda.bpm.tasklist.Tasklist;
 import org.camunda.bpm.tasklist.TasklistRuntimeDelegate;
 import org.camunda.bpm.webapp.impl.security.filter.headersec.provider.impl.ContentSecurityPolicyProvider;
+import org.camunda.bpm.webapp.impl.util.FormsIsolation;
 import org.camunda.bpm.webapp.impl.util.ServletContextUtil;
 import org.camunda.bpm.webapp.impl.IllegalWebAppConfigurationException;
 import org.camunda.bpm.webapp.impl.filter.AbstractTemplateFilter;
@@ -64,8 +67,13 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
   protected static final String ADMIN_APP_NAME = "admin";
   protected static final String TASKLIST_APP_NAME = "tasklist";
   protected static final String WELCOME_APP_NAME = "welcome";
+  /** the new web UI; it has a setup page of its own */
+  protected static final String NEXT_APP_NAME = "next";
 
-  protected static final String DEFAULT_APP = WELCOME_APP_NAME;
+  /** the application that requests to <code>/</code> and <code>/app/</code> are sent to */
+  protected static final String DEFAULT_APP = NEXT_APP_NAME;
+  protected static final Set<String> DEFAULT_APP_CHOICES = Set.of(NEXT_APP_NAME, WELCOME_APP_NAME,
+      TASKLIST_APP_NAME, COCKPIT_APP_NAME, ADMIN_APP_NAME);
   protected static final String INDEX_PAGE = "index.html";
 
   protected static final String SETUP_PAGE = "setup/";
@@ -83,7 +91,37 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
    */
   public static final String INITIAL_SETUP_ENABLED_INIT_PARAM_NAME = "initialSetupEnabled";
 
+  /**
+   * Name of the filter init parameter that selects the web application that
+   * requests to the root of the web applications (<code>/</code> and
+   * <code>/app/</code>) are sent to. Allowed values are <code>next</code>
+   * (default, the new web UI), <code>welcome</code> (the classic Welcome
+   * application), <code>tasklist</code>, <code>cockpit</code> and
+   * <code>admin</code>. Every application stays reachable at its own URL,
+   * whatever is configured.
+   */
+  public static final String DEFAULT_APP_INIT_PARAM_NAME = "defaultApp";
+
+  /**
+   * Name of the filter init parameter that selects how the new web UI
+   * isolates embedded HTML forms: <code>sandboxed</code> (default; the form
+   * frame has an opaque origin and no session), <code>separate-origin</code>
+   * (the form frame is served from {@link #FORMS_ORIGIN_INIT_PARAM_NAME}) or
+   * <code>same-origin</code> (the form frame shares origin and session with
+   * the web UI; scripts of forms can act with the session of the user).
+   */
+  public static final String FORMS_ISOLATION_INIT_PARAM_NAME = "formsIsolation";
+
+  /**
+   * Name of the filter init parameter with the origin the form frame is
+   * served from in mode <code>separate-origin</code>, e.g.
+   * <code>https://forms.example.com</code>.
+   */
+  public static final String FORMS_ORIGIN_INIT_PARAM_NAME = "formsOrigin";
+
   public static final String APP_ROOT_PLACEHOLDER = "$APP_ROOT";
+  public static final String FORMS_ISOLATION_PLACEHOLDER = "$FORMS_ISOLATION";
+  public static final String FORMS_ORIGIN_PLACEHOLDER = "$FORMS_ORIGIN";
   public static final String BASE_PLACEHOLDER = "$BASE";
 
   public static final String PLUGIN_DEPENDENCIES_PLACEHOLDER = "$PLUGIN_DEPENDENCIES";
@@ -133,6 +171,43 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
             + "' must be either 'true' or 'false' but is '" + initialSetupEnabled + "'.");
       }
     }
+
+    String defaultApp = filterConfig.getInitParameter(DEFAULT_APP_INIT_PARAM_NAME);
+    if (defaultApp != null && !defaultApp.trim().isEmpty()) {
+      ServletContextUtil.setDefaultApp(validDefaultApp(defaultApp), filterConfig.getServletContext());
+    }
+
+    String formsIsolation = filterConfig.getInitParameter(FORMS_ISOLATION_INIT_PARAM_NAME);
+    String formsOrigin = filterConfig.getInitParameter(FORMS_ORIGIN_INIT_PARAM_NAME);
+    if (!isBlank(formsIsolation) || !isBlank(formsOrigin)) {
+      FormsIsolation isolation = FormsIsolation.parse(formsIsolation, FORMS_ISOLATION_INIT_PARAM_NAME);
+      String origin = FormsIsolation.parseOrigin(formsOrigin, FORMS_ORIGIN_INIT_PARAM_NAME);
+      FormsIsolation.check(isolation, origin, FORMS_ORIGIN_INIT_PARAM_NAME);
+      ServletContextUtil.setFormsIsolation(isolation, origin, filterConfig.getServletContext());
+    }
+  }
+
+  protected static boolean isBlank(String value) {
+    return value == null || value.trim().isEmpty();
+  }
+
+  /**
+   * Checks the name of a default application; a misspelled name must not
+   * silently fall back to another application.
+   */
+  public static String validDefaultApp(String defaultApp) {
+    String name = defaultApp.trim().toLowerCase(Locale.ROOT);
+    if (!DEFAULT_APP_CHOICES.contains(name)) {
+      throw new IllegalWebAppConfigurationException("'" + DEFAULT_APP_INIT_PARAM_NAME
+          + "' must be one of " + new TreeSet<>(DEFAULT_APP_CHOICES) + " but is '" + defaultApp + "'.");
+    }
+    return name;
+  }
+
+  /** The application that requests to the root of the web applications are sent to. */
+  protected String getDefaultApp(ServletContext servletContext) {
+    String configured = ServletContextUtil.getDefaultApp(servletContext);
+    return configured != null ? configured : DEFAULT_APP;
   }
 
   @Override
@@ -196,7 +271,7 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
 
       // redirect to {defaultApp}/{defaultEngineName}
       response.sendRedirect(String.format("%s%s/app/%s/%s/", contextPath, applicationPath,
-        DEFAULT_APP, getDefaultEngineName()));
+        getDefaultApp(request.getServletContext()), getDefaultEngineName()));
     } else
 
     // access to /app/
@@ -212,9 +287,10 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
 
       if (ServletContextUtil.isInitialSetupEnabled(request.getServletContext()) && needsInitialUser(engineName)) {
         if (!setupPage) {
-          // redirect to setup
-          String setupPath = "%s%s/app/admin/%s/setup/#/setup";
-          response.sendRedirect(String.format(setupPath, contextPath, applicationPath, engineName));
+          // redirect to setup; the new web UI has a setup page of its own
+          String setupApp = NEXT_APP_NAME.equals(appName) ? NEXT_APP_NAME : ADMIN_APP_NAME;
+          String setupPath = "%s%s/app/%s/%s/setup/#/setup";
+          response.sendRedirect(String.format(setupPath, contextPath, applicationPath, setupApp, engineName));
         } else {
           // serve the index page as a setup page
           // setup will be handled by app
@@ -304,6 +380,7 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
     final String cspNonce = (String) request.getAttribute(ContentSecurityPolicyProvider.ATTR_CSP_FILTER_NONCE);
 
     data = replacePlaceholder(data, appName, engineName, applicationPath, contextPath, cspNonce);
+    data = replaceFormsPlaceholders(data, request.getServletContext());
 
     // the length is counted in UTF-8, so the writer must encode in UTF-8 too (the servlet
     // default would be ISO-8859-1, which also contradicts the meta charset of the page)
@@ -333,6 +410,16 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
                  applicationPath, contextPath))
                .replace(PLUGIN_DEPENDENCIES_PLACEHOLDER, createPluginDependenciesStr(appName))
                .replace(CSP_NONCE_PLACEHOLDER, cspNonce == null ? "" : String.format("nonce=\"%s\"", cspNonce));
+  }
+
+  /**
+   * Tells the new web UI how embedded forms are isolated. Only the values
+   * validated at startup are written; they contain no markup characters.
+   */
+  protected String replaceFormsPlaceholders(String data, ServletContext servletContext) {
+    String origin = ServletContextUtil.getFormsOrigin(servletContext);
+    return data.replace(FORMS_ISOLATION_PLACEHOLDER, ServletContextUtil.getFormsIsolation(servletContext).getValue())
+               .replace(FORMS_ORIGIN_PLACEHOLDER, origin == null ? "" : origin);
   }
 
   protected <T extends AppPlugin> CharSequence createPluginPackagesStr(String appName,

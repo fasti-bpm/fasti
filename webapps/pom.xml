@@ -36,6 +36,11 @@
 
     <skip.frontend.build>false</skip.frontend.build>
 
+    <!-- the new web UI (frontend-next) is built with its own Node.js release:
+    its tool chain needs a newer one than the classic front end is built with -->
+    <version.nodejs.frontend.next>24.22.3</version.nodejs.frontend.next>
+    <version.npm.frontend.next>11.19.1</version.npm.frontend.next>
+
     <authorizationCheckRevokes>auto</authorizationCheckRevokes>
 
     <jdbcBatchProcessing>true</jdbcBatchProcessing>
@@ -147,6 +152,9 @@
             <fileset>
               <directory>./frontend/target</directory>
             </fileset>
+            <fileset>
+              <directory>./frontend-next/target</directory>
+            </fileset>
           </filesets>
         </configuration>
       </plugin>
@@ -203,6 +211,39 @@
             </goals>
             <phase>generate-resources</phase>
             <configuration>
+              <arguments>run build</arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>install node and npm (frontend-next)</id>
+            <goals>
+              <goal>install-node-and-npm</goal>
+            </goals>
+            <configuration>
+              <workingDirectory>./frontend-next</workingDirectory>
+              <nodeVersion>v${version.nodejs.frontend.next}</nodeVersion>
+              <npmVersion>${version.npm.frontend.next}</npmVersion>
+            </configuration>
+          </execution>
+          <execution>
+            <id>npm ci (frontend-next)</id>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <phase>generate-resources</phase>
+            <configuration>
+              <workingDirectory>./frontend-next</workingDirectory>
+              <arguments>ci</arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>Build (frontend-next)</id>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <phase>generate-resources</phase>
+            <configuration>
+              <workingDirectory>./frontend-next</workingDirectory>
               <arguments>run build</arguments>
             </configuration>
           </execution>
@@ -333,6 +374,81 @@
       <properties>
         <skip.frontend.build>true</skip.frontend.build>
       </properties>
+    </profile>
+    <profile>
+      <!-- runs the unit tests of the new web UI unless tests are skipped -->
+      <id>frontend-next-tests</id>
+      <activation>
+        <property>
+          <name>!skipTests</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.github.eirslett</groupId>
+            <artifactId>frontend-maven-plugin</artifactId>
+            <inherited>false</inherited>
+            <executions>
+              <execution>
+                <id>Test (frontend-next)</id>
+                <goals>
+                  <goal>npm</goal>
+                </goals>
+                <phase>test</phase>
+                <configuration>
+                  <workingDirectory>./frontend-next</workingDirectory>
+                  <arguments>test</arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <!-- runs the end-to-end tests of the new web UI against a running
+      distribution: mvn -Pe2e-next -pl webapps verify -De2e.baseUrl=... -->
+      <id>e2e-next</id>
+      <properties>
+        <e2e.baseUrl>http://localhost:18800/fasti/</e2e.baseUrl>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.github.eirslett</groupId>
+            <artifactId>frontend-maven-plugin</artifactId>
+            <inherited>false</inherited>
+            <executions>
+              <execution>
+                <id>Install Playwright Chromium (frontend-next)</id>
+                <goals>
+                  <goal>npx</goal>
+                </goals>
+                <phase>pre-integration-test</phase>
+                <configuration>
+                  <workingDirectory>./frontend-next</workingDirectory>
+                  <arguments>playwright install chromium</arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>E2E (frontend-next)</id>
+                <goals>
+                  <goal>npm</goal>
+                </goals>
+                <phase>integration-test</phase>
+                <configuration>
+                  <workingDirectory>./frontend-next</workingDirectory>
+                  <arguments>run e2e</arguments>
+                  <environmentVariables>
+                    <E2E_BASE_URL>${e2e.baseUrl}</E2E_BASE_URL>
+                  </environmentVariables>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 

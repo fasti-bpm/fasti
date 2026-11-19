@@ -103,6 +103,29 @@ public class ProcessInstanceRestServiceTenantCheckTest extends AbstractCockpitPl
   }
 
   @Test
+  public void queryNarrowedToTenant() {
+
+    identityService.setAuthentication("user", Collections.singletonList(Groups.CAMUNDA_ADMIN), null);
+    queryParameter.setTenantIdIn(new String[] { TENANT_TWO });
+
+    CountResultDto count = resource.queryProcessInstancesCount(queryParameter);
+    List<ProcessInstanceDto> result = resource.queryProcessInstances(queryParameter, null, null);
+    assertThat(count.getCount()).isEqualTo(1);
+    assertThat(result).hasSize(1);
+    assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(result.get(0).getId()).singleResult().getTenantId())
+        .isEqualTo(TENANT_TWO);
+  }
+
+  @Test
+  public void queryNarrowedToTenantStaysWithinAuthenticatedTenants() {
+
+    identityService.setAuthentication("user", null, Arrays.asList(TENANT_ONE));
+    queryParameter.setTenantIdIn(new String[] { TENANT_TWO });
+
+    assertThat(resource.queryProcessInstancesCount(queryParameter).getCount()).isEqualTo(0);
+  }
+
+  @Test
   public void queryCountDisabledTenantCheck() {
 
     processEngineConfiguration.setTenantCheckEnabled(false);

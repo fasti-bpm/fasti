@@ -54,6 +54,9 @@ public class SecurityFilterRequestPathTest {
         "/api//engine/engine/default/user",
         "/api/./engine/engine/default/user",
         "/app/../api/engine/engine/default/user",
+        "/app/next/../../api/engine/engine/default/user",
+        "/app/next/default/../../../api/engine/engine/default/user",
+        "/app/next/assets/..;/..;/../api/engine/engine/default/user",
         "/api/cockpit/plugin/base/static/../../../engine/engine/default/user",
         // encoded characters
         "/api/%65ngine/engine/default/user",

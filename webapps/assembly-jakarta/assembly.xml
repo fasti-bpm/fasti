@@ -27,5 +27,19 @@
         <exclude>ui/cockpit/build/**</exclude>
       </excludes>
     </fileSet>
+    <!-- the new web UI -->
+    <fileSet>
+      <outputDirectory>/frontend-next</outputDirectory>
+      <directory>../frontend-next</directory>
+
+      <excludes>
+        <!-- what the build of the module leaves behind -->
+        <exclude>node_modules/**</exclude>
+        <exclude>node/**</exclude>
+        <exclude>target/**</exclude>
+        <exclude>**/.idea/**</exclude>
+        <exclude>**/.settings/**</exclude>
+      </excludes>
+    </fileSet>
   </fileSets>
 </assembly>

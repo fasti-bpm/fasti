@@ -39,6 +39,53 @@
     </cookie-config>
   </session-config>
 
+  <!--
+    The following filters come first on purpose: filters are invoked in the
+    order of their mappings, and the authentication, security and CSRF
+    prevention filters answer rejected requests themselves. Headers and cookie
+    attributes that are set by filters behind them would be missing on these
+    responses.
+  -->
+  <!-- HTTP Header Security Filter -->
+  <filter>
+    <filter-name>HttpHeaderSecurity</filter-name>
+    <filter-class>org.camunda.bpm.webapp.impl.security.filter.headersec.HttpHeaderSecurityFilter</filter-class>
+
+    <!--
+    The Strict Transport Security header is disabled by default.
+    You can enable it by uncommenting the configuration below.
+    Read more about it in the documentation
+    https://docs.camunda.org/manual/latest/webapps/shared-options/header-security/#strict-transport-security
+    -->
+
+    <!--
+    <init-param>
+      <param-name>hstsDisabled</param-name>
+      <param-value>false</param-value>
+    </init-param>
+    -->
+  </filter>
+
+  <filter-mapping>
+    <filter-name>HttpHeaderSecurity</filter-name>
+    <url-pattern>/*</url-pattern>
+    <dispatcher>REQUEST</dispatcher>
+  </filter-mapping>
+
+  <!-- Session Cookie filter -->
+  <filter>
+    <filter-name>SessionCookieFilter</filter-name>
+    <filter-class>org.camunda.bpm.webapp.impl.security.filter.SessionCookieFilter</filter-class>
+    <!--<init-param>-->
+    <!--<param-name>enableSecureCookie</param-name>-->
+    <!--<param-value>true</param-value>-->
+    <!--</init-param>-->
+  </filter>
+  <filter-mapping>
+    <filter-name>SessionCookieFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
   <!-- Container Based Authentication filter -->
   <!-- <filter>
     <filter-name>Container Based Authentication Filter</filter-name>
@@ -97,46 +144,6 @@
   <filter-mapping>
     <filter-name>CsrfPreventionFilter</filter-name>
     <url-pattern>/*</url-pattern>
-  </filter-mapping>
-
-  <!-- Session Cookie filter -->
-  <filter>
-    <filter-name>SessionCookieFilter</filter-name>
-    <filter-class>org.camunda.bpm.webapp.impl.security.filter.SessionCookieFilter</filter-class>
-    <!--<init-param>-->
-    <!--<param-name>enableSecureCookie</param-name>-->
-    <!--<param-value>true</param-value>-->
-    <!--</init-param>-->
-  </filter>
-  <filter-mapping>
-    <filter-name>SessionCookieFilter</filter-name>
-    <url-pattern>/*</url-pattern>
-  </filter-mapping>
-
-  <!-- HTTP Header Security Filter -->
-  <filter>
-    <filter-name>HttpHeaderSecurity</filter-name>
-    <filter-class>org.camunda.bpm.webapp.impl.security.filter.headersec.HttpHeaderSecurityFilter</filter-class>
-
-    <!--
-    The Strict Transport Security header is disabled by default.
-    You can enable it by uncommenting the configuration below.
-    Read more about it in the documentation
-    https://docs.camunda.org/manual/latest/webapps/shared-options/header-security/#strict-transport-security
-    -->
-
-    <!--
-    <init-param>
-      <param-name>hstsDisabled</param-name>
-      <param-value>false</param-value>
-    </init-param>
-    -->
-  </filter>
-
-  <filter-mapping>
-    <filter-name>HttpHeaderSecurity</filter-name>
-    <url-pattern>/*</url-pattern>
-    <dispatcher>REQUEST</dispatcher>
   </filter-mapping>
 
   <!-- Empty body filter -->

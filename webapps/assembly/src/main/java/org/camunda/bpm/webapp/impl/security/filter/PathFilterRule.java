@@ -33,8 +33,11 @@ import org.camunda.bpm.webapp.impl.security.filter.util.FilterRules;
  * <li> A path that is listed in <code>deniedPaths</code> is then also checked against <code>allowedPaths</code>.
  * <li> A path that is listed in <code>allowedPaths</code> is checked by the
  *  corresponding {@link RequestAuthorizer} that can decide to grant/deny (identified or anonymous) access.
- * <li> A path that is not listed in <code>allowedPaths</code> is always granted anonymous access
- *  (via {@link FilterRules#authorize(String, String, List)})
+ * <li> A path that is listed in <code>deniedPaths</code> but not in <code>allowedPaths</code> is denied.
+ *  The paths of the APIs are secured as a whole, a resource below them must only be accessible
+ *  if a rule exists for it: otherwise every spelling of a URI that is not covered by the patterns
+ *  of <code>allowedPaths</code> (e.g. a path parameter in <code>/api/engine/engine;foo/default/user</code>)
+ *  would reach the resource without any check.
  *
  * @author Daniel Meyer
  * @author nico.rehwaldt
@@ -71,7 +74,8 @@ public class PathFilterRule implements SecurityFilterRule {
       }
     }
 
-    return null;
+    // secured, but not explicitly allowed
+    return Authorization.denied(Authentication.ANONYMOUS);
   }
 
   public List<RequestMatcher> getAllowedPaths() {

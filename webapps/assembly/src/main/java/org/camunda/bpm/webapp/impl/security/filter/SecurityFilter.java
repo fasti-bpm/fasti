@@ -60,8 +60,9 @@ public class SecurityFilter implements Filter {
   public void doFilterSecure(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
 
     String requestUri = getRequestUri(request);
+    String requestPath = getRequestPath(request);
 
-    Authorization authorization = authorize(request.getMethod(), requestUri, filterRules);
+    Authorization authorization = authorize(request.getMethod(), requestUri, requestPath);
 
     // attach authorization headers
     // to response
@@ -111,6 +112,37 @@ public class SecurityFilter implements Filter {
     return FilterRules.authorize(requestMethod, requestUri, filterRules);
   }
 
+  /**
+   * <p>Authorizes a request for both of its representations: the request URI
+   * as it was sent by the client and the path the container resolved it to.</p>
+   *
+   * <p>The container selects the servlet of a request by the decoded and
+   * normalized path without path parameters, whereas the request URI is the
+   * raw value of the request line. Both may differ (e.g.
+   * <code>/api/engine;foo/engine/default</code> or
+   * <code>/app/../api/engine/engine/default</code> are resolved to
+   * <code>/api/engine/engine/default</code>), so a rule that protects a
+   * resource must not be evaded by spelling its URI differently. Access is
+   * only granted if it is granted for both representations.</p>
+   *
+   * @param requestMethod the HTTP method of the request
+   * @param requestUri the request URI within the context, as sent by the client
+   * @param requestPath the path within the context, as resolved by the container
+   */
+  protected Authorization authorize(String requestMethod, String requestUri, String requestPath) {
+    Authorization authorization = authorize(requestMethod, requestUri, filterRules);
+
+    if (authorization.isGranted() && requestPath != null && !requestPath.equals(requestUri)) {
+      Authorization pathAuthorization = authorize(requestMethod, requestPath, filterRules);
+
+      if (!pathAuthorization.isGranted()) {
+        return pathAuthorization;
+      }
+    }
+
+    return authorization;
+  }
+
   protected void loadFilterRules(FilterConfig filterConfig,
                                  String applicationPath) throws ServletException {
     String configFileName = filterConfig.getInitParameter("configFile");
@@ -147,5 +179,24 @@ public class SecurityFilter implements Filter {
   protected String getRequestUri(HttpServletRequest request) {
     String contextPath = request.getContextPath();
     return request.getRequestURI().substring(contextPath.length());
+  }
+
+  /**
+   * @return the path of the request within the context as it was resolved by
+   *         the container to select the servlet, i.e. decoded, normalized
+   *         and without path parameters
+   */
+  protected String getRequestPath(HttpServletRequest request) {
+    String servletPath = request.getServletPath();
+    String pathInfo = request.getPathInfo();
+
+    StringBuilder requestPath = new StringBuilder();
+    if (servletPath != null) {
+      requestPath.append(servletPath);
+    }
+    if (pathInfo != null) {
+      requestPath.append(pathInfo);
+    }
+    return requestPath.toString();
   }
 }

@@ -25,6 +25,14 @@ public class RestApiProperty {
   @NestedConfigurationProperty
   protected FetchAndLockProperties fetchAndLock = new FetchAndLockProperties();
 
+  /**
+   * The REST API does not authenticate requests unless an authentication
+   * filter is registered. A warning is logged on startup if no such filter is
+   * found. Set to <code>false</code> to switch the warning off, e.g. if the
+   * REST API is protected by other means.
+   */
+  protected boolean authenticationWarningEnabled = true;
+
   public FetchAndLockProperties getFetchAndLock() {
     return fetchAndLock;
   }
@@ -33,10 +41,19 @@ public class RestApiProperty {
     this.fetchAndLock = fetchAndLock;
   }
 
+  public boolean isAuthenticationWarningEnabled() {
+    return authenticationWarningEnabled;
+  }
+
+  public void setAuthenticationWarningEnabled(boolean authenticationWarningEnabled) {
+    this.authenticationWarningEnabled = authenticationWarningEnabled;
+  }
+
   @Override
   public String toString() {
     return joinOn(this.getClass())
       .add("fetchAndLock='" + fetchAndLock + '\'')
+      .add("authenticationWarningEnabled='" + authenticationWarningEnabled + '\'')
       .toString();
   }
 

@@ -26,6 +26,13 @@ var instancesTemplate = require('./variable-instances-tab.html?raw');
 var inspectTemplate = require('../../../../../client/scripts/components/variables/variable-inspect-dialog');
 var uploadTemplate = require('../../../../../client/scripts/components/variables/variable-upload-dialog');
 
+// static template of the scope column; the values are bound, not concatenated
+var ACTIVITY_INSTANCE_LINK_TEMPLATE =
+  '<a ng-href="{{ activityInstanceLink.href }}" ' +
+  'title="{{ activityInstanceLink.id }}">' +
+  '{{ activityInstanceLink.name }}' +
+  '</a>';
+
 module.exports = function(ngModule) {
   ngModule.controller('VariableInstancesController', [
     '$scope',
@@ -41,7 +48,6 @@ module.exports = function(ngModule) {
     'unfixDate',
     '$translate',
     'localConf',
-    'escapeHtml',
     function(
       $scope,
       $sce,
@@ -55,8 +61,7 @@ module.exports = function(ngModule) {
       fixDate,
       unfixDate,
       $translate,
-      localConf,
-      escapeHtml
+      localConf
     ) {
       // input: processInstance, processData
       var variableInstanceData = $scope.processData.newChild($scope),
@@ -422,20 +427,28 @@ module.exports = function(ngModule) {
                     item.value = unfixDate(item.value);
                   }
 
+                  // The template of the scope column is compiled by AngularJS.
+                  // The data of the activity instance is therefore handed over
+                  // as scope variables and bound in the template; it must never
+                  // be concatenated into the template itself, otherwise an
+                  // activity name could inject markup or expressions.
+                  var scopeTemplate = '';
+                  var scopeVariables = {
+                    processData: $scope.processData
+                  };
                   // prevents the list to throw an error when the activity instance is missing
-                  var activityInstanceLink = '';
                   if (instance) {
-                    activityInstanceLink =
-                      '<a ng-href="#/process-instance/' +
-                      processInstance.id +
-                      '/runtime' +
-                      '?detailsTab=variables-tab&' +
-                      $scope.getSearchQueryForSearchType(instance.id) +
-                      '" title="' +
-                      instance.id +
-                      '">' +
-                      escapeHtml.escape(instance.name) +
-                      '</a>';
+                    scopeTemplate = ACTIVITY_INSTANCE_LINK_TEMPLATE;
+                    scopeVariables.activityInstanceLink = {
+                      href:
+                        '#/process-instance/' +
+                        processInstance.id +
+                        '/runtime' +
+                        '?detailsTab=variables-tab&' +
+                        $scope.getSearchQueryForSearchType(instance.id),
+                      id: instance.id,
+                      name: instance.name
+                    };
                   }
 
                   return {
@@ -450,10 +463,8 @@ module.exports = function(ngModule) {
                     original: item,
                     additions: {
                       scope: {
-                        html: activityInstanceLink,
-                        scopeVariables: {
-                          processData: $scope.processData
-                        }
+                        html: scopeTemplate,
+                        scopeVariables: scopeVariables
                       }
                     }
                   };

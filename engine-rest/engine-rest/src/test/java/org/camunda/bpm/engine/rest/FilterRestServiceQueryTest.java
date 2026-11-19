@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.camunda.bpm.engine.FilterService;
+import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.filter.Filter;
 import org.camunda.bpm.engine.filter.FilterQuery;
 import org.camunda.bpm.engine.impl.AbstractQuery;
@@ -217,6 +218,25 @@ public class FilterRestServiceQueryTest extends AbstractRestServiceTest {
       .body("$.size()", equalTo(2))
       .body("any { it.containsKey('itemCount') }", is(true))
       .body("[0].itemCount", equalTo(mockedFilterItemCount))
+      .body("[1].itemCount", equalTo(anotherMockedFilterItemCount))
+    .when()
+      .get(FILTER_QUERY_URL);
+  }
+
+  @Test
+  public void testFilterQueryWithItemCountOfFailingFilter() {
+    // e.g. an expression of the filter that cannot be evaluated for the current user
+    when(processEngine.getFilterService().count(eq(MockProvider.EXAMPLE_FILTER_ID)))
+      .thenThrow(new ProcessEngineException("Candidate group list is empty"));
+
+    given()
+      .queryParam("itemCount", true)
+    .then().expect()
+      .statusCode(Status.OK.getStatusCode())
+      .body("$.size()", equalTo(2))
+      .body("[0].id", equalTo(MockProvider.EXAMPLE_FILTER_ID))
+      .body("[0].containsKey('itemCount')", is(false))
+      .body("[1].id", equalTo(MockProvider.ANOTHER_EXAMPLE_FILTER_ID))
       .body("[1].itemCount", equalTo(anotherMockedFilterItemCount))
     .when()
       .get(FILTER_QUERY_URL);

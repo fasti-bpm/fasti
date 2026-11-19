@@ -20,9 +20,10 @@ import org.camunda.bpm.webapp.impl.security.filter.headersec.provider.HeaderSecu
 import org.camunda.bpm.webapp.impl.util.ServletFilterUtil;
 
 import javax.servlet.ServletContext;
+import javax.servlet.ServletRequest;
+import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class ContentSecurityPolicyProvider extends HeaderSecurityProvider {
 
@@ -44,6 +45,8 @@ public class ContentSecurityPolicyProvider extends HeaderSecurityProvider {
   public static final String VALUE_PARAM = "contentSecurityPolicyValue";
   public static final String ATTR_CSP_FILTER_NONCE = "org.camunda.bpm.csp.nonce";
   public static final Base64.Encoder ENCODER = Base64.getUrlEncoder().withoutPadding();
+
+  protected static final SecureRandom RANDOM = new SecureRandom();
 
   @Override
   public Map<String, String> initParams() {
@@ -87,16 +90,42 @@ public class ContentSecurityPolicyProvider extends HeaderSecurityProvider {
     return HEADER_NAME;
   }
 
+  /**
+   * Creates the header value with a new nonce. The nonce is not stored
+   * anywhere: use {@link #getHeaderValue(ServletRequest)} if the nonce is
+   * needed to render the response.
+   */
   @Override
   public String getHeaderValue(final ServletContext servletContext) {
-    final String nonce = generateNonce();
-    servletContext.setAttribute(ATTR_CSP_FILTER_NONCE, nonce);
-    return value.replaceAll("\\" + HEADER_NONCE_PLACEHOLDER, String.format("'nonce-%s'", nonce));
+    return createHeaderValue(generateNonce());
   }
 
+  /**
+   * Creates the header value with a new nonce. The nonce is only valid for
+   * the response of the given request and is provided as request attribute
+   * {@link #ATTR_CSP_FILTER_NONCE}. It must not be shared between requests
+   * (e.g. in the servlet context): concurrent requests would overwrite each
+   * other's nonce, so that a page is rendered with a nonce that does not
+   * match its own header, or with a nonce that was issued for another client.
+   */
+  @Override
+  public String getHeaderValue(final ServletRequest request) {
+    final String nonce = generateNonce();
+    request.setAttribute(ATTR_CSP_FILTER_NONCE, nonce);
+    return createHeaderValue(nonce);
+  }
+
+  protected String createHeaderValue(final String nonce) {
+    return value.replace(HEADER_NONCE_PLACEHOLDER, String.format("'nonce-%s'", nonce));
+  }
+
+  /**
+   * A nonce must not be guessable, it is created by a cryptographically
+   * strong random number generator.
+   */
   protected String generateNonce() {
     final byte[] bytes = new byte[20];
-    ThreadLocalRandom.current().nextBytes(bytes);
+    RANDOM.nextBytes(bytes);
     return ENCODER.encodeToString(bytes);
   }
 }

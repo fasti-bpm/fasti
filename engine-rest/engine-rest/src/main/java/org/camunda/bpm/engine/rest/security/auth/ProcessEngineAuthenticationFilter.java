@@ -75,6 +75,8 @@ public class ProcessEngineAuthenticationFilter implements Filter {
   protected static final Pattern ENGINE_REQUEST_URL_PATTERN = Pattern.compile("^" + NamedProcessEngineRestServiceImpl.PATH + "/(.*?)(/|$)");
   protected static final String DEFAULT_ENGINE_NAME = "default";
 
+  protected static final Pattern PATH_PARAMETERS_PATTERN = Pattern.compile(";[^/]*");
+
   // init params
   public static final String AUTHENTICATION_PROVIDER_PARAM = "authentication-provider";
   public static final String SERVLET_PATH_PREFIX = "rest-url-pattern-prefix";
@@ -119,6 +121,7 @@ public class ProcessEngineAuthenticationFilter implements Filter {
       servletPath = req.getServletPath();
     }
     String requestUrl = req.getRequestURI().substring(req.getContextPath().length() + servletPath.length());
+    requestUrl = removePathParameters(requestUrl);
 
     boolean requiresEngineAuthentication = requiresEngineAuthentication(requestUrl);
 
@@ -207,6 +210,19 @@ public class ProcessEngineAuthenticationFilter implements Filter {
 
   protected void clearAuthentication(ProcessEngine engine) {
     engine.getIdentityService().clearAuthentication();
+  }
+
+  /**
+   * Path parameters (<code>;name=value</code>) are not part of the path a
+   * resource is resolved by. They must be ignored here as well, otherwise
+   * the request is authenticated against another engine (the default one)
+   * than the engine it is processed by.
+   */
+  protected String removePathParameters(String requestUrl) {
+    if (requestUrl.indexOf(';') < 0) {
+      return requestUrl;
+    }
+    return PATH_PARAMETERS_PATTERN.matcher(requestUrl).replaceAll("");
   }
 
   protected boolean requiresEngineAuthentication(String requestUrl) {

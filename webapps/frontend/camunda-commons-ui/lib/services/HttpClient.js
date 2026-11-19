@@ -35,13 +35,23 @@ module.exports = [
     configuration,
     ifUnauthorizedForwardToWelcomeApp
   ) {
-    function setHeaders(options) {
+    function setHeaders(options, sendToken) {
       var headers = (options.headers = options.headers || {});
       var token = $cookies.get(configuration.getCsrfCookieName());
 
-      if (token) {
+      if (token && sendToken) {
         headers['X-XSRF-TOKEN'] = token;
       }
+    }
+
+    /**
+     * All requests address the REST API, except for `load`: it requests the
+     * given URL as it is, e.g. the URL of a form that is defined in a form
+     * key. The CSRF token belongs to the session of the web application and
+     * must not be sent to another origin.
+     */
+    function isTokenAllowed(client, name, path) {
+      return name !== 'load' || !client.isForeignOrigin(path);
     }
 
     function AngularClient(config) {
@@ -54,7 +64,8 @@ module.exports = [
         AngularClient.prototype[name] = function(path, options) {
           var myTimeout = $timeout(function() {}, 100000);
 
-          setHeaders(options);
+          options = options || {};
+          setHeaders(options, isTokenAllowed(this._wrapped, name, path));
 
           var original = angular.isFunction(options.done)
             ? options.done

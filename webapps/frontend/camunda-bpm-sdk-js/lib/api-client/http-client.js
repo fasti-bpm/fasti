@@ -52,6 +52,47 @@ var HttpClient = function(config) {
   this.config = config;
 };
 
+/**
+ * @return {String} the origin a URL points to, `undefined` if it cannot be determined
+ */
+function originOf(url, base) {
+  try {
+    var origin = new URL(url, base).origin;
+    // opaque origins (e.g. of file or data URLs) are never equal to each other
+    return origin === 'null' ? undefined : origin;
+  } catch (e) {
+    return undefined;
+  }
+}
+
+/**
+ * Tells whether a URL leaves the origins this client is configured for, i.e.
+ * the origin of the REST API (`baseUrl`) and, in a browser, the origin of the
+ * current page. A URL whose origin cannot be determined is treated as foreign.
+ *
+ * Headers that are configured for the client (for example credentials) and
+ * tokens of the current session must only be sent to the own origins.
+ *
+ * @param  {String} url  the URL of a request
+ * @return {Boolean}     true if the URL points to another origin
+ */
+HttpClient.prototype.isForeignOrigin = function(url) {
+  var pageUrl =
+    typeof window !== 'undefined' && window.location
+      ? window.location.href
+      : undefined;
+
+  var origin = originOf(url, pageUrl);
+  if (!origin) {
+    return true;
+  }
+
+  return (
+    origin !== originOf(this.config.baseUrl, pageUrl) &&
+    origin !== (pageUrl && originOf(pageUrl))
+  );
+};
+
 function end(self, done, deferred) {
   done = done || noop;
   return function(err, response) {
@@ -165,7 +206,10 @@ HttpClient.prototype.load = function(url, options) {
   var self = this;
   var deferred = Q.defer();
 
-  var headers = options.headers || this.config.headers;
+  // an arbitrary URL can be loaded (e.g. the URL of a form), the headers
+  // configured for the REST API must not be disclosed to another origin
+  var headers =
+    options.headers || (this.isForeignOrigin(url) ? {} : this.config.headers);
   var accept = options.accept || headers.Accept || this.config.headers.Accept;
 
   var req = request

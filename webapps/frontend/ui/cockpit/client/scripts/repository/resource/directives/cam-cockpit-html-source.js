@@ -19,7 +19,29 @@
 
 'use strict';
 
+var DOMPurify = require('dompurify');
+
 var template = require('./cam-cockpit-html-source.html?raw');
+
+/**
+ * The preview renders the markup of a deployed resource inside of Cockpit.
+ * A resource is arbitrary content provided by whoever is allowed to deploy,
+ * so it must not be able to run scripts or to restyle and redirect the
+ * application of the user who looks at it. Scripts, event handlers and
+ * script URLs are removed by the sanitizer; in addition style sheets, inline
+ * styles and form targets are dropped.
+ */
+var SANITIZER_CONFIG = {
+  FORBID_TAGS: ['style'],
+  FORBID_ATTR: ['style', 'action', 'formaction']
+};
+
+function sanitizePreview(source) {
+  return DOMPurify.sanitize(
+    typeof source === 'string' ? source : '',
+    SANITIZER_CONFIG
+  );
+}
 
 module.exports = [
   '$sce',
@@ -38,7 +60,7 @@ module.exports = [
       link: function($scope) {
         $scope.showHtml = configuration.getPreviewHtml();
         if ($scope.showHtml) {
-          $scope.trustedHtml = $sce.trustAsHtml($scope.source);
+          $scope.trustedHtml = $sce.trustAsHtml(sanitizePreview($scope.source));
         }
       }
     };

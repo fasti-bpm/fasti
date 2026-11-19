@@ -218,12 +218,12 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
         } else {
           // serve the index page as a setup page
           // setup will be handled by app
-          serveIndexPage(appName, engineName, applicationPath, contextPath, response, request.getServletContext());
+          serveIndexPage(appName, engineName, applicationPath, contextPath, request, response);
         }
       } else {
         if (!setupPage) {
           // correctly serving index page
-          serveIndexPage(appName, engineName, applicationPath, contextPath, response, request.getServletContext());
+          serveIndexPage(appName, engineName, applicationPath, contextPath, request, response);
         } else {
           response.sendRedirect(String.format("%s%s/app/%s/%s/", contextPath, applicationPath,
             appName, engineName));
@@ -296,16 +296,19 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
                                 String engineName,
                                 String applicationPath,
                                 String contextPath,
-                                HttpServletResponse response,
-                                ServletContext servletContext) throws IOException {
-    setWebappInTelemetry(engineName, appName, servletContext);
+                                HttpServletRequest request,
+                                HttpServletResponse response) throws IOException {
+    setWebappInTelemetry(engineName, appName, request.getServletContext());
     String data = getWebResourceContents("/app/" + appName + "/index.html");
-    final String cspNonce = (String) servletContext.getAttribute(ContentSecurityPolicyProvider.ATTR_CSP_FILTER_NONCE);
+    // the nonce that was announced in the header of this very response
+    final String cspNonce = (String) request.getAttribute(ContentSecurityPolicyProvider.ATTR_CSP_FILTER_NONCE);
 
     data = replacePlaceholder(data, appName, engineName, applicationPath, contextPath, cspNonce);
 
+    // the length is counted in UTF-8, so the writer must encode in UTF-8 too (the servlet
+    // default would be ISO-8859-1, which also contradicts the meta charset of the page)
+    response.setContentType("text/html;charset=UTF-8");
     response.setContentLength(data.getBytes(StandardCharsets.UTF_8).length);
-    response.setContentType("text/html");
 
     response.getWriter().append(data);
   }

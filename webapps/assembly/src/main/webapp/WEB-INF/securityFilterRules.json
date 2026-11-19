@@ -11,7 +11,7 @@
       { "path": "/app/admin/{engine}/.*", "methods" : "*" }
     ],
     "allowedPaths" : [
-      { "path": "/api/engine/engine/", "methods" : "GET" },
+      { "path": "/api/engine/engine/?", "methods" : "GET" },
       { "path": "/api/{app:cockpit}/plugin/{plugin}/static/.*", "methods" : "GET" },
       { "path": "/api/{app:cockpit}/plugin/{plugin}/{engine}/.*", "methods" : "*", "authorizer" : "org.camunda.bpm.webapp.impl.security.filter.EngineRequestAuthorizer" },
       { "path": "/api/engine/engine/{engine}/identity/password-policy", "methods" : "GET" },

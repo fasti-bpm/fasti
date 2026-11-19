@@ -115,29 +115,79 @@ public class ContainerBasedAuthenticationFilter implements Filter {
 
   }
 
+  /**
+   * @return the request URI relative to the application path of the web
+   *         applications, <code>null</code> if the request does not address
+   *         the web applications
+   */
   protected String getRequestUri(HttpServletRequest request) {
     String requestURI = request.getRequestURI();
     String contextPath = request.getContextPath();
 
-    int contextPathLength = contextPath.length();
-    if (contextPathLength > 0) {
-      requestURI = requestURI.substring(contextPathLength);
+    if (contextPath != null && !contextPath.isEmpty() && requestURI.startsWith(contextPath)) {
+      requestURI = requestURI.substring(contextPath.length());
     }
 
-    ServletContext servletContext = request.getServletContext();
-    String applicationPath = ServletContextUtil.getAppPath(servletContext);
-    int applicationPathLength = applicationPath.length();
-
-    if (applicationPathLength > 0) {
-      requestURI = requestURI.substring(applicationPathLength);
-    }
-
-    return requestURI;
+    return removeApplicationPath(requestURI, request);
   }
 
+  /**
+   * @return the path the container resolved the request to (decoded,
+   *         normalized, without path parameters), relative to the application
+   *         path of the web applications; <code>null</code> if the request
+   *         does not address the web applications
+   */
+  protected String getRequestPath(HttpServletRequest request) {
+    StringBuilder requestPath = new StringBuilder();
+    if (request.getServletPath() != null) {
+      requestPath.append(request.getServletPath());
+    }
+    if (request.getPathInfo() != null) {
+      requestPath.append(request.getPathInfo());
+    }
+
+    return removeApplicationPath(requestPath.toString(), request);
+  }
+
+  /**
+   * The filter can be mapped to paths that do not belong to the web
+   * applications, the application path must not be cut off blindly.
+   */
+  protected String removeApplicationPath(String path, HttpServletRequest request) {
+    ServletContext servletContext = request.getServletContext();
+    String applicationPath = ServletContextUtil.getAppPath(servletContext);
+
+    if (applicationPath.isEmpty()) {
+      return path;
+    }
+
+    if (!path.startsWith(applicationPath)) {
+      return null;
+    }
+
+    return path.substring(applicationPath.length());
+  }
+
+  /**
+   * The engine is determined from the request URI and, if it cannot be
+   * found there, from the path the container resolved the request to: the
+   * container resolves e.g. <code>/api/engine;foo/engine/default/task</code>
+   * to a resource of the engine "default" as well.
+   */
   protected String extractEngineName(HttpServletRequest request) {
-    String requestUri = getRequestUri(request);
     String requestMethod = request.getMethod();
+
+    String engineName = extractEngineName(requestMethod, getRequestUri(request));
+    if (engineName == null) {
+      engineName = extractEngineName(requestMethod, getRequestPath(request));
+    }
+    return engineName;
+  }
+
+  protected String extractEngineName(String requestMethod, String requestUri) {
+    if (requestUri == null) {
+      return null;
+    }
 
     Matcher appMatcher = APP_PATTERN.matcher(requestUri);
     if (appMatcher.matches()) {

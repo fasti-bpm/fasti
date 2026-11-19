@@ -16,6 +16,7 @@
  */
 package org.camunda.bpm.webapp.impl.security.filter;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import javax.servlet.http.HttpServletResponse;
 
@@ -27,6 +28,8 @@ import org.camunda.bpm.webapp.impl.security.auth.UserAuthentication;
  * @author nico.rehwaldt
  */
 public class Authorization {
+
+  private static final char[] HEX_DIGITS = "0123456789ABCDEF".toCharArray();
 
   private final Authentication authentication;
   private final boolean granted;
@@ -57,11 +60,11 @@ public class Authorization {
     if (authentication != null) {
       // header != null checks required for websphere compatibility
       if (authentication.getIdentityId() != null) {
-        response.addHeader("X-Authorized-User", authentication.getIdentityId());
+        response.addHeader("X-Authorized-User", encodeHeaderValue(authentication.getIdentityId()));
       }
 
       if (authentication.getProcessEngineName() != null) {
-        response.addHeader("X-Authorized-Engine", authentication.getProcessEngineName());
+        response.addHeader("X-Authorized-Engine", encodeHeaderValue(authentication.getProcessEngineName()));
       }
 
       if (authentication instanceof UserAuthentication) {
@@ -92,6 +95,51 @@ public class Authorization {
 
   public static Authorization grantedUnlessNull(Authentication authentication) {
     return authentication != null ? granted(authentication) : denied(authentication);
+  }
+
+  /**
+   * <p>Makes a value safe to be used as the value of a response header.</p>
+   *
+   * <p>A header value may only consist of printable US-ASCII characters.
+   * Identifiers (e.g. the id of a user that is managed in an external
+   * directory) are not restricted that way: characters outside of this range
+   * are garbled or rejected by the container, and line breaks would allow to
+   * add further headers to the response. All characters that are not
+   * printable US-ASCII are therefore percent-encoded with their UTF-8
+   * representation, as well as the percent sign itself, so that the original
+   * value can be restored by percent-decoding. Values that consist of
+   * printable US-ASCII characters only (except <code>%</code>) are not changed.</p>
+   *
+   * @return the encoded value
+   */
+  protected static String encodeHeaderValue(String value) {
+    StringBuilder encoded = null;
+
+    int i = 0;
+    while (i < value.length()) {
+      int codePoint = value.codePointAt(i);
+      int charCount = Character.charCount(codePoint);
+
+      if (codePoint >= 0x20 && codePoint <= 0x7E && codePoint != '%') {
+        if (encoded != null) {
+          encoded.append((char) codePoint);
+        }
+      } else {
+        if (encoded == null) {
+          encoded = new StringBuilder(value.length() + 16).append(value, 0, i);
+        }
+        byte[] bytes = value.substring(i, i + charCount).getBytes(StandardCharsets.UTF_8);
+        for (byte b : bytes) {
+          encoded.append('%')
+            .append(HEX_DIGITS[(b >> 4) & 0xF])
+            .append(HEX_DIGITS[b & 0xF]);
+        }
+      }
+
+      i += charCount;
+    }
+
+    return encoded == null ? value : encoded.toString();
   }
 
   private static String join(String delimiter, Collection<?> collection) {

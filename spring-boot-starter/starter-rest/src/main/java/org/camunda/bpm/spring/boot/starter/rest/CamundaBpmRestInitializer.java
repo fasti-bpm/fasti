@@ -18,6 +18,7 @@ package org.camunda.bpm.spring.boot.starter.rest;
 
 import org.camunda.bpm.engine.rest.filter.CacheControlFilter;
 import org.camunda.bpm.engine.rest.filter.EmptyBodyFilter;
+import org.camunda.bpm.engine.rest.security.auth.RestApiAuthenticationCheck;
 import org.camunda.bpm.spring.boot.starter.property.CamundaBpmProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +60,10 @@ public class CamundaBpmRestInitializer implements ServletContextInitializer {
     this.servletContext = servletContext;
 
     properties.getRestApi().getFetchAndLock().getInitParams().forEach(servletContext::setInitParameter);
+
+    if (!properties.getRestApi().isAuthenticationWarningEnabled()) {
+      servletContext.setInitParameter(RestApiAuthenticationCheck.WARNING_ENABLED_PARAM, String.valueOf(false));
+    }
 
     String restApiPathPattern = applicationPath.getUrlMapping();
 

@@ -26,8 +26,10 @@ public final class CookieConstants {
   public static final String SET_COOKIE_HEADER_NAME = "Set-Cookie";
 
   public static final String SAME_SITE_FIELD_NAME = ";SameSite=";
-  public static final Pattern SAME_SITE_FIELD_NAME_REGEX = Pattern.compile(";\\w*SameSite\\w*=");
+  // whitespace, not word characters: containers write "; SameSite=Strict"; a missed match
+  // appended a second, conflicting SameSite attribute
+  public static final Pattern SAME_SITE_FIELD_NAME_REGEX = Pattern.compile(";\\s*SameSite\\s*=", Pattern.CASE_INSENSITIVE);
 
   public static final String SECURE_FLAG_NAME = ";Secure";
-  public static final Pattern SECURE_FLAG_NAME_REGEX = Pattern.compile(";\\w*Secure");
+  public static final Pattern SECURE_FLAG_NAME_REGEX = Pattern.compile(";\\s*Secure", Pattern.CASE_INSENSITIVE);
 }

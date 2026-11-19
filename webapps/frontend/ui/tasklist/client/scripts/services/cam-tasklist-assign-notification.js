@@ -49,9 +49,11 @@ module.exports = [
         if (data._embedded.task.length > 0) {
           var msg = '';
           for (var task, i = 0; (task = data._embedded.task[i]); i++) {
+            // the message is rendered as markup: neither the id nor the
+            // name of a task may break out of the link
             msg +=
               '<a href="#/?forceDisplayTask=true&task=' +
-              task.id +
+              escapeHtml(encodeURIComponent(task.id)) +
               '">' +
               escapeHtml(task.name || task.taskDefinitionKey) +
               '</a>, ';

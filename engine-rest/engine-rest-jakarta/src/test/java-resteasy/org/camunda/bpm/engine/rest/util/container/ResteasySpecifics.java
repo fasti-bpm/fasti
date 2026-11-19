@@ -26,6 +26,7 @@ import org.camunda.bpm.engine.rest.CustomJacksonDateFormatTest;
 import org.camunda.bpm.engine.rest.ExceptionHandlerTest;
 import org.camunda.bpm.engine.rest.application.TestCustomResourceApplication;
 import org.camunda.bpm.engine.rest.security.auth.ProcessEngineAuthenticationFilter;
+import org.camunda.bpm.engine.rest.standalone.FetchAndLockAuthenticationFilterTest;
 import org.camunda.bpm.engine.rest.standalone.NoServletAuthenticationFilterTest;
 import org.camunda.bpm.engine.rest.standalone.NoServletEmptyBodyFilterTest;
 import org.camunda.bpm.engine.rest.standalone.ServletAuthenticationFilterTest;
@@ -62,6 +63,25 @@ public class ResteasySpecifics implements ContainerSpecifics {
                     "org.camunda.bpm.engine.rest.security.auth.impl.HttpBasicAuthenticationProvider"))
             .addFilterUrlMapping("camunda-auth", "/*", DispatcherType.REQUEST)
             .addServlet(Servlets.servlet("camunda-app", HttpServletDispatcher.class)
+                .addMapping("/*")
+                .addInitParam("jakarta.ws.rs.Application",
+                    "org.camunda.bpm.engine.rest.util.container.JaxrsApplication"))));
+
+    // long polling requires the filter and the servlet to support asynchronous processing
+    TEST_RULE_FACTORIES.put(FetchAndLockAuthenticationFilterTest.class, new UndertowServletContainerRuleFactory(
+        Servlets.deployment()
+            .setDeploymentName("rest-test.war")
+            .setContextPath("/rest-test/rest")
+            .setClassLoader(ResteasyUndertowServerBootstrap.class.getClassLoader())
+            .addListener(Servlets.listener(ResteasyBootstrap.class))
+            .addListener(Servlets.listener(org.camunda.bpm.engine.rest.impl.FetchAndLockContextListener.class))
+            .addFilter(Servlets.filter("camunda-auth", ProcessEngineAuthenticationFilter.class)
+                .setAsyncSupported(true)
+                .addInitParam("authentication-provider",
+                    "org.camunda.bpm.engine.rest.security.auth.impl.HttpBasicAuthenticationProvider"))
+            .addFilterUrlMapping("camunda-auth", "/*", DispatcherType.REQUEST)
+            .addServlet(Servlets.servlet("camunda-app", HttpServletDispatcher.class)
+                .setAsyncSupported(true)
                 .addMapping("/*")
                 .addInitParam("jakarta.ws.rs.Application",
                     "org.camunda.bpm.engine.rest.util.container.JaxrsApplication"))));

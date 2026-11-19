@@ -24,6 +24,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -32,6 +34,7 @@ import javax.ws.rs.core.UriInfo;
 import org.camunda.bpm.engine.EntityTypes;
 import org.camunda.bpm.engine.FilterService;
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.exception.NotValidException;
 import org.camunda.bpm.engine.filter.Filter;
 import org.camunda.bpm.engine.filter.FilterQuery;
@@ -50,6 +53,8 @@ import org.camunda.bpm.engine.rest.util.QueryUtil;
  * @author Sebastian Menski
  */
 public class FilterRestServiceImpl extends AbstractAuthorizedRestResource implements FilterRestService {
+
+  private static final Logger LOG = Logger.getLogger(FilterRestServiceImpl.class.getName());
 
   public FilterRestServiceImpl(String engineName, ObjectMapper objectMapper) {
     super(engineName, FILTER, ANY, objectMapper);
@@ -71,12 +76,29 @@ public class FilterRestServiceImpl extends AbstractAuthorizedRestResource implem
     for (Filter filter : matchingFilters) {
       FilterDto dto = FilterDto.fromFilter(filter);
       if (itemCount != null && itemCount) {
-        dto.setItemCount(filterService.count(filter.getId()));
+        dto.setItemCount(countItems(filterService, filter));
       }
       filters.add(dto);
     }
 
     return filters;
+  }
+
+  /**
+   * The number of items of a filter, or <code>null</code> (no <code>itemCount</code>
+   * in the result) if its query cannot be executed, e.g. because of an invalid
+   * expression: one broken filter must not fail the list of all filters.
+   */
+  protected Long countItems(FilterService filterService, Filter filter) {
+    try {
+      return filterService.count(filter.getId());
+    } catch (ProcessEngineException e) {
+      if (LOG.isLoggable(Level.WARNING)) {
+        LOG.warning("Cannot count the items of filter '" + filter.getId()
+            + "', the item count is omitted: " + e.getMessage());
+      }
+      return null;
+    }
   }
 
   @Override

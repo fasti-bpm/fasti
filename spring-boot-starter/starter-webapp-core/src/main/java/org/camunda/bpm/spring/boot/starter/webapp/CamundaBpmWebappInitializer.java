@@ -100,6 +100,26 @@ public class CamundaBpmWebappInitializer implements ServletContextInitializer {
         applicationPath + "/app/admin",
         applicationPath + "/app/tasklist",
         applicationPath + "/app/welcome");
+
+    // Filters are invoked in the order of their registration. The filters
+    // that set the security headers and the attributes of the session cookie
+    // must come before the authentication, security and CSRF prevention
+    // filters: these answer rejected requests themselves, so that headers and
+    // cookie attributes set behind them would be missing on such responses.
+    // The security headers are also set on the static resources of the web
+    // applications that are not located below /app.
+    Map<String, String> headerSecurityProperties = webapp
+      .getHeaderSecurity()
+      .getInitParams();
+
+    registerFilter("HttpHeaderSecurity", HttpHeaderSecurityFilter.class,
+        headerSecurityProperties,
+        applicationPath + "/api/*", applicationPath + "/app/*",
+        applicationPath + "/lib/*", applicationPath + "/assets/*");
+    registerFilter("SessionCookieFilter", SessionCookieFilter.class,
+        webapp.getSessionCookie().getInitParams(),
+        applicationPath + "/api/*", applicationPath + "/app/*");
+
     registerFilter("Authentication Filter", AuthenticationFilter.class,
         Collections.singletonMap("cacheTimeToLive", getAuthCacheTTL(webapp)),
         applicationPath + "/api/*", applicationPath + "/app/*");
@@ -108,17 +128,6 @@ public class CamundaBpmWebappInitializer implements ServletContextInitializer {
         applicationPath + "/api/*", applicationPath + "/app/*");
     registerFilter("CsrfPreventionFilter", CsrfPreventionFilter.class,
         webapp.getCsrf().getInitParams(),
-        applicationPath + "/api/*", applicationPath + "/app/*");
-    registerFilter("SessionCookieFilter", SessionCookieFilter.class,
-        webapp.getSessionCookie().getInitParams(),
-        applicationPath + "/api/*", applicationPath + "/app/*");
-
-    Map<String, String> headerSecurityProperties = webapp
-      .getHeaderSecurity()
-      .getInitParams();
-
-    registerFilter("HttpHeaderSecurity", HttpHeaderSecurityFilter.class,
-        headerSecurityProperties,
         applicationPath + "/api/*", applicationPath + "/app/*");
 
     registerFilter("Engines Filter", LazyProcessEnginesFilter.class,

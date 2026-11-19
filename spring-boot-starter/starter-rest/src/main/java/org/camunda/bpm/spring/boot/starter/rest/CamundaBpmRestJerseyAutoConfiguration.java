@@ -42,6 +42,11 @@ public class CamundaBpmRestJerseyAutoConfiguration {
   }
 
   @Bean
+  public RestApiAuthenticationWarning restApiAuthenticationWarning() {
+    return new RestApiAuthenticationWarning();
+  }
+
+  @Bean
   public CamundaBpmRestInitializer camundaBpmRestInitializer(JerseyApplicationPath applicationPath, CamundaBpmProperties props) {
     return new CamundaBpmRestInitializer(applicationPath, props);
   }

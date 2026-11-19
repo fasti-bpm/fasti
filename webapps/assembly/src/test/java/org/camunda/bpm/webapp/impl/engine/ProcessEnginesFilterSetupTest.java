@@ -27,8 +27,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.camunda.bpm.cockpit.Cockpit;
@@ -113,7 +113,7 @@ public class ProcessEnginesFilterSetupTest {
     filter = new ProcessEnginesFilter() {
       @Override
       protected void serveIndexPage(String appName, String engineName, String applicationPath, String contextPath,
-          HttpServletResponse response, ServletContext servletContext) throws IOException {
+          HttpServletRequest request, HttpServletResponse response) throws IOException {
         // the web resources are not available in this test
         servedIndexPages.add(appName);
       }

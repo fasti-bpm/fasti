@@ -179,5 +179,35 @@ public class SessionCookieTest {
     // then
     assertThat(headerRule.getCookieHeader()).matches(headerRule.getSessionCookieRegex("camunda", "Lax", false));
   }
-  
+
+  @Test
+  public void shouldConfigureCookieOfResponseWithoutBody() {
+    // given
+    headerRule.startServer("no_body_web.xml", "session");
+
+    // when
+    headerRule.performRequestWithHeader(null, null, "/session-test/no-body", null);
+
+    // then
+    assertThat(headerRule.getResponseCode()).isEqualTo(204);
+    assertThat(headerRule.getCookieHeaders())
+      .isNotEmpty()
+      .allMatch(cookie -> cookie.matches(headerRule.getSessionCookieRegex("camunda", "Lax", true)));
+  }
+
+  @Test
+  public void shouldConfigureCookieOfChangedSessionId() {
+    // given
+    headerRule.startServer("no_body_web.xml", "session");
+
+    // when
+    headerRule.performRequestWithHeader(null, null, "/session-test/new-session-id", null);
+
+    // then
+    assertThat(headerRule.getResponseCode()).isEqualTo(204);
+    assertThat(headerRule.getCookieHeaders())
+      .isNotEmpty()
+      .allMatch(cookie -> cookie.matches(headerRule.getSessionCookieRegex("camunda", "Lax", true)));
+  }
+
 }

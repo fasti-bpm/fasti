@@ -19,6 +19,7 @@ package org.camunda.bpm.engine.rest.impl.web.bootstrap;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import org.camunda.bpm.engine.rest.security.auth.RestApiAuthenticationCheck;
 import org.camunda.bpm.engine.rest.util.WebApplicationUtil;
 
 public class RestContainerBootstrap implements ServletContextListener {
@@ -26,6 +27,9 @@ public class RestContainerBootstrap implements ServletContextListener {
   @Override
   public void contextInitialized(ServletContextEvent sce) {
     WebApplicationUtil.setApplicationServer(sce.getServletContext().getServerInfo());
+
+    // the filters of the deployment descriptor are known at this point
+    RestApiAuthenticationCheck.warnIfUnauthenticated(sce.getServletContext());
   }
 
   @Override

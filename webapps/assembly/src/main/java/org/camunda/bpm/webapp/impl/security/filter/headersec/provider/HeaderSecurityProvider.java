@@ -17,6 +17,7 @@
 package org.camunda.bpm.webapp.impl.security.filter.headersec.provider;
 
 import javax.servlet.ServletContext;
+import javax.servlet.ServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +38,15 @@ public abstract class HeaderSecurityProvider {
 
   public String getHeaderValue(final ServletContext servletContext) {
     return value;
+  }
+
+  /**
+   * @param request the request the header is set for; a provider may store
+   *          data that belongs to the header value as request attribute
+   * @return the value of the header for the response of the given request
+   */
+  public String getHeaderValue(final ServletRequest request) {
+    return getHeaderValue(request.getServletContext());
   }
 
   public void setValue(String value) {

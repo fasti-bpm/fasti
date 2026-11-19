@@ -24,6 +24,7 @@ import javax.ws.rs.core.Application;
 import org.camunda.bpm.engine.rest.CustomJacksonDateFormatTest;
 import org.camunda.bpm.engine.rest.ExceptionHandlerTest;
 import org.camunda.bpm.engine.rest.application.TestCustomResourceApplication;
+import org.camunda.bpm.engine.rest.standalone.FetchAndLockAuthenticationFilterTest;
 import org.camunda.bpm.engine.rest.standalone.NoServletAuthenticationFilterTest;
 import org.camunda.bpm.engine.rest.standalone.NoServletEmptyBodyFilterTest;
 import org.camunda.bpm.engine.rest.standalone.ServletAuthenticationFilterTest;
@@ -49,6 +50,7 @@ public class ResteasySpecifics implements ContainerSpecifics {
     TEST_RULE_FACTORIES.put(ExceptionHandlerTest.class, new EmbeddedServerRuleFactory(new TestCustomResourceApplication()));
     TEST_RULE_FACTORIES.put(ServletAuthenticationFilterTest.class, new ServletContainerRuleFactory("auth-filter-servlet-web.xml"));
     TEST_RULE_FACTORIES.put(NoServletAuthenticationFilterTest.class, new ServletContainerRuleFactory("auth-filter-no-servlet-web.xml"));
+    TEST_RULE_FACTORIES.put(FetchAndLockAuthenticationFilterTest.class, new ServletContainerRuleFactory("fetch-and-lock-auth-filter-web.xml"));
     TEST_RULE_FACTORIES.put(ServletEmptyBodyFilterTest.class, new ServletContainerRuleFactory("empty-body-filter-servlet-web.xml"));
     TEST_RULE_FACTORIES.put(NoServletEmptyBodyFilterTest.class, new ServletContainerRuleFactory("empty-body-filter-no-servlet-web.xml"));
     TEST_RULE_FACTORIES.put(CustomJacksonDateFormatTest.class, new ServletContainerRuleFactory("custom-date-format-web.xml"));

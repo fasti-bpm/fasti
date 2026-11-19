@@ -40,6 +40,25 @@
     </cookie-config>
   </session-config>
 
+  <!--
+    The following filters come first on purpose: filters are invoked in the
+    order of their mappings, and the authentication, security and CSRF
+    prevention filters answer rejected requests themselves. Headers and cookie
+    attributes that are set by filters behind them would be missing on these
+    responses.
+  -->
+  <!-- HTTP Header Security Filter -->
+  <filter>
+    <filter-name>HttpHeaderSecurity</filter-name>
+    <filter-class>org.camunda.bpm.webapp.impl.security.filter.headersec.HttpHeaderSecurityFilter</filter-class>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>HttpHeaderSecurity</filter-name>
+    <url-pattern>/*</url-pattern>
+    <dispatcher>REQUEST</dispatcher>
+  </filter-mapping>
+
   <!-- Container Based Authentication filter -->
   <!-- <filter>
     <filter-name>Container Based Authentication Filter</filter-name>
@@ -98,18 +117,6 @@
   <filter-mapping>
     <filter-name>CsrfPreventionFilter</filter-name>
     <url-pattern>/*</url-pattern>
-  </filter-mapping>
-
-  <!-- HTTP Header Security Filter -->
-  <filter>
-    <filter-name>HttpHeaderSecurity</filter-name>
-    <filter-class>org.camunda.bpm.webapp.impl.security.filter.headersec.HttpHeaderSecurityFilter</filter-class>
-  </filter>
-
-  <filter-mapping>
-    <filter-name>HttpHeaderSecurity</filter-name>
-    <url-pattern>/*</url-pattern>
-    <dispatcher>REQUEST</dispatcher>
   </filter-mapping>
 
   <!-- engines filter -->

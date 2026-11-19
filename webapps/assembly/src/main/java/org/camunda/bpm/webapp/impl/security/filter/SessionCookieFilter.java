@@ -46,10 +46,29 @@ public class SessionCookieFilter implements Filter {
   public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
       throws IOException, ServletException {
     if ((servletRequest instanceof HttpServletRequest) && (servletResponse instanceof HttpServletResponse)) {
+      HttpServletResponse response = (HttpServletResponse) servletResponse;
+      SameSiteResponseProxy responseProxy = new SameSiteResponseProxy(response);
+
       // create a session if none exists yet
       ((HttpServletRequest) servletRequest).getSession();
-      // execute filter chain with a response wrapper that handles sameSite attributes
-      filterChain.doFilter(servletRequest, new SameSiteResponseProxy((HttpServletResponse) servletResponse));
+      // the cookie of a new session is configured right away, it is then
+      // complete no matter how the response is committed later on
+      responseProxy.appendSameSiteIfMissing();
+
+      try {
+        // execute filter chain with a response wrapper that handles sameSite attributes
+        filterChain.doFilter(servletRequest, responseProxy);
+      } finally {
+        // the session cookie may have been set again while the request was
+        // processed (e.g. the session id changes on login) and the response
+        // may be committed without any of the intercepted methods being
+        // called (e.g. a response without a body)
+        if (!servletRequest.isAsyncStarted() && !response.isCommitted()) {
+          responseProxy.appendSameSiteIfMissing();
+        }
+      }
+    } else {
+      filterChain.doFilter(servletRequest, servletResponse);
     }
   }
 
@@ -82,6 +101,12 @@ public class SessionCookieFilter implements Filter {
     public void sendRedirect(String location) throws IOException {
       appendSameSiteIfMissing();
       super.sendRedirect(location);
+    }
+
+    @Override
+    public void flushBuffer() throws IOException {
+      appendSameSiteIfMissing();
+      super.flushBuffer();
     }
 
     @Override

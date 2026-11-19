@@ -45,7 +45,8 @@
         desc = "
                 The number of items matched by the filter itself. Note: Only exists
                 if the query parameter
-                `itemCount` was set to `true`"
+                `itemCount` was set to `true` and the query of the filter could be
+                executed"
         last = true
     />
     

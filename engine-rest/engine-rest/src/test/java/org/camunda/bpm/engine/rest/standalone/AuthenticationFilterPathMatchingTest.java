@@ -114,7 +114,15 @@ public class AuthenticationFilterPathMatchingTest extends AbstractRestServiceTes
         {"", "/engine/", null, false},
         {"", "/", "default", true},
         {"", "", "default", true},
-        {"/someservlet", "/engine/someengine/process-definition", "someengine", true}
+        {"/someservlet", "/engine/someengine/process-definition", "someengine", true},
+        // path parameters are not part of the path a resource is resolved by
+        {"", "/engine;foo=bar/someOtherEngine/process-definition", "someOtherEngine", true},
+        {"", "/engine/someOtherEngine;foo=bar/process-definition", "someOtherEngine", true},
+        {"", "/engine/someOtherEngine;foo=bar", "someOtherEngine", true},
+        {"", "/engine;foo=bar/default/", "default", true},
+        {"", "/engine;foo=bar", null, false},
+        {"", "/engine;foo=bar/", null, false},
+        {"", "/engine/;foo=bar", null, false}
     });
   }
 

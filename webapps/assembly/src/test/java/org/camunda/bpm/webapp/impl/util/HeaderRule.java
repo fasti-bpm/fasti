@@ -21,6 +21,8 @@ import java.net.BindException;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.junit.rules.ExternalResource;
@@ -131,6 +133,11 @@ public class HeaderRule extends ExternalResource {
 
   public String getCookieHeader() {
     return connection.getHeaderField("Set-Cookie");
+  }
+
+  public List<String> getCookieHeaders() {
+    List<String> cookieHeaders = connection.getHeaderFields().get("Set-Cookie");
+    return cookieHeaders == null ? Collections.<String> emptyList() : cookieHeaders;
   }
 
   public Throwable getException() {

@@ -345,7 +345,7 @@ public class SecurityFilterRulesTest {
   }
 
   @Test
-  public void shouldPassAdminApi_GET_LOGGED_IN() throws Exception {
+  public void shouldRejectUnknownAdminApi_GET_LOGGED_IN() throws Exception {
 
     authenticatedForApp("default", "admin", new Runnable() {
 
@@ -354,7 +354,7 @@ public class SecurityFilterRulesTest {
         Authorization authorization =
           getAuthorization("GET", applicationPath + "/api/admin/foo/");
 
-        assertThat(authorization.isGranted()).isTrue();
+        assertThat(authorization.isGranted()).isFalse();
         assertThat(authorization.isAuthenticated()).isFalse();
       }
     });
@@ -401,17 +401,18 @@ public class SecurityFilterRulesTest {
   }
 
   @Test
-  public void shouldPassAdminApiPlugin_GET_LOGGED_IN() throws Exception {
+  public void shouldRejectAdminApiPluginWithoutResource_GET_LOGGED_IN() throws Exception {
 
     authenticatedForApp("default", "admin", new Runnable() {
 
       @Override
       public void run() {
+        // no rule exists for the path of a plugin without a resource
         Authorization authorization =
           getAuthorization("GET",
             applicationPath + "/api/admin/plugin/adminPlugins/some-engine");
 
-        assertThat(authorization.isGranted()).isTrue();
+        assertThat(authorization.isGranted()).isFalse();
         assertThat(authorization.isAuthenticated()).isFalse();
       }
     });
@@ -478,6 +479,53 @@ public class SecurityFilterRulesTest {
 
     assertThat(authorization.isGranted()).isTrue();
     assertThat(authorization.isAuthenticated()).isFalse();
+  }
+
+  @Test
+  public void shouldPassEngineNames_GET_LOGGED_OUT() {
+    assertThat(isAuthorized("GET", applicationPath + "/api/engine/engine/")).isTrue();
+    assertThat(isAuthorized("GET", applicationPath + "/api/engine/engine")).isTrue();
+  }
+
+  @Test
+  public void shouldRejectEngineNames_POST_LOGGED_OUT() {
+    assertThat(isAuthorized("POST", applicationPath + "/api/engine/engine/")).isFalse();
+    assertThat(isAuthorized("POST", applicationPath + "/api/engine/engine")).isFalse();
+  }
+
+  @Test
+  public void shouldRejectEngineApiWithPathParameters_LOGGED_OUT() {
+    // a path parameter is not part of the path the resource is resolved by
+    assertThat(isAuthorized("GET", applicationPath + "/api/engine/engine;foo=bar/default/user")).isFalse();
+    assertThat(isAuthorized("GET", applicationPath + "/api/engine/engine;/default/user")).isFalse();
+    assertThat(isAuthorized("POST", applicationPath + "/api/engine/engine;foo/default/user/create")).isFalse();
+  }
+
+  @Test
+  public void shouldRejectUnknownPathOfSecuredApi_LOGGED_OUT() {
+    // a secured path that is not explicitly allowed must not be accessible
+    assertThat(isAuthorized("GET", applicationPath + "/api/engine/foo")).isFalse();
+    assertThat(isAuthorized("GET", applicationPath + "/api/engine/engine/default")).isFalse();
+    assertThat(isAuthorized("GET", applicationPath + "/api/engine/engine//default/user")).isFalse();
+    assertThat(isAuthorized("GET", applicationPath + "/api/cockpit/foo")).isFalse();
+    assertThat(isAuthorized("GET", applicationPath + "/api/cockpit/plugin;foo/base/default/process-instance")).isFalse();
+    assertThat(isAuthorized("GET", applicationPath + "/api/tasklist/foo")).isFalse();
+    assertThat(isAuthorized("GET", applicationPath + "/api/admin/foo/")).isFalse();
+    assertThat(isAuthorized("POST", applicationPath + "/api/admin/setup;foo/default/user/create")).isFalse();
+  }
+
+  @Test
+  public void shouldRejectUnknownPathOfSecuredApi_LOGGED_IN() {
+    authenticatedForApp("default", "admin", new Runnable() {
+
+      @Override
+      public void run() {
+        Authorization authorization =
+          getAuthorization("GET", applicationPath + "/api/engine/engine;foo=bar/default/user");
+
+        assertThat(authorization.isGranted()).isFalse();
+      }
+    });
   }
 
   protected Authorization getAuthorization(String method, String uri) {

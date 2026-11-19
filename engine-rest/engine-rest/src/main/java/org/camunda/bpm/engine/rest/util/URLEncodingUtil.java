@@ -40,8 +40,37 @@ public class URLEncodingUtil {
     return null;
   }
 
+  /**
+   * Creates the value of a <code>Content-Disposition</code> header for a
+   * download. The file name is provided twice: percent-encoded
+   * (<code>filename*</code>), which is the form clients prefer, and as quoted
+   * string for clients that only understand the plain parameter.
+   */
   public static String buildAttachmentValue(String attachmentFileName) {
-    return format("attachment; filename=\"{0}\"; filename*=UTF-8''''{1}", attachmentFileName, encode(attachmentFileName));
+    return format("attachment; filename=\"{0}\"; filename*=UTF-8''''{1}", toQuotedString(attachmentFileName), encode(attachmentFileName));
+  }
+
+  /**
+   * A file name is arbitrary text (e.g. the name of a file variable). Within
+   * the quoted string of a header it must neither end the string nor the
+   * header: quotes, backslashes and every character that is not printable
+   * US-ASCII (which includes line breaks) are replaced.
+   */
+  protected static String toQuotedString(String value) {
+    if (value == null) {
+      return null;
+    }
+
+    StringBuilder quotedString = new StringBuilder(value.length());
+    for (int i = 0; i < value.length(); i++) {
+      char c = value.charAt(i);
+      if (c < 0x20 || c > 0x7E || c == '"' || c == '\\') {
+        quotedString.append('_');
+      } else {
+        quotedString.append(c);
+      }
+    }
+    return quotedString.toString();
   }
 
 }

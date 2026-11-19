@@ -1,0 +1,99 @@
+# Configuration of the Fasti BPM container image.
+#
+# The entrypoint (docker-entrypoint.sh) passes the database settings and the FASTI_* options as
+# Spring Boot properties, which override this file. Further YAML files can be mounted and named
+# in FASTI_CONFIG; environment variables in Spring Boot notation (for example
+# CAMUNDA_BPM_RUN_AUTH_ENABLED=true) work as well.
+#
+# The defaults here are chosen for connecting to a database that an existing installation
+# already uses: nothing in it is created or changed unless asked for.
+
+camunda.bpm:
+  # secure by default (unlike Camunda Run): the REST API requires authentication and
+  # authorization checks are on. Users, groups and authorizations come from the database, so an
+  # existing Camunda 7 database keeps its logins. FASTI_INSECURE_DEMO=true is the only switch
+  # back to the open demo mode (see README).
+  authorization:
+    enabled: true
+  database:
+    # never create or change tables of an existing database by default; the entrypoint switches
+    # this on for the built-in H2 demo database or if FASTI_DB_SCHEMA_UPDATE=true
+    schema-update: false
+  # take the history level stored in the database; a new database gets FULL, like Run
+  history-level: auto
+  history-level-default: full
+  job-execution:
+    enabled: true
+    # false, like Run and the former official container image: this node executes the jobs of
+    # every deployment. Set FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE=true (or disable the job
+    # executor) when other nodes run process applications whose classes this node lacks.
+    deployment-aware: false
+  run:
+    auth:
+      enabled: true
+    # cross-origin REST calls from browsers are off; FASTI_CORS_ALLOWED_ORIGINS enables them
+    # ("*" restores what Run's default.yml and the former image allowed)
+    cors:
+      enabled: false
+    deployment:
+      deploy-changed-only: true
+    example:
+      enabled: false
+  webapp:
+    # no anonymous "create the first administrator" page: an empty database is bootstrapped
+    # with FASTI_ADMIN_USER/FASTI_ADMIN_PASSWORD; FASTI_INITIAL_SETUP=true brings the page back
+    initial-setup-enabled: false
+    csrf:
+      enable-same-site-cookie: true
+      same-site-cookie-option: LAX
+
+# refuse to start if the effective configuration (any file, variable or argument) turns REST
+# authentication or authorization off; only FASTI_INSECURE_DEMO=true lifts this
+fasti:
+  security:
+    enforce-auth: true
+  # the image serves only the new web UI (/fasti/app/next/). The classic Cockpit, Tasklist,
+  # Admin and Welcome are built on AngularJS 1.8.2 and Bootstrap 3, both end of life: their
+  # pages redirect to the new web UI and their files are not served. FASTI_CLASSIC_WEBAPPS=true
+  # brings them back (deprecated, logged as a warning).
+  webapp:
+    classic:
+      enabled: false
+
+# health, liveness and readiness below /actuator/health for HEALTHCHECK, Kubernetes probes and
+# load balancers; nothing else of the actuator is exposed
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        readiness:
+          include: readinessState,db,processEngine
+
+server:
+  port: 8080
+  # gzip for the web UI (scripts, styles, pages) and JSON answers of the REST API above 2 KB;
+  # set server.compression.enabled=false when a reverse proxy already compresses
+  compression:
+    enabled: true
+    min-response-size: 2KB
+    mime-types: text/html,text/css,text/javascript,application/javascript,image/svg+xml,application/json,application/hal+json
+  shutdown: graceful
+  forward-headers-strategy: native
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  web.resources:
+    static-locations: NULL
+
+logging:
+  # everything goes to stdout; the container runtime collects it
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p [%t] %logger{40} : %m%n"

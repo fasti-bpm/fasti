@@ -1,0 +1,31 @@
+# Production settings of the container image, applied on top of docker.yml with the argument
+# --production. They follow the production.yml of Run, without what does not fit a container:
+# TLS is terminated by the proxy or load balancer in front (or configured explicitly), logs go
+# to stdout and the datasource comes from DB_* / SPRING_DATASOURCE_*.
+
+camunda.bpm:
+  authorization.enabled: true
+  generic-properties.properties:
+    deserialization-type-validation-enabled: true
+    deserialization-allowed-packages:
+    deserialization-allowed-classes:
+    enable-password-policy: true
+  run:
+    auth.enabled: true
+    rest.disable-wadl: true
+    cors.enabled: false
+  webapp:
+    csrf:
+      enable-same-site-cookie: true
+      same-site-cookie-option: STRICT
+    header-security:
+      hsts-disabled: false
+
+server:
+  servlet.session.cookie:
+    secure: true
+    http-only: true
+    # the session cookie itself (the csrf settings above only cover the XSRF cookie). With
+    # --oauth2 the entrypoint lowers this to lax: the IdP redirects back cross-site and the
+    # login state lives in the session.
+    same-site: strict

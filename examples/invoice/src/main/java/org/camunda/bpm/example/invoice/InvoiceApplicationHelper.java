@@ -168,8 +168,10 @@ public class InvoiceApplicationHelper {
         calendar.add(Calendar.DAY_OF_MONTH, 5);
         ClockUtil.setCurrentTime(calendar.getTime());
 
-        processEngine.getIdentityService().setAuthenticatedUserId("mary");
+        // the task is looked up before acting as mary: with authorization checks on, a user
+        // without groups would not find it; the comment is written as mary
         Task task = processEngine.getTaskService().createTaskQuery().processInstanceId(pi.getId()).singleResult();
+        processEngine.getIdentityService().setAuthentication("mary", Arrays.asList(Groups.CAMUNDA_ADMIN));
         processEngine.getTaskService().createComment(task.getId(), pi.getId(), "I cannot approve this invoice: the amount is missing.\n\n Could you please provide the amount?");
         processEngine.getTaskService().complete(task.getId(), createVariables().putValue("approved", false));
       }

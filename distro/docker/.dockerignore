@@ -1,0 +1,7 @@
+*
+!fasti-bpm-run.tar.gz
+!drivers/
+!Dockerfile
+!docker-entrypoint.sh
+!fasti-docker.yml
+!fasti-docker-production.yml

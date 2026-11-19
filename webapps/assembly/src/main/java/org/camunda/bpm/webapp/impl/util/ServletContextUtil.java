@@ -55,6 +55,9 @@ public class ServletContextUtil {
   protected static final String FORMS_ORIGIN_ATTR_NAME =
     "dev.fasti.webapp.forms.origin";
 
+  protected static final String CLASSIC_WEBAPPS_ATTR_NAME =
+    "dev.fasti.webapp.classic.enabled";
+
   /**
    * Consumed by Camunda Platform CE & EE Webapp:
    * Retrieves the application path from Spring Boot's servlet context.
@@ -197,6 +200,22 @@ public class ServletContextUtil {
       return null;
     }
     return (String) servletContext.getAttribute(FORMS_ORIGIN_ATTR_NAME);
+  }
+
+  /**
+   * Sets whether the classic web applications (Cockpit, Tasklist, Admin and
+   * Welcome) are served. The new web UI hides its links to them if not.
+   */
+  public static void setClassicWebappsEnabled(boolean enabled, ServletContext servletContext) {
+    servletContext.setAttribute(CLASSIC_WEBAPPS_ATTR_NAME, enabled);
+  }
+
+  /**
+   * @return whether the classic web applications are served; <code>true</code>
+   *         if nothing has been configured for the given servlet context
+   */
+  public static boolean isClassicWebappsEnabled(ServletContext servletContext) {
+    return !Boolean.FALSE.equals(servletContext.getAttribute(CLASSIC_WEBAPPS_ATTR_NAME));
   }
 
 }

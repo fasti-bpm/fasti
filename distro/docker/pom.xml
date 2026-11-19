@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>dev.fasti.platform.run</groupId>
+    <artifactId>fasti-bpm-run-root</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <relativePath>../run</relativePath>
+  </parent>
+
+  <artifactId>fasti-bpm-docker</artifactId>
+  <name>Fasti BPM Platform - Container image build context</name>
+  <packaging>pom</packaging>
+
+  <description>
+    Prepares target/docker, the build context of the container image: the Run distribution,
+    the open-source JDBC drivers and the Dockerfile with its entrypoint. Building the image
+    itself is left to docker build.
+  </description>
+
+  <properties>
+    <!-- MariaDB Connector/J (LGPL-2.1, redistributed unmodified as a separate jar). Without it
+      (-Dfasti.docker.skipMariadbDriver=true, for example when building offline) the entrypoint
+      connects to MariaDB with MySQL Connector/J -->
+    <version.mariadb>3.5.11</version.mariadb>
+    <fasti.docker.skipMariadbDriver>false</fasti.docker.skipMariadbDriver>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>dev.fasti.platform.run</groupId>
+      <artifactId>fasti-bpm-run</artifactId>
+      <version>${project.version}</version>
+      <type>tar.gz</type>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-distribution</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>dev.fasti.platform.run</groupId>
+                  <artifactId>fasti-bpm-run</artifactId>
+                  <version>${project.version}</version>
+                  <type>tar.gz</type>
+                  <destFileName>fasti-bpm-run.tar.gz</destFileName>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.build.directory}/docker</outputDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <!-- JDBC drivers under open-source licences; H2 is part of the distribution. Oracle
+              and DB2 drivers are not redistributed, see README.md -->
+            <id>copy-drivers</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.postgresql</groupId>
+                  <artifactId>postgresql</artifactId>
+                  <version>${version.postgresql}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.mysql</groupId>
+                  <artifactId>mysql-connector-j</artifactId>
+                  <version>${version.mysql}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.microsoft.sqlserver</groupId>
+                  <artifactId>mssql-jdbc</artifactId>
+                  <version>${version.sqlserver}</version>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.build.directory}/docker/drivers</outputDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-mariadb-driver</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <skip>${fasti.docker.skipMariadbDriver}</skip>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.mariadb.jdbc</groupId>
+                  <artifactId>mariadb-java-client</artifactId>
+                  <version>${version.mariadb}</version>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.build.directory}/docker/drivers</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-docker-files</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/docker</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}</directory>
+                  <includes>
+                    <include>Dockerfile</include>
+                    <include>docker-entrypoint.sh</include>
+                    <include>fasti-docker.yml</include>
+                    <include>fasti-docker-production.yml</include>
+                    <include>.dockerignore</include>
+                  </includes>
+                  <filtering>false</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

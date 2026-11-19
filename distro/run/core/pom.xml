@@ -84,6 +84,13 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-webmvc</artifactId>
     </dependency>
+
+    <!-- health, liveness and readiness endpoints below /actuator for containers and load
+      balancers; only the health endpoint is exposed over HTTP -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
     
     <!-- Graal.js -->
     

@@ -30,6 +30,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.core.Ordered;
+import org.springframework.core.env.Environment;
 
 import java.util.List;
 
@@ -37,6 +40,22 @@ import java.util.List;
 @Configuration
 @AutoConfigureAfter({ CamundaBpmAutoConfiguration.class })
 public class CamundaBpmRunConfiguration {
+
+  @Bean
+  @ConditionalOnProperty(name = "fasti.http.security-headers.enabled", havingValue = "true", matchIfMissing = true)
+  public FilterRegistrationBean<FastiSecurityHeadersFilter> fastiSecurityHeadersFilter() {
+    FilterRegistrationBean<FastiSecurityHeadersFilter> registration = new FilterRegistrationBean<>(new FastiSecurityHeadersFilter());
+    registration.setName("FastiSecurityHeaders");
+    registration.addUrlPatterns("/*");
+    // first, so that the headers are also on answers that other filters end early (401, 403)
+    registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+    return registration;
+  }
+
+  @Bean
+  public static FastiSecureDefaultsGuard fastiSecureDefaultsGuard(Environment environment) {
+    return new FastiSecureDefaultsGuard(environment);
+  }
 
   @Bean
   @ConditionalOnProperty(name = "enabled", havingValue = "true", prefix = CamundaBpmRunLdapProperties.PREFIX)

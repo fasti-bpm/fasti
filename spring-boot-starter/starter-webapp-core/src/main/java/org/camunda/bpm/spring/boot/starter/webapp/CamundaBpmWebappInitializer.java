@@ -38,6 +38,7 @@ import org.camunda.bpm.engine.rest.filter.EmptyBodyFilter;
 import org.camunda.bpm.spring.boot.starter.property.CamundaBpmProperties;
 import org.camunda.bpm.spring.boot.starter.property.WebappProperty;
 import org.camunda.bpm.spring.boot.starter.webapp.filter.AppendTrailingSlashFilter;
+import org.camunda.bpm.spring.boot.starter.webapp.filter.ClassicWebappsDisabledFilter;
 import org.camunda.bpm.spring.boot.starter.webapp.filter.LazyProcessEnginesFilter;
 import org.camunda.bpm.spring.boot.starter.webapp.filter.LegacyPathRedirectFilter;
 import org.camunda.bpm.spring.boot.starter.webapp.filter.LazySecurityFilter;
@@ -100,6 +101,16 @@ public class CamundaBpmWebappInitializer implements ServletContextInitializer {
    */
   public static final String FORMS_ORIGIN_PROPERTY = "fasti.webapp.forms-origin";
 
+  /**
+   * Whether the classic web applications Cockpit, Tasklist, Admin and Welcome
+   * (AngularJS 1.8 and Bootstrap 3, both end of life) are served (default:
+   * <code>true</code>; the container image sets <code>false</code>). If
+   * <code>false</code>, their pages redirect to the new web UI and their files
+   * are not served; see {@link ClassicWebappsDisabledFilter}. The REST
+   * resources below <code>/api/</code> stay available either way.
+   */
+  public static final String CLASSIC_WEBAPPS_PROPERTY = "fasti.webapp.classic.enabled";
+
   /** The application path of the web applications before Fasti. */
   public static final String LEGACY_APP_PATH = "/camunda";
 
@@ -113,13 +124,22 @@ public class CamundaBpmWebappInitializer implements ServletContextInitializer {
 
   private String formsOrigin;
 
+  /** <code>null</code> if not configured: served, without a warning */
+  private Boolean classicWebapps;
+
   public CamundaBpmWebappInitializer(CamundaBpmProperties properties) {
     this(properties, null);
   }
 
   public CamundaBpmWebappInitializer(CamundaBpmProperties properties, String defaultApp) {
+    this(properties, defaultApp, true);
+  }
+
+  public CamundaBpmWebappInitializer(CamundaBpmProperties properties, String defaultApp,
+                                     boolean legacyPathRedirect) {
     this.properties = properties;
     this.defaultApp = defaultApp;
+    this.legacyPathRedirect = legacyPathRedirect;
   }
 
   /**
@@ -132,6 +152,15 @@ public class CamundaBpmWebappInitializer implements ServletContextInitializer {
     FormsIsolation.check(parsedIsolation, parsedOrigin, FORMS_ORIGIN_PROPERTY);
     this.formsIsolation = parsedIsolation;
     this.formsOrigin = parsedOrigin;
+    return this;
+  }
+
+  /**
+   * Configures whether the classic web applications are served;
+   * <code>null</code> leaves the default (served).
+   */
+  public CamundaBpmWebappInitializer classicWebapps(Boolean enabled) {
+    this.classicWebapps = enabled;
     return this;
   }
 
@@ -152,8 +181,23 @@ public class CamundaBpmWebappInitializer implements ServletContextInitializer {
 
     ServletContextUtil.setAppPath(applicationPath, servletContext);
     ServletContextUtil.setInitialSetupEnabled(webapp.isInitialSetupEnabled(), servletContext);
+    boolean classic = !Boolean.FALSE.equals(classicWebapps);
+    ServletContextUtil.setClassicWebappsEnabled(classic, servletContext);
+    if (Boolean.TRUE.equals(classicWebapps)) {
+      log.warn("The classic web applications Cockpit, Tasklist and Admin are served below {}/app/ "
+          + "({}=true). They are deprecated: they are built on AngularJS 1.8.2 and Bootstrap 3, "
+          + "which are end of life and get no security fixes. Use the new web UI at {}/app/next/.",
+          applicationPath, CLASSIC_WEBAPPS_PROPERTY, applicationPath);
+    }
     if (defaultApp != null && !defaultApp.isBlank()) {
-      ServletContextUtil.setDefaultApp(ProcessEnginesFilter.validDefaultApp(defaultApp), servletContext);
+      String app = ProcessEnginesFilter.validDefaultApp(defaultApp);
+      if (!classic && !"next".equals(app)) {
+        log.warn("{}={} is ignored: the classic web applications are not served ({}=false); "
+            + "the new web UI is the default application.", DEFAULT_APP_PROPERTY, app,
+            CLASSIC_WEBAPPS_PROPERTY);
+      } else {
+        ServletContextUtil.setDefaultApp(app, servletContext);
+      }
     }
     ServletContextUtil.setFormsIsolation(formsIsolation, formsOrigin, servletContext);
 
@@ -194,6 +238,13 @@ public class CamundaBpmWebappInitializer implements ServletContextInitializer {
     registerFilter("SessionCookieFilter", SessionCookieFilter.class,
         webapp.getSessionCookie().getInitParams(),
         applicationPath + "/api/*", applicationPath + "/app/*");
+
+    // after the security headers, so that its redirects and 404 answers carry them
+    if (!classic) {
+      registerFilter("ClassicWebappsDisabledFilter", ClassicWebappsDisabledFilter.class,
+          singletonMap(ClassicWebappsDisabledFilter.APPLICATION_PATH_PARAM, applicationPath),
+          applicationPath + "/api/*", applicationPath + "/app/*", "/webjars/*");
+    }
 
     registerFilter("Authentication Filter", AuthenticationFilter.class,
         Collections.singletonMap("cacheTimeToLive", getAuthCacheTTL(webapp)),

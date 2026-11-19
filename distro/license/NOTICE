@@ -27,3 +27,9 @@ Third Party Libraries contained within this distribution
 can be reviewed in the License Book (LicenseBook.txt)
 
 ========================================================
+
+The container image additionally bundles unmodified JDBC drivers under
+their own licences: PostgreSQL JDBC (BSD-2-Clause), MySQL Connector/J
+(GPLv2 with the Universal FOSS Exception 1.0), MariaDB Connector/J
+(LGPL-2.1), Microsoft JDBC Driver for SQL Server (MIT) and H2
+(MPL-2.0 / EPL-1.0). See the "JDBC drivers" section of the License Book.

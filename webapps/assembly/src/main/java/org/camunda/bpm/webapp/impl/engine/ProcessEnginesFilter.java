@@ -122,6 +122,8 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
   public static final String APP_ROOT_PLACEHOLDER = "$APP_ROOT";
   public static final String FORMS_ISOLATION_PLACEHOLDER = "$FORMS_ISOLATION";
   public static final String FORMS_ORIGIN_PLACEHOLDER = "$FORMS_ORIGIN";
+  /** whether the classic web applications are served, for the links of the new web UI */
+  public static final String CLASSIC_WEBAPPS_PLACEHOLDER = "$CLASSIC_WEBAPPS";
   public static final String BASE_PLACEHOLDER = "$BASE";
 
   public static final String PLUGIN_DEPENDENCIES_PLACEHOLDER = "$PLUGIN_DEPENDENCIES";
@@ -413,13 +415,16 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
   }
 
   /**
-   * Tells the new web UI how embedded forms are isolated. Only the values
-   * validated at startup are written; they contain no markup characters.
+   * Tells the new web UI how embedded forms are isolated and whether the
+   * classic web applications are served. Only the values validated at startup
+   * are written; they contain no markup characters.
    */
   protected String replaceFormsPlaceholders(String data, ServletContext servletContext) {
     String origin = ServletContextUtil.getFormsOrigin(servletContext);
     return data.replace(FORMS_ISOLATION_PLACEHOLDER, ServletContextUtil.getFormsIsolation(servletContext).getValue())
-               .replace(FORMS_ORIGIN_PLACEHOLDER, origin == null ? "" : origin);
+               .replace(FORMS_ORIGIN_PLACEHOLDER, origin == null ? "" : origin)
+               .replace(CLASSIC_WEBAPPS_PLACEHOLDER,
+                   Boolean.toString(ServletContextUtil.isClassicWebappsEnabled(servletContext)));
   }
 
   protected <T extends AppPlugin> CharSequence createPluginPackagesStr(String appName,

@@ -120,6 +120,7 @@
         <module>distro/tomcat</module>
         <module>distro/sql-script</module>
         <module>distro/run</module>
+        <module>distro/docker</module>
 
         <module>clients/java</module>
 
@@ -144,6 +145,7 @@
         <module>distro/jboss</module>
         <module>distro/tomcat</module>
         <module>distro/run</module>
+        <module>distro/docker</module>
       </modules>
     </profile>
 

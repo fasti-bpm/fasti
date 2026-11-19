@@ -2541,6 +2541,7 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
    */
   protected void checkEngineLibraries() {
     DuplicateEngineLibraryCheck.check();
+    JvmBase64IntrinsicCheck.check();
   }
 
   protected void initDefaultCharset() {

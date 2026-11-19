@@ -35,6 +35,18 @@ public class EngineLibraryLogger extends ProcessEngineLogger {
         libraries.size(), libraries, checkEnabledProperty));
   }
 
+  public void warnJvmExposedToBase64Flaw(String cve, String runtimeVersion, String fixedBuild) {
+    logWarn("023", "The Java runtime {} is older than the build that fixes {} (\"Java4Shell\", Base64 decoder of "
+        + "HotSpot on x86-64 CPUs with AVX-512 VBMI). Upgrade to {} or newer, or start the JVM with "
+        + "-XX:-UseBASE64Intrinsics until you can. "
+        + "The warning can be switched off by setting the system property 'fasti.engine.jvm-check.enabled' to false.",
+        runtimeVersion, cve, fixedBuild);
+  }
+
+  public void debugCouldNotCheckJvm(Throwable cause) {
+    logDebug("024", "Could not check the Java runtime for known flaws: {}", cause.getMessage());
+  }
+
   public void debugCouldNotEnumerateEngineLibraries(ClassLoader classLoader, Throwable cause) {
     logDebug("022", "Could not look up the process engine libraries of class loader {}: {}", classLoader, cause.getMessage());
   }

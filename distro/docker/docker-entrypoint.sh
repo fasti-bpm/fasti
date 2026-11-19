@@ -283,6 +283,12 @@ fi
 # --- JVM --------------------------------------------------------------------------------------
 
 JVM_OPTS="-XX:MaxRAMPercentage=${FASTI_MAX_RAM_PERCENTAGE:-75} -XX:+ExitOnOutOfMemoryError -Djava.security.egd=file:/dev/./urandom"
+# CVE-2026-114938 ("Java4Shell"): defence in depth on top of the fixed JRE. Turns off the HotSpot
+# Base64 intrinsic that contains the flaw; Base64 then runs on the plain Java code, which is slower
+# but correct. FASTI_BASE64_INTRINSICS=true keeps the intrinsic.
+if [ "${FASTI_BASE64_INTRINSICS:-false}" != "true" ]; then
+  JVM_OPTS="$JVM_OPTS -XX:+UnlockDiagnosticVMOptions -XX:-UseBASE64Intrinsics"
+fi
 if is_true "${FASTI_APPCDS:-}"; then
   # class data sharing: the first run writes the archive on a clean shutdown, later runs of the
   # same image start faster; an archive that does not match is ignored by the JVM (see README)

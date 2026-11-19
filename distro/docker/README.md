@@ -6,8 +6,8 @@
 
 ## Tiếng Việt
 
-Image chạy **Fasti BPM Run** (engine, REST API `/engine-rest`, web app mới ở `/fasti/` và các
-web app cổ điển). Image được làm để **trỏ vào cơ sở dữ liệu mà một hệ Camunda 7 (7.24) đang
+Image chạy **Fasti BPM Run** (engine, REST API `/engine-rest` và web app mới ở `/fasti/`; các
+web app cổ điển **tắt theo mặc định**, xem bên dưới). Image được làm để **trỏ vào cơ sở dữ liệu mà một hệ Camunda 7 (7.24) đang
 dùng** và chạy tiếp trên đó: người dùng, mật khẩu, nhóm, tenant, phân quyền, filter,
 deployment, instance đang chạy, lịch sử, job và incident giữ nguyên. Fasti BPM tương thích với
 cơ sở dữ liệu của Camunda 7; đây là dự án độc lập, không liên kết với Camunda.
@@ -28,14 +28,15 @@ docker build -t fasti-bpm:1.0.0 \
 
 - Build không có mạng: thêm `-o -Dfasti.docker.skipMariadbDriver=true` (khi đó không có
   driver MariaDB, xem bảng driver).
-- Image tái lập được: ghim image nền bằng digest,
+- Image ổn định hơn giữa các lần build: ghim image nền bằng digest (bước `apk upgrade` vẫn lấy
+  bản vá mới nhất của Alpine),
   `--build-arg JRE_IMAGE=eclipse-temurin:21-jre-alpine@sha256:<digest>`.
 
 ### Bảo mật mặc định — khác với Camunda Run
 
 > **Khác biệt có chủ đích:** Camunda Run và image Camunda 7 cũ để `/engine-rest` **không cần
-> xác thực** và **tắt phân quyền**. Image Fasti **bật cả hai ở mọi chế độ**, kể cả khi không có
-> `--production`.
+> xác thực** và **tắt phân quyền**. Image Fasti **bật sẵn cả hai**, kể cả khi không có `--production`;
+> chỉ `FASTI_INSECURE_DEMO=true` (demo) tắt được.
 
 - REST API yêu cầu Basic auth (hoặc bearer token khi bật OIDC); phân quyền
   (`camunda.bpm.authorization.enabled`) luôn bật. Người dùng, nhóm và phân quyền lấy từ cơ sở
@@ -145,11 +146,13 @@ Spring Boot cũng đặt được bằng biến môi trường (ví dụ `CAMUND
 | `FASTI_ADMIN_USER`, `FASTI_ADMIN_PASSWORD` (+`_FILE`) | | tạo admin nếu chưa có; mật khẩu truyền qua biến môi trường, không qua dòng lệnh |
 | `FASTI_WEBAPP_PATH` | `/fasti` | `/camunda` để giữ đường dẫn cũ, không chuyển hướng |
 | `FASTI_LEGACY_PATH_REDIRECT` | `true` | chuyển `/camunda/...` sang `/fasti/...` |
+| `FASTI_CLASSIC_WEBAPPS` | `false` | `true`: phục vụ lại Cockpit, Tasklist, Admin, Welcome cổ điển (lỗi thời, AngularJS hết vòng đời; có cảnh báo) |
 | `FASTI_CONFIG` | | file YAML thêm (cách nhau dấu phẩy) |
 | `FASTI_EXTRA_LIB` | | thư mục jar thêm (driver, plugin) |
 | `FASTI_MARIADB_USE_MYSQL_DRIVER` | `true` | khi thiếu driver MariaDB, dùng MySQL Connector/J |
 | `FASTI_PORT` | 8080 | cổng HTTP; `HEALTHCHECK` của image dùng cùng cổng này |
 | `FASTI_APPCDS`, `FASTI_APPCDS_FILE` | `false`, `/fasti/data/fasti-appcds.jsa` | class data sharing để khởi động nhanh hơn (xem Tinh chỉnh hiệu năng) |
+| `FASTI_BASE64_INTRINSICS` | `false` | `false` thêm `-XX:-UseBASE64Intrinsics` để giảm thiểu CVE-2026-114938 ("Java4Shell"); `true` giữ intrinsic Base64 của JVM. Xem [docs/security/CVE-2026-114938.md](../../docs/security/CVE-2026-114938.md) |
 
 Tham số lệnh của image cũ được nhận: `--webapps`, `--rest`, `--example`, `--oauth2`,
 `--production` (cấu hình production cho container: bật xác thực REST, phân quyền, cookie
@@ -237,8 +240,8 @@ Số đo tham khảo (image này, PostgreSQL 16 cùng máy, 16 nhân, container 
 
 ## English
 
-The image runs **Fasti BPM Run** (engine, REST API at `/engine-rest`, the new web application
-at `/fasti/` and the classic web applications). It is made to be **pointed at the database an
+The image runs **Fasti BPM Run** (engine, REST API at `/engine-rest` and the new web
+application at `/fasti/`; the classic web applications are **off by default**, see below). It is made to be **pointed at the database an
 existing Camunda 7 (7.24) installation uses** and to carry on with it: users, passwords,
 groups, tenants, authorizations, filters, deployments, running instances, history, jobs and
 incidents stay as they are. Fasti BPM is compatible with Camunda 7 databases; it is an
@@ -257,14 +260,14 @@ docker build -t fasti-bpm:1.0.0 \
 ```
 
 Offline: add `-o -Dfasti.docker.skipMariadbDriver=true` (the MariaDB driver is then left out,
-see JDBC drivers). Reproducible: pin the base image by
-digest with `--build-arg JRE_IMAGE=eclipse-temurin:21-jre-alpine@sha256:<digest>`.
+see JDBC drivers). More repeatable builds: pin the base image by
+digest (the `apk upgrade` step still takes the latest Alpine fixes) with `--build-arg JRE_IMAGE=eclipse-temurin:21-jre-alpine@sha256:<digest>`.
 
 ### Secure by default — different from Camunda Run
 
 > **Deliberate difference:** Camunda Run and the former Camunda 7 image serve `/engine-rest`
-> **without authentication** and with **authorizations off**. The Fasti image turns **both on in
-> every mode**, with or without `--production`.
+> **without authentication** and with **authorizations off**. The Fasti image turns **both on by
+> default**, with or without `--production`; only `FASTI_INSECURE_DEMO=true` (demos) turns them off.
 
 - The REST API requires Basic authentication (or a bearer token with OIDC); authorization checks
   are always on. Users, groups and authorizations come from the database, so pointing `DB_*` at
@@ -351,6 +354,7 @@ the Vietnamese part for the full list; in short:
   `JMX_PROMETHEUS` (port `JMX_PROMETHEUS_PORT`, 9404, configuration `JMX_PROMETHEUS_CONF`, agent
   jar in `/fasti/javaagent`), `JAVA_OPTS` (space-separated, no quotes), `FASTI_MAX_RAM_PERCENTAGE`
   (75), `FASTI_APPCDS` / `FASTI_APPCDS_FILE` (class data sharing);
+  `FASTI_BASE64_INTRINSICS` (default `false`: adds `-XX:-UseBASE64Intrinsics` against CVE-2026-114938, "Java4Shell");
 - schema: `FASTI_DB_SCHEMA_UPDATE` (default `false`; `true` creates missing tables, it never
   upgrades), `FASTI_SCHEMA_VERSION_CHECK` (`enforce` | `warn`), `FASTI_DB_SCHEMA`,
   `FASTI_DB_TABLE_PREFIX`;
@@ -362,7 +366,8 @@ the Vietnamese part for the full list; in short:
 - web/REST:
   `FASTI_CORS_ALLOWED_ORIGINS` (off; `*` restores Run's former default), `FASTI_ADMIN_USER`,
   `FASTI_ADMIN_PASSWORD`, `FASTI_WEBAPP_PATH` (`/camunda` keeps the old path),
-  `FASTI_LEGACY_PATH_REDIRECT`, `FASTI_PORT` (8080; the `HEALTHCHECK` follows it);
+  `FASTI_LEGACY_PATH_REDIRECT`, `FASTI_CLASSIC_WEBAPPS` (`false`; `true` serves the deprecated
+  classic applications again, with a warning), `FASTI_PORT` (8080; the `HEALTHCHECK` follows it);
 - files: `FASTI_CONFIG` (extra YAML files), `FASTI_EXTRA_LIB` (extra jars),
   `FASTI_MARIADB_USE_MYSQL_DRIVER` (`true`: use MySQL Connector/J when the MariaDB driver is
   missing).

@@ -15,6 +15,9 @@
       <property name="history">full</property>
       <property name="databaseSchemaUpdate">true</property>
       <property name="authorizationEnabled">true</property>
+      <!-- true: only jobs of deployments registered on this server run. Set it to false when
+           taking over the database of Camunda Run or deploying through the REST API, otherwise
+           the timers and async continuations of those deployments do not run (README.txt). -->
       <property name="jobExecutorDeploymentAware">true</property>
       <property name="historyCleanupBatchWindowStartTime">00:01</property>
     </properties>

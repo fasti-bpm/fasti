@@ -81,6 +81,17 @@ public class ProcessEngineAuthenticationFilter implements Filter {
   public static final String AUTHENTICATION_PROVIDER_PARAM = "authentication-provider";
   public static final String SERVLET_PATH_PREFIX = "rest-url-pattern-prefix";
 
+  /**
+   * Request attribute set while a request is processed on behalf of a user that
+   * an authentication filter of this kind has authenticated. Further filters of
+   * this kind in the same chain let such a request pass, so that several of them
+   * can be configured, e.g. one for bearer tokens followed by one for HTTP basic
+   * authentication: the first one that authenticates the request decides. Clients
+   * cannot set request attributes.
+   */
+  public static final String AUTHENTICATED_REQUEST_ATTRIBUTE =
+      ProcessEngineAuthenticationFilter.class.getName() + ".AUTHENTICATED";
+
   protected AuthenticationProvider authenticationProvider;
   protected String servletPathPrefix;
 
@@ -112,6 +123,12 @@ public class ProcessEngineAuthenticationFilter implements Filter {
   @Override
   public void doFilter(ServletRequest request, ServletResponse response,
       FilterChain chain) throws IOException, ServletException {
+
+    if (request.getAttribute(AUTHENTICATED_REQUEST_ATTRIBUTE) != null) {
+      // already authenticated by a filter of this kind before this one
+      chain.doFilter(request, response);
+      return;
+    }
 
     HttpServletRequest req = (HttpServletRequest) request;
     HttpServletResponse resp = (HttpServletResponse) response;
@@ -155,8 +172,10 @@ public class ProcessEngineAuthenticationFilter implements Filter {
         List<String> groups = authenticationResult.getGroups();
         List<String> tenants = authenticationResult.getTenants();
         setAuthenticatedUser(engine, authenticatedUser, groups, tenants);
+        request.setAttribute(AUTHENTICATED_REQUEST_ATTRIBUTE, authenticatedUser);
         chain.doFilter(request, response);
       } finally {
+        request.removeAttribute(AUTHENTICATED_REQUEST_ATTRIBUTE);
         clearAuthentication(engine);
       }
     } else {

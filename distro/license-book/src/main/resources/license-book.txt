@@ -2898,7 +2898,7 @@ The Apache Software Foundation (http://www.apache.org/).
 Licensed under Apache 2.0
 
 ===========================================================================================
-org.apache.tomcat:tomcat:tar.gz:10.1.61
+org.apache.tomcat:tomcat:tar.gz:10.1.62
 https://tomcat.apache.org/
 Copyright 1999-2025 The Apache Software Foundation
 Licensed under Apache 2.0

@@ -36,13 +36,13 @@ khởi động trên schema cũ với thông báo nêu rõ script cần chạy.
    bảng/schema.
 4. **Build image** theo [distro/docker/README.md](../distro/docker/README.md).
 5. **Chạy Fasti với cùng biến `DB_*`** (và `TZ` giống node cũ). Khác Camunda Run, image Fasti
-   **luôn bật xác thực REST và phân quyền**: tài khoản trong cơ sở dữ liệu đăng nhập được,
+   **bật sẵn xác thực REST và phân quyền**: tài khoản trong cơ sở dữ liệu đăng nhập được,
    nhưng mọi client REST phải gửi Basic auth hoặc bearer token, và user không thuộc
    `camunda-admin` cần có quyền trong `ACT_RU_AUTHORIZATION` (xem "Bảo mật mặc định" trong
    [distro/docker/README.md](../distro/docker/README.md)). `FASTI_INSECURE_DEMO=true` chỉ để demo. Fasti kiểm tra phiên bản schema và in
    `ENGINE-03115 Database schema version 7.24.0 matches this engine.`
 6. **Kiểm tra:** đăng nhập `/fasti/` bằng tài khoản có sẵn; xem filter, task, instance, lịch
-   sử; `GET /engine-rest/engine`; `GET /actuator/health/readiness`.
+   sử; `GET /engine-rest/task` (kèm Basic auth); `GET /actuator/health/readiness`.
 7. **Chuyển lưu lượng** (load balancer, DNS) sang Fasti; dừng node cũ, hoặc để chạy song song
    (xem [Chạy lẫn](#chạy-lẫn-với-node-camunda-7)).
 
@@ -56,6 +56,38 @@ classpath: Fasti dừng khởi động khi thấy cả hai (giới hạn của p
 > dụng đang dùng starter của Camunda 7.24 (Spring Boot 3.5) phải nâng lên Spring Boot 4.1 và
 > Java 17+ cùng lúc với việc đổi artifact. Xem [README](../README.md#khác-gì-so-với-camunda-7240-ce)
 > và [CHANGELOG](../CHANGELOG.md#changed).
+
+### Bản phân phối Tomcat và WildFly
+
+> **Bắt buộc khi tiếp quản cơ sở dữ liệu của Camunda Run** (hoặc của máy chủ mà process được
+> deploy qua REST API): bản Tomcat và WildFly giữ `jobExecutorDeploymentAware=true` như Camunda
+> 7. Job (timer, async, retry) của deployment không đăng ký trên node đó **không chạy, và không
+> báo lỗi**. Trước khi khởi động, đặt
+> `<property name="jobExecutorDeploymentAware">false</property>` trong `conf/bpm-platform.xml`
+> (Tomcat) hoặc trong phần properties của engine trong `standalone.xml` (WildFly). Giữ `true` nếu node khác chạy process application có lớp Java
+> riêng (xem [Chạy lẫn](#chạy-lẫn-với-node-camunda-7)).
+
+Khác với bản Tomcat/WildFly của Camunda 7.24:
+
+- **REST API cần đăng nhập** (breaking). `/engine-rest` bật sẵn bộ lọc `camunda-auth`
+  (HTTP Basic): mọi client REST phải gửi tên và mật khẩu của một người dùng của engine,
+  không có thì nhận 401; chỉ danh sách engine (`/engine`) còn mở. Client REST, worker
+  external task và script đang gọi REST không đăng nhập phải được cấu hình thông tin đăng
+  nhập trước khi chuyển. Bearer token OpenID Connect (`fasti-oidc.properties`,
+  `fasti.security.oidc.rest.bearer-enabled=true`) dùng được cùng lúc: request có token hợp lệ
+  không cần mật khẩu. Tắt xác thực (**không khuyến nghị**): xóa bộ lọc `camunda-auth` và
+  `filter-mapping` của nó trong `WEB-INF/web.xml` của WAR `engine-rest`.
+- **Không có người dùng mặc định** (breaking). Ví dụ hóa đơn không còn được triển khai sẵn
+  nên không tạo `demo/demo` (quản trị viên), `john`, `mary`, `peter`; WAR của nó nằm ở
+  `examples/camunda-invoice.war`, chỉ chép vào `webapps/` (Tomcat) hoặc
+  `standalone/deployments/` (WildFly) để thử. Trên cơ sở dữ liệu trống, mở `/fasti/` và tạo
+  quản trị viên đầu tiên ở trang thiết lập; trên cơ sở dữ liệu của Camunda 7 dùng tài khoản có
+  sẵn.
+- **Không phục vụ Cockpit, Tasklist, Admin, Welcome cổ điển** (breaking), như image: trang và
+  bookmark chuyển tới mục tương ứng của giao diện mới, file trả 404. Bật lại tạm thời (lỗi thời,
+  sẽ bị gỡ): `-Dfasti.webapp.classic.enabled=true` trong `CATALINA_OPTS` (Tomcat) hoặc
+  `JAVA_OPTS` (WildFly), biến môi trường `FASTI_CLASSIC_WEBAPPS=true`, hoặc context parameter
+  `fasti.webapp.classic.enabled` trong `WEB-INF/web.xml` của web app.
 
 ### Cái gì giống hệt
 
@@ -75,7 +107,10 @@ classpath: Fasti dừng khởi động khi thấy cả hai (giới hạn của p
 | Chủ đề | Camunda 7.24 | Fasti | Làm gì |
 |---|---|---|---|
 | Đường dẫn web app | `/camunda/app/...` | `/fasti/app/...`; `/camunda/...` chuyển hướng (301/308) | Proxy chỉ mở `/camunda` phải mở thêm `/fasti`, hoặc đặt `FASTI_WEBAPP_PATH=/camunda` |
-| Trang mở đầu | Welcome | Web app mới (`/fasti/app/next/`) | `fasti.webapp.default-app: welcome` để như cũ |
+| Trang mở đầu | Welcome | Web app mới (`/fasti/app/next/`) | `fasti.webapp.default-app: welcome` để như cũ (không áp dụng cho image, nơi ứng dụng cổ điển tắt) |
+| **Image: Cockpit, Tasklist, Admin, Welcome cổ điển** (breaking) | phục vụ ở `/camunda/app/...` | **không phục vụ**: trang và bookmark (kể cả `/camunda/app/...`) chuyển tới mục tương ứng của giao diện mới (`#/cockpit`, `#/tasklist`, `#/admin`), file trả 404. Lý do: AngularJS 1.8.2 và Bootstrap 3 đã hết vòng đời | dùng giao diện mới; tạm thời `FASTI_CLASSIC_WEBAPPS=true` (có cảnh báo, sẽ bị gỡ) |
+| **Tomcat, WildFly: ứng dụng cổ điển** (breaking) | phục vụ | **không phục vụ** (như image) | dùng giao diện mới; tạm thời `-Dfasti.webapp.classic.enabled=true` (`CATALINA_OPTS`/`JAVA_OPTS`), `FASTI_CLASSIC_WEBAPPS=true` hoặc context parameter trong `WEB-INF/web.xml` |
+| Run zip, Spring Boot starter: ứng dụng cổ điển | có | vẫn có, nhưng **lỗi thời (deprecated)** | lên kế hoạch chuyển sang giao diện mới; tắt sớm bằng `fasti.webapp.classic.enabled: false` |
 | Schema cũ | khởi động, lỗi về sau | dừng với `ENGINE-03111` | nâng cấp schema; tạm thời `FASTI_SCHEMA_VERSION_CHECK=warn` |
 | Expression trong query/filter | mọi expression | allow-list (hàm thời gian, user hiện tại) | filter dùng bean/hàm riêng: khai báo trong `allowedExpressionFunctionsInQueries`, `allowedExpressionBeansInQueries`, `allowedExpressionPropertiesInQueries` của cấu hình engine |
 | Image: tạo schema | `true` (Spring Boot) | `false` | `FASTI_DB_SCHEMA_UPDATE=true` cho cơ sở dữ liệu mới |
@@ -110,7 +145,11 @@ của nhau, job chạy trên node nào cũng được). Điều kiện:
 
 - **cùng mức lịch sử** (image dùng `auto`: lấy mức đang lưu), **cùng múi giờ JVM** (`TZ`), cùng
   cấu hình mật khẩu, cùng tiền tố bảng;
-- **job executor:** mặc định Fasti nhận job của mọi deployment (như Run). Nếu node cũ là
+- **job executor:** mặc định Fasti (image, Run, Spring Boot) nhận job của mọi deployment (như Run).
+  Riêng bản Tomcat và WildFly mặc định `jobExecutorDeploymentAware=true` (như Camunda 7): job
+  (timer, async, retry) của deployment không đăng ký trên node đó, kể cả deployment từ Run hay
+  qua REST trước lần khởi động lại, **không chạy**; khi tiếp quản cơ sở dữ liệu của Run, đặt
+  `false` trong `conf/bpm-platform.xml` (Tomcat) hoặc `standalone.xml` (WildFly). Nếu node cũ là
   *process application* có lớp Java (`JavaDelegate`, listener, bean) mà Fasti không có, Fasti
   sẽ lấy job của chúng và làm hỏng (incident). Khi đó: `FASTI_JOB_EXECUTOR_ENABLED=false`
   trên Fasti, hoặc bật `deployment-aware` trên **mọi** node (job executor của node chỉ chạy
@@ -118,7 +157,8 @@ của nhau, job chạy trên node nào cũng được). Điều kiện:
   deploy, cho đến khi khởi động lại). REST đồng bộ (hoàn thành task, bắt đầu instance) vẫn
   chạy delegate ngay trên Fasti — đừng gọi các process đó qua Fasti;
 - **load balancer:** sticky session cho web app; REST Basic auth không cần;
-- web app cổ điển và web app mới dùng chung filter và người dùng.
+- web app cổ điển (trên node Camunda 7, hoặc Fasti với `FASTI_CLASSIC_WEBAPPS=true`) và web
+  app mới dùng chung filter và người dùng.
 
 ### Phiên bản cũ hơn (7.17–7.23)
 
@@ -192,14 +232,14 @@ start on an older schema and names the scripts to run.
    table prefix/schema.
 4. **Build the image** as described in [distro/docker/README.md](../distro/docker/README.md#english).
 5. **Start Fasti with the same `DB_*` variables** (and the same `TZ`). Unlike Camunda Run, the
-   Fasti image **always requires REST authentication and enforces authorizations**: database
+   Fasti image **requires REST authentication and enforces authorizations by default**: database
    accounts keep working, but every REST client must send Basic credentials or a bearer token,
    and users outside `camunda-admin` need grants in `ACT_RU_AUTHORIZATION` (see "Secure by
    default" in [distro/docker/README.md](../distro/docker/README.md#english)).
    `FASTI_INSECURE_DEMO=true` is for demos only. Fasti logs
    `ENGINE-03115 Database schema version 7.24.0 matches this engine.`
 6. **Check:** sign in at `/fasti/` with an existing account; filters, tasks, instances and
-   history are there; `GET /engine-rest/engine`; `GET /actuator/health/readiness`.
+   history are there; `GET /engine-rest/task` (with Basic credentials); `GET /actuator/health/readiness`.
 7. **Move traffic** (load balancer, DNS) to Fasti; stop the old nodes or keep them running (see
    [Mixed operation](#mixed-operation-with-camunda-7-nodes)).
 
@@ -214,6 +254,40 @@ to start then (for the limits of this check see "Startup check" in the
 > Java 17+ together with the artifact change. See the
 > [README](../README.md#what-is-different-from-camunda-7240-ce) and the
 > [CHANGELOG](../CHANGELOG.md#changed).
+
+### Tomcat and WildFly distributions
+
+> **Required when taking over the database of Camunda Run** (or of a server whose processes were
+> deployed through the REST API): the Tomcat and WildFly distributions keep
+> `jobExecutorDeploymentAware=true` like Camunda 7. Jobs (timers, async continuations, retries)
+> of deployments that are not registered on the node **do not run, and no error is reported**.
+> Before starting, set `<property name="jobExecutorDeploymentAware">false</property>` in
+> `conf/bpm-platform.xml` (Tomcat) or in the engine properties of `standalone.xml` (WildFly).
+> Keep `true` if other nodes run process applications with Java classes of their own (see
+> [Mixed operation](#mixed-operation-with-camunda-7-nodes)).
+
+Compared with the Tomcat/WildFly distributions of Camunda 7.24:
+
+- **The REST API requires authentication** (breaking). `/engine-rest` has the `camunda-auth`
+  filter (HTTP Basic) enabled: every REST client must send the user name and password of a
+  user of the engine, otherwise it gets 401; only the list of engines (`/engine`) stays open.
+  Configure credentials in REST clients, external task workers and scripts that call the REST
+  API anonymously before you switch. OpenID Connect bearer tokens (`fasti-oidc.properties`,
+  `fasti.security.oidc.rest.bearer-enabled=true`) work alongside: requests with a valid token
+  need no password. To switch authentication off (**not recommended**), remove the
+  `camunda-auth` filter and its `filter-mapping` from `WEB-INF/web.xml` of the `engine-rest` WAR.
+- **No default users** (breaking). The invoice example is no longer deployed, so it does not
+  create `demo/demo` (administrator), `john`, `mary` and `peter`; its WAR is
+  `examples/camunda-invoice.war`, to be copied to `webapps/` (Tomcat) or
+  `standalone/deployments/` (WildFly) for trying it out. On an empty database open `/fasti/`
+  and create the first administrator on the setup page; on a Camunda 7 database use the
+  existing accounts.
+- **The classic Cockpit, Tasklist, Admin and Welcome are not served** (breaking), as in the
+  image: their pages and bookmarks lead to the matching section of the new UI, their files
+  answer 404. To bring them back for a while (deprecated, to be removed):
+  `-Dfasti.webapp.classic.enabled=true` in `CATALINA_OPTS` (Tomcat) or `JAVA_OPTS` (WildFly), the
+  environment variable `FASTI_CLASSIC_WEBAPPS=true`, or the context parameter
+  `fasti.webapp.classic.enabled` in `WEB-INF/web.xml` of the web application.
 
 ### What is identical
 
@@ -232,7 +306,17 @@ to start then (for the limits of this check see "Startup check" in the
 
 - Web applications live at `/fasti/app/...`; `/camunda/...` redirects there (301/308). Proxies
   exposing only `/camunda` must expose `/fasti`, or set `FASTI_WEBAPP_PATH=/camunda`. The root
-  opens the new web application (`fasti.webapp.default-app: welcome` restores Welcome).
+  opens the new web application (`fasti.webapp.default-app: welcome` restores Welcome, except
+  in the image, where the classic applications are off).
+- **Breaking, container image:** the classic Cockpit, Tasklist, Admin and Welcome are not
+  served, because AngularJS 1.8.2 and Bootstrap 3 are end of life. Their pages and bookmarks,
+  also below `/camunda/app/`, redirect to the matching section of the new web UI (`#/cockpit`,
+  `#/tasklist`, `#/admin`); their files answer 404. Move users to the new web UI;
+  `FASTI_CLASSIC_WEBAPPS=true` serves the classic applications again for a transition, with a
+  warning. Tomcat and WildFly do not serve them either (see
+  [Tomcat and WildFly distributions](#tomcat-and-wildfly-distributions)). The Run zip and the
+  Spring Boot starter still serve them, but they are deprecated and will be removed in a later
+  release (`fasti.webapp.classic.enabled: false` turns them off early).
 - An older schema stops the start with `ENGINE-03111` instead of failing later
   (`FASTI_SCHEMA_VERSION_CHECK=warn` to start anyway).
 - Expressions in queries and filters are limited to an allow-list (date functions, current
@@ -265,7 +349,12 @@ data and jobs run on either node). Requirements:
 
 - the **same history level** (the image takes the stored one), the **same JVM time zone**, the
   same password settings and table prefix;
-- **job executor:** by default Fasti takes jobs of every deployment, like Run. If old nodes are
+- **job executor:** by default Fasti (image, Run, Spring Boot) takes jobs of every deployment, like Run.
+  The Tomcat and WildFly distributions default to `jobExecutorDeploymentAware=true` (as Camunda
+  7 does): jobs (timers, async continuations, retries) of deployments not registered on that
+  node, including deployments made by Run or through REST before the last restart, **do not
+  run**; when taking over the database of Run, set it to `false` in `conf/bpm-platform.xml`
+  (Tomcat) or `standalone.xml` (WildFly). If old nodes are
   process applications with classes Fasti does not have (`JavaDelegate`, listeners, beans),
   Fasti would pick up their jobs and fail them (incidents). Then set
   `FASTI_JOB_EXECUTOR_ENABLED=false` on Fasti, or make **every** node deployment-aware (a node's
@@ -274,7 +363,8 @@ data and jobs run on either node). Requirements:
   starting an instance) still run delegates on the node that receives them — do not route such
   processes to Fasti;
 - **load balancer:** sticky sessions for the web applications; Basic-auth REST calls need none;
-- the classic and the new web applications share filters and users.
+- the classic web applications (on Camunda 7 nodes, or Fasti with
+  `FASTI_CLASSIC_WEBAPPS=true`) and the new one share filters and users.
 
 ### Older versions (7.17–7.23)
 

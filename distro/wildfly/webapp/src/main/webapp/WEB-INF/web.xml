@@ -78,6 +78,29 @@
     <dispatcher>REQUEST</dispatcher>
   </filter-mapping>
 
+  <!-- Classic web applications (Cockpit, Tasklist, Admin and Welcome below /app/): built on
+       AngularJS 1.8.2 and Bootstrap 3, both end of life, and therefore NOT served by default.
+       Their pages redirect to the matching section of the new web UI (/app/next/), their files
+       answer 404. To serve them (deprecated, they will be removed in a later release), set the
+       system property fasti.webapp.classic.enabled=true (e.g. in JAVA_OPTS), the environment
+       variable FASTI_CLASSIC_WEBAPPS=true or the context parameter below. -->
+  <!--
+  <context-param>
+    <param-name>fasti.webapp.classic.enabled</param-name>
+    <param-value>true</param-value>
+  </context-param>
+  -->
+  <filter>
+    <filter-name>ClassicWebappsFilter</filter-name>
+    <filter-class>org.camunda.bpm.webapp.impl.filter.ClassicWebappsFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>ClassicWebappsFilter</filter-name>
+    <url-pattern>/app/*</url-pattern>
+    <url-pattern>/api/*</url-pattern>
+    <dispatcher>REQUEST</dispatcher>
+  </filter-mapping>
+
   <!-- Single sign-on (OpenID Connect): login, logout and back-channel logout below /sso/.
        Does nothing unless fasti-oidc.properties exists (see the README of the distribution);
        init-param config-file names another location. -->

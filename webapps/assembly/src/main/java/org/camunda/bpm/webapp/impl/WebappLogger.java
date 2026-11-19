@@ -76,5 +76,12 @@ public class WebappLogger extends BaseLogger {
         + "for process engine '{}': {}.", engineName, reason);
   }
 
+  public void warnClassicWebappsEnabled(String path, String property) {
+    logWarn("009", "The classic web applications Cockpit, Tasklist and Admin are served below {}/app/ "
+        + "({}=true). They are deprecated: they are built on AngularJS 1.8.2 and Bootstrap 3, "
+        + "which are end of life and get no security fixes. Use the new web UI at {}/app/next/.",
+        path, property, path);
+  }
+
 
 }

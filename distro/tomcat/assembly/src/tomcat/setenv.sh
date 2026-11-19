@@ -1,1 +1,1 @@
-export CATALINA_OPTS="-Xmx512m"
+export CATALINA_OPTS="-Xmx512m $CATALINA_OPTS"

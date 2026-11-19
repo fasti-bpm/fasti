@@ -20,6 +20,7 @@
   <properties>
     <engine.runtime>${project.build.directory}/camunda-tomcat</engine.runtime>
     <tomcat.runtime>${engine.runtime}/server/apache-tomcat-${version.tomcat}</tomcat.runtime>
+    <engine.rest.runtime>${project.build.directory}/engine-rest</engine.rest.runtime>
     <http.port>${tomcat.connector.http.port}</http.port>
 
     <tomcat.connector.http.port>50080</tomcat.connector.http.port>
@@ -217,7 +218,45 @@
                   <outputDirectory>${engine.runtime}</outputDirectory>
                   <overWrite>true</overWrite>
                 </artifactItem>
+                <artifactItem>
+                  <groupId>dev.fasti.platform</groupId>
+                  <artifactId>fasti-engine-rest-jakarta</artifactId>
+                  <version>${project.version}</version>
+                  <type>war</type>
+                  <classifier>tomcat</classifier>
+                  <outputDirectory>${engine.rest.runtime}</outputDirectory>
+                  <overWrite>true</overWrite>
+                </artifactItem>
               </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <!-- Test setup only. Cargo copies webapps/manager and webapps/host-manager of the
+             installed Tomcat into its standalone configuration, but the Tomcat bundle leaves
+             these applications out: empty directories stand in for them. The REST API of the
+             bundle requires authentication, while the tests talk to it as an anonymous client
+             against an engine without users: they use the WAR with a web.xml that has no
+             authentication filter. -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>prepare-test-container</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <skip>${skipTests}</skip>
+              <target>
+                <mkdir dir="${tomcat.runtime}/webapps/manager" />
+                <mkdir dir="${tomcat.runtime}/webapps/host-manager" />
+                <copy file="${project.basedir}/src/it/tomcat/engine-rest/WEB-INF/web.xml"
+                      todir="${engine.rest.runtime}/WEB-INF" overwrite="true" />
+              </target>
             </configuration>
           </execution>
         </executions>
@@ -291,6 +330,7 @@
               <artifactId>fasti-engine-rest-jakarta</artifactId>
               <type>war</type>
               <classifier>tomcat</classifier>
+              <location>${engine.rest.runtime}</location>
               <pingURL>
                 http://localhost:${tomcat.connector.http.port}/engine-rest/engine/default/process-definition
               </pingURL>

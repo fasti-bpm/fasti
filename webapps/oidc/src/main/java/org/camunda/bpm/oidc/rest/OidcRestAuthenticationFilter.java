@@ -1,4 +1,7 @@
 /*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -40,6 +43,11 @@ import org.camunda.bpm.oidc.OidcSettings;
  * <p>
  * Unlike the plain engine filter, the list of engines ({@code /engine}) also
  * requires credentials.
+ * <p>
+ * It can be followed by the HTTP basic authentication filter of the engine,
+ * which the distributions enable by default: requests that this filter has
+ * authenticated pass that filter (see
+ * {@link ProcessEngineAuthenticationFilter#AUTHENTICATED_REQUEST_ATTRIBUTE}).
  * <p>
  * Init-params: {@code config-file} (path of the configuration, optional) and
  * {@code rest-url-pattern-prefix} as for the engine filter.
@@ -106,7 +114,7 @@ public class OidcRestAuthenticationFilter extends ProcessEngineAuthenticationFil
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
-    if (!enabled) {
+    if (!enabled || request.getAttribute(AUTHENTICATED_REQUEST_ATTRIBUTE) != null) {
       chain.doFilter(request, response);
       return;
     }

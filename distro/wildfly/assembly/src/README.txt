@@ -48,11 +48,31 @@ Contents:
         http://localhost:8080/fasti
         http://localhost:8080/engine-rest
 
+        The classic Cockpit, Tasklist, Admin and Welcome applications
+        (/fasti/app/cockpit/, ...) are NOT served by default: they are
+        built on AngularJS 1.8.2 and Bootstrap 3, both end of life. Their
+        pages redirect to the matching section of the new web UI. To serve
+        them (deprecated), start the server with
+        -Dfasti.webapp.classic.enabled=true (JAVA_OPTS) or set the
+        environment variable FASTI_CLASSIC_WEBAPPS=true.
+
         The former path http://localhost:8080/camunda redirects to /fasti
         (standalone/deployments/camunda.war). To serve the web applications
         below /camunda again, delete camunda.war and camunda.war.dodeploy
         and set <context-root>/camunda</context-root> in
         WEB-INF/jboss-web.xml of the web application WAR.
+
+    examples/
+        camunda-invoice.war, the invoice example, is NOT deployed. To try it,
+        copy it to server/wildfly-${version.wildfly}/standalone/deployments/.
+        On its first start it creates the users demo/demo (administrator),
+        john/john, mary/mary and peter/peter unless a user "demo" exists:
+        never deploy it on a server that is reachable by others, and delete
+        these users after trying it.
+
+        No user exists after the first start: open http://localhost:8080/fasti/
+        and create the first administrator (group camunda-admin) on the setup
+        page that the web UI shows as long as there is no administrator.
 
     sql/
         This directory contains the create and upgrade sql script
@@ -61,6 +81,44 @@ Contents:
 
         Execute the current upgrade script to make the database compatible
         with this release of Fasti BPM Platform.
+
+==================
+
+!!! QUAN TRONG / IMPORTANT: tiep quan co so du lieu cua Camunda Run /
+!!! taking over the database of Camunda Run
+
+  Engine giu jobExecutorDeploymentAware=true: job (timer, async, retry) cua
+  deployment tao boi Camunda Run hoac qua REST API KHONG CHAY va khong bao
+  loi. Truoc khi khoi dong tren co so du lieu do, dat property nay thanh
+  false cho engine trong standalone/configuration/standalone.xml.
+
+  The engine keeps jobExecutorDeploymentAware=true: jobs (timers, async
+  continuations, retries) of deployments made by Camunda Run or through the
+  REST API do NOT RUN, without any error. Before starting on such a
+  database, set this property to false for the engine in
+  standalone/configuration/standalone.xml.
+
+==================
+
+Bao mat / Security:
+
+  REST API (/engine-rest) YEU CAU DANG NHAP (HTTP Basic) theo mac dinh: moi
+  client phai gui ten va mat khau cua mot nguoi dung cua engine
+  (curl -u nguoidung:matkhau ...); khong co thi tra 401. Chi danh sach engine
+  (/engine) la mo. Khac voi Camunda 7.24 (REST mo): client REST cu phai gui
+  thong tin dang nhap. Tat xac thuc (KHONG khuyen nghi): trong
+  WEB-INF/web.xml cua standalone/deployments/fasti-engine-rest-*.war xoa bo loc
+  "camunda-auth" va filter-mapping cua no.
+
+  The REST API (/engine-rest) REQUIRES AUTHENTICATION (HTTP Basic) by
+  default: every client must send the user name and the password of a user
+  of the engine (curl -u user:password ...); requests without credentials are
+  answered with 401. Only the list of engines (/engine) is open. Unlike
+  Camunda 7.24 (open REST API), existing REST clients must send credentials.
+  To switch authentication off (NOT recommended: every client that can reach
+  the server then has unrestricted access), remove the "camunda-auth" filter
+  and its filter-mapping from WEB-INF/web.xml of
+  standalone/deployments/fasti-engine-rest-*.war.
 
 ==================
 
@@ -73,11 +131,12 @@ Dang nhap mot lan (OpenID Connect) / Single sign-on (OpenID Connect):
   Copy server/wildfly-${version.wildfly}/standalone/configuration/fasti-oidc.properties.example
   to fasti-oidc.properties, fill in the provider and the client, and restart.
   Without that file users sign in with a password as before. The same file
-  enables bearer tokens on /engine-rest (fasti.security.oidc.rest.*).
+  enables bearer tokens on /engine-rest (fasti.security.oidc.rest.*); HTTP
+  Basic keeps working unless fasti.security.oidc.rest.basic-enabled=false.
 
 ==================
 
-Camunda Platform version: ${project.version}
+Fasti BPM Platform version: ${project.version}
 Wildfly Application Server version: ${version.wildfly}
 
 =================

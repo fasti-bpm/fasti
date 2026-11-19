@@ -77,11 +77,13 @@
     </file>
     <file>
       <source>src/start-camunda.bat</source>
+      <lineEnding>dos</lineEnding>
       <filtered>true</filtered>
       <outputDirectory></outputDirectory>
     </file>
     <file>
       <source>src/start-camunda.sh</source>
+      <lineEnding>unix</lineEnding>
       <filtered>true</filtered>
       <outputDirectory></outputDirectory>
       <fileMode>0755</fileMode>
@@ -112,10 +114,12 @@
     </file>
     <file>
       <source>src/wildfly/standalone.conf</source>
+      <lineEnding>unix</lineEnding>
       <outputDirectory>server/wildfly-${version.wildfly}/bin/</outputDirectory>
     </file>
     <file>
       <source>src/wildfly/standalone.conf.bat</source>
+      <lineEnding>dos</lineEnding>
       <outputDirectory>server/wildfly-${version.wildfly}/bin/</outputDirectory>
     </file>
   </files>

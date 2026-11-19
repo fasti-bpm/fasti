@@ -49,11 +49,13 @@
         <outputDirectory>server/wildfly-${version.wildfly}/standalone/deployments</outputDirectory>
     </dependencySet>
 
+    <!-- not deployed: it creates the administrator demo/demo and further demo users -->
     <dependencySet>
         <includes>
           <include>dev.fasti.platform.example:fasti-example-invoice-jakarta:war:*</include>
         </includes>
-        <outputDirectory>server/wildfly-${version.wildfly}/standalone/deployments</outputDirectory>
+        <outputDirectory>examples</outputDirectory>
+        <outputFileNameMapping>camunda-invoice.war</outputFileNameMapping>
     </dependencySet>
     
   </dependencySets>

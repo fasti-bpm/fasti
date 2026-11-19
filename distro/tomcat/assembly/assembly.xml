@@ -26,6 +26,13 @@
       <unpackOptions>
         <excludes>
           <exclude>**/conf/server.xml</exclude>
+          <!-- web applications of Tomcat, not meant for production: samples, documentation,
+               manager applications and the default page; webapps/ROOT is replaced below -->
+          <exclude>**/webapps/examples/**</exclude>
+          <exclude>**/webapps/docs/**</exclude>
+          <exclude>**/webapps/manager/**</exclude>
+          <exclude>**/webapps/host-manager/**</exclude>
+          <exclude>**/webapps/ROOT/**</exclude>
         </excludes>
       </unpackOptions>
       <unpack>true</unpack>
@@ -138,25 +145,35 @@
     </file>
     <file>
       <source>src/start-camunda.bat</source>
+      <lineEnding>dos</lineEnding>
       <filtered>true</filtered>
       <outputDirectory></outputDirectory>
     </file>
     <file>
       <source>src/start-camunda.sh</source>
+      <lineEnding>unix</lineEnding>
       <filtered>true</filtered>
       <outputDirectory></outputDirectory>
       <fileMode>0755</fileMode>
     </file>
     <file>
       <source>src/shutdown-camunda.bat</source>
+      <lineEnding>dos</lineEnding>
       <filtered>true</filtered>
       <outputDirectory></outputDirectory>
     </file>
     <file>
       <source>src/shutdown-camunda.sh</source>
+      <lineEnding>unix</lineEnding>
       <filtered>true</filtered>
       <outputDirectory></outputDirectory>
       <fileMode>0755</fileMode>
+    </file>
+
+    <!-- the root of the server leads to the welcome page of Fasti -->
+    <file>
+      <source>src/webapps/ROOT/index.html</source>
+      <outputDirectory>server/apache-tomcat-${version.tomcat}/webapps/ROOT/</outputDirectory>
     </file>
 
     <file>
@@ -176,10 +193,12 @@
       
     <file>
       <source>src/tomcat/setenv.bat</source>
+      <lineEnding>dos</lineEnding>
       <outputDirectory>server/apache-tomcat-${version.tomcat}/bin/</outputDirectory>
     </file>
     <file>
       <source>src/tomcat/setenv.sh</source>
+      <lineEnding>unix</lineEnding>
       <outputDirectory>server/apache-tomcat-${version.tomcat}/bin/</outputDirectory>
     </file>
   </files>

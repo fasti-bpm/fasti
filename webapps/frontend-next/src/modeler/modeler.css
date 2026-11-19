@@ -1,0 +1,483 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ */
+/* an editor fills the space under the page header: toolbar, canvas and panel */
+.modeler {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 272px);
+  min-height: 460px;
+}
+
+.modeler__workspace {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.modeler__canvas {
+  position: relative;
+  /* keeps the editor's overlays (context pad, popups) beneath dialogs */
+  isolation: isolate;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  outline: none;
+}
+
+.modeler__canvas:focus-within {
+  box-shadow: inset 0 0 0 2px var(--accent-soft);
+}
+
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  padding: var(--s-1) var(--s-2);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.editor-toolbar__divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 var(--s-1);
+  background: var(--border);
+}
+
+.editor-toolbar__spacer {
+  flex: 1;
+}
+
+.editor-toolbar .icon-btn.is-active {
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+}
+
+/* the properties of the selected element, beside the canvas */
+.props-panel {
+  position: relative;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  min-height: 0;
+  border-inline-start: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.props-panel__resize {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: -4px;
+  z-index: 1;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.props-panel__resize:hover,
+.props-panel__resize:focus-visible {
+  outline: none;
+  background: linear-gradient(to right, transparent 3px, var(--accent) 3px, var(--accent) 5px, transparent 5px);
+}
+
+.props-panel__header {
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.props-panel__type {
+  color: var(--text-subtle);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.props-panel__title {
+  margin: 2px 0 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.props-panel__hint {
+  margin: var(--s-1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.props-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4) var(--s-6);
+  overflow-y: auto;
+}
+
+.props-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.props-field__label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.props-field__hint {
+  margin: 0;
+  color: var(--text-subtle);
+  font-size: var(--fs-xs);
+}
+
+.props-field__error {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--fs-xs);
+}
+
+.props-field textarea {
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+.props-check {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: var(--control-sm);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.props-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+@media (max-width: 900px) {
+  .modeler__workspace {
+    flex-direction: column;
+  }
+
+  .props-panel {
+    width: auto !important;
+    max-height: 45%;
+    border-inline-start: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .props-panel__resize {
+    display: none;
+  }
+}
+
+.modeler__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+}
+
+/* palette, context pad and popup menus of the editors in the colours of the theme */
+.modeler .djs-parent {
+  --palette-background-color: var(--surface);
+  --palette-border-color: var(--border);
+  --palette-entry-color: var(--text);
+  --palette-entry-hover-color: var(--accent);
+  --palette-entry-selected-color: var(--accent);
+  --palette-separator-color: var(--border);
+  --palette-toggle-hover-background-color: var(--surface-subtle);
+  --context-pad-entry-background-color: var(--surface);
+  --context-pad-entry-hover-background-color: var(--surface-subtle);
+  --popup-background-color: var(--surface);
+  --popup-border-color: var(--border);
+  --popup-entry-title-color: var(--text);
+  --popup-description-color: var(--text-muted);
+  --popup-entry-selected-background-color: var(--accent-soft);
+  --popup-entry-selected-color: var(--accent-soft-text);
+  --popup-search-border-color: var(--border-strong);
+  --popup-search-focus-border-color: var(--accent);
+  --popup-search-focus-background-color: var(--surface);
+  --popup-no-results-color: var(--text-subtle);
+}
+
+.modeler .djs-palette .entry,
+.modeler .djs-context-pad .entry {
+  color: var(--text);
+}
+
+.modeler .djs-context-pad .entry {
+  border-radius: var(--r-sm);
+  box-shadow: none;
+}
+
+.modeler--dmn,
+.modeler--form {
+  display: flex;
+  flex-direction: column;
+}
+
+.modeler__views {
+  flex-wrap: wrap;
+}
+
+/* what the model is and whether it can be deployed, under the editor */
+.modeler-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-4);
+  padding: var(--s-2) var(--s-4);
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.modeler-status__file {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.modeler-status__dirty {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  color: var(--warning);
+}
+
+.modeler-status__dirty::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  content: '';
+}
+
+.modeler-status__check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  margin-inline-start: auto;
+  padding: 2px var(--s-2);
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  color: var(--success);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modeler-status__check:hover {
+  background: var(--surface-subtle);
+}
+
+.modeler-status__check--warning {
+  color: var(--warning);
+}
+
+.modeler-status__check--error {
+  color: var(--danger);
+}
+
+.modeler-status__findings {
+  padding: var(--s-3) var(--s-4);
+  border-top: 1px solid var(--border);
+}
+
+.modeler--dmn .modeler__canvas,
+.modeler--form .modeler__canvas {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* the form editor: palette, canvas and properties side by side */
+.form-editor .fjs-editor-container {
+  height: 100%;
+}
+
+/* the form library takes its colours from --bio-* properties: they follow the theme */
+.form-editor,
+.form-editor .bio-theme-parent {
+  --bio-surface: var(--surface);
+  --bio-surface-overlay: var(--surface-raised);
+  --bio-surface-subtle: var(--surface-subtle);
+  --bio-surface-medium: var(--surface-subtle);
+  --bio-surface-strong: var(--border);
+  --bio-surface-inverted: var(--text);
+  --bio-text: var(--text);
+  --bio-text-subtle: var(--text-muted);
+  --bio-text-subtlest: var(--text-subtle);
+  --bio-text-on-primary: var(--text-on-accent);
+  --bio-text-on-inverted: var(--surface);
+  --bio-border: var(--border-strong);
+  --bio-border-input: var(--border-strong);
+  --bio-border-subtle: var(--border);
+  --bio-border-disabled: var(--border);
+  --bio-primary: var(--accent);
+  --bio-primary-hover: var(--accent-hover);
+  --bio-primary-surface: var(--accent-soft);
+  --bio-primary-surface-strong: var(--accent-soft);
+  --bio-neutral: var(--text-muted);
+  --bio-neutral-subtle: var(--border);
+  --bio-neutral-subtle-hover: var(--border-strong);
+  --bio-danger: var(--danger);
+  --bio-danger-surface: var(--danger-soft);
+  --bio-danger-surface-subtle: var(--danger-soft);
+  --bio-focus: var(--focus);
+  --bio-focus-ring: color-mix(in srgb, var(--focus) 35%, transparent);
+  --bio-focus-ring-danger: color-mix(in srgb, var(--danger) 35%, transparent);
+  --bio-shadow: rgba(0, 0, 0, 0.3);
+
+  background: var(--surface);
+  color: var(--text);
+}
+/* what was found in a model before it is deployed */
+.readiness {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.readiness__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0;
+  color: var(--success);
+  font-weight: 600;
+}
+
+.readiness__summary--warning {
+  color: var(--warning);
+}
+
+.readiness__summary--error {
+  color: var(--danger);
+}
+
+.readiness__list {
+  display: grid;
+  gap: var(--s-1);
+  max-height: 14rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.readiness__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.readiness__item > svg {
+  flex: none;
+  margin-top: 3px;
+}
+
+.readiness__item--error > svg {
+  color: var(--danger);
+}
+
+.readiness__item--warning > svg {
+  color: var(--warning);
+}
+
+.readiness__element {
+  font-weight: 600;
+}
+
+/* groups of the properties panel: trigger, mappings, listeners, form fields */
+.props-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.props-section {
+  border-top: 1px solid var(--border);
+  padding-top: var(--s-2);
+}
+
+.props-section__title {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-1) 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.props-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-top: var(--s-1);
+}
+
+.props-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.props-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-1);
+  padding: var(--s-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-subtle);
+}
+
+.props-row__fields {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+.props-row__pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s-1);
+}
+
+.props-rows__add {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--s-1);
+  font-size: var(--fs-sm);
+}
+
+.input--sm {
+  height: 30px;
+  padding: 0 var(--s-2);
+  font-size: var(--fs-sm);
+}
+
+/* the form editor needs room for palette, form and properties: on a small screen it scrolls sideways */
+@media (max-width: 1000px) {
+  .modeler--form .modeler__canvas {
+    overflow-x: auto;
+  }
+
+  .modeler--form .form-editor > * {
+    min-width: 900px;
+  }
+}

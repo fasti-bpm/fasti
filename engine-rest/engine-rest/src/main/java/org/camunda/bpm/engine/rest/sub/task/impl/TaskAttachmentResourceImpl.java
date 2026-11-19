@@ -27,6 +27,7 @@ import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
+import org.camunda.bpm.engine.AuthorizationException;
 import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.ProcessEngineException;
@@ -74,6 +75,7 @@ public class TaskAttachmentResourceImpl implements TaskAttachmentResource {
   @Override
   public AttachmentDto getAttachment(String attachmentId) {
     ensureHistoryEnabled(Status.NOT_FOUND);
+    ensureTaskExists(Status.NOT_FOUND);
 
     Attachment attachment = engine.getTaskService().getTaskAttachment(taskId, attachmentId);
 
@@ -87,6 +89,7 @@ public class TaskAttachmentResourceImpl implements TaskAttachmentResource {
   @Override
   public InputStream getAttachmentData(String attachmentId) {
     ensureHistoryEnabled(Status.NOT_FOUND);
+    ensureTaskExists(Status.NOT_FOUND);
 
     InputStream attachmentData = engine.getTaskService().getTaskAttachmentContent(taskId, attachmentId);
 
@@ -101,9 +104,12 @@ public class TaskAttachmentResourceImpl implements TaskAttachmentResource {
   @Override
   public void deleteAttachment(String attachmentId) {
     ensureHistoryEnabled(Status.FORBIDDEN);
+    ensureTaskExists(Status.NOT_FOUND);
 
     try {
       engine.getTaskService().deleteTaskAttachment(taskId, attachmentId);
+    } catch (AuthorizationException e) {
+      throw e;
     } catch (ProcessEngineException e) {
       throw new InvalidRequestException(Status.NOT_FOUND, "Deletion is not possible. No attachment exists for task id '" + taskId + "' and attachment id '" + attachmentId + "'.");
     }
@@ -145,6 +151,8 @@ public class TaskAttachmentResourceImpl implements TaskAttachmentResource {
       } else if (urlPart != null) {
         attachment = engine.getTaskService().createAttachment(attachmentType, taskId, null, attachmentName, attachmentDescription, urlPart.getTextContent());
       }
+    } catch (AuthorizationException e) {
+      throw e;
     } catch (ProcessEngineException e) {
       throw new InvalidRequestException(Status.BAD_REQUEST, e, "Task id is null");
     }
@@ -181,6 +189,12 @@ public class TaskAttachmentResourceImpl implements TaskAttachmentResource {
     }
   }
 
+  /**
+   * Looks up the task with the authorizations of the current user. Every
+   * operation of this resource must pass this check before it accesses an
+   * attachment, so that a task which the user is not allowed to see cannot be
+   * told apart from a task that does not exist.
+   */
   private void ensureTaskExists(Status status) {
     HistoricTaskInstance historicTaskInstance = engine.getHistoryService().createHistoricTaskInstanceQuery().taskId(taskId).singleResult();
     if (historicTaskInstance == null) {

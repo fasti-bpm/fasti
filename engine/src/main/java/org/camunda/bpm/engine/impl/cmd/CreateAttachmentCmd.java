@@ -68,6 +68,8 @@ public class CreateAttachmentCmd implements Command<Attachment> {
 
   @Override
   public Attachment execute(CommandContext commandContext) {
+    AttachmentAndCommentCheckUtil.checkUpdate(commandContext, taskId, processInstanceId);
+
     if (taskId != null) {
       task = commandContext
           .getTaskManager()

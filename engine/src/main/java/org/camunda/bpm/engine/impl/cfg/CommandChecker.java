@@ -177,6 +177,16 @@ public interface CommandChecker {
   void checkReadProcessInstance(ExecutionEntity execution);
 
   /**
+   * Checks if it is allowed to read the attachments and comments of the
+   * process instance of the given execution. By default, this requires that
+   * it is allowed to {@link #checkReadProcessInstance(ExecutionEntity) read
+   * the process instance}.
+   */
+  default void checkReadProcessInstanceAttachmentsAndComments(ExecutionEntity execution) {
+    checkReadProcessInstance(execution);
+  }
+
+  /**
    * Checks if it is allowed to read a process instance's variables of the given execution.
    */
   void checkReadProcessInstanceVariable(ExecutionEntity execution);
@@ -190,6 +200,15 @@ public interface CommandChecker {
    * Check if it is allowed to read a task.
    */
   void checkReadTask(TaskEntity task);
+
+  /**
+   * Checks if it is allowed to read the attachments, comments and events of
+   * the given task. By default, this requires that it is allowed to
+   * {@link #checkReadTask(TaskEntity) read the task}.
+   */
+  default void checkReadTaskAttachmentsAndComments(TaskEntity task) {
+    checkReadTask(task);
+  }
 
   /**
    * Check if it is allowed to read a task's variable.
@@ -290,6 +309,38 @@ public interface CommandChecker {
    * Checks if it is allowed to update the given case definition.
    */
   void checkUpdateCaseDefinition(CaseDefinition caseDefinition);
+
+  /**
+   * Checks if it is allowed to read the given historic task instance, e.g. to
+   * read the attachments and comments of a task that does not exist anymore.
+   * By default, nothing is checked.
+   */
+  default void checkReadHistoricTaskInstance(HistoricTaskInstanceEntity task) {
+  }
+
+  /**
+   * Checks if it is allowed to read the given historic process instance, e.g.
+   * to read the attachments and comments of a process instance that does not
+   * exist anymore. By default, nothing is checked.
+   */
+  default void checkReadHistoricProcessInstance(HistoricProcessInstance instance) {
+  }
+
+  /**
+   * Checks if it is allowed to change the given historic task instance, e.g.
+   * to add an attachment or a comment to a task that does not exist anymore.
+   * By default, nothing is checked.
+   */
+  default void checkUpdateHistoricTaskInstance(HistoricTaskInstanceEntity task) {
+  }
+
+  /**
+   * Checks if it is allowed to change the given historic process instance,
+   * e.g. to add an attachment or a comment to a process instance that does
+   * not exist anymore. By default, nothing is checked.
+   */
+  default void checkUpdateHistoricProcessInstance(HistoricProcessInstance instance) {
+  }
 
   /**
    * Checks if it is allowed to delete the given historic task instance.

@@ -48,6 +48,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -2318,6 +2319,42 @@ public class TaskRestServiceInteractionTest extends
   }
 
   @Test
+  public void testGetSingleTaskCommentThrowsAuthorizationException() {
+    String message = "expected exception";
+    when(taskServiceMock.getTaskComment(EXAMPLE_TASK_ID, EXAMPLE_TASK_COMMENT_ID))
+        .thenThrow(new AuthorizationException(message));
+
+    given()
+      .pathParam("id", EXAMPLE_TASK_ID)
+      .pathParam("commentId", EXAMPLE_TASK_COMMENT_ID)
+      .header("accept", MediaType.APPLICATION_JSON)
+    .then().expect()
+      .statusCode(Status.FORBIDDEN.getStatusCode())
+      .contentType(ContentType.JSON)
+      .body("type", equalTo(AuthorizationException.class.getSimpleName()))
+      .body("message", equalTo(message))
+    .when()
+      .get(SINGLE_TASK_SINGLE_COMMENT_URL);
+  }
+
+  @Test
+  public void testGetTaskCommentsThrowsAuthorizationException() {
+    String message = "expected exception";
+    when(taskServiceMock.getTaskComments(EXAMPLE_TASK_ID)).thenThrow(new AuthorizationException(message));
+
+    given()
+      .pathParam("id", EXAMPLE_TASK_ID)
+      .header("accept", MediaType.APPLICATION_JSON)
+    .then().expect()
+      .statusCode(Status.FORBIDDEN.getStatusCode())
+      .contentType(ContentType.JSON)
+      .body("type", equalTo(AuthorizationException.class.getSimpleName()))
+      .body("message", equalTo(message))
+    .when()
+      .get(SINGLE_TASK_COMMENTS_URL);
+  }
+
+  @Test
   public void testGetSingleTaskComment() {
     given()
       .pathParam("id", EXAMPLE_TASK_ID)
@@ -2381,15 +2418,40 @@ public class TaskRestServiceInteractionTest extends
 
   @Test
   public void testGetSingleTaskCommentForNonExistingTask() {
+    when(historicTaskInstanceQueryMock.taskId(NON_EXISTING_ID)).thenReturn(historicTaskInstanceQueryMock);
+    when(historicTaskInstanceQueryMock.singleResult()).thenReturn(null);
+
     given()
       .pathParam("id", NON_EXISTING_ID)
       .pathParam("commentId", EXAMPLE_TASK_COMMENT_ID)
       .header("accept", MediaType.APPLICATION_JSON)
     .then().expect()
       .statusCode(Status.NOT_FOUND.getStatusCode())
-      .body(containsString("Task comment with id " + EXAMPLE_TASK_COMMENT_ID + " does not exist for task id '" + NON_EXISTING_ID + "'"))
+      .body(containsString("No task found for task id " + NON_EXISTING_ID))
     .when()
       .get(SINGLE_TASK_SINGLE_COMMENT_URL);
+
+    verify(taskServiceMock, never()).getTaskComment(anyString(), anyString());
+  }
+
+  @Test
+  public void testGetSingleTaskCommentForTaskNotVisibleToCaller() {
+    // the task and its comment exist, but the task lookup, which applies the
+    // caller's authorizations, does not return the task
+    when(historicTaskInstanceQueryMock.singleResult()).thenReturn(null);
+
+    given()
+      .pathParam("id", EXAMPLE_TASK_ID)
+      .pathParam("commentId", EXAMPLE_TASK_COMMENT_ID)
+      .header("accept", MediaType.APPLICATION_JSON)
+    .then().expect()
+      .statusCode(Status.NOT_FOUND.getStatusCode())
+      .body(containsString("No task found for task id " + EXAMPLE_TASK_ID))
+      .body(not(containsString(EXAMPLE_TASK_COMMENT_FULL_MESSAGE)))
+    .when()
+      .get(SINGLE_TASK_SINGLE_COMMENT_URL);
+
+    verify(taskServiceMock, never()).getTaskComment(anyString(), anyString());
   }
 
   @Test
@@ -2547,6 +2609,29 @@ public class TaskRestServiceInteractionTest extends
   }
 
   @Test
+  public void testAddTaskCommentThrowsAuthorizationException() {
+    String message = "expected exception";
+    when(taskServiceMock.createComment(EXAMPLE_TASK_ID, null, EXAMPLE_TASK_COMMENT_FULL_MESSAGE))
+        .thenThrow(new AuthorizationException(message));
+
+    Map<String, Object> json = new HashMap<>();
+    json.put("message", EXAMPLE_TASK_COMMENT_FULL_MESSAGE);
+
+    given()
+      .pathParam("id", EXAMPLE_TASK_ID)
+      .header("accept", MediaType.APPLICATION_JSON)
+      .contentType(ContentType.JSON)
+      .body(json)
+    .then().expect()
+      .statusCode(Status.FORBIDDEN.getStatusCode())
+      .contentType(ContentType.JSON)
+      .body("type", equalTo(AuthorizationException.class.getSimpleName()))
+      .body("message", equalTo(message))
+    .when()
+      .post(SINGLE_TASK_ADD_COMMENT_URL);
+  }
+
+  @Test
   public void testAddCompleteTaskCommentWithHistoryDisabled() {
 
     mockHistoryDisabled();
@@ -2652,6 +2737,47 @@ public class TaskRestServiceInteractionTest extends
     .when().get(SINGLE_TASK_SINGLE_ATTACHMENT_URL);
   }
 
+  /**
+   * The lookup of the historic task does not protect standalone tasks: they
+   * are visible to every user. The engine checks the permissions on the task
+   * itself, and its refusal must reach the caller.
+   */
+  @Test
+  public void testGetSingleTaskAttachmentThrowsAuthorizationException() {
+    String message = "expected exception";
+    when(taskServiceMock.getTaskAttachment(EXAMPLE_TASK_ID, EXAMPLE_TASK_ATTACHMENT_ID))
+        .thenThrow(new AuthorizationException(message));
+
+    given()
+      .pathParam("id", EXAMPLE_TASK_ID)
+      .pathParam("attachmentId", EXAMPLE_TASK_ATTACHMENT_ID)
+      .header("accept", MediaType.APPLICATION_JSON)
+    .then().expect()
+      .statusCode(Status.FORBIDDEN.getStatusCode())
+      .contentType(ContentType.JSON)
+      .body("type", equalTo(AuthorizationException.class.getSimpleName()))
+      .body("message", equalTo(message))
+    .when()
+      .get(SINGLE_TASK_SINGLE_ATTACHMENT_URL);
+  }
+
+  @Test
+  public void testGetTaskAttachmentsThrowsAuthorizationException() {
+    String message = "expected exception";
+    when(taskServiceMock.getTaskAttachments(EXAMPLE_TASK_ID)).thenThrow(new AuthorizationException(message));
+
+    given()
+      .pathParam("id", EXAMPLE_TASK_ID)
+      .header("accept", MediaType.APPLICATION_JSON)
+    .then().expect()
+      .statusCode(Status.FORBIDDEN.getStatusCode())
+      .contentType(ContentType.JSON)
+      .body("type", equalTo(AuthorizationException.class.getSimpleName()))
+      .body("message", equalTo(message))
+    .when()
+      .get(SINGLE_TASK_ATTACHMENTS_URL);
+  }
+
   @Test
   public void testGetSingleTaskAttachmentWithHistoryDisabled() {
     mockHistoryDisabled();
@@ -2694,15 +2820,40 @@ public class TaskRestServiceInteractionTest extends
 
   @Test
   public void testGetSingleTaskAttachmentForNonExistingTask() {
+    when(historicTaskInstanceQueryMock.taskId(NON_EXISTING_ID)).thenReturn(historicTaskInstanceQueryMock);
+    when(historicTaskInstanceQueryMock.singleResult()).thenReturn(null);
+
     given()
       .pathParam("id", NON_EXISTING_ID)
       .pathParam("attachmentId", EXAMPLE_TASK_ATTACHMENT_ID)
       .header("accept", MediaType.APPLICATION_JSON)
     .then().expect()
       .statusCode(Status.NOT_FOUND.getStatusCode())
-      .body(containsString("Task attachment with id " + EXAMPLE_TASK_ATTACHMENT_ID + " does not exist for task id '" + NON_EXISTING_ID + "'"))
+      .body(containsString("No task found for task id " + NON_EXISTING_ID))
     .when()
       .get(SINGLE_TASK_SINGLE_ATTACHMENT_URL);
+
+    verify(taskServiceMock, never()).getTaskAttachment(anyString(), anyString());
+  }
+
+  @Test
+  public void testGetSingleTaskAttachmentForTaskNotVisibleToCaller() {
+    // the task and its attachment exist, but the task lookup, which applies the
+    // caller's authorizations, does not return the task
+    when(historicTaskInstanceQueryMock.singleResult()).thenReturn(null);
+
+    given()
+      .pathParam("id", EXAMPLE_TASK_ID)
+      .pathParam("attachmentId", EXAMPLE_TASK_ATTACHMENT_ID)
+      .header("accept", MediaType.APPLICATION_JSON)
+    .then().expect()
+      .statusCode(Status.NOT_FOUND.getStatusCode())
+      .body(containsString("No task found for task id " + EXAMPLE_TASK_ID))
+      .body(not(containsString(EXAMPLE_TASK_ATTACHMENT_NAME)))
+    .when()
+      .get(SINGLE_TASK_SINGLE_ATTACHMENT_URL);
+
+    verify(taskServiceMock, never()).getTaskAttachment(anyString(), anyString());
   }
 
   @Test
@@ -2818,6 +2969,50 @@ public class TaskRestServiceInteractionTest extends
       .post(SINGLE_TASK_ADD_ATTACHMENT_URL);
 
     verifyCreatedTaskAttachment(mockTaskAttachment, response, false);
+  }
+
+  @Test
+  public void testCreateTaskAttachmentWithContentThrowsAuthorizationException() {
+    String message = "expected exception";
+    when(taskServiceMock.createAttachment(any(), any(), any(), any(), any(), Mockito.<InputStream>any()))
+        .thenThrow(new AuthorizationException(message));
+
+    given()
+      .pathParam("id", EXAMPLE_TASK_ID)
+      .multiPart("attachment-name", EXAMPLE_TASK_ATTACHMENT_NAME)
+      .multiPart("attachment-description", EXAMPLE_TASK_ATTACHMENT_DESCRIPTION)
+      .multiPart("attachment-type", EXAMPLE_TASK_ATTACHMENT_TYPE)
+      .multiPart("content", createMockByteData())
+      .header("accept", MediaType.APPLICATION_JSON)
+    .then().expect()
+      .statusCode(Status.FORBIDDEN.getStatusCode())
+      .contentType(ContentType.JSON)
+      .body("type", equalTo(AuthorizationException.class.getSimpleName()))
+      .body("message", equalTo(message))
+    .when()
+      .post(SINGLE_TASK_ADD_ATTACHMENT_URL);
+  }
+
+  @Test
+  public void testCreateTaskAttachmentWithUrlThrowsAuthorizationException() {
+    String message = "expected exception";
+    when(taskServiceMock.createAttachment(any(), any(), any(), any(), any(), Mockito.<String>any()))
+        .thenThrow(new AuthorizationException(message));
+
+    given()
+      .pathParam("id", EXAMPLE_TASK_ID)
+      .multiPart("attachment-name", EXAMPLE_TASK_ATTACHMENT_NAME)
+      .multiPart("attachment-description", EXAMPLE_TASK_ATTACHMENT_DESCRIPTION)
+      .multiPart("attachment-type", EXAMPLE_TASK_ATTACHMENT_TYPE)
+      .multiPart("url", EXAMPLE_TASK_ATTACHMENT_URL)
+      .header("accept", MediaType.APPLICATION_JSON)
+    .then().expect()
+      .statusCode(Status.FORBIDDEN.getStatusCode())
+      .contentType(ContentType.JSON)
+      .body("type", equalTo(AuthorizationException.class.getSimpleName()))
+      .body("message", equalTo(message))
+    .when()
+      .post(SINGLE_TASK_ADD_ATTACHMENT_URL);
   }
 
   @Test
@@ -2937,6 +3132,22 @@ public class TaskRestServiceInteractionTest extends
   }
 
   @Test
+  public void testGetSingleTaskAttachmentContentThrowsAuthorizationException() {
+    String message = "expected exception";
+    when(taskServiceMock.getTaskAttachmentContent(EXAMPLE_TASK_ID, EXAMPLE_TASK_ATTACHMENT_ID))
+        .thenThrow(new AuthorizationException(message));
+
+    given()
+      .pathParam("id", EXAMPLE_TASK_ID)
+      .pathParam("attachmentId", EXAMPLE_TASK_ATTACHMENT_ID)
+    .then().expect()
+      .statusCode(Status.FORBIDDEN.getStatusCode())
+      .body(containsString(message))
+    .when()
+      .get(SINGLE_TASK_SINGLE_ATTACHMENT_DATA_URL);
+  }
+
+  @Test
   public void testGetSingleTaskAttachmentContentWithHistoryDisabled() {
     mockHistoryDisabled();
 
@@ -2975,14 +3186,38 @@ public class TaskRestServiceInteractionTest extends
 
   @Test
   public void testGetSingleTaskAttachmentContentForNonExistingTask() {
+    when(historicTaskInstanceQueryMock.taskId(NON_EXISTING_ID)).thenReturn(historicTaskInstanceQueryMock);
+    when(historicTaskInstanceQueryMock.singleResult()).thenReturn(null);
+
     given()
       .pathParam("id", NON_EXISTING_ID)
       .pathParam("attachmentId", EXAMPLE_TASK_ATTACHMENT_ID)
     .then().expect()
       .statusCode(Status.NOT_FOUND.getStatusCode())
-      .body(containsString("Attachment content for attachment with id '" + EXAMPLE_TASK_ATTACHMENT_ID + "' does not exist for task id '" + NON_EXISTING_ID + "'."))
+      .body(containsString("No task found for task id " + NON_EXISTING_ID))
     .when()
       .get(SINGLE_TASK_SINGLE_ATTACHMENT_DATA_URL);
+
+    verify(taskServiceMock, never()).getTaskAttachmentContent(anyString(), anyString());
+  }
+
+  @Test
+  public void testGetSingleTaskAttachmentContentForTaskNotVisibleToCaller() {
+    // the task and its attachment exist, but the task lookup, which applies the
+    // caller's authorizations, does not return the task
+    when(historicTaskInstanceQueryMock.singleResult()).thenReturn(null);
+
+    given()
+      .pathParam("id", EXAMPLE_TASK_ID)
+      .pathParam("attachmentId", EXAMPLE_TASK_ATTACHMENT_ID)
+    .then().expect()
+      .statusCode(Status.NOT_FOUND.getStatusCode())
+      .body(containsString("No task found for task id " + EXAMPLE_TASK_ID))
+      .body(not(containsString("someContent")))
+    .when()
+      .get(SINGLE_TASK_SINGLE_ATTACHMENT_DATA_URL);
+
+    verify(taskServiceMock, never()).getTaskAttachmentContent(anyString(), anyString());
   }
 
   @Test
@@ -3008,6 +3243,25 @@ public class TaskRestServiceInteractionTest extends
     .then().expect()
       .statusCode(Status.NO_CONTENT.getStatusCode())
     .when().delete(SINGLE_TASK_DELETE_SINGLE_ATTACHMENT_URL);
+  }
+
+  @Test
+  public void testDeleteSingleTaskAttachmentThrowsAuthorizationException() {
+    String message = "expected exception";
+    doThrow(new AuthorizationException(message)).when(taskServiceMock)
+        .deleteTaskAttachment(EXAMPLE_TASK_ID, EXAMPLE_TASK_ATTACHMENT_ID);
+
+    given()
+      .pathParam("id", EXAMPLE_TASK_ID)
+      .pathParam("attachmentId", EXAMPLE_TASK_ATTACHMENT_ID)
+      .header("accept", MediaType.APPLICATION_JSON)
+    .then().expect()
+      .statusCode(Status.FORBIDDEN.getStatusCode())
+      .contentType(ContentType.JSON)
+      .body("type", equalTo(AuthorizationException.class.getSimpleName()))
+      .body("message", equalTo(message))
+    .when()
+      .delete(SINGLE_TASK_DELETE_SINGLE_ATTACHMENT_URL);
   }
 
   @Test
@@ -3054,7 +3308,8 @@ public class TaskRestServiceInteractionTest extends
 
   @Test
   public void testDeleteSingleTaskAttachmentForNonExistingTask() {
-    doThrow(new ProcessEngineException()).when(taskServiceMock).deleteTaskAttachment(NON_EXISTING_ID, EXAMPLE_TASK_ATTACHMENT_ID);
+    when(historicTaskInstanceQueryMock.taskId(NON_EXISTING_ID)).thenReturn(historicTaskInstanceQueryMock);
+    when(historicTaskInstanceQueryMock.singleResult()).thenReturn(null);
 
     given()
       .pathParam("id", NON_EXISTING_ID)
@@ -3062,9 +3317,30 @@ public class TaskRestServiceInteractionTest extends
       .header("accept", MediaType.APPLICATION_JSON)
     .then().expect()
       .statusCode(Status.NOT_FOUND.getStatusCode())
-      .body(containsString("Deletion is not possible. No attachment exists for task id '" + NON_EXISTING_ID + "' and attachment id '" + EXAMPLE_TASK_ATTACHMENT_ID + "'."))
+      .body(containsString("No task found for task id " + NON_EXISTING_ID))
     .when()
       .delete(SINGLE_TASK_DELETE_SINGLE_ATTACHMENT_URL);
+
+    verify(taskServiceMock, never()).deleteTaskAttachment(anyString(), anyString());
+  }
+
+  @Test
+  public void testDeleteSingleTaskAttachmentForTaskNotVisibleToCaller() {
+    // the task and its attachment exist, but the task lookup, which applies the
+    // caller's authorizations, does not return the task
+    when(historicTaskInstanceQueryMock.singleResult()).thenReturn(null);
+
+    given()
+      .pathParam("id", EXAMPLE_TASK_ID)
+      .pathParam("attachmentId", EXAMPLE_TASK_ATTACHMENT_ID)
+      .header("accept", MediaType.APPLICATION_JSON)
+    .then().expect()
+      .statusCode(Status.NOT_FOUND.getStatusCode())
+      .body(containsString("No task found for task id " + EXAMPLE_TASK_ID))
+    .when()
+      .delete(SINGLE_TASK_DELETE_SINGLE_ATTACHMENT_URL);
+
+    verify(taskServiceMock, never()).deleteTaskAttachment(anyString(), anyString());
   }
 
   @Test

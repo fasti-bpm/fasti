@@ -35,10 +35,14 @@ import static org.camunda.bpm.engine.authorization.Resources.BATCH;
 import static org.camunda.bpm.engine.authorization.Resources.DECISION_DEFINITION;
 import static org.camunda.bpm.engine.authorization.Resources.DECISION_REQUIREMENTS_DEFINITION;
 import static org.camunda.bpm.engine.authorization.Resources.DEPLOYMENT;
+import static org.camunda.bpm.engine.authorization.Resources.HISTORIC_PROCESS_INSTANCE;
+import static org.camunda.bpm.engine.authorization.Resources.HISTORIC_TASK;
 import static org.camunda.bpm.engine.authorization.Resources.PROCESS_DEFINITION;
 import static org.camunda.bpm.engine.authorization.Resources.PROCESS_INSTANCE;
 import static org.camunda.bpm.engine.authorization.Resources.TASK;
 
+import org.camunda.bpm.engine.authorization.HistoricProcessInstancePermissions;
+import org.camunda.bpm.engine.authorization.HistoricTaskPermissions;
 import org.camunda.bpm.engine.authorization.Permission;
 import org.camunda.bpm.engine.authorization.ProcessDefinitionPermissions;
 import org.camunda.bpm.engine.authorization.ProcessInstancePermissions;
@@ -371,6 +375,25 @@ public class AuthorizationCommandChecker implements CommandChecker {
   }
 
   @Override
+  public void checkReadProcessInstanceAttachmentsAndComments(ExecutionEntity execution) {
+    String processInstanceId = execution.getProcessInstanceId();
+    String processDefinitionKey = execution.getProcessDefinition().getKey();
+
+    // attachments and comments are part of the history, so that
+    // they can be read with one of the following permissions:
+    // - READ on PROCESS_INSTANCE
+    // - READ_INSTANCE on PROCESS_DEFINITION
+    // - the permissions to read the historic process instance
+    PermissionCheckBuilder permissionCheck = new PermissionCheckBuilder()
+        .disjunctive()
+          .atomicCheckForResourceId(PROCESS_INSTANCE, processInstanceId, READ)
+          .atomicCheckForResourceId(PROCESS_DEFINITION, processDefinitionKey, READ_INSTANCE);
+    addReadHistoryPermissionChecks(permissionCheck, processDefinitionKey, processInstanceId, null);
+
+    getAuthorizationManager().checkAuthorization(permissionCheck.build());
+  }
+
+  @Override
   public void checkReadProcessInstanceVariable(ExecutionEntity execution) {
     if (getAuthorizationManager().isEnsureSpecificVariablePermission()) {
       ProcessDefinitionEntity processDefinition = execution.getProcessDefinition();
@@ -411,6 +434,110 @@ public class AuthorizationCommandChecker implements CommandChecker {
   @Override
   public void checkReadTask(TaskEntity task) {
     checkTaskPermission(task, READ_TASK, READ);
+  }
+
+  @Override
+  public void checkReadTaskAttachmentsAndComments(TaskEntity task) {
+    String taskId = task.getId();
+
+    if (task.getExecutionId() != null) {
+
+      // if the task exists in context of a process instance, then its
+      // attachments and comments are part of the history of that process
+      // instance, so that they can be read with one of the following permissions:
+      // - READ on TASK
+      // - READ_TASK on PROCESS_DEFINITION
+      // - the permissions to read the historic task instance
+
+      String processDefinitionKey = task.getProcessDefinition().getKey();
+
+      PermissionCheckBuilder permissionCheck = new PermissionCheckBuilder()
+          .disjunctive()
+            .atomicCheckForResourceId(TASK, taskId, READ)
+            .atomicCheckForResourceId(PROCESS_DEFINITION, processDefinitionKey, READ_TASK);
+      addReadHistoryPermissionChecks(permissionCheck, processDefinitionKey, task.getProcessInstanceId(), taskId);
+
+      getAuthorizationManager().checkAuthorization(permissionCheck.build());
+
+    } else {
+
+      // (a) standalone task: READ on TASK
+      // (b) task in context of a case instance: no permission
+      //     is checked, because such tasks can always be read
+      checkReadTask(task);
+    }
+  }
+
+  @Override
+  public void checkReadHistoricTaskInstance(HistoricTaskInstanceEntity task) {
+    // the same permissions as in HistoryService#createHistoricTaskInstanceQuery()
+    if (task == null) {
+      return;
+    }
+
+    if (task.getProcessDefinitionKey() != null) {
+      PermissionCheckBuilder permissionCheck = new PermissionCheckBuilder().disjunctive();
+      addReadHistoryPermissionChecks(permissionCheck, task.getProcessDefinitionKey(), task.getProcessInstanceId(), task.getId());
+
+      getAuthorizationManager().checkAuthorization(permissionCheck.build());
+
+    } else if (Context.getProcessEngineConfiguration().isEnableHistoricInstancePermissions()) {
+      // historic tasks which do not belong to a process definition (i.e. standalone
+      // tasks and tasks in context of a case instance) are only protected
+      // if historic instance permissions are enabled, otherwise they can always be read
+      getAuthorizationManager().checkAuthorization(HistoricTaskPermissions.READ, HISTORIC_TASK, task.getId());
+    }
+  }
+
+  @Override
+  public void checkReadHistoricProcessInstance(HistoricProcessInstance instance) {
+    if (instance != null && instance.getProcessDefinitionKey() != null) {
+      PermissionCheckBuilder permissionCheck = new PermissionCheckBuilder().disjunctive();
+      addReadHistoryPermissionChecks(permissionCheck, instance.getProcessDefinitionKey(), instance.getId(), null);
+
+      getAuthorizationManager().checkAuthorization(permissionCheck.build());
+    }
+  }
+
+  @Override
+  public void checkUpdateHistoricTaskInstance(HistoricTaskInstanceEntity task) {
+    // like for reading and deleting, the history of tasks which do not
+    // belong to a process definition is not protected by a permission
+    if (task != null && task.getProcessDefinitionKey() != null) {
+      getAuthorizationManager().checkAuthorization(ProcessDefinitionPermissions.UPDATE_HISTORY, PROCESS_DEFINITION, task.getProcessDefinitionKey());
+    }
+  }
+
+  @Override
+  public void checkUpdateHistoricProcessInstance(HistoricProcessInstance instance) {
+    if (instance != null && instance.getProcessDefinitionKey() != null) {
+      getAuthorizationManager().checkAuthorization(ProcessDefinitionPermissions.UPDATE_HISTORY, PROCESS_DEFINITION, instance.getProcessDefinitionKey());
+    }
+  }
+
+  /**
+   * Adds the permissions which allow to read a historic process instance or,
+   * if a task id is given, a historic task instance:
+   * <ul>
+   *   <li>READ_HISTORY on PROCESS_DEFINITION</li>
+   *   <li>if historic instance permissions are enabled: READ on
+   *   HISTORIC_PROCESS_INSTANCE or READ on HISTORIC_TASK</li>
+   * </ul>
+   */
+  protected void addReadHistoryPermissionChecks(PermissionCheckBuilder permissionCheck, String processDefinitionKey,
+      String processInstanceId, String taskId) {
+
+    permissionCheck.atomicCheckForResourceId(PROCESS_DEFINITION, processDefinitionKey, READ_HISTORY);
+
+    if (Context.getProcessEngineConfiguration().isEnableHistoricInstancePermissions()) {
+      if (processInstanceId != null) {
+        permissionCheck.atomicCheckForResourceId(HISTORIC_PROCESS_INSTANCE, processInstanceId,
+            HistoricProcessInstancePermissions.READ);
+      }
+      if (taskId != null) {
+        permissionCheck.atomicCheckForResourceId(HISTORIC_TASK, taskId, HistoricTaskPermissions.READ);
+      }
+    }
   }
 
   @Override

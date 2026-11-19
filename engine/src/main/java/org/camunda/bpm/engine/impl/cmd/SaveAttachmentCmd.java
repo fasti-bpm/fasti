@@ -42,6 +42,8 @@ public class SaveAttachmentCmd implements Command<Object>, Serializable {
       .getDbEntityManager()
       .selectById(AttachmentEntity.class, attachment.getId());
 
+    AttachmentAndCommentCheckUtil.checkUpdate(commandContext, updateAttachment);
+
     updateAttachment.setName(attachment.getName());
     updateAttachment.setDescription(attachment.getDescription());
 

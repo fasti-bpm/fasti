@@ -38,6 +38,8 @@ public class GetProcessInstanceCommentsCmd implements Command<List<Comment>>, Se
 
   @SuppressWarnings("unchecked")
   public List<Comment> execute(CommandContext commandContext) {
+    AttachmentAndCommentCheckUtil.checkReadByProcessInstanceId(commandContext, processInstanceId);
+
     return commandContext
       .getCommentManager()
       .findCommentsByProcessInstanceId(processInstanceId);

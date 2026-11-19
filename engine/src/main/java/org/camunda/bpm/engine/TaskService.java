@@ -22,6 +22,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.camunda.bpm.engine.authorization.HistoricProcessInstancePermissions;
+import org.camunda.bpm.engine.authorization.HistoricTaskPermissions;
 import org.camunda.bpm.engine.authorization.Permissions;
 import org.camunda.bpm.engine.authorization.ProcessDefinitionPermissions;
 import org.camunda.bpm.engine.authorization.Resources;
@@ -1100,11 +1102,43 @@ public interface TaskService {
    * Add a comment to a task and/or process instance.
    *
    * @deprecated Use {@link #createComment(String, String, String)} instead
+   *
+   * @throws AuthorizationException
+   *          If a task id is given and the user has none of the following permissions:
+   *          <ul>
+   *            <li>{@link Permissions#UPDATE} or {@link Permissions#TASK_WORK} permission on {@link Resources#TASK},</li>
+   *            <li>{@link Permissions#UPDATE_TASK} or {@link Permissions#TASK_WORK} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is part of a running process instance).</li>
+   *          </ul>
+   *          If only a process instance id is given and the user has neither
+   *          {@link Permissions#UPDATE} permission on {@link Resources#PROCESS_INSTANCE} nor
+   *          {@link Permissions#UPDATE_INSTANCE} permission on {@link Resources#PROCESS_DEFINITION}.
+   *          If the task or process instance does not exist anymore (e.g. because the task has
+   *          been completed) and the user has no {@link ProcessDefinitionPermissions#UPDATE_HISTORY}
+   *          permission on {@link Resources#PROCESS_DEFINITION}. Standalone tasks which do not
+   *          exist anymore are not checked.
    */
   @Deprecated
   void addComment(String taskId, String processInstanceId, String message);
 
-  /** Creates a comment to a task and/or process instance and returns the comment. */
+  /**
+   * Creates a comment to a task and/or process instance and returns the comment.
+   *
+   * @throws AuthorizationException
+   *          If a task id is given and the user has none of the following permissions:
+   *          <ul>
+   *            <li>{@link Permissions#UPDATE} or {@link Permissions#TASK_WORK} permission on {@link Resources#TASK},</li>
+   *            <li>{@link Permissions#UPDATE_TASK} or {@link Permissions#TASK_WORK} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is part of a running process instance).</li>
+   *          </ul>
+   *          If only a process instance id is given and the user has neither
+   *          {@link Permissions#UPDATE} permission on {@link Resources#PROCESS_INSTANCE} nor
+   *          {@link Permissions#UPDATE_INSTANCE} permission on {@link Resources#PROCESS_DEFINITION}.
+   *          If the task or process instance does not exist anymore (e.g. because the task has
+   *          been completed) and the user has no {@link ProcessDefinitionPermissions#UPDATE_HISTORY}
+   *          permission on {@link Resources#PROCESS_DEFINITION}. Standalone tasks which do not
+   *          exist anymore are not checked.
+   */
   Comment createComment(String taskId, String processInstanceId, String message);
 
   /**
@@ -1181,10 +1215,50 @@ public interface TaskService {
    */
   void updateProcessInstanceComment(String processInstanceId, String commentId, String message);
 
-  /** The comments related to the given task. */
+  /**
+   * The comments related to the given task.
+   *
+   * @throws AuthorizationException
+   *          If the user has none of the following permissions:
+   *          <ul>
+   *            <li>{@link Permissions#READ} permission on {@link Resources#TASK},</li>
+   *            <li>{@link Permissions#READ_TASK} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is part of a running process instance),</li>
+   *            <li>{@link Permissions#READ_HISTORY} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is or was part of a process instance; this is the only
+   *            sufficient permission once the task does not exist anymore, e.g.
+   *            because it has been completed).</li>
+   *          </ul>
+   *          If historic instance permissions are enabled, the {@link HistoricTaskPermissions#READ}
+   *          permission on {@link Resources#HISTORIC_TASK} and the {@link HistoricProcessInstancePermissions#READ}
+   *          permission on {@link Resources#HISTORIC_PROCESS_INSTANCE} are sufficient as well.
+   *          Standalone tasks which do not exist anymore are only checked if historic instance
+   *          permissions are enabled ({@link HistoricTaskPermissions#READ} permission on
+   *          {@link Resources#HISTORIC_TASK}).
+   */
   List<Comment> getTaskComments(String taskId);
 
-  /** Retrieve a particular task comment */
+  /**
+   * Retrieve a particular task comment
+   *
+   * @throws AuthorizationException
+   *          If the user has none of the following permissions:
+   *          <ul>
+   *            <li>{@link Permissions#READ} permission on {@link Resources#TASK},</li>
+   *            <li>{@link Permissions#READ_TASK} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is part of a running process instance),</li>
+   *            <li>{@link Permissions#READ_HISTORY} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is or was part of a process instance; this is the only
+   *            sufficient permission once the task does not exist anymore, e.g.
+   *            because it has been completed).</li>
+   *          </ul>
+   *          If historic instance permissions are enabled, the {@link HistoricTaskPermissions#READ}
+   *          permission on {@link Resources#HISTORIC_TASK} and the {@link HistoricProcessInstancePermissions#READ}
+   *          permission on {@link Resources#HISTORIC_PROCESS_INSTANCE} are sufficient as well.
+   *          Standalone tasks which do not exist anymore are only checked if historic instance
+   *          permissions are enabled ({@link HistoricTaskPermissions#READ} permission on
+   *          {@link Resources#HISTORIC_TASK}).
+   */
   Comment getTaskComment(String taskId, String commentId);
 
   /**
@@ -1199,11 +1273,43 @@ public interface TaskService {
    * the operation log. See {@link UserOperationLogEntry} and {@link UserOperationLogQuery}.
    *
    * @see HistoryService#createUserOperationLogQuery()
+   *
+   * @throws AuthorizationException
+   *          If the user has none of the following permissions:
+   *          <ul>
+   *            <li>{@link Permissions#READ} permission on {@link Resources#TASK},</li>
+   *            <li>{@link Permissions#READ_TASK} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is part of a running process instance),</li>
+   *            <li>{@link Permissions#READ_HISTORY} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is or was part of a process instance; this is the only
+   *            sufficient permission once the task does not exist anymore, e.g.
+   *            because it has been completed).</li>
+   *          </ul>
+   *          If historic instance permissions are enabled, the {@link HistoricTaskPermissions#READ}
+   *          permission on {@link Resources#HISTORIC_TASK} and the {@link HistoricProcessInstancePermissions#READ}
+   *          permission on {@link Resources#HISTORIC_PROCESS_INSTANCE} are sufficient as well.
+   *          Standalone tasks which do not exist anymore are only checked if historic instance
+   *          permissions are enabled ({@link HistoricTaskPermissions#READ} permission on
+   *          {@link Resources#HISTORIC_TASK}).
    */
   @Deprecated
   List<Event> getTaskEvents(String taskId);
 
-  /** The comments related to the given process instance. */
+  /**
+   * The comments related to the given process instance.
+   *
+   * @throws AuthorizationException
+   *          If the user has none of the following permissions:
+   *          <ul>
+   *            <li>{@link Permissions#READ} permission on {@link Resources#PROCESS_INSTANCE},</li>
+   *            <li>{@link Permissions#READ_INSTANCE} permission on {@link Resources#PROCESS_DEFINITION},</li>
+   *            <li>{@link Permissions#READ_HISTORY} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (this is the only sufficient permission once the process instance
+   *            does not exist anymore).</li>
+   *          </ul>
+   *          If historic instance permissions are enabled, the {@link HistoricProcessInstancePermissions#READ}
+   *          permission on {@link Resources#HISTORIC_PROCESS_INSTANCE} is sufficient as well.
+   */
   List<Comment> getProcessInstanceComments(String processInstanceId);
 
   /**
@@ -1219,6 +1325,20 @@ public interface TaskService {
    * @param attachmentDescription  - full text description, can be null
    * @param content - byte array with content of attachment
    *
+   * @throws AuthorizationException
+   *          If the attachment belongs to a task and the user has none of the following permissions:
+   *          <ul>
+   *            <li>{@link Permissions#UPDATE} or {@link Permissions#TASK_WORK} permission on {@link Resources#TASK},</li>
+   *            <li>{@link Permissions#UPDATE_TASK} or {@link Permissions#TASK_WORK} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is part of a running process instance).</li>
+   *          </ul>
+   *          If the attachment only belongs to a process instance and the user has neither
+   *          {@link Permissions#UPDATE} permission on {@link Resources#PROCESS_INSTANCE} nor
+   *          {@link Permissions#UPDATE_INSTANCE} permission on {@link Resources#PROCESS_DEFINITION}.
+   *          If the task or process instance does not exist anymore (e.g. because the task has
+   *          been completed) and the user has no {@link ProcessDefinitionPermissions#UPDATE_HISTORY}
+   *          permission on {@link Resources#PROCESS_DEFINITION}. Standalone tasks which do not
+   *          exist anymore are not checked.
    */
   Attachment createAttachment(String attachmentType, String taskId, String processInstanceId, String attachmentName, String attachmentDescription, InputStream content);
 
@@ -1235,37 +1355,195 @@ public interface TaskService {
    * @param attachmentDescription  - full text description, can be null
    * @param url - url of the attachment, can be null
    *
+   * @throws AuthorizationException
+   *          If the attachment belongs to a task and the user has none of the following permissions:
+   *          <ul>
+   *            <li>{@link Permissions#UPDATE} or {@link Permissions#TASK_WORK} permission on {@link Resources#TASK},</li>
+   *            <li>{@link Permissions#UPDATE_TASK} or {@link Permissions#TASK_WORK} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is part of a running process instance).</li>
+   *          </ul>
+   *          If the attachment only belongs to a process instance and the user has neither
+   *          {@link Permissions#UPDATE} permission on {@link Resources#PROCESS_INSTANCE} nor
+   *          {@link Permissions#UPDATE_INSTANCE} permission on {@link Resources#PROCESS_DEFINITION}.
+   *          If the task or process instance does not exist anymore (e.g. because the task has
+   *          been completed) and the user has no {@link ProcessDefinitionPermissions#UPDATE_HISTORY}
+   *          permission on {@link Resources#PROCESS_DEFINITION}. Standalone tasks which do not
+   *          exist anymore are not checked.
    */
   Attachment createAttachment(String attachmentType, String taskId, String processInstanceId, String attachmentName, String attachmentDescription, String url);
 
-  /** Update the name and decription of an attachment */
+  /**
+   * Update the name and decription of an attachment
+   *
+   * @throws AuthorizationException
+   *          If the attachment belongs to a task and the user has none of the following permissions:
+   *          <ul>
+   *            <li>{@link Permissions#UPDATE} or {@link Permissions#TASK_WORK} permission on {@link Resources#TASK},</li>
+   *            <li>{@link Permissions#UPDATE_TASK} or {@link Permissions#TASK_WORK} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is part of a running process instance).</li>
+   *          </ul>
+   *          If the attachment only belongs to a process instance and the user has neither
+   *          {@link Permissions#UPDATE} permission on {@link Resources#PROCESS_INSTANCE} nor
+   *          {@link Permissions#UPDATE_INSTANCE} permission on {@link Resources#PROCESS_DEFINITION}.
+   *          If the task or process instance does not exist anymore (e.g. because the task has
+   *          been completed) and the user has no {@link ProcessDefinitionPermissions#UPDATE_HISTORY}
+   *          permission on {@link Resources#PROCESS_DEFINITION}. Standalone tasks which do not
+   *          exist anymore are not checked.
+   */
   void saveAttachment(Attachment attachment);
 
-  /** Retrieve a particular attachment */
+  /**
+   * Retrieve a particular attachment
+   *
+   * @throws AuthorizationException
+   *          If the user is not allowed to read the attachments of the task the
+   *          attachment belongs to, see {@link #getTaskAttachments(String)}, or,
+   *          if it does not belong to a task, of its process instance, see
+   *          {@link #getProcessInstanceAttachments(String)}.
+   */
   Attachment getAttachment(String attachmentId);
 
-  /** Retrieve a particular attachment to the given task id and attachment id*/
+  /**
+   * Retrieve a particular attachment to the given task id and attachment id
+   *
+   * @throws AuthorizationException
+   *          If the user has none of the following permissions:
+   *          <ul>
+   *            <li>{@link Permissions#READ} permission on {@link Resources#TASK},</li>
+   *            <li>{@link Permissions#READ_TASK} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is part of a running process instance),</li>
+   *            <li>{@link Permissions#READ_HISTORY} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is or was part of a process instance; this is the only
+   *            sufficient permission once the task does not exist anymore, e.g.
+   *            because it has been completed).</li>
+   *          </ul>
+   *          If historic instance permissions are enabled, the {@link HistoricTaskPermissions#READ}
+   *          permission on {@link Resources#HISTORIC_TASK} and the {@link HistoricProcessInstancePermissions#READ}
+   *          permission on {@link Resources#HISTORIC_PROCESS_INSTANCE} are sufficient as well.
+   *          Standalone tasks which do not exist anymore are only checked if historic instance
+   *          permissions are enabled ({@link HistoricTaskPermissions#READ} permission on
+   *          {@link Resources#HISTORIC_TASK}).
+   */
   Attachment getTaskAttachment(String taskId, String attachmentId);
 
-  /** Retrieve stream content of a particular attachment */
+  /**
+   * Retrieve stream content of a particular attachment
+   *
+   * @throws AuthorizationException
+   *          If the user is not allowed to read the attachments of the task the
+   *          attachment belongs to, see {@link #getTaskAttachments(String)}, or,
+   *          if it does not belong to a task, of its process instance, see
+   *          {@link #getProcessInstanceAttachments(String)}.
+   */
   InputStream getAttachmentContent(String attachmentId);
 
-  /** Retrieve stream content of a particular attachment to the given task id and attachment id*/
+  /**
+   * Retrieve stream content of a particular attachment to the given task id and attachment id
+   *
+   * @throws AuthorizationException
+   *          If the user has none of the following permissions:
+   *          <ul>
+   *            <li>{@link Permissions#READ} permission on {@link Resources#TASK},</li>
+   *            <li>{@link Permissions#READ_TASK} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is part of a running process instance),</li>
+   *            <li>{@link Permissions#READ_HISTORY} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is or was part of a process instance; this is the only
+   *            sufficient permission once the task does not exist anymore, e.g.
+   *            because it has been completed).</li>
+   *          </ul>
+   *          If historic instance permissions are enabled, the {@link HistoricTaskPermissions#READ}
+   *          permission on {@link Resources#HISTORIC_TASK} and the {@link HistoricProcessInstancePermissions#READ}
+   *          permission on {@link Resources#HISTORIC_PROCESS_INSTANCE} are sufficient as well.
+   *          Standalone tasks which do not exist anymore are only checked if historic instance
+   *          permissions are enabled ({@link HistoricTaskPermissions#READ} permission on
+   *          {@link Resources#HISTORIC_TASK}).
+   */
   InputStream getTaskAttachmentContent(String taskId, String attachmentId);
 
-  /** The list of attachments associated to a task */
+  /**
+   * The list of attachments associated to a task
+   *
+   * @throws AuthorizationException
+   *          If the user has none of the following permissions:
+   *          <ul>
+   *            <li>{@link Permissions#READ} permission on {@link Resources#TASK},</li>
+   *            <li>{@link Permissions#READ_TASK} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is part of a running process instance),</li>
+   *            <li>{@link Permissions#READ_HISTORY} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is or was part of a process instance; this is the only
+   *            sufficient permission once the task does not exist anymore, e.g.
+   *            because it has been completed).</li>
+   *          </ul>
+   *          If historic instance permissions are enabled, the {@link HistoricTaskPermissions#READ}
+   *          permission on {@link Resources#HISTORIC_TASK} and the {@link HistoricProcessInstancePermissions#READ}
+   *          permission on {@link Resources#HISTORIC_PROCESS_INSTANCE} are sufficient as well.
+   *          Standalone tasks which do not exist anymore are only checked if historic instance
+   *          permissions are enabled ({@link HistoricTaskPermissions#READ} permission on
+   *          {@link Resources#HISTORIC_TASK}).
+   */
   List<Attachment> getTaskAttachments(String taskId);
 
-  /** The list of attachments associated to a process instance */
+  /**
+   * The list of attachments associated to a process instance
+   *
+   * @throws AuthorizationException
+   *          If the user has none of the following permissions:
+   *          <ul>
+   *            <li>{@link Permissions#READ} permission on {@link Resources#PROCESS_INSTANCE},</li>
+   *            <li>{@link Permissions#READ_INSTANCE} permission on {@link Resources#PROCESS_DEFINITION},</li>
+   *            <li>{@link Permissions#READ_HISTORY} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (this is the only sufficient permission once the process instance
+   *            does not exist anymore).</li>
+   *          </ul>
+   *          If historic instance permissions are enabled, the {@link HistoricProcessInstancePermissions#READ}
+   *          permission on {@link Resources#HISTORIC_PROCESS_INSTANCE} is sufficient as well.
+   */
   List<Attachment> getProcessInstanceAttachments(String processInstanceId);
 
-  /** Delete an attachment */
+  /**
+   * Delete an attachment
+   *
+   * @throws AuthorizationException
+   *          If the attachment belongs to a task and the user has none of the following permissions:
+   *          <ul>
+   *            <li>{@link Permissions#UPDATE} or {@link Permissions#TASK_WORK} permission on {@link Resources#TASK},</li>
+   *            <li>{@link Permissions#UPDATE_TASK} or {@link Permissions#TASK_WORK} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is part of a running process instance).</li>
+   *          </ul>
+   *          If the attachment only belongs to a process instance and the user has neither
+   *          {@link Permissions#UPDATE} permission on {@link Resources#PROCESS_INSTANCE} nor
+   *          {@link Permissions#UPDATE_INSTANCE} permission on {@link Resources#PROCESS_DEFINITION}.
+   *          If the task or process instance does not exist anymore (e.g. because the task has
+   *          been completed) and the user has no {@link Permissions#DELETE_HISTORY}
+   *          permission on {@link Resources#PROCESS_DEFINITION}. Standalone tasks which do not
+   *          exist anymore are not checked.
+   */
   void deleteAttachment(String attachmentId);
 
-  /** Delete an attachment to the given task id and attachment id */
+  /**
+   * Delete an attachment to the given task id and attachment id
+   *
+   * @throws AuthorizationException
+   *          If the attachment belongs to a task and the user has none of the following permissions:
+   *          <ul>
+   *            <li>{@link Permissions#UPDATE} or {@link Permissions#TASK_WORK} permission on {@link Resources#TASK},</li>
+   *            <li>{@link Permissions#UPDATE_TASK} or {@link Permissions#TASK_WORK} permission on {@link Resources#PROCESS_DEFINITION}
+   *            (if the task is part of a running process instance).</li>
+   *          </ul>
+   *          If the attachment only belongs to a process instance and the user has neither
+   *          {@link Permissions#UPDATE} permission on {@link Resources#PROCESS_INSTANCE} nor
+   *          {@link Permissions#UPDATE_INSTANCE} permission on {@link Resources#PROCESS_DEFINITION}.
+   *          If the task or process instance does not exist anymore (e.g. because the task has
+   *          been completed) and the user has no {@link Permissions#DELETE_HISTORY}
+   *          permission on {@link Resources#PROCESS_DEFINITION}. Standalone tasks which do not
+   *          exist anymore are not checked.
+   */
   void deleteTaskAttachment(String taskId, String attachmentId);
 
-  /** The list of subtasks for this parent task */
+  /**
+   * The list of subtasks for this parent task. Like a task query, the result
+   * only contains the subtasks the user is allowed to read.
+   */
   List<Task> getSubTasks(String parentTaskId);
 
   /** Instantiate a task report */

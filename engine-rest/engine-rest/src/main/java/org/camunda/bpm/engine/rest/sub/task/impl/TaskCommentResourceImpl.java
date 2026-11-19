@@ -69,6 +69,7 @@ public class TaskCommentResourceImpl implements TaskCommentResource {
 
   public CommentDto getComment(String commentId) {
     ensureHistoryEnabled(Status.NOT_FOUND);
+    ensureTaskExists(Status.NOT_FOUND);
 
     Comment comment = engine.getTaskService().getTaskComment(taskId, commentId);
     if (comment == null) {
@@ -129,6 +130,9 @@ public class TaskCommentResourceImpl implements TaskCommentResource {
     try {
       comment = engine.getTaskService().createComment(taskId, processInstanceId, commentDto.getMessage());
     }
+    catch (AuthorizationException e) {
+      throw e;
+    }
     catch (ProcessEngineException e) {
       throw new InvalidRequestException(Status.BAD_REQUEST, e, "Not enough parameters submitted");
     }
@@ -165,6 +169,12 @@ public class TaskCommentResourceImpl implements TaskCommentResource {
     }
   }
 
+  /**
+   * Looks up the task with the authorizations of the current user. Every
+   * operation of this resource must pass this check before it accesses a
+   * comment, so that a task which the user is not allowed to see cannot be
+   * told apart from a task that does not exist.
+   */
   private void ensureTaskExists(Status status) {
     HistoricTaskInstance historicTaskInstance = engine.getHistoryService().createHistoricTaskInstanceQuery().taskId(taskId).singleResult();
     if (historicTaskInstance == null) {

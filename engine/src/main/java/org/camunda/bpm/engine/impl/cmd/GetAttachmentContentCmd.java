@@ -41,6 +41,8 @@ public class GetAttachmentContentCmd implements Command<InputStream>, Serializab
   public InputStream execute(CommandContext commandContext) {
     DbEntityManager dbEntityManger = commandContext.getDbEntityManager();
     AttachmentEntity attachment = dbEntityManger.selectById(AttachmentEntity.class, attachmentId);
+
+    AttachmentAndCommentCheckUtil.checkRead(commandContext, attachment);
     
     String contentId = attachment.getContentId();
     if (contentId==null) {

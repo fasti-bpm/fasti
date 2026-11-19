@@ -62,6 +62,8 @@ public class DeleteAttachmentCmd implements Command<Object>, Serializable {
       ensureNotNull("No attachment exists with attachmentId '" + attachmentId + "'.", "attachment", attachment);
     }
 
+    AttachmentAndCommentCheckUtil.checkDelete(commandContext, attachment);
+
     commandContext
         .getDbEntityManager()
         .delete(attachment);

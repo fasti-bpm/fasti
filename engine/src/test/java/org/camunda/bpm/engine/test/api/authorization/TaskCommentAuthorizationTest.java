@@ -21,11 +21,13 @@ import static org.camunda.bpm.engine.authorization.Resources.TASK;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Collections;
 import java.util.List;
 import org.camunda.bpm.engine.AuthorizationException;
+import org.camunda.bpm.engine.BadUserRequestException;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Comment;
 import org.camunda.bpm.engine.task.Task;
@@ -61,14 +63,14 @@ public class TaskCommentAuthorizationTest extends AuthorizationTest {
   public void testDeleteTaskComment() {
     // given
     createTask(TASK_ID);
-    Comment createdComment = taskService.createComment(TASK_ID, null, "aComment");
+    Comment createdComment = createComment(TASK_ID, null, "aComment");
     createGrantAuthorization(TASK, TASK_ID, userId, UPDATE);
 
     // when
     taskService.deleteTaskComment(TASK_ID, createdComment.getId());
 
     // then
-    Comment shouldBeDeleletedComment = taskService.getTaskComment(TASK_ID, createdComment.getId());
+    Comment shouldBeDeleletedComment = runWithoutAuthorization(() -> taskService.getTaskComment(TASK_ID, createdComment.getId()));
     assertNull(shouldBeDeleletedComment);
 
     // triggers a db clean up
@@ -100,8 +102,8 @@ public class TaskCommentAuthorizationTest extends AuthorizationTest {
   public void testDeleteTaskComments() {
     // given
     createTask(TASK_ID);
-    taskService.createComment(TASK_ID, null, "aCommentOne");
-    taskService.createComment(TASK_ID, null, "aCommentTwo");
+    createComment(TASK_ID, null, "aCommentOne");
+    createComment(TASK_ID, null, "aCommentTwo");
 
     createGrantAuthorization(TASK, TASK_ID, userId, UPDATE);
 
@@ -109,7 +111,7 @@ public class TaskCommentAuthorizationTest extends AuthorizationTest {
     taskService.deleteTaskComments(TASK_ID);
 
     // then
-    List<Comment> comments = taskService.getTaskComments(TASK_ID);
+    List<Comment> comments = runWithoutAuthorization(() -> taskService.getTaskComments(TASK_ID));
     assertEquals("The comments list should be empty", Collections.emptyList(), comments);
 
     // triggers a db clean up
@@ -143,14 +145,14 @@ public class TaskCommentAuthorizationTest extends AuthorizationTest {
     createTask(TASK_ID);
     String commentMessage = "OriginalCommentMessage";
     String updatedMessage = "UpdatedCommentMessage";
-    Comment comment = taskService.createComment(TASK_ID, null, commentMessage);
+    Comment comment = createComment(TASK_ID, null, commentMessage);
     createGrantAuthorization(TASK, TASK_ID, userId, UPDATE);
 
     // when
     taskService.updateTaskComment(TASK_ID, comment.getId(), updatedMessage);
 
     // then
-    List<Comment> comments = taskService.getTaskComments(TASK_ID);
+    List<Comment> comments = runWithoutAuthorization(() -> taskService.getTaskComments(TASK_ID));
     assertFalse("The comments list should not be empty", comments.isEmpty());
     assertEquals(updatedMessage, comments.get(0).getFullMessage());
 
@@ -185,14 +187,14 @@ public class TaskCommentAuthorizationTest extends AuthorizationTest {
     ProcessInstance processInstance = startProcessInstanceByKey(PROCESS_KEY);
     Task task = selectSingleTask();
     task.setAssignee("demo");
-    Comment createdComment = taskService.createComment(task.getId(), processInstance.getId(), "aComment");
+    Comment createdComment = createComment(task.getId(), processInstance.getId(), "aComment");
     createGrantAuthorization(TASK, task.getId(), userId, UPDATE);
 
     // when
     taskService.deleteTaskComment(task.getId(), createdComment.getId());
 
     // then
-    Comment shouldBeDeleletedComment = taskService.getTaskComment(task.getId(), createdComment.getId());
+    Comment shouldBeDeleletedComment = runWithoutAuthorization(() -> taskService.getTaskComment(task.getId(), createdComment.getId()));
     assertNull(shouldBeDeleletedComment);
   }
 
@@ -222,8 +224,8 @@ public class TaskCommentAuthorizationTest extends AuthorizationTest {
     // given
     ProcessInstance processInstance = startProcessInstanceByKey(PROCESS_KEY);
     Task task = selectSingleTask();
-    taskService.createComment(task.getId(), processInstance.getId(), "aCommentOne");
-    taskService.createComment(task.getId(), processInstance.getId(), "aCommentTwo");
+    createComment(task.getId(), processInstance.getId(), "aCommentOne");
+    createComment(task.getId(), processInstance.getId(), "aCommentTwo");
 
     createGrantAuthorization(TASK, task.getId(), userId, UPDATE);
 
@@ -231,7 +233,7 @@ public class TaskCommentAuthorizationTest extends AuthorizationTest {
     taskService.deleteTaskComments(task.getId());
 
     // then
-    List<Comment> comments = taskService.getTaskComments(task.getId());
+    List<Comment> comments = runWithoutAuthorization(() -> taskService.getTaskComments(task.getId()));
     assertEquals("The comments list should be empty", Collections.emptyList(), comments);
   }
 
@@ -266,16 +268,53 @@ public class TaskCommentAuthorizationTest extends AuthorizationTest {
 
     String commentMessage = "OriginalCommentMessage";
     String updatedMessage = "UpdatedCommentMessage";
-    Comment comment = taskService.createComment(task.getId(), processInstance.getId(), commentMessage);
+    Comment comment = createComment(task.getId(), processInstance.getId(), commentMessage);
     createGrantAuthorization(TASK, task.getId(), userId, UPDATE);
 
     // when
     taskService.updateTaskComment(task.getId(), comment.getId(), updatedMessage);
 
     // then
-    List<Comment> comments = taskService.getTaskComments(task.getId());
+    List<Comment> comments = runWithoutAuthorization(() -> taskService.getTaskComments(task.getId()));
     assertFalse("The comments list should not be empty", comments.isEmpty());
     assertEquals(updatedMessage, comments.get(0).getFullMessage());
+  }
+
+
+  @Test
+  @Deployment(resources = "org/camunda/bpm/engine/test/api/oneTaskProcess.bpmn20.xml")
+  public void testCreateTaskCommentWithForeignProcessInstanceId() {
+    // given: work permission on the task of instance A only
+    ProcessInstance instanceA = startProcessInstanceByKey(PROCESS_KEY);
+    ProcessInstance instanceB = startProcessInstanceByKey(PROCESS_KEY);
+    Task taskA = runWithoutAuthorization(() -> taskService.createTaskQuery()
+        .processInstanceId(instanceA.getId()).singleResult());
+    createGrantAuthorization(TASK, taskA.getId(), userId, UPDATE);
+
+    // when
+    try {
+      taskService.createComment(taskA.getId(), instanceB.getId(), "injected");
+      fail("Exception expected: the process instance does not belong to the task");
+    } catch (BadUserRequestException e) {
+      // then
+      assertTrue(e.getMessage().contains("is not the process instance of task"));
+    }
+    assertTrue(runWithoutAuthorization(() -> taskService.getProcessInstanceComments(instanceB.getId())).isEmpty());
+
+    // a standalone task cannot name a real process instance either
+    createTask("standalone");
+    createGrantAuthorization(TASK, "standalone", userId, UPDATE);
+    try {
+      taskService.createComment("standalone", instanceB.getId(), "injected");
+      fail("Exception expected: the process instance does not belong to the task");
+    } catch (BadUserRequestException e) {
+      assertTrue(e.getMessage().contains("is not the process instance of task"));
+    }
+    deleteTask("standalone", true);
+
+    // the matching process instance id is still accepted
+    taskService.createComment(taskA.getId(), instanceA.getId(), "fine");
+    assertEquals(1, runWithoutAuthorization(() -> taskService.getTaskComments(taskA.getId())).size());
   }
 
 }

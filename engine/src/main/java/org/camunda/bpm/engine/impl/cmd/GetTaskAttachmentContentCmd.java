@@ -42,6 +42,8 @@ public class GetTaskAttachmentContentCmd implements Command<InputStream>, Serial
   }
 
   public InputStream execute(CommandContext commandContext) {
+    AttachmentAndCommentCheckUtil.checkReadByTaskId(commandContext, taskId);
+
     AttachmentEntity attachment = (AttachmentEntity) commandContext
         .getAttachmentManager()
         .findAttachmentByTaskIdAndAttachmentId(taskId, attachmentId);

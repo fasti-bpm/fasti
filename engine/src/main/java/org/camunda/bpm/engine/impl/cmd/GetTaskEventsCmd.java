@@ -37,6 +37,8 @@ public class GetTaskEventsCmd implements Command<List<Event>>, Serializable {
   }
 
   public List<Event> execute(CommandContext commandContext) {
+    AttachmentAndCommentCheckUtil.checkReadByTaskId(commandContext, taskId);
+
     return commandContext
       .getCommentManager()
       .findEventsByTaskId(taskId);

@@ -61,14 +61,14 @@ public class ProcessInstanceCommentAuthorizationTest extends AuthorizationTest {
     // given
     createTask(TASK_ID);
     String processInstanceId = startProcessInstanceByKey(ONE_TASK_PROCESS_KEY).getId();
-    Comment createdComment = taskService.createComment(TASK_ID, processInstanceId, "aComment");
+    Comment createdComment = createComment(TASK_ID, processInstanceId, "aComment");
     createGrantAuthorization(PROCESS_INSTANCE, processInstanceId, userId, UPDATE);
 
     // when
     taskService.deleteProcessInstanceComment(processInstanceId, createdComment.getId());
 
     // then
-    List<Comment> deletedCommentLst = taskService.getProcessInstanceComments(processInstanceId);
+    List<Comment> deletedCommentLst = runWithoutAuthorization(() -> taskService.getProcessInstanceComments(processInstanceId));
     assertEquals("The comments list should be empty", Collections.emptyList(), deletedCommentLst);
 
     // triggers a db clean up
@@ -103,8 +103,8 @@ public class ProcessInstanceCommentAuthorizationTest extends AuthorizationTest {
     // given
     createTask(TASK_ID);
     String processInstanceId = startProcessInstanceByKey(ONE_TASK_PROCESS_KEY).getId();
-    taskService.createComment(TASK_ID, processInstanceId, "aCommentOne");
-    taskService.createComment(TASK_ID, processInstanceId, "aCommentTwo");
+    createComment(TASK_ID, processInstanceId, "aCommentOne");
+    createComment(TASK_ID, processInstanceId, "aCommentTwo");
 
     createGrantAuthorization(PROCESS_INSTANCE, processInstanceId, userId, UPDATE);
 
@@ -112,7 +112,7 @@ public class ProcessInstanceCommentAuthorizationTest extends AuthorizationTest {
     taskService.deleteProcessInstanceComments(processInstanceId);
 
     // then
-    List<Comment> comments = taskService.getProcessInstanceComments(processInstanceId);
+    List<Comment> comments = runWithoutAuthorization(() -> taskService.getProcessInstanceComments(processInstanceId));
     assertEquals("The comments list should be empty", Collections.emptyList(), comments);
 
     // triggers a db clean up
@@ -150,14 +150,14 @@ public class ProcessInstanceCommentAuthorizationTest extends AuthorizationTest {
 
     String commentMessage = "OriginalCommentMessage";
     String updatedMessage = "UpdatedCommentMessage";
-    Comment comment = taskService.createComment(taskId, processInstanceId, commentMessage);
+    Comment comment = createComment(taskId, processInstanceId, commentMessage);
     createGrantAuthorization(PROCESS_INSTANCE, processInstanceId, userId, UPDATE);
 
     // when
     taskService.updateProcessInstanceComment(processInstanceId, comment.getId(), updatedMessage);
 
     // then
-    List<Comment> comments = taskService.getProcessInstanceComments(processInstanceId);
+    List<Comment> comments = runWithoutAuthorization(() -> taskService.getProcessInstanceComments(processInstanceId));
     assertFalse("The comments list should not be empty", comments.isEmpty());
     assertEquals(updatedMessage, comments.get(0).getFullMessage());
 
@@ -189,14 +189,14 @@ public class ProcessInstanceCommentAuthorizationTest extends AuthorizationTest {
   public void testDeleteProcessInstanceComment() {
     // given
     String processInstanceId = startProcessInstanceByKey(ONE_TASK_PROCESS_KEY).getId();
-    Comment createdComment = taskService.createComment(null, processInstanceId, "aComment");
+    Comment createdComment = createComment(null, processInstanceId, "aComment");
     createGrantAuthorization(PROCESS_INSTANCE, processInstanceId, userId, UPDATE);
 
     // when
     taskService.deleteProcessInstanceComment(processInstanceId, createdComment.getId());
 
     // then
-    List<Comment> deletedCommentLst = taskService.getProcessInstanceComments(processInstanceId);
+    List<Comment> deletedCommentLst = runWithoutAuthorization(() -> taskService.getProcessInstanceComments(processInstanceId));
     assertEquals("The comments list should be empty", Collections.emptyList(), deletedCommentLst);
   }
 
@@ -223,8 +223,8 @@ public class ProcessInstanceCommentAuthorizationTest extends AuthorizationTest {
   public void testDeleteProcessInstanceComments() {
     // given
     String processInstanceId = startProcessInstanceByKey(ONE_TASK_PROCESS_KEY).getId();
-    taskService.createComment(null, processInstanceId, "aCommentOne");
-    taskService.createComment(null, processInstanceId, "aCommentTwo");
+    createComment(null, processInstanceId, "aCommentOne");
+    createComment(null, processInstanceId, "aCommentTwo");
 
     createGrantAuthorization(PROCESS_INSTANCE, processInstanceId, userId, UPDATE);
 
@@ -232,7 +232,7 @@ public class ProcessInstanceCommentAuthorizationTest extends AuthorizationTest {
     taskService.deleteProcessInstanceComments(processInstanceId);
 
     // then
-    List<Comment> comments = taskService.getProcessInstanceComments(processInstanceId);
+    List<Comment> comments = runWithoutAuthorization(() -> taskService.getProcessInstanceComments(processInstanceId));
     assertEquals("The comments list should be empty", Collections.emptyList(), comments);
   }
 
@@ -262,14 +262,14 @@ public class ProcessInstanceCommentAuthorizationTest extends AuthorizationTest {
 
     String commentMessage = "OriginalCommentMessage";
     String updatedMessage = "UpdatedCommentMessage";
-    Comment comment = taskService.createComment(null, processInstanceId, commentMessage);
+    Comment comment = createComment(null, processInstanceId, commentMessage);
     createGrantAuthorization(PROCESS_INSTANCE, processInstanceId, userId, UPDATE);
 
     // when
     taskService.updateProcessInstanceComment(processInstanceId, comment.getId(), updatedMessage);
 
     // then
-    List<Comment> comments = taskService.getProcessInstanceComments(processInstanceId);
+    List<Comment> comments = runWithoutAuthorization(() -> taskService.getProcessInstanceComments(processInstanceId));
     assertFalse("The comments list should not be empty", comments.isEmpty());
     assertEquals(updatedMessage, comments.get(0).getFullMessage());
   }

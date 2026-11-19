@@ -266,6 +266,34 @@ public class TenantCommandChecker implements CommandChecker {
   }
 
   @Override
+  public void checkReadHistoricTaskInstance(HistoricTaskInstanceEntity task) {
+    if (task != null && !getTenantManager().isAuthenticatedTenant(task.getTenantId())) {
+      throw LOG.exceptionCommandWithUnauthorizedTenant("read the historic task instance '"+ task.getId() + "'");
+    }
+  }
+
+  @Override
+  public void checkReadHistoricProcessInstance(HistoricProcessInstance instance) {
+    if (instance != null && !getTenantManager().isAuthenticatedTenant(instance.getTenantId())) {
+      throw LOG.exceptionCommandWithUnauthorizedTenant("read the historic process instance '"+ instance.getId() + "'");
+    }
+  }
+
+  @Override
+  public void checkUpdateHistoricTaskInstance(HistoricTaskInstanceEntity task) {
+    if (task != null && !getTenantManager().isAuthenticatedTenant(task.getTenantId())) {
+      throw LOG.exceptionCommandWithUnauthorizedTenant("update the historic task instance '"+ task.getId() + "'");
+    }
+  }
+
+  @Override
+  public void checkUpdateHistoricProcessInstance(HistoricProcessInstance instance) {
+    if (instance != null && !getTenantManager().isAuthenticatedTenant(instance.getTenantId())) {
+      throw LOG.exceptionCommandWithUnauthorizedTenant("update the historic process instance '"+ instance.getId() + "'");
+    }
+  }
+
+  @Override
   public void checkReadTaskVariable(TaskEntity task) {
     checkReadTask(task);
   }

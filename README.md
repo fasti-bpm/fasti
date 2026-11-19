@@ -157,13 +157,13 @@ chọn hợp lý cho những nhu cầu khác nhau; hãy đối chiếu với tà
 | | Giấy phép | Chạy thẳng trên DB C7 có sẵn | Phải chuyển đổi | Bản vá bảo mật | Java / Spring Boot | Giao diện | SSO | Image Docker |
 |---|---|---|---|---|---|---|---|---|
 | **Fasti BPM** | Apache-2.0 | Có, schema 7.24 không đổi | Image: không. Ứng dụng nhúng: đổi tọa độ Maven, lên Spring Boot 4.1 và Java 17+; package `org.camunda.*` giữ nguyên | Có, theo [chính sách bên dưới](#cam-kết-hỗ-trợ-và-bản-vá-bảo-mật) | 17+ / 4.1 | Mới (React) + cổ điển (lỗi thời) | OIDC có sẵn | Có, từ 1.0.0 |
-| Camunda 7 CE 7.24 | Apache-2.0 | (bản gốc) | — | Không còn bản CE sau 7.24 ([1]) | 17, 21, 25 ([2]) / 3.5 | Cockpit, Tasklist, Admin (AngularJS) | OAuth2 qua starter security | Image Run cũ |
+| Camunda 7 CE 7.24 | Mã nguồn Apache-2.0; một số thành phần web đi kèm theo MIT ([13]) | (bản gốc) | — | Không còn bản CE sau 7.24 ([1]) | 17, 21, 25 ([2]) / 3.5 | Cockpit, Tasklist, Admin (AngularJS) | OAuth2 qua starter security | Image Run cũ |
 | Camunda 7 Enterprise | Thương mại | Có (cùng dòng sản phẩm) | Không | Tới 04/2030, gia hạn trả phí tới 04/2032 ([3]) | chưa kiểm chứng | Cockpit Enterprise | chưa kiểm chứng | chưa kiểm chứng |
 | Camunda 8 | Camunda License 1.0; production self-managed cần license từ 8.6 ([4]) | Không (engine khác) | Có (mô hình, instance, dữ liệu) | Có (nhà cung cấp) | engine khác, không so được | Operate, Tasklist | chưa kiểm chứng | chưa kiểm chứng |
 | Operaton | Apache-2.0 | Cấu trúc bảng như 7.24; bản 2.2 ghi phiên bản schema 7.25 bằng script nâng cấp ([5]) | Đổi package `org.operaton.*` (có OpenRewrite recipe); chạy script phiên bản schema (2.2) | Có, dòng 2.2.x ([6]) | 17+ / 4.1 ([5]) | Cổ điển + webapps-neo (preview) | chưa kiểm chứng | Có ([7]) |
 | CIB seven | Apache-2.0; bản EE cần khóa license | Có (đã gộp thay đổi 7.24) | Đổi package `org.cibseven.*`, tiền tố `cibseven.*` | Có, theo bản phát hành ([8]) | 17, 21 / 3.5 và 4.0 ([9]) | Webclient Vue 3 | OAuth2/JWT cho REST ([8]) | Có ([8]) |
-| OrqueIO | Apache-2.0 | Tương thích bảng C7 theo tài liệu của họ ([10]) | Đổi package sang `io.orqueio.*` | Có, theo tài liệu của họ ([10]) | 21 / 3.5, 4.0, 4.1 | Viết lại bằng Angular | OIDC đa nhà cung cấp | chưa kiểm chứng |
-| EximeeBPMS | Apache-2.0 (Monitor: MIT) | chưa kiểm chứng | Đổi package `org.eximeebpms.*`, đổi tên Model API | Có, hai minor gần nhất ([11]) | 21 / 4.1 | Monitor riêng | chưa kiểm chứng | Có (repo `eximeebpms-docker`) |
+| OrqueIO | Apache-2.0 | Tương thích bảng C7 theo tài liệu của họ ([10]) | Maven group `io.orqueio`; việc đổi package chưa được nêu rõ | Có, theo tài liệu của họ ([10]) | 21 / 3.5, 4.0, 4.1 | Viết lại bằng Angular | OIDC đa nhà cung cấp | chưa kiểm chứng |
+| EximeeBPMS | Apache-2.0 (Monitor: MIT) | Dự án cho biết schema vẫn tương thích Camunda 7 (Fasti chưa kiểm chứng) ([14]) | Đổi package `org.eximeebpms.*`, đổi tên Model API | Có, hai minor gần nhất ([11]) | 21 / phiên bản Spring Boot chưa được nêu | Monitor riêng | chưa kiểm chứng | Có (repo `eximeebpms-docker`) |
 | Fluxnova | Apache-2.0 (FINOS) | chưa kiểm chứng | chưa kiểm chứng | chưa kiểm chứng | 21 (image Corretto) / chưa kiểm chứng | Control Center | chưa kiểm chứng | Có ([12]) |
 
 Điểm yếu của Fasti cũng cần nói rõ: dự án mới, nhóm nhỏ, chưa có hỗ trợ thương mại, DB2 chưa
@@ -181,6 +181,8 @@ Nguồn: [1] [thông báo CE hết vòng đời](https://forum.camunda.io/t/impo
 [10] [tài liệu OrqueIO](https://docs.orqueio.io/);
 [11] [EximeeBPMS SECURITY.md](https://github.com/EximeeBPMS/eximeebpms/blob/main/SECURITY.md);
 [12] [Fluxnova](https://github.com/finos/fluxnova-bpm-platform);
+[13] [Camunda 7 licenses](https://docs.camunda.org/manual/latest/introduction/licenses/);
+[14] [EximeeBPMS](https://github.com/EximeeBPMS/eximeebpms);
 tổng quan độc lập: [WZ-IT, 15/10/2026](https://wz-it.com/en/blog/camunda-7-end-of-life-operaton-cibseven-fluxnova-compared/).
 
 ## Dòng thời gian
@@ -751,13 +753,13 @@ sound choice for different needs; check their documentation before you decide.
 | | Licence | Runs on an existing C7 DB | Migration needed | Security patches | Java / Spring Boot | UI | SSO | Docker image |
 |---|---|---|---|---|---|---|---|---|
 | **Fasti BPM** | Apache-2.0 | Yes, 7.24 schema unchanged | Image: none. Embedded apps: new Maven coordinates, Spring Boot 4.1 and Java 17+; `org.camunda.*` packages kept | Yes, see the [policy below](#commitments-support-and-security-patches) | 17+ / 4.1 | New (React) + classic (deprecated) | OIDC built in | Yes, from 1.0.0 |
-| Camunda 7 CE 7.24 | Apache-2.0 | (the original) | — | No CE releases after 7.24 ([1]) | 17, 21, 25 ([2]) / 3.5 | Cockpit, Tasklist, Admin (AngularJS) | OAuth2 via the security starter | Former Run image |
+| Camunda 7 CE 7.24 | Apache-2.0 source; some bundled web components under MIT ([13]) | (the original) | — | No CE releases after 7.24 ([1]) | 17, 21, 25 ([2]) / 3.5 | Cockpit, Tasklist, Admin (AngularJS) | OAuth2 via the security starter | Former Run image |
 | Camunda 7 Enterprise | Commercial | Yes (same product line) | No | Until 04/2030, paid extension to 04/2032 ([3]) | not verified | Cockpit Enterprise | not verified | not verified |
 | Camunda 8 | Camunda License 1.0; self-managed production needs a licence since 8.6 ([4]) | No (different engine) | Yes (models, instances, data) | Yes (vendor) | different engine, not comparable | Operate, Tasklist | not verified | not verified |
 | Operaton | Apache-2.0 | Same table structure as 7.24; 2.2 records schema version 7.25 through an upgrade script ([5]) | Packages renamed to `org.operaton.*` (OpenRewrite recipe available); schema-version script (2.2) | Yes, 2.2.x line ([6]) | 17+ / 4.1 ([5]) | Classic + webapps-neo (preview) | not verified | Yes ([7]) |
 | CIB seven | Apache-2.0; EE needs a licence key | Yes (7.24 changes merged) | Packages renamed to `org.cibseven.*`, prefix `cibseven.*` | Yes, per release ([8]) | 17, 21 / 3.5 and 4.0 ([9]) | Vue 3 webclient | OAuth2/JWT for REST ([8]) | Yes ([8]) |
-| OrqueIO | Apache-2.0 | Compatible with C7 tables per their docs ([10]) | Packages renamed to `io.orqueio.*` | Yes, per their docs ([10]) | 21 / 3.5, 4.0, 4.1 | Angular rewrite | Multi-provider OIDC | not verified |
-| EximeeBPMS | Apache-2.0 (Monitor: MIT) | not verified | Packages renamed to `org.eximeebpms.*`, Model API renamed | Yes, two latest minors ([11]) | 21 / 4.1 | Separate Monitor | not verified | Yes (`eximeebpms-docker` repository) |
+| OrqueIO | Apache-2.0 | Compatible with C7 tables per their docs ([10]) | Maven group `io.orqueio`; package rename not stated | Yes, per their docs ([10]) | 21 / 3.5, 4.0, 4.1 | Angular rewrite | Multi-provider OIDC | not verified |
+| EximeeBPMS | Apache-2.0 (Monitor: MIT) | The project states its schema stays compatible with Camunda 7 (not verified by Fasti) ([14]) | Packages renamed to `org.eximeebpms.*`, Model API renamed | Yes, two latest minors ([11]) | 21 / Spring Boot version not stated | Separate Monitor | not verified | Yes (`eximeebpms-docker` repository) |
 | Fluxnova | Apache-2.0 (FINOS) | not verified | not verified | not verified | 21 (Corretto image) / not verified | Control Center | not verified | Yes ([12]) |
 
 Fasti's own weak points, stated plainly: a young project with a small team, no commercial
@@ -775,6 +777,8 @@ Sources: [1] [CE end-of-life announcement](https://forum.camunda.io/t/important-
 [10] [OrqueIO docs](https://docs.orqueio.io/);
 [11] [EximeeBPMS SECURITY.md](https://github.com/EximeeBPMS/eximeebpms/blob/main/SECURITY.md);
 [12] [Fluxnova](https://github.com/finos/fluxnova-bpm-platform);
+[13] [Camunda 7 licenses](https://docs.camunda.org/manual/latest/introduction/licenses/);
+[14] [EximeeBPMS](https://github.com/EximeeBPMS/eximeebpms);
 independent overview: [WZ-IT, 2026-10-15](https://wz-it.com/en/blog/camunda-7-end-of-life-operaton-cibseven-fluxnova-compared/).
 
 ### Timeline

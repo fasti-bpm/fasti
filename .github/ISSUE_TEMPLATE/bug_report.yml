@@ -1,0 +1,62 @@
+name: Báo lỗi / Bug report
+description: Báo một lỗi của Fasti BPM / Report a defect in Fasti BPM
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Lỗ hổng bảo mật: **không** báo ở đây, xem SECURITY.md.
+        Security vulnerabilities: do **not** report them here, see SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: Phiên bản / Version
+      description: Phiên bản Fasti BPM hoặc tag image / Fasti BPM version or image tag
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: distribution
+    attributes:
+      label: Bản phân phối / Distribution
+      options:
+        - Docker image
+        - Run
+        - Spring Boot starter
+        - Tomcat
+        - WildFly
+        - Khác / Other
+    validations:
+      required: true
+  - type: input
+    id: database
+    attributes:
+      label: Cơ sở dữ liệu / Database
+      placeholder: PostgreSQL 16
+  - type: textarea
+    id: steps
+    attributes:
+      label: Các bước tái hiện / Steps to reproduce
+      description: Càng ngắn càng tốt; đính kèm BPMN nếu cần / As short as possible; attach BPMN if needed
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Kết quả mong đợi và thực tế / Expected and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log / Logs
+      description: Xóa mật khẩu và dữ liệu cá nhân trước khi dán / Remove passwords and personal data before pasting
+      render: text
+  - type: dropdown
+    id: upstream
+    attributes:
+      label: Có xảy ra với Camunda 7 CE 7.24.0 không? / Does it happen on Camunda 7 CE 7.24.0?
+      options:
+        - Không biết / Unknown
+        - Có / Yes
+        - Không / No

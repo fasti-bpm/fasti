@@ -1,0 +1,27 @@
+name: Đề xuất tính năng / Feature request
+description: Đề xuất một thay đổi hoặc tính năng mới / Suggest a change or a new feature
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Vấn đề / Problem
+      description: Bạn đang gặp khó khăn gì? / What problem are you trying to solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Đề xuất / Proposal
+      description: Bạn muốn Fasti BPM làm gì? / What should Fasti BPM do?
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Tương thích / Compatibility
+      description: Thay đổi này có ảnh hưởng tới cơ sở dữ liệu, REST API hay BPMN của Camunda 7 không? / Does it affect Camunda 7 database, REST API or BPMN compatibility?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Cách khác đã cân nhắc / Alternatives considered

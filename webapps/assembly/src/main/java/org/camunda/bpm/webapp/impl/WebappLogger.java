@@ -71,5 +71,10 @@ public class WebappLogger extends BaseLogger {
     logTrace("007", "Authentication removed: {}", engineName);
   }
 
+  public void warnSetupActionRefused(String engineName, String reason) {
+    logWarn("008", "Refused an attempt to perform the initial setup (creation of an administrator) "
+        + "for process engine '{}': {}.", engineName, reason);
+  }
+
 
 }

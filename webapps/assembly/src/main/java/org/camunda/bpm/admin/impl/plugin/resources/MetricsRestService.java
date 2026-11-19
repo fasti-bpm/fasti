@@ -20,6 +20,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.camunda.bpm.admin.impl.plugin.base.dto.MetricsAggregatedQueryDto;
 import org.camunda.bpm.admin.impl.plugin.base.dto.MetricsAggregatedResultDto;
 import org.camunda.bpm.admin.resource.AbstractAdminPluginResource;
+import org.camunda.bpm.engine.AuthorizationException;
+import org.camunda.bpm.engine.authorization.Resources;
+import org.camunda.bpm.engine.authorization.SystemPermissions;
+import org.camunda.bpm.engine.impl.cfg.CommandChecker;
+import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.metrics.util.MetricsUtil;
 import org.camunda.bpm.engine.management.Metrics;
 
@@ -45,6 +50,8 @@ public class MetricsRestService extends AbstractAdminPluginResource {
   @Path("/aggregated")
   @Produces(MediaType.APPLICATION_JSON)
   public List<MetricsAggregatedResultDto> getAggregatedMetrics(@Context UriInfo uriInfo) {
+    checkReadMetrics();
+
     MetricsAggregatedQueryDto queryDto = new MetricsAggregatedQueryDto(objectMapper, uriInfo.getQueryParameters());
     queryDto.validateAndPrepareQuery();
 
@@ -62,6 +69,28 @@ public class MetricsRestService extends AbstractAdminPluginResource {
 
     result.forEach(resultDto -> resultDto.setMetric(MetricsUtil.resolvePublicName(resultDto.getMetric())));
     return result;
+  }
+
+  /**
+   * The aggregated metrics are read by a query of this plugin, which does not
+   * pass any authorization check of the engine. They contain the same usage
+   * figures as the diagnostics data of the engine, hence the same rule is
+   * applied here: the current user must be an administrator or must be granted
+   * {@link SystemPermissions#READ} on {@link Resources#SYSTEM}. As in the
+   * engine, nothing is checked if authorization is disabled.
+   *
+   * @throws AuthorizationException if the current user is not permitted to
+   *           read the metrics
+   */
+  protected void checkReadMetrics() {
+    ProcessEngineConfigurationImpl processEngineConfiguration =
+        (ProcessEngineConfigurationImpl) getProcessEngine().getProcessEngineConfiguration();
+
+    processEngineConfiguration.getCommandExecutorTxRequired().execute(commandContext -> {
+      commandContext.getAuthorizationManager()
+          .checkCamundaAdminOrPermission(CommandChecker::checkReadDiagnosticsData);
+      return null;
+    });
   }
 
 }

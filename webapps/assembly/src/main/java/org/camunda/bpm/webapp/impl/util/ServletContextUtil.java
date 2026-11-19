@@ -43,6 +43,9 @@ public class ServletContextUtil {
   protected static final String AUTH_CACHE_TTL_ATTR_NAME =
     "org.camunda.bpm.webapp.auth.cache.ttl";
 
+  protected static final String INITIAL_SETUP_ENABLED_ATTR_NAME =
+    "org.camunda.bpm.webapp.initial.setup.enabled";
+
   /**
    * Consumed by Camunda Platform CE & EE Webapp:
    * Retrieves the application path from Spring Boot's servlet context.
@@ -115,6 +118,26 @@ public class ServletContextUtil {
       return null;
 
     }
+  }
+
+  /**
+   * Switches the initial setup of the webapps, i.e. the creation of the first
+   * administrator by an unauthenticated user, on or off for the given servlet
+   * context. See the init parameter
+   * {@link org.camunda.bpm.webapp.impl.engine.ProcessEnginesFilter#INITIAL_SETUP_ENABLED_INIT_PARAM_NAME}
+   * of the engines filter.
+   */
+  public static void setInitialSetupEnabled(boolean initialSetupEnabled, ServletContext servletContext) {
+    servletContext.setAttribute(INITIAL_SETUP_ENABLED_ATTR_NAME, initialSetupEnabled);
+  }
+
+  /**
+   * @return <code>false</code> if the initial setup of the webapps has been
+   *         switched off for the given servlet context, <code>true</code> if
+   *         it is switched on or nothing has been configured.
+   */
+  public static boolean isInitialSetupEnabled(ServletContext servletContext) {
+    return !Boolean.FALSE.equals(servletContext.getAttribute(INITIAL_SETUP_ENABLED_ATTR_NAME));
   }
 
 }

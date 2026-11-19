@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -46,8 +47,10 @@ import org.camunda.bpm.engine.rest.impl.UserRestServiceImpl;
 import org.camunda.bpm.engine.rest.spi.ProcessEngineProvider;
 import org.camunda.bpm.engine.rest.util.ProvidersUtil;
 import org.camunda.bpm.webapp.impl.WebappLogger;
+import org.camunda.bpm.webapp.impl.security.InitialAdminSetup;
 import org.camunda.bpm.webapp.impl.security.SecurityActions;
 import org.camunda.bpm.webapp.impl.security.SecurityActions.SecurityAction;
+import org.camunda.bpm.webapp.impl.util.ServletContextUtil;
 
 /**
  * <p>Jax RS resource allowing to perform the setup steps.</p>
@@ -63,8 +66,19 @@ public class SetupResource {
 
   protected final static WebappLogger LOGGER = WebappLogger.INSTANCE;
 
+  /**
+   * Guards the check whether the setup is available and the creation of the
+   * initial user. Without it, concurrent requests could all pass the check
+   * before the first of them has created its user, and each of them would
+   * create an administrator. The lock is effective within one JVM only.
+   */
+  protected static final Object SETUP_LOCK = new Object();
+
   @Context
   protected Providers providers;
+
+  @Context
+  protected HttpServletRequest request;
 
   @Path("/user/create")
   @POST
@@ -90,19 +104,22 @@ public class SetupResource {
 
     ObjectMapper objectMapper = getObjectMapper();
 
-    // make sure we can process this request at this time
-    ensureSetupAvailable(processEngine);
+    synchronized (SETUP_LOCK) {
 
-    // reuse logic from rest api implementation
-    UserRestServiceImpl userRestServiceImpl = new UserRestServiceImpl(processEngineName, objectMapper);
-    userRestServiceImpl.createUser(user);
+      // make sure we can process this request at this time
+      ensureSetupAvailable(processEngine);
 
-    // crate the camunda admin group
-    ensureCamundaAdminGroupExists(processEngine);
+      // reuse logic from rest api implementation
+      UserRestServiceImpl userRestServiceImpl = new UserRestServiceImpl(processEngineName, objectMapper);
+      userRestServiceImpl.createUser(user);
 
-    // create group membership (add new user to admin group)
-    processEngine.getIdentityService()
-      .createMembership(user.getProfile().getId(), Groups.CAMUNDA_ADMIN);
+      // crate the camunda admin group
+      ensureCamundaAdminGroupExists(processEngine);
+
+      // create group membership (add new user to admin group)
+      processEngine.getIdentityService()
+        .createMembership(user.getProfile().getId(), Groups.CAMUNDA_ADMIN);
+    }
   }
 
   protected ObjectMapper getObjectMapper() {
@@ -142,12 +159,31 @@ public class SetupResource {
 
   }
 
+  /**
+   * The setup is only available if it has not been switched off for the web
+   * application (see {@link ServletContextUtil#isInitialSetupEnabled(javax.servlet.ServletContext)})
+   * and as long as no administrator is defined for the engine, see
+   * {@link InitialAdminSetup} for the rules. Refused attempts are logged, the
+   * reason is not disclosed to the caller.
+   */
   protected void ensureSetupAvailable(ProcessEngine processEngine) {
-    if (processEngine.getIdentityService().isReadOnly()
-        || (processEngine.getIdentityService().createUserQuery().memberOfGroup(Groups.CAMUNDA_ADMIN).count() > 0)) {
+    String reason;
+    if (!isSetupEnabled()) {
+      reason = "the initial setup is switched off in the configuration of the web application";
+    } else {
+      reason = InitialAdminSetup.getUnavailabilityReason(processEngine);
+    }
 
+    if (reason != null) {
+      LOGGER.warnSetupActionRefused(processEngine.getName(), reason);
       throw LOGGER.setupActionNotAvailable();
     }
+  }
+
+  protected boolean isSetupEnabled() {
+    // without a servlet request, i.e. outside of a servlet container, nothing
+    // can be configured
+    return request == null || ServletContextUtil.isInitialSetupEnabled(request.getServletContext());
   }
 
   protected ProcessEngine lookupProcessEngine(String engineName) {

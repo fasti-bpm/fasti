@@ -116,6 +116,23 @@
   <filter>
     <filter-name>Engines Filter</filter-name>
     <filter-class>org.camunda.bpm.webapp.impl.engine.ProcessEnginesFilter</filter-class>
+
+    <!--
+    As long as no administrator is defined for a process engine, the web
+    applications offer a setup page on which the first administrator can be
+    created without authentication. If users and groups are supplied by an
+    external authentication mechanism (e.g. container based authentication
+    or single sign-on), the administrators are not visible to the web
+    applications and the setup page stays available. You can switch the
+    initial setup off by uncommenting the configuration below.
+    -->
+
+    <!--
+    <init-param>
+      <param-name>initialSetupEnabled</param-name>
+      <param-value>false</param-value>
+    </init-param>
+    -->
   </filter>
   <filter-mapping>
     <filter-name>Engines Filter</filter-name>

@@ -90,6 +90,7 @@ public class CamundaBpmWebappInitializer implements ServletContextInitializer {
     String applicationPath = webapp.getApplicationPath();
 
     ServletContextUtil.setAppPath(applicationPath, servletContext);
+    ServletContextUtil.setInitialSetupEnabled(webapp.isInitialSetupEnabled(), servletContext);
 
     // make sure that trailing slashes are added for the registered patterns
     // see AppendTrailingSlashFilter for details

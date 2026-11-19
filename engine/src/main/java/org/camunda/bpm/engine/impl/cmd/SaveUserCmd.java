@@ -21,7 +21,9 @@ import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureWhitelistedResou
 
 import java.io.Serializable;
 
-import org.camunda.bpm.engine.ProcessEngineException;
+import org.camunda.bpm.engine.BadUserRequestException;
+import org.camunda.bpm.engine.authorization.Permissions;
+import org.camunda.bpm.engine.authorization.Resources;
 import org.camunda.bpm.engine.identity.User;
 import org.camunda.bpm.engine.impl.identity.IdentityOperationResult;
 import org.camunda.bpm.engine.impl.interceptor.Command;
@@ -65,9 +67,21 @@ public class SaveUserCmd extends AbstractWritableIdentityServiceCmd<Void> implem
 
   private void validateUserEntity(CommandContext commandContext) {
     if(shouldCheckPasswordPolicy(commandContext)) {
+      // permission first: the policy must not be disclosed to users who may not save the user
+      checkSavePermission(commandContext);
       if(!((UserEntity) user).checkPasswordAgainstPolicy()) {
-        throw new ProcessEngineException("Password does not match policy");
+        throw new BadUserRequestException("Password does not match policy");
       }
+    }
+  }
+
+  /** The check the identity provider performs when it saves the user, done before the password policy. */
+  protected void checkSavePermission(CommandContext commandContext) {
+    UserEntity userEntity = (UserEntity) user;
+    if (userEntity.getRevision() == 0) {
+      commandContext.getAuthorizationManager().checkAuthorization(Permissions.CREATE, Resources.USER, null);
+    } else {
+      commandContext.getAuthorizationManager().checkAuthorization(Permissions.UPDATE, Resources.USER, user.getId());
     }
   }
 

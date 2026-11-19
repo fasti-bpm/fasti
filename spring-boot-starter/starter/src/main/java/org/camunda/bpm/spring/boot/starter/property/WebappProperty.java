@@ -28,6 +28,15 @@ public class WebappProperty {
 
   protected boolean indexRedirectEnabled = true;
 
+  /**
+   * Enables the initial setup of the web applications, i.e. the page on which
+   * the first administrator can be created without authentication as long as
+   * no administrator is defined for the process engine. Should be disabled if
+   * users and groups are supplied by an external authentication mechanism, as
+   * the administrators are not visible to the web applications then.
+   */
+  protected boolean initialSetupEnabled = true;
+
   protected String webjarClasspath = "/META-INF/resources/webjars/camunda";
 
   protected String securityConfigFile = "/securityFilterRules.json";
@@ -52,6 +61,14 @@ public class WebappProperty {
 
   public void setIndexRedirectEnabled(boolean indexRedirectEnabled) {
     this.indexRedirectEnabled = indexRedirectEnabled;
+  }
+
+  public boolean isInitialSetupEnabled() {
+    return initialSetupEnabled;
+  }
+
+  public void setInitialSetupEnabled(boolean initialSetupEnabled) {
+    this.initialSetupEnabled = initialSetupEnabled;
   }
 
   public String getWebjarClasspath() {
@@ -130,6 +147,7 @@ public class WebappProperty {
   public String toString() {
     return joinOn(this.getClass())
       .add("indexRedirectEnabled=" + indexRedirectEnabled)
+      .add("initialSetupEnabled=" + initialSetupEnabled)
       .add("webjarClasspath='" + webjarClasspath + '\'')
       .add("securityConfigFile='" + securityConfigFile + '\'')
       .add("webappPath='" + applicationPath + '\'')

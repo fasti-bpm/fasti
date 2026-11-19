@@ -25,6 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -35,7 +36,6 @@ import org.camunda.bpm.admin.AdminRuntimeDelegate;
 import org.camunda.bpm.cockpit.Cockpit;
 import org.camunda.bpm.cockpit.CockpitRuntimeDelegate;
 import org.camunda.bpm.engine.ProcessEngine;
-import org.camunda.bpm.engine.authorization.Groups;
 import org.camunda.bpm.engine.rest.util.WebApplicationUtil;
 import org.camunda.bpm.tasklist.Tasklist;
 import org.camunda.bpm.tasklist.TasklistRuntimeDelegate;
@@ -43,6 +43,7 @@ import org.camunda.bpm.webapp.impl.security.filter.headersec.provider.impl.Conte
 import org.camunda.bpm.webapp.impl.util.ServletContextUtil;
 import org.camunda.bpm.webapp.impl.IllegalWebAppConfigurationException;
 import org.camunda.bpm.webapp.impl.filter.AbstractTemplateFilter;
+import org.camunda.bpm.webapp.impl.security.InitialAdminSetup;
 import org.camunda.bpm.webapp.impl.security.SecurityActions;
 import org.camunda.bpm.webapp.impl.security.SecurityActions.SecurityAction;
 import org.camunda.bpm.webapp.plugin.spi.AppPlugin;
@@ -68,6 +69,19 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
   protected static final String INDEX_PAGE = "index.html";
 
   protected static final String SETUP_PAGE = "setup/";
+
+  /**
+   * Name of the filter init parameter that switches the initial setup of the
+   * webapps (the creation of the first administrator by an unauthenticated
+   * user) on or off. Allowed values are <code>true</code> (default) and
+   * <code>false</code>. If set to <code>false</code>, users are never sent to
+   * the setup page and the setup resource refuses every request, regardless
+   * of whether an administrator is defined for the engine. This is meant for
+   * installations whose administrators are not visible to the webapps, e.g.
+   * because users and groups are supplied by an external authentication
+   * mechanism.
+   */
+  public static final String INITIAL_SETUP_ENABLED_INIT_PARAM_NAME = "initialSetupEnabled";
 
   public static final String APP_ROOT_PLACEHOLDER = "$APP_ROOT";
   public static final String BASE_PLACEHOLDER = "$BASE";
@@ -97,6 +111,28 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
     this.pluginPackageFormat = "{ name: '%s-plugin-%s', " +
       "location: '%s%s/api/%s/plugin/%s/static/app', main: 'plugin.js' }";
     this.pluginDependencyFormat = "{ ngModuleName: '%s.plugin.%s', requirePackageName: '%s-plugin-%s' }";
+  }
+
+  @Override
+  public void init(FilterConfig filterConfig) throws ServletException {
+    super.init(filterConfig);
+
+    String initialSetupEnabled = filterConfig.getInitParameter(INITIAL_SETUP_ENABLED_INIT_PARAM_NAME);
+    if (initialSetupEnabled != null && !initialSetupEnabled.trim().isEmpty()) {
+      initialSetupEnabled = initialSetupEnabled.trim();
+
+      // a value that is misspelled must not be mistaken for any of the two
+      if ("true".equalsIgnoreCase(initialSetupEnabled)) {
+        ServletContextUtil.setInitialSetupEnabled(true, filterConfig.getServletContext());
+
+      } else if ("false".equalsIgnoreCase(initialSetupEnabled)) {
+        ServletContextUtil.setInitialSetupEnabled(false, filterConfig.getServletContext());
+
+      } else {
+        throw new IllegalWebAppConfigurationException("'" + INITIAL_SETUP_ENABLED_INIT_PARAM_NAME
+            + "' must be either 'true' or 'false' but is '" + initialSetupEnabled + "'.");
+      }
+    }
   }
 
   @Override
@@ -174,7 +210,7 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
       // access to /app/{engineName}/
       boolean setupPage = SETUP_PAGE.equals(pageUri);
 
-      if (needsInitialUser(engineName)) {
+      if (ServletContextUtil.isInitialSetupEnabled(request.getServletContext()) && needsInitialUser(engineName)) {
         if (!setupPage) {
           // redirect to setup
           String setupPath = "%s%s/app/admin/%s/setup/#/setup";
@@ -246,20 +282,13 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
       return false;
     }
 
-    if (processEngine.getIdentityService().isReadOnly()) {
-      return false;
-
-    } else {
-
-      return SecurityActions.runWithoutAuthentication(new SecurityAction<Boolean>() {
-        public Boolean execute() {
-          return processEngine.getIdentityService()
-              .createUserQuery()
-              .memberOfGroup(Groups.CAMUNDA_ADMIN).count() == 0;
-        }
-      }, processEngine);
-
-    }
+    // the setup page is only offered if the setup resource would accept the
+    // request, i.e. no administrator is defined for the engine
+    return SecurityActions.runWithoutAuthentication(new SecurityAction<Boolean>() {
+      public Boolean execute() {
+        return InitialAdminSetup.isAvailable(processEngine);
+      }
+    }, processEngine);
 
   }
 

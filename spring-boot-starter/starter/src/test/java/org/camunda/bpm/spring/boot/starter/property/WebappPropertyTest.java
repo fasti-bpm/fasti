@@ -28,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @TestPropertySource(properties = {
   "camunda.bpm.webapp.indexRedirectEnabled=false",
+  "camunda.bpm.webapp.initialSetupEnabled=false",
   "camunda.bpm.webapp.csrf.targetOrigin=localhost:8080",
   "camunda.bpm.webapp.csrf.denyStatus=405",
   "camunda.bpm.webapp.csrf.randomClass=java.util.Random",
@@ -41,6 +42,18 @@ public class WebappPropertyTest extends ParsePropertiesHelper {
     // given Camunda properties are set
     // then
     assertThat(webapp.isIndexRedirectEnabled()).isFalse();
+  }
+
+  @Test
+  public void testInitialSetupEnabled() {
+    // given Camunda properties are set
+    // then
+    assertThat(webapp.isInitialSetupEnabled()).isFalse();
+  }
+
+  @Test
+  public void testInitialSetupEnabledByDefault() {
+    assertThat(new WebappProperty().isInitialSetupEnabled()).isTrue();
   }
 
   @Test

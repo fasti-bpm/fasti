@@ -162,14 +162,18 @@ public class AbstractCockpitPluginResource extends AbstractAppPluginResource<Coc
     }
   }
 
+  /**
+   * Return <code>true</code> if the check of the given permission is switched off,
+   * i.e. the name of the permission is listed in the disabled permissions of the
+   * process engine configuration. Any other entry of that list does not affect
+   * the given permission; a missing or empty list disables nothing.
+   */
   protected boolean isPermissionDisabled(Permission permission) {
-    List<String> disabledPermissions = getProcessEngine().getProcessEngineConfiguration().getDisabledPermissions();
-    for (String disabledPerm : disabledPermissions) {
-      if (!disabledPerm.equals(permission.getName())) {
-        return true;
-      }
+    if (permission == null) {
+      return false;
     }
-    return false;
+    List<String> disabledPermissions = getProcessEngine().getProcessEngineConfiguration().getDisabledPermissions();
+    return disabledPermissions != null && disabledPermissions.contains(permission.getName());
   }
 
 }

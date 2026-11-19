@@ -2,7 +2,7 @@
   <parent>
     <groupId>dev.fasti.platform.quarkus</groupId>
     <artifactId>fasti-bpm-quarkus-engine-parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>

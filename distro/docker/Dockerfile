@@ -55,7 +55,7 @@ RUN chmod 0755 /fasti/docker-entrypoint.sh \
  && find /fasti -type f ! -name docker-entrypoint.sh -exec chmod 0644 {} +
 
 FROM ${JRE_IMAGE}
-ARG VERSION=1.0.0-SNAPSHOT
+ARG VERSION=1.0.0
 ARG REVISION=unknown
 LABEL org.opencontainers.image.title="Fasti BPM" \
       org.opencontainers.image.description="Fasti BPM Run: BPMN/DMN process engine with REST API and web applications" \

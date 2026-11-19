@@ -229,9 +229,9 @@ task đang chờ ở topic `charge-card`.
 <!-- update with the Maven Central version at release -->
 Artifact `dev.fasti.platform:fasti-external-task-client` (thay cho
 `org.camunda.bpm:camunda-external-task-client`; package `org.camunda.bpm.client` giữ nguyên).
-Chưa có trên Maven Central cho tới bản 1.0.0: trước đó hãy build từ mã nguồn
+Chưa có trên Maven Central: hãy build từ mã nguồn
 (`./mvnw -pl clients/java/client -am install -DskipTests`) và đặt `fasti.version` là
-`1.0.0-SNAPSHOT`; sau khi phát hành, dùng số phiên bản đã phát hành (ví dụ `1.0.0`).
+`1.0.0`.
 
 ```xml
 <dependency>
@@ -539,9 +539,9 @@ topic `charge-card`.
 <!-- update with the Maven Central version at release -->
 Artifact `dev.fasti.platform:fasti-external-task-client` (instead of
 `org.camunda.bpm:camunda-external-task-client`; the package `org.camunda.bpm.client` is
-unchanged). It is not on Maven Central before 1.0.0: until then build it from source
+unchanged). It is not on Maven Central yet: build it from source
 (`./mvnw -pl clients/java/client -am install -DskipTests`) and set `fasti.version` to
-`1.0.0-SNAPSHOT`; after the release use the released version (for example `1.0.0`).
+`1.0.0`.
 
 ```xml
 <dependency>

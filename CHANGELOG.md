@@ -10,7 +10,9 @@ All notable changes to Fasti BPM are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Fasti BPM is built on Camunda 7 CE 7.24.0; the
 entries below describe the differences from that release.
 
-## [Unreleased] - 1.0.0
+## [Unreleased]
+
+## [1.0.0] - 2026-11-20
 
 ### Added
 

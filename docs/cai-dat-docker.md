@@ -28,7 +28,7 @@ checks, upgrade, rollback and troubleshooting. Full image reference:
 ### 2. Tải image
 
 <!-- update with the Docker Hub image name at release -->
-Image có từ bản 1.0.0, cho amd64 và arm64, ở hai nơi:
+Image cho amd64 và arm64, có ở hai nơi:
 
 ```bash
 docker pull fastidev/fasti-bpm:1.0.0              # Docker Hub
@@ -38,7 +38,7 @@ docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.0     # GitHub Container Registry
 Tag: `1.0.0` (đúng một bản) và `1.0` (bản vá mới nhất của 1.0). Image được ký bằng cosign
 (keyless, GitHub OIDC) và kèm SBOM và provenance.
 
-Trước khi image được phát hành, build từ mã nguồn (cần JDK 17+ và mạng tới Maven Central,
+Cũng có thể build image từ mã nguồn (cần JDK 17+ và mạng tới Maven Central,
 nodejs.org, npm registry) rồi dùng tên `fasti-bpm:local` thay cho `fastidev/fasti-bpm:1.0.0` ở mọi
 lệnh bên dưới:
 
@@ -277,7 +277,7 @@ Gói Tomcat dựng sẵn sẽ được tải từ fasti.dev:
 ### 2. Pull the image
 
 <!-- update with the Docker Hub image name at release -->
-The image is available from 1.0.0, for amd64 and arm64, in two places:
+The image is published for amd64 and arm64 in two places:
 
 ```bash
 docker pull fastidev/fasti-bpm:1.0.0              # Docker Hub
@@ -287,7 +287,7 @@ docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.0     # GitHub Container Registry
 Tags: `1.0.0` (exactly that release) and `1.0` (latest patch of 1.0). The image is signed with
 cosign (keyless, GitHub OIDC) and carries an SBOM and a provenance attestation.
 
-Until the image is published, build it from source (needs JDK 17+ and network access to Maven
+You can also build the image from source (needs JDK 17+ and network access to Maven
 Central, nodejs.org and the npm registry) and use the name `fasti-bpm:local` instead of
 `fastidev/fasti-bpm:1.0.0` in every command below:
 

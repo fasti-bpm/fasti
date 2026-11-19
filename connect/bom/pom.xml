@@ -6,13 +6,13 @@
   <parent>
     <groupId>dev.fasti.platform</groupId>
     <artifactId>fasti-root</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
   <groupId>dev.fasti.platform.connect</groupId>
   <artifactId>fasti-connect-bom</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <name>Fasti BPM Platform - connect - bom</name>
   <packaging>pom</packaging>
 

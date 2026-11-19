@@ -15,7 +15,7 @@ libraries and a new web UI. [English below](#english).*
 
 ## Bắt đầu nhanh
 
-**Từ bản 1.0.0**, image có trên Docker Hub (`fastidev/fasti-bpm`) và GitHub Container Registry
+Image có trên Docker Hub (`fastidev/fasti-bpm`) và GitHub Container Registry
 (`ghcr.io/fasti-bpm/fasti-bpm`), cho amd64 và arm64:
 
 <!-- update with the Docker Hub image name at release -->
@@ -33,7 +33,7 @@ curl -i http://localhost:8080/engine-rest/task      # 401: thiếu thông tin đ
 curl -u admin:'đổi-mật-khẩu-này' http://localhost:8080/engine-rest/task
 ```
 
-**Trước khi image được phát hành**, hãy build từ mã nguồn. Cần Docker, JDK 17+ và mạng tới Maven
+**Tự build image** từ mã nguồn. Cần Docker, JDK 17+ và mạng tới Maven
 Central, nodejs.org và npm registry (build tải Node/npm cho web UI); lần đầu mất khoảng 10–20
 phút:
 
@@ -212,7 +212,7 @@ Fasti tiếp nối trực tiếp từ tag `7.24.0`; mọi bản vá và thay đ�
    schema, thử thật trên năm hệ quản trị cơ sở dữ liệu.
 6. **Rà soát bảo mật trước khi công khai** (review mã, kiểm thử xâm nhập image, quét ZAP
    baseline; đã sửa các lỗi tìm được) và **giảm thiểu Java4Shell**.
-7. **1.0.0**: bản phát hành đầu tiên (đang chuẩn bị).
+7. **1.0.0**: bản phát hành đầu tiên (20/11/2026).
 
 ## Lộ trình (kế hoạch)
 
@@ -604,7 +604,7 @@ continued fixes and library upgrades, and a new web UI.
 
 ### Quick start
 
-**From 1.0.0 on**, the image is available on Docker Hub (`fastidev/fasti-bpm`) and on GitHub
+The image is available on Docker Hub (`fastidev/fasti-bpm`) and on GitHub
 Container Registry (`ghcr.io/fasti-bpm/fasti-bpm`), for amd64 and arm64:
 
 <!-- update with the Docker Hub image name at release -->
@@ -622,7 +622,7 @@ curl -i http://localhost:8080/engine-rest/task      # 401: no credentials
 curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 ```
 
-**Until the image is published**, build it from source. This needs Docker, JDK 17+ and network
+**Build the image yourself** from source. This needs Docker, JDK 17+ and network
 access to Maven Central, nodejs.org and the npm registry (the build downloads Node/npm for the
 web UI); the first build takes about 10–20 minutes:
 
@@ -809,7 +809,7 @@ Fasti continues directly from the `7.24.0` tag; every fix and change counts from
    schema version, tested for real on five database systems.
 6. **Pre-release security review** (code review, penetration test of the image, ZAP baseline
    scan; the findings were fixed) and **Java4Shell mitigation**.
-7. **1.0.0**: the first release (in preparation).
+7. **1.0.0**: the first release (2026-11-20).
 
 ### Roadmap (plan)
 

@@ -9,7 +9,7 @@
   <parent>
     <groupId>dev.fasti.platform.dmn</groupId>
     <artifactId>fasti-engine-dmn-root</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
   </parent>
 
   <artifactId>fasti-engine-dmn</artifactId>

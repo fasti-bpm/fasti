@@ -44,7 +44,7 @@ services:
     restart: unless-stopped
 
   fasti:
-    # update with the published image tag at release; the image is available from 1.0.0
+    # update with the published image tag at release
     image: ${FASTI_IMAGE:-fastidev/fasti-bpm:1.0.0}
     depends_on:
       postgres:

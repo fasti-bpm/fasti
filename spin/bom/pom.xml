@@ -6,14 +6,14 @@
   <parent>
     <groupId>dev.fasti.platform</groupId>
     <artifactId>fasti-root</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
   <groupId>dev.fasti.platform.spin</groupId>
   <artifactId>fasti-spin-bom</artifactId>
   <name>Fasti BPM Platform - spin - bom</name>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <packaging>pom</packaging>
 
   <description>

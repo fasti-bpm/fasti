@@ -34,6 +34,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 import java.util.Collections;
 
@@ -45,6 +46,13 @@ public class CamundaBpmRunRestConfiguration {
 
   @Autowired
   CamundaBpmRunProperties camundaBpmRunProperties;
+
+  @Autowired
+  Environment environment;
+
+  protected static final String BEARER_ENABLED_PROPERTY = "fasti.security.oidc.rest.bearer-enabled";
+  protected static final String BEARER_AUTHENTICATION_PROVIDER =
+      "org.camunda.bpm.spring.boot.starter.security.oauth2.impl.BearerTokenAuthenticationProvider";
 
   /*
    * The CORS and Authentication filters need to run before other camunda
@@ -76,7 +84,11 @@ public class CamundaBpmRunRestConfiguration {
     // if nothing is set, use Http Basic authentication
     CamundaBpmRunAuthenticationProperties properties = camundaBpmRunProperties.getAuth();
     if (properties.getAuthentication() == null || CamundaBpmRunAuthenticationProperties.DEFAULT_AUTH.equals(properties.getAuthentication())) {
-      registration.addInitParameter("authentication-provider", "org.camunda.bpm.engine.rest.security.auth.impl.HttpBasicAuthenticationProvider");
+      // with bearer tokens enabled (oauth2 module), basic authentication keeps working
+      String provider = environment.getProperty(BEARER_ENABLED_PROPERTY, Boolean.class, false)
+          ? BEARER_AUTHENTICATION_PROVIDER
+          : "org.camunda.bpm.engine.rest.security.auth.impl.HttpBasicAuthenticationProvider";
+      registration.addInitParameter("authentication-provider", provider);
     }
     return registration;
   }

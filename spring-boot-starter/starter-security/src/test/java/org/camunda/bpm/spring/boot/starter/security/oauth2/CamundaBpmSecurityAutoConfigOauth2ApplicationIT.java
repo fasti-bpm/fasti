@@ -95,11 +95,8 @@ public class CamundaBpmSecurityAutoConfigOauth2ApplicationIT extends AbstractSpr
     mockMvc.perform(MockMvcRequestBuilders.get(baseUrl + "/fasti/api/engine/engine/default/user")
             .accept(MediaType.APPLICATION_JSON))
         .andDo(MockMvcResultHandlers.print())
-        // then oauth2 redirection occurs
-        .andExpect(MockMvcResultMatchers.status().isFound())
-        // Spring Security 7 redirects to the login page with a relative URI by default
-        .andExpect(MockMvcResultMatchers.header().exists("Location"))
-        .andExpect(MockMvcResultMatchers.header().string("Location", "/oauth2/authorization/" + PROVIDER));
+        // then the API answers 401: a script cannot follow a redirect to the identity provider
+        .andExpect(MockMvcResultMatchers.status().isUnauthorized());
   }
 
   @Test
@@ -128,10 +125,8 @@ public class CamundaBpmSecurityAutoConfigOauth2ApplicationIT extends AbstractSpr
     mockMvc.perform(MockMvcRequestBuilders.get(baseUrl + "/fasti/api/engine/engine/default/user")
             .accept(MediaType.APPLICATION_JSON)
             .with(authentication(authenticationToken)))
-        // then authorization fails and redirection occurs
-        .andExpect(MockMvcResultMatchers.status().isFound())
-        .andExpect(MockMvcResultMatchers.header().exists("Location"))
-        .andExpect(MockMvcResultMatchers.header().string("Location", "/oauth2/authorization/" + PROVIDER));
+        // then authorization fails and the API answers 401
+        .andExpect(MockMvcResultMatchers.status().isUnauthorized());
 
     String expectedWarn = "Authorize failed for '" + UNAUTHORIZED_USER + "'";
     assertThat(loggingRule.getFilteredLog(expectedWarn)).hasSize(1);

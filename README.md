@@ -433,6 +433,112 @@ cookie path, CSP, health check theo `/camunda`), hãy thêm `/fasti/` — hoặc
 `/fasti/`. Cookie `XSRF-TOKEN` (và `JSESSIONID` trên Tomcat, WildFly) giờ có path `/fasti`,
 nên người dùng phải đăng nhập lại một lần. Bookmark và liên kết cũ vẫn chạy nhờ chuyển hướng.
 
+## Đăng nhập một lần (SSO, OpenID Connect)
+
+Hỗ trợ trên **Run** (`./start.sh --oauth2`, module `internal/oauth2`) và ứng dụng **Spring
+Boot** dùng `fasti-bpm-spring-boot-starter-security`. Bật bằng cách khai báo một client
+registration của Spring Security (`spring.security.oauth2.client.*`).
+
+- **Đăng nhập:** trang đăng nhập của giao diện mới hiện nút "Đăng nhập bằng &lt;nhà cung
+  cấp&gt;" thay cho ô mật khẩu (nhãn: `fasti.security.oidc.login-label`, mặc định là
+  `client-name`; có nhiều registration thì chọn bằng `fasti.security.oidc.registration-id`).
+  Luồng authorization code có `state`, `nonce` và PKCE (S256, cả với confidential client);
+  session id được thay mới khi đăng nhập. Người dùng quay lại đúng trang của giao diện mới
+  (chỉ nhận đường dẫn dưới `/fasti/app/next/`, nên không có open redirect).
+- **Đăng xuất:** `POST /logout` (chỉ chấp nhận yêu cầu cùng origin) xoá session; khi
+  `camunda.bpm.oauth2.sso-logout.enabled=true` người dùng được chuyển tới endpoint đăng xuất
+  của nhà cung cấp (RP-initiated logout, `post-logout-redirect-uri`). Back-channel logout
+  của Spring Security vẫn bật. `GET /logout` không còn đăng xuất.
+- **Hết phiên:** khi access token không làm mới được hoặc session hết hạn, `/fasti/api/**`
+  trả `401` (không chuyển hướng) và giao diện mới quay về trang đăng nhập.
+- **CSRF:** `/fasti/api` và `/fasti/app` vẫn được bảo vệ bởi bộ lọc CSRF của web app
+  (`X-XSRF-TOKEN`); CSRF của Spring Security tắt như bản gốc.
+- **Nhóm, quyền quản trị, tenant:** claim nhóm đặt bằng
+  `camunda.bpm.oauth2.identity-provider.group-name-attribute` (giữ tên thuộc tính gốc; hỗ
+  trợ claim lồng nhau như `realm_access.roles`). `fasti.security.oidc.groups.admin` liệt kê
+  các giá trị claim được vào nhóm `camunda-admin`; `groups.mapping` đổi giá trị claim sang id
+  nhóm của engine; `groups.include-unmapped=false` bỏ các giá trị chưa ánh xạ.
+  **Khác bản gốc:** giá trị `camunda-admin` trong claim không còn tự cấp quyền quản trị, và
+  các authority như `SCOPE_openid`, `OIDC_USER` không còn thành nhóm.
+  `fasti.security.oidc.tenants.claim` lấy tenant từ claim. Tên, email:
+  `fasti.security.oidc.user.{first-name,last-name,email}-claim`.
+- **Identity provider:** mặc định engine đọc người dùng, nhóm, tenant từ token của phiên
+  hiện tại (chỉ đọc). Đặt `camunda.bpm.oauth2.identity-provider.enabled=false` để dùng cơ sở
+  dữ liệu (khi đó nhóm lấy từ bảng membership). Chưa có tự động tạo người dùng
+  (auto-provisioning).
+  Khi đó trang thiết lập ban đầu (tạo quản trị viên đầu tiên) tắt hẳn, vì quản trị viên đến
+  từ claim (`groups.admin`); trước đây người dùng không thuộc nhóm quản trị bị đưa tới trang
+  thiết lập.
+- **REST API bằng bearer token:** `fasti.security.oidc.rest.bearer-enabled=true` cho phép
+  `Authorization: Bearer <JWT>` trên `/engine-rest`, song song với basic auth. Bắt buộc
+  `rest.issuer-uri` và `rest.audiences`; chữ ký được kiểm tra bằng JWKS của issuer, chỉ nhận
+  thuật toán bất đối xứng (`rest.jws-algorithms`, mặc định `RS256`); kiểm tra `iss`, `aud`,
+  `exp`, `nbf`. Trên Run cần thêm `camunda.bpm.run.auth.enabled=true`. Cookie phiên của
+  trình duyệt không bao giờ xác thực được `/engine-rest`.
+
+Ví dụ Keycloak (`configuration/default.yml` của Run):
+
+```yaml
+spring.security.oauth2.client:
+  registration.keycloak:
+    client-id: fasti
+    client-secret: ${KEYCLOAK_CLIENT_SECRET}
+    client-name: Keycloak
+    scope: openid, profile, email
+  provider.keycloak:
+    issuer-uri: https://sso.example.com/realms/fasti
+    user-name-attribute: preferred_username
+camunda.bpm:
+  oauth2:
+    # mapper "Group Membership" của client, tắt "Full group path"
+    identity-provider.group-name-attribute: groups
+    sso-logout:
+      enabled: true
+      post-logout-redirect-uri: "{baseUrl}/fasti/app/next/default/"
+  run.auth.enabled: true
+fasti.security.oidc:
+  groups.admin: [fasti-admins]
+  rest:
+    bearer-enabled: true
+    issuer-uri: https://sso.example.com/realms/fasti
+    audiences: [fasti-api]          # mapper "Audience" trong Keycloak
+    user-id-claim: preferred_username
+```
+
+Ví dụ Microsoft Entra ID:
+
+```yaml
+spring.security.oauth2.client:
+  registration.entra:
+    client-id: <application-id>
+    client-secret: ${ENTRA_CLIENT_SECRET}
+    client-name: Microsoft
+    scope: openid, profile, email
+  provider.entra:
+    issuer-uri: https://login.microsoftonline.com/<tenant-id>/v2.0
+    user-name-attribute: preferred_username
+camunda.bpm.oauth2:
+  # manifest của app registration: "groupMembershipClaims": "SecurityGroup"
+  identity-provider.group-name-attribute: groups
+  sso-logout.enabled: true
+fasti.security.oidc:
+  groups:
+    admin: ["<object-id nhóm quản trị>"]
+    mapping:
+      "<object-id nhóm kế toán>": accounting
+    include-unmapped: false          # Entra gửi object id, không phải tên nhóm
+  rest:
+    bearer-enabled: true
+    issuer-uri: https://login.microsoftonline.com/<tenant-id>/v2.0
+    audiences: ["api://<application-id>"]   # access token v2: accessTokenAcceptedVersion = 2
+    user-id-claim: preferred_username
+```
+
+**Tomcat, WildFly (WAR):** chưa có tích hợp OIDC sẵn. Có thể dùng xác thực của container
+(ví dụ WildFly Elytron OIDC) cùng `ContainerBasedAuthenticationProvider` của web app (cấu hình
+trong `web.xml`), nhưng nhóm, đăng xuất và trang đăng nhập mới phải tự cấu hình và Fasti chưa
+kiểm thử cách này. Đường được hỗ trợ là Run hoặc Spring Boot.
+
 ## Build
 
 Yêu cầu: JDK 17 trở lên (khuyến nghị 21).
@@ -902,6 +1008,58 @@ To restore `/camunda`:
 paths, CSP or health checks for `/camunda`), add `/fasti/` or move to `/fasti/` entirely.
 The `XSRF-TOKEN` cookie (and `JSESSIONID` on Tomcat and WildFly) now has the path `/fasti`,
 so users sign in once more. Bookmarks and old links keep working through the redirect.
+
+### Single sign-on (OpenID Connect)
+
+Supported on **Run** (`./start.sh --oauth2`, module `internal/oauth2`) and on **Spring Boot**
+applications with `fasti-bpm-spring-boot-starter-security`. It is enabled by declaring a
+Spring Security client registration (`spring.security.oauth2.client.*`).
+
+- **Login:** the login page of the new web application shows "Sign in with &lt;provider&gt;"
+  instead of the password form (label: `fasti.security.oidc.login-label`, defaults to the
+  `client-name`; with several registrations choose one with
+  `fasti.security.oidc.registration-id`). The authorization code flow uses `state`, `nonce`
+  and PKCE (S256, also for confidential clients); the session id is replaced on login. Users
+  return to the page of the new web application they started from (only paths below
+  `/fasti/app/next/` are accepted, so there is no open redirect).
+- **Logout:** `POST /logout` (same-origin requests only) ends the session; with
+  `camunda.bpm.oauth2.sso-logout.enabled=true` the user continues to the provider's end
+  session endpoint (RP-initiated logout, `post-logout-redirect-uri`). Spring Security's
+  back-channel logout stays enabled. `GET /logout` no longer logs out.
+- **Session expiry:** when the access token cannot be refreshed or the session times out,
+  `/fasti/api/**` answers `401` (no redirect) and the new web application shows its login page.
+- **CSRF:** `/fasti/api` and `/fasti/app` keep the web applications' own CSRF filter
+  (`X-XSRF-TOKEN`); Spring Security's CSRF protection stays off as upstream.
+- **Groups, administrators, tenants:** the groups claim is
+  `camunda.bpm.oauth2.identity-provider.group-name-attribute` (upstream property name; nested
+  claims such as `realm_access.roles` work). `fasti.security.oidc.groups.admin` lists the
+  claim values that grant `camunda-admin`; `groups.mapping` maps claim values to engine group
+  ids; `groups.include-unmapped=false` drops unmapped values. **Changed from upstream:** a
+  claim value `camunda-admin` no longer grants administrator rights by itself, and
+  authorities such as `SCOPE_openid` or `OIDC_USER` no longer become groups.
+  `fasti.security.oidc.tenants.claim` maps tenants. Name and email:
+  `fasti.security.oidc.user.{first-name,last-name,email}-claim`.
+- **Identity provider:** by default the engine reads users, groups and tenants from the
+  token of the current session (read-only). Set
+  `camunda.bpm.oauth2.identity-provider.enabled=false` to use the database instead (groups
+  then come from the membership tables). Auto-provisioning is not implemented.
+  The initial setup page (first administrator) is then switched off, since administrators come
+  from the claims (`groups.admin`); before, users outside the administrators group were sent
+  to it.
+- **REST API with bearer tokens:** `fasti.security.oidc.rest.bearer-enabled=true` accepts
+  `Authorization: Bearer <JWT>` on `/engine-rest` in addition to basic authentication.
+  `rest.issuer-uri` and `rest.audiences` are required; signatures are checked against the
+  issuer's JWKS with asymmetric algorithms only (`rest.jws-algorithms`, default `RS256`), and
+  `iss`, `aud`, `exp`, `nbf` are validated. Run also needs `camunda.bpm.run.auth.enabled=true`.
+  A browser session cookie never authenticates `/engine-rest`.
+
+The Keycloak and Microsoft Entra ID examples in the Vietnamese section above apply unchanged.
+
+**Tomcat, WildFly (WAR):** no built-in OIDC integration. Container authentication (for
+example WildFly Elytron OIDC) together with the web applications'
+`ContainerBasedAuthenticationProvider` (configured in `web.xml`) can work, but groups, logout
+and the new login page must be configured by hand and Fasti does not test it. The supported
+path is Run or Spring Boot.
 
 ### Build
 

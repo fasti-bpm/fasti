@@ -39,12 +39,13 @@ public class SsoLogoutSuccessHandler extends OidcClientInitiatedLogoutSuccessHan
                                  OAuth2Properties oAuth2Properties) {
     super(clientRegistrationRepository);
     this.setPostLogoutRedirectUri(oAuth2Properties.getSsoLogout().getPostLogoutRedirectUri());
+    this.setRedirectStrategy(new JsonAwareRedirectStrategy());
   }
 
   @Override
   public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication)
       throws IOException, ServletException {
-    logger.debug("Initiating SSO logout for '{}'", authentication.getName());
+    logger.debug("Initiating SSO logout for '{}'", authentication != null ? authentication.getName() : null);
     super.onLogoutSuccess(request, response, authentication);
   }
 }

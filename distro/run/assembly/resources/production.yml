@@ -89,6 +89,22 @@ logging:
    level.root: INFO
    file.name: logs/camunda-bpm-run.log
 
+# Bearer tokens (JWT access tokens of an OpenID Connect provider) on the REST API. When enabled,
+# every REST request needs a valid token (401 otherwise); the user, groups and tenants of the
+# token become the engine identity. Basic authentication keeps working only together with
+# camunda.bpm.run.auth.enabled: true.
+#fasti.security.oidc:
+#  rest:
+#    bearer-enabled: true
+#    issuer-uri: https://idp.example.com/realms/fasti
+#    audiences: fasti-rest
+#    jwk-set-uri: https://idp.example.com/realms/fasti/protocol/openid-connect/certs  # optional
+#    jws-algorithms: RS256
+#    user-id-claim: sub
+#    groups-claim: groups
+#  tenants:
+#    claim: tenants
+
 # datasource configuration is required
 # do not use the H2 databse in production
 # https://docs.camunda.org/manual/latest/user-guide/camunda-bpm-run/#connect-to-a-database

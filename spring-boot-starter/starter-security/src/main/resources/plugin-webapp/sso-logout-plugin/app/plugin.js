@@ -31,7 +31,23 @@ const observer = new MutationObserver(() => {
     const idx = document.location.href.indexOf(appRoot);
     const baseUrl = document.location.href.substring(0, idx);
     
-    logoutLink.href = baseUrl + "/logout";
+    logoutLink.href = "#";
+    // the logout only accepts POST requests; the server answers with the
+    // page to continue on, e.g. the logout endpoint of the identity provider
+    logoutLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      fetch(baseUrl + "/logout", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { Accept: "application/json" }
+      })
+        .then((response) => (response.ok ? response.json() : { redirectUrl: baseUrl + "/" }))
+        .catch(() => ({ redirectUrl: baseUrl + "/" }))
+        .then((result) => {
+          const target = new URL(result.redirectUrl || "/", document.location.href);
+          window.location.assign(target.protocol === "https:" || target.protocol === "http:" ? target.href : baseUrl + "/");
+        });
+    });
   }
 });
 observer.observe(document, { attributes: false, childList: true, characterData: false, subtree: true });

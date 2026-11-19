@@ -36,12 +36,15 @@ import org.camunda.bpm.engine.impl.persistence.entity.TenantEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.UserEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.authority.FactorGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -76,6 +79,19 @@ public class OAuth2IdentityProvider extends DbIdentityServiceProvider {
   }
 
   /**
+   * @return the entries of the given page of the list, all entries without a page
+   */
+  protected static <T> List<T> page(List<T> list, Page page) {
+    if (page == null) {
+      return list;
+    }
+    return list.stream()
+        .skip(Math.max(0, page.getFirstResult()))
+        .limit(Math.max(0, page.getMaxResults()))
+        .collect(Collectors.toList());
+  }
+
+  /**
    * @return true if user is authenticated in Spring security context
    */
   protected boolean springSecurityAuthentication() {
@@ -90,33 +106,53 @@ public class OAuth2IdentityProvider extends DbIdentityServiceProvider {
     if (authentication == null) {
       return null;
     }
-
     Object principal = authentication.getPrincipal();
     String userId = authentication.getName();
     UserEntity user = new UserEntity();
     user.setId(userId);
-    if (principal instanceof OidcUser) {
-      var oidcUser = (OidcUser) principal;
-      user.setFirstName(oidcUser.getGivenName());
-      user.setLastName(oidcUser.getFamilyName());
-      user.setEmail(oidcUser.getEmail());
+    Map<String, Object> claims = null;
+    if (principal instanceof OAuth2AuthenticatedPrincipal oauth2Principal) {
+      claims = oauth2Principal.getAttributes();
+    } else if (principal instanceof Jwt jwt) {
+      claims = jwt.getClaims();
+    }
+    if (claims != null) {
+      OidcClaimMapper mapper = OidcClaimMapper.current();
+      user.setFirstName(mapper.firstName(claims));
+      user.setLastName(mapper.lastName(claims));
+      user.setEmail(mapper.email(claims));
     }
     return user;
   }
 
   protected static List<Group> transformGroups() {
-    return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream().map(a -> {
-      var group = new GroupEntity();
-      group.setId(a.getAuthority());
-      group.setName(a.getAuthority());
-      return group;
-    }).collect(Collectors.toList());
+    return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+        // tenants are no groups, nor are the factors Spring Security records for
+        // the way the user authenticated (FACTOR_BEARER, FACTOR_AUTHORIZATION_CODE)
+        .filter(a -> !(a instanceof TenantGrantedAuthority) && !(a instanceof FactorGrantedAuthority))
+        .map(a -> {
+          var group = new GroupEntity();
+          group.setId(a.getAuthority());
+          group.setName(a.getAuthority());
+          return group;
+        }).collect(Collectors.toList());
+  }
+
+  protected static List<Tenant> transformTenants() {
+    return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+        .filter(TenantGrantedAuthority.class::isInstance)
+        .map(a -> {
+          var tenant = new TenantEntity();
+          tenant.setId(((TenantGrantedAuthority) a).getTenantId());
+          tenant.setName(tenant.getId());
+          return (Tenant) tenant;
+        }).collect(Collectors.toList());
   }
 
   public static class OAuth2UserQuery extends UserQueryImpl {
     @Override
     public long executeCount(CommandContext commandContext) {
-      return 1;
+      return executeList(commandContext, null).size();
     }
 
     @Override
@@ -125,7 +161,7 @@ public class OAuth2IdentityProvider extends DbIdentityServiceProvider {
         unsupportedFilterForOAuth2();
       }
 
-      return Stream.of(transformUser())
+      return page(Stream.of(transformUser())
           .filter(Objects::nonNull)
           .filter(u -> this.id == null || this.id.equals(u.getId()))
           .filter(u -> this.ids == null || Arrays.stream(this.ids).anyMatch(id -> u.getId().equals(id)))
@@ -136,7 +172,7 @@ public class OAuth2IdentityProvider extends DbIdentityServiceProvider {
           .filter(u -> this.email == null || this.email.equals(u.getEmail()))
           .filter(u -> nullOrContainsIgnoreCase(this.emailLike, u.getEmail()))
           .filter(u -> this.groupId == null || transformGroups().stream().anyMatch(g -> g.getId().equals(this.groupId)))
-          .collect(Collectors.toList());
+          .collect(Collectors.toList()), page);
     }
   }
 
@@ -188,7 +224,7 @@ public class OAuth2IdentityProvider extends DbIdentityServiceProvider {
         unsupportedFilterForOAuth2();
       }
 
-      return transformGroups().stream()
+      return page(transformGroups().stream()
           .filter(g -> this.id == null || this.id.equals(g.getId()))
           .filter(g -> this.ids == null || Arrays.stream(this.ids).anyMatch(id -> g.getId().equals(id)))
           .filter(g -> this.name == null || this.name.equals(g.getName()))
@@ -197,7 +233,7 @@ public class OAuth2IdentityProvider extends DbIdentityServiceProvider {
             var user = transformUser();
             return this.userId == null || user == null || this.userId.equals(user.getId());
           })
-          .collect(Collectors.toList());
+          .collect(Collectors.toList()), page);
     }
   }
 
@@ -224,18 +260,33 @@ public class OAuth2IdentityProvider extends DbIdentityServiceProvider {
   public static class OAuth2TenantQuery extends TenantQueryImpl {
     @Override
     public long executeCount(CommandContext commandContext) {
-      return 0;
+      return executeList(commandContext, null).size();
     }
 
     @Override
     public List<Tenant> executeList(CommandContext commandContext, Page page) {
-      return Collections.emptyList();
+      var user = transformUser();
+      if (this.userId != null && (user == null || !this.userId.equals(user.getId()))) {
+        return Collections.emptyList();
+      }
+      if (this.groupId != null && transformGroups().stream().noneMatch(g -> g.getId().equals(this.groupId))) {
+        return Collections.emptyList();
+      }
+      return page(transformTenants().stream()
+          .filter(t -> this.id == null || this.id.equals(t.getId()))
+          .filter(t -> this.ids == null || Arrays.stream(this.ids).anyMatch(id -> t.getId().equals(id)))
+          .filter(t -> this.name == null || this.name.equals(t.getName()))
+          .filter(t -> nullOrContainsIgnoreCase(this.nameLike, t.getName()))
+          .collect(Collectors.toList()), page);
     }
   }
 
   @Override
   public TenantEntity findTenantById(String tenantId) {
-    return springSecurityAuthentication() ? null : super.findTenantById(tenantId);
+    if (springSecurityAuthentication()) {
+      return (TenantEntity) transformTenants().stream().filter(t -> t.getId().equals(tenantId)).findFirst().orElse(null);
+    }
+    return super.findTenantById(tenantId);
   }
 
   @Override
@@ -245,7 +296,7 @@ public class OAuth2IdentityProvider extends DbIdentityServiceProvider {
 
   @Override
   public TenantQuery createTenantQuery(CommandContext commandContext) {
-    return springSecurityAuthentication() ? new OAuth2TenantQuery() : super.createTenantQuery();
+    return springSecurityAuthentication() ? new OAuth2TenantQuery() : super.createTenantQuery(commandContext);
   }
 
   @Override

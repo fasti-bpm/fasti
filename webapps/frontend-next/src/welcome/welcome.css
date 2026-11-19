@@ -1,0 +1,207 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ */
+/* The welcome page reuses the frame and cards of the monitoring pages
+   (cockpit.css) and the forms of the administration (admin.css). */
+
+/* --- applications ------------------------------------------------------------ */
+
+.welcome-apps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.welcome-app {
+  display: flex;
+  box-shadow: var(--shadow-card);
+  transition:
+    border-color var(--duration) var(--ease),
+    background var(--duration) var(--ease),
+    box-shadow var(--duration) var(--ease);
+  align-items: center;
+  gap: var(--s-4);
+  height: 100%;
+  padding: var(--s-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    border-color var(--duration) var(--ease),
+    background var(--duration) var(--ease);
+}
+
+.welcome-app:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+}
+
+.welcome-app:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.welcome-app__icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+}
+
+.welcome-app__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.welcome-app__title {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.welcome-app__description {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.welcome-app__arrow {
+  flex: none;
+  color: var(--text-subtle);
+}
+
+/* --- profile and links ------------------------------------------------------- */
+
+.welcome-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--s-4);
+}
+
+.welcome-profile__id {
+  color: var(--text-subtle);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.welcome-profile__notice {
+  padding: var(--s-4) var(--s-5) 0;
+}
+
+.welcome-links {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.welcome-link {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.welcome-link:hover {
+  background: var(--surface-hover);
+}
+
+.welcome-link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.welcome-link svg {
+  flex: none;
+  color: var(--text-subtle);
+}
+
+.welcome-note {
+  margin: var(--s-3) 0 0;
+  font-size: var(--fs-sm);
+}
+
+@media (max-width: 860px) {
+  .welcome-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* on a phone the applications are one compact list, so the profile shows on the first screen */
+@media (max-width: 520px) {
+  .welcome-apps {
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+  }
+
+  .welcome-app {
+    gap: var(--s-3);
+    padding: var(--s-3) var(--s-4);
+    border: 0;
+    border-radius: 0;
+  }
+
+  .welcome-apps > li + li .welcome-app {
+    border-top: 1px solid var(--border);
+  }
+
+  /* the list clips its rows, so the focus ring is drawn inside */
+  .welcome-app:focus-visible {
+    outline-offset: -2px;
+  }
+
+  .welcome-app__icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .welcome-app__title {
+    font-size: var(--fs-md);
+  }
+
+  .welcome-app__description {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+  }
+
+  .welcome .admin-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* the steps to a first process, while nothing is deployed */
+.welcome-first {
+  border-inline-start: 3px solid var(--accent);
+}
+
+.welcome-first__steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: var(--s-3) 0 0;
+  padding-inline-start: var(--s-5);
+}

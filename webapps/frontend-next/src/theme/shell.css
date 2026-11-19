@@ -1,0 +1,419 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ */
+/* --- brand -------------------------------------------------------------- */
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.wordmark__suffix {
+  color: var(--text-subtle);
+  font-weight: 500;
+}
+
+/* --- application shell -------------------------------------------------- */
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.shell__header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s-4);
+  height: var(--header-height);
+  padding: 0 var(--s-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.shell__brand {
+  display: inline-flex;
+  flex: none;
+  border-radius: var(--r-md);
+  text-decoration: none;
+}
+
+.shell__navrow {
+  flex: 1;
+  height: 100%;
+}
+
+/* a hidden page keeps its menu of pages hidden as well */
+.nav-link[data-overflow] + .nav-menu-btn {
+  display: none;
+}
+
+.shell__nav {
+  display: flex;
+  flex: 1;
+  align-items: stretch;
+  gap: var(--s-1);
+  height: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  padding: 0 var(--s-3);
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: color var(--duration) var(--ease);
+}
+
+.nav-link:hover {
+  color: var(--text);
+}
+
+.nav-link:focus-visible {
+  outline-offset: -2px;
+}
+
+.nav-link.active {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.nav-link.active::after {
+  position: absolute;
+  inset-inline-end: var(--s-3);
+  bottom: 0;
+  inset-inline-start: var(--s-3);
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--accent);
+  content: '';
+}
+
+/* the top bar in goals: work, operate, administer */
+.nav-group {
+  display: flex;
+  flex: none;
+  align-items: stretch;
+}
+
+.nav-group::before {
+  align-self: center;
+  width: 1px;
+  height: 20px;
+  margin-inline: var(--s-1);
+  background: var(--border);
+  content: '';
+}
+
+.nav-group > .nav-link + .nav-menu-btn {
+  margin-inline-start: calc(-1 * var(--s-3));
+}
+
+.nav-menu-btn {
+  display: inline-flex;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-subtle);
+}
+
+.nav-menu-btn:hover,
+.nav-menu-btn[data-state='open'] {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.nav-menu {
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+}
+
+.nav-link--classic svg {
+  color: var(--text-subtle);
+}
+
+.shell__tools {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.search-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 32px;
+  margin-inline-end: var(--s-2);
+  padding: 0 var(--s-2) 0 var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-subtle);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.search-btn:hover {
+  border-color: var(--border-strong);
+  color: var(--text-muted);
+}
+
+.search-btn__text {
+  min-width: 120px;
+  text-align: start;
+}
+
+.user-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 36px;
+  margin-inline-start: var(--s-1);
+  padding: 0 var(--s-2) 0 var(--s-1);
+  border: 0;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.user-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.user-btn__name {
+  max-width: 160px;
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shell__main {
+  flex: 1;
+  min-height: 0;
+  outline: none;
+}
+
+.loading {
+  width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .search-btn__text,
+  .search-btn .kbd {
+    display: none;
+  }
+
+  .search-btn {
+    width: 34px;
+    margin-inline-end: 0;
+    padding: 0;
+    justify-content: center;
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .user-btn__name {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .shell__header {
+    flex-wrap: wrap;
+    row-gap: 0;
+    height: auto;
+    padding: 0 var(--s-3);
+  }
+
+  .shell__brand {
+    height: 48px;
+    align-items: center;
+  }
+
+  /* the header is short of room on a phone; the sign-in card is not */
+  .shell__brand .wordmark__text {
+    display: none;
+  }
+
+  .shell__tools {
+    margin-inline-start: auto;
+  }
+
+  .shell__navrow {
+    flex: none;
+    order: 3;
+    width: 100%;
+    height: 40px;
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* --- login -------------------------------------------------------------- */
+
+.login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-5);
+  min-height: 100%;
+  padding: var(--s-6) var(--s-4);
+}
+
+.login__tools {
+  position: absolute;
+  top: var(--s-3);
+  inset-inline-end: var(--s-3);
+  display: flex;
+  gap: var(--s-1);
+}
+
+.login__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  width: min(380px, 100%);
+  padding: var(--s-8) var(--s-6) var(--s-6);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.login__title {
+  margin-top: var(--s-2);
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  line-height: var(--lh-tight);
+}
+
+.login__engine {
+  margin-top: calc(-1 * var(--s-3));
+  color: var(--text-subtle);
+  font-size: var(--fs-sm);
+}
+
+.login__submit {
+  margin-top: var(--s-2);
+  min-height: 40px;
+}
+
+a.login__submit {
+  justify-content: center;
+  text-decoration: none;
+}
+
+.login__hint {
+  color: var(--text-subtle);
+  font-size: var(--fs-sm);
+}
+
+.login__footer {
+  color: var(--text-subtle);
+  font-size: var(--fs-xs);
+}
+
+/* --- rows that move what does not fit into a "More" menu ------------------ */
+
+.overflow-row {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.overflow-row__items {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.overflow-row__items > * {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: visible;
+}
+
+.overflow-row [data-overflow] {
+  display: none !important;
+}
+
+.overflow-menu {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  align-self: center;
+  gap: 2px;
+  max-width: 11rem;
+  height: 30px;
+  margin-inline: var(--s-1);
+  padding: 0 var(--s-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.overflow-menu:hover {
+  color: var(--text);
+}
+
+.overflow-menu.is-active {
+  border-color: transparent;
+  background: var(--surface-pressed);
+  color: var(--text);
+}
+
+.overflow-menu__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu__item.is-active {
+  color: var(--accent-soft-text);
+  font-weight: 600;
+}
+
+/* tab rows keep one line under all tabs and the menu */
+.tabrow {
+  flex: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.tabrow .tabs__list,
+.tabrow .ctabs__list {
+  border-bottom: 0;
+}
+
+/* a group whose pages all moved into the menu takes no room and leaves no separator */
+.nav-group:not(:has(.nav-link:not([data-overflow]))),
+.cockpit__group:not(:has(.subnav-link:not([data-overflow]))) {
+  display: none;
+}

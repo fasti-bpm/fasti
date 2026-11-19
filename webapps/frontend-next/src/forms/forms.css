@@ -1,0 +1,105 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ */
+/*
+ * The form viewer is themed through its own custom properties, so that it
+ * follows the tokens of the application in the light and the dark theme.
+ */
+.camunda-form .fjs-container {
+  --bio-surface: var(--surface);
+  --bio-surface-medium: var(--surface-subtle);
+  --bio-surface-strong: var(--surface-pressed);
+  --bio-text: var(--text);
+  --bio-text-subtle: var(--text-muted);
+  --bio-text-subtlest: var(--text-subtle);
+  --bio-text-on-primary: var(--text-on-accent);
+  --bio-border: var(--border-strong);
+  --bio-border-input: var(--border-strong);
+  --bio-border-subtle: var(--border);
+  --bio-border-disabled: var(--border);
+  --bio-primary: var(--accent);
+  --bio-focus: var(--focus);
+  --bio-focus-ring: color-mix(in srgb, var(--focus) 28%, transparent);
+  --bio-focus-ring-danger: color-mix(in srgb, var(--danger) 28%, transparent);
+  --bio-neutral-subtle: var(--surface-pressed);
+  --bio-neutral-subtle-hover: var(--surface-hover);
+  --bio-danger: var(--danger);
+  --bio-danger-surface: var(--danger-soft);
+  --bio-danger-surface-subtle: var(--danger-soft);
+  --bio-radius-sm: var(--r-md);
+  --bio-radius-md: var(--r-md);
+  --bio-radius-lg: var(--r-lg);
+  --font-family: var(--font);
+  --font-size-label: var(--fs-sm);
+  --letter-spacing-base: 0;
+  --letter-spacing-input: 0;
+  --letter-spacing-label: 0;
+
+  color: var(--text);
+  font-family: var(--font);
+}
+
+.camunda-form .fjs-container .fjs-form {
+  padding: 0;
+  background: transparent;
+}
+
+/* the form starts at the left edge of the content, like every other form */
+.camunda-form {
+  margin: 0 -8px;
+}
+
+.camunda-form .fjs-container .fjs-form > .fjs-element > .fjs-vertical-layout {
+  padding: 0;
+}
+
+.camunda-form .fjs-container .fjs-form-field-label {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.camunda-form .fjs-container .fjs-input,
+.camunda-form .fjs-container .fjs-textarea,
+.camunda-form .fjs-container .fjs-select,
+.camunda-form .fjs-container .fjs-input-group {
+  min-height: 36px;
+}
+
+/* the submit button of the application is used instead of buttons of the form */
+.camunda-form .fjs-container .fjs-form-field-button {
+  display: none;
+}
+
+/* the form library links to its project next to the form */
+.camunda-form .fjs-powered-by {
+  color: var(--text-subtle);
+}
+
+/* embedded HTML forms are rendered by the form frame */
+.embedded-form__frame {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+}
+
+.embedded-form__frame[data-status='loading'],
+.embedded-form__frame[data-status='error'] {
+  visibility: hidden;
+}
+
+/* a form that shows a draft says so and offers to start over */
+.form-draft {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2) var(--s-3);
+  margin-bottom: var(--s-3);
+}
+
+.form-draft .link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

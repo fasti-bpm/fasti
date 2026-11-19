@@ -1,0 +1,151 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ */
+/* the preferences of a user */
+.page.prefs,
+.prefs {
+  width: 100%;
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: var(--s-5) var(--s-4);
+  display: grid;
+  gap: var(--s-4);
+}
+
+.prefs__title {
+  margin: 0;
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-semibold);
+  letter-spacing: -0.018em;
+}
+
+.prefs__card {
+  display: grid;
+  gap: 0;
+  padding: 0 var(--s-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+/* one setting per row, divided by a line */
+.prefs .prefs__card > * {
+  margin: 0;
+  padding-block: var(--s-4);
+}
+
+.prefs .prefs__card > * + * {
+  border-top: 1px solid var(--border);
+}
+
+.prefs__group {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.prefs__legend {
+  float: inline-start;
+  width: 100%;
+  margin-bottom: var(--s-1);
+  padding: 0;
+  font-weight: var(--fw-semibold);
+}
+
+.prefs__legend + * {
+  clear: both;
+}
+
+.prefs__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-5);
+}
+
+.prefs__select {
+  max-width: 20rem;
+}
+
+.tenant-btn.is-on {
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+}
+
+.tenant-btn__name {
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* compact density: less room around rows and fields */
+:root[data-density='compact'] .table td,
+:root[data-density='compact'] .table th {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+:root[data-density='compact'] .task-row {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+:root[data-density='compact'] .input {
+  min-height: 30px;
+}
+
+/* the business fields per process on the task cards */
+.card-fields__list {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card-fields__process {
+  display: grid;
+  gap: var(--s-1);
+}
+
+.card-fields__name {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.card-fields__fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card-fields__chip .icon-btn {
+  width: 22px;
+  height: 22px;
+}
+
+.card-fields__form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: var(--s-2);
+}
+
+.card-fields__input {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .card-fields__form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

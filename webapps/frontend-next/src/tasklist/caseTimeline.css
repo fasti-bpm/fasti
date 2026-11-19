@@ -1,0 +1,151 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ */
+/* The story of a case: comments and steps of every task of a call chain. */
+.case {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.case__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.case__form .comment-form__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.case__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.case__count {
+  font-size: var(--fs-sm);
+}
+
+.case__list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.case__item {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-2) var(--s-3);
+  border-inline-start: 3px solid transparent;
+  border-radius: var(--r-md);
+}
+
+.case__item + .case__item {
+  border-block-start: 1px solid var(--border);
+  border-start-start-radius: 0;
+  border-start-end-radius: 0;
+}
+
+.case__item.is-current {
+  border-inline-start-color: var(--accent);
+}
+
+.case__icon {
+  margin-top: 2px;
+  color: var(--text-subtle);
+}
+
+.case__item--comment .case__icon {
+  color: var(--accent);
+}
+
+.case__item--completed .case__icon {
+  color: var(--success);
+}
+
+.case__item--canceled .case__icon {
+  color: var(--warning);
+}
+
+.case__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-2);
+}
+
+.case__user {
+  font-weight: var(--fw-semibold);
+}
+
+.case__user:empty {
+  display: none;
+}
+
+.case__what {
+  color: var(--text-muted);
+}
+
+.case__step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  padding: 0 var(--s-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.case__step--case {
+  border-style: dashed;
+  color: var(--text-muted);
+}
+
+.case__here {
+  padding: 0 var(--s-2);
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
+.case__process {
+  font-size: var(--fs-sm);
+}
+
+.case__time {
+  margin-inline-start: auto;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.case__comment,
+.case__reason {
+  margin: var(--s-1) 0 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.case__comment {
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-md);
+  background: var(--surface-subtle);
+}
+
+
+.case__reason {
+  color: var(--warning);
+  font-size: var(--fs-sm);
+}

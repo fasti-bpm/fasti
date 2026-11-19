@@ -1,0 +1,220 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ */
+/*
+ * Design tokens. Every colour, size and radius of the user interface comes
+ * from here. The dark values apply if the system asks for a dark scheme,
+ * unless the user chose a theme (data-theme on the root element).
+ */
+:root {
+  color-scheme: light;
+
+  /* surfaces */
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-subtle: #f1f3f6;
+  --surface-hover: #edf0f4;
+  --surface-pressed: #e3e7ed;
+  --surface-raised: #ffffff;
+  --input-bg: #ffffff;
+  --overlay: rgb(16 22 30 / 0.42);
+
+  /* lines */
+  --border: #dfe3e9;
+  --border-strong: #c3cad4;
+
+  /* text */
+  --text: #17202b;
+  --text-muted: #4b5767;
+  --text-subtle: #667283;
+  --text-on-accent: #ffffff;
+
+  /* the accent */
+  --accent: #0b6b62;
+  --accent-hover: #09594f;
+  --accent-soft: #e2f1ee;
+  --accent-soft-text: #0a5a52;
+  --focus: #0b6b62;
+
+  /* signals */
+  --danger: #b3261b;
+  --danger-hover: #951f16;
+  --danger-soft: #fceceb;
+  --warning: #8f5300;
+  --warning-soft: #fcf1dc;
+  --success: #17703f;
+  --success-soft: #e3f4e9;
+
+  /* diagram */
+  --diagram-fill: #ffffff;
+  --diagram-stroke: #2c3643;
+  --diagram-label: #17202b;
+  --diagram-current: #0b6b62;
+  --diagram-current-fill: #d5ece8;
+
+  /* charts: a fixed order of series colours, checked for colour blindness */
+  --chart-1: #0a8f80;
+  --chart-2: #2a78d6;
+  --chart-3: #eb6834;
+
+  /* space: steps of 4px */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+
+  /* shape */
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 10px;
+  --r-full: 999px;
+
+  /* type: system fonts that render Vietnamese diacritics well; scripts the
+     Latin fonts lack get their own stack below, picked by the page language */
+  --font: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue',
+    'Noto Sans', 'Liberation Sans', Arial, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'Cascadia Code', 'SF Mono', 'JetBrains Mono', 'Roboto Mono', Menlo, Consolas,
+    monospace;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.875rem;
+  --fs-lg: 1rem;
+  --fs-xl: 1.25rem;
+  --fs-2xl: 1.5rem;
+  --lh-tight: 1.3;
+  --lh: 1.5;
+
+  /* weights: 400 text, 500 interactive text, 600 headings and emphasis */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+
+  /* controls: one height per size, larger where the pointer is a finger */
+  --control-sm: 30px;
+  --control-md: 36px;
+
+  /* disabled controls: a quiet surface instead of a faded colour */
+  --disabled-bg: #eceff3;
+  --disabled-text: #8a95a4;
+
+  /* depth and motion */
+  --shadow-xs: 0 1px 2px rgb(16 22 30 / 0.05);
+  --shadow-card: 0 1px 2px rgb(16 22 30 / 0.04), 0 1px 1px rgb(16 22 30 / 0.03);
+  --shadow-pop: 0 10px 30px rgb(16 22 30 / 0.14), 0 1px 3px rgb(16 22 30 / 0.1);
+  --duration: 140ms;
+  --duration-slow: 220ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  --header-height: 52px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #0c0f13;
+    --surface: #14181e;
+    --surface-subtle: #1a1f26;
+    --surface-hover: #222830;
+    --surface-pressed: #2a313b;
+    --surface-raised: #1c2128;
+    --input-bg: #101419;
+    --overlay: rgb(0 0 0 / 0.6);
+    --border: #28313c;
+    --border-strong: #3a4553;
+    --text: #e7ebf0;
+    --text-muted: #b1bac6;
+    --text-subtle: #8c98a8;
+    --text-on-accent: #04211d;
+    --accent: #4cc7b6;
+    --accent-hover: #6ad6c7;
+    --accent-soft: #11302c;
+    --accent-soft-text: #7fdccf;
+    --focus: #6ad6c7;
+    --danger: #f4877c;
+    --danger-hover: #f8a49b;
+    --danger-soft: #3a1b18;
+    --warning: #ecb45c;
+    --warning-soft: #372a11;
+    --success: #6fd29b;
+    --success-soft: #132f20;
+    --diagram-fill: #151a20;
+    --diagram-stroke: #b1bac6;
+    --diagram-label: #e7ebf0;
+    --diagram-current: #4cc7b6;
+    --diagram-current-fill: #12352f;
+    --chart-1: #27a392;
+    --chart-2: #3987e5;
+    --chart-3: #d95926;
+    --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.015), 0 1px 2px rgb(0 0 0 / 0.35);
+    --shadow-pop: 0 12px 34px rgb(0 0 0 / 0.55), 0 0 0 1px rgb(255 255 255 / 0.06);
+    --disabled-bg: #20262e;
+    --disabled-text: #6b7683;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0c0f13;
+  --surface: #14181e;
+  --surface-subtle: #1a1f26;
+  --surface-hover: #222830;
+  --surface-pressed: #2a313b;
+  --surface-raised: #1c2128;
+  --input-bg: #101419;
+  --overlay: rgb(0 0 0 / 0.6);
+  --border: #28313c;
+  --border-strong: #3a4553;
+  --text: #e7ebf0;
+  --text-muted: #b1bac6;
+  --text-subtle: #8c98a8;
+  --text-on-accent: #04211d;
+  --accent: #4cc7b6;
+  --accent-hover: #6ad6c7;
+  --accent-soft: #11302c;
+  --accent-soft-text: #7fdccf;
+  --focus: #6ad6c7;
+  --danger: #f4877c;
+  --danger-hover: #f8a49b;
+  --danger-soft: #3a1b18;
+  --warning: #ecb45c;
+  --warning-soft: #372a11;
+  --success: #6fd29b;
+  --success-soft: #132f20;
+  --diagram-fill: #151a20;
+  --diagram-stroke: #b1bac6;
+  --diagram-label: #e7ebf0;
+  --diagram-current: #4cc7b6;
+  --diagram-current-fill: #12352f;
+  --chart-1: #27a392;
+  --chart-2: #3987e5;
+  --chart-3: #d95926;
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.015), 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-pop: 0 12px 34px rgb(0 0 0 / 0.55), 0 0 0 1px rgb(255 255 255 / 0.06);
+  --disabled-bg: #20262e;
+  --disabled-text: #6b7683;
+}
+
+/* the Han glyphs differ between Chinese, Japanese and Korean, so each names its own fonts */
+:root:lang(zh) {
+  --font: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Microsoft YaHei UI', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans CJK SC', 'Noto Sans SC', 'Source Han Sans SC', sans-serif;
+}
+:root:lang(ja) {
+  --font: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Yu Gothic UI', 'Meiryo UI', Meiryo, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans CJK JP', 'Noto Sans JP', sans-serif;
+}
+:root:lang(ko) {
+  --font: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans CJK KR', 'Noto Sans KR', sans-serif;
+}
+:root:lang(th) {
+  --font: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Leelawadee UI', Leelawadee, Thonburi, 'Noto Sans Thai', 'Noto Sans Thai UI', Tahoma, sans-serif;
+}
+:root:lang(hi) {
+  --font: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Nirmala UI', 'Kohinoor Devanagari', 'Devanagari Sangam MN', 'Noto Sans Devanagari', sans-serif;
+}
+/* Arabic, Hebrew, Persian and Urdu would add their stacks here; layout uses logical properties for right to left */

@@ -1,0 +1,55 @@
+{
+  "name": "fasti-webapp-next",
+  "private": true,
+  "version": "1.0.0-SNAPSHOT",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24.15.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint . && node scripts/check-license-headers.mjs && npm run i18n:check",
+    "i18n:check": "node scripts/i18n.mjs check",
+    "i18n:new": "node scripts/i18n.mjs new",
+    "test": "vitest run",
+    "bundle": "vite build",
+    "e2e": "playwright test -c e2e/playwright.config.ts",
+    "e2e:sso": "playwright test -c e2e/playwright.sso.config.ts",
+    "typecheck:e2e": "tsc --noEmit -p e2e/tsconfig.json",
+    "build": "npm run typecheck && npm run lint && npm run bundle"
+  },
+  "dependencies": {
+    "@bpmn-io/form-js-editor": "2.2.0",
+    "@bpmn-io/form-js-viewer": "2.2.0",
+    "@tanstack/react-query": "5.107.1",
+    "bpmn-js": "18.31.1",
+    "dmn-js": "18.0.3",
+    "lucide-react": "1.73.0",
+    "radix-ui": "1.8.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-router": "8.5.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.61.1",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.10",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "eslint": "10.15.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.14.0",
+    "jsdom": "31.0.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2",
+    "vite": "8.3.8",
+    "vitest": "5.1.0"
+  }
+}

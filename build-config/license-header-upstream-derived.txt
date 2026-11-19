@@ -1,0 +1,6 @@
+# New paths (not in 7.24.0) that are copies or renames of upstream files and therefore keep
+# the Camunda header. One repository-relative path per line. See CONTRIBUTING.md.
+spring-boot-starter/starter-webapp-core/src/test/java/org/camunda/bpm/spring/boot/starter/webapp/setup/InitialSetupDefaultIT.java
+spring-boot-starter/starter-webapp-core/src/test/java/org/camunda/bpm/spring/boot/starter/webapp/setup/InitialSetupDisabledIT.java
+spring-boot-starter/starter-webapp-core/src/test/java/org/camunda/bpm/spring/boot/starter/webapp/filter/FormsIsolationPropertiesIT.java
+distro/wildfly/modules/src/main/modules/org/camunda/bpm/identity/camunda-identity-oidc/main/module.xml

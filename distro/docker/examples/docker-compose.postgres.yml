@@ -1,0 +1,83 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Fasti BPM contributors
+
+# Fasti BPM with PostgreSQL 16, for a new installation.
+#
+# Guide: docs/cai-dat-docker.md. Before the first start, create the two secret files next to
+# this file (they must be readable by the container users, uid 999 for PostgreSQL and uid 1000
+# for Fasti):
+#
+#   mkdir -p secrets
+#   openssl rand -hex 24 > secrets/db-password.txt
+#   echo "Fasti-1-$(openssl rand -hex 12)" > secrets/admin-password.txt
+#   chmod 0700 secrets            # other host users cannot enter the directory
+#   chmod 0644 secrets/*.txt      # readable inside the containers
+#   docker compose -f docker-compose.postgres.yml up -d
+#
+# With --production the engine enforces its password policy: the admin password needs at least
+# 10 characters with upper- and lowercase letters, a digit and a special character.
+#
+# Fasti is then at http://localhost:8080/fasti/ (user "admin", password in
+# secrets/admin-password.txt). To connect to the database of an existing Camunda 7.24
+# installation instead (see the guide): remove the postgres service, the pgdata volume and the
+# depends_on block; remove FASTI_DB_SCHEMA_UPDATE, FASTI_ADMIN_USER, FASTI_ADMIN_PASSWORD_FILE and
+# the admin-password secret; point the DB_* variables and db-password.txt at that database.
+
+name: fasti
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: fasti
+      POSTGRES_USER: fasti
+      POSTGRES_PASSWORD_FILE: /run/secrets/db-password
+    secrets:
+      - db-password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fasti -d fasti"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  fasti:
+    # update with the published image tag at release; the image is available from 1.0.0
+    image: ${FASTI_IMAGE:-fastidev/fasti-bpm:1.0.0}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # --production: REST authentication, authorizations, Secure cookies (put TLS in front),
+    # no implicit H2
+    command: ["--production"]
+    environment:
+      DB_DRIVER: org.postgresql.Driver
+      DB_URL: jdbc:postgresql://postgres:5432/fasti
+      DB_USERNAME: fasti
+      DB_PASSWORD_FILE: /run/secrets/db-password
+      # new, empty database: create the tables once; never upgrades an existing schema
+      FASTI_DB_SCHEMA_UPDATE: "true"
+      FASTI_ADMIN_USER: admin
+      FASTI_ADMIN_PASSWORD_FILE: /run/secrets/admin-password
+      # must be the same on every node that shares the database
+      TZ: ${TZ:-UTC}
+    secrets:
+      - db-password
+      - admin-password
+    ports:
+      - "127.0.0.1:${FASTI_HOST_PORT:-8080}:8080"
+    # SIGTERM gives running requests 30 s; leave more time before the kill
+    stop_grace_period: 60s
+    mem_limit: 2g
+    restart: unless-stopped
+
+secrets:
+  db-password:
+    file: ./secrets/db-password.txt
+  admin-password:
+    file: ./secrets/admin-password.txt
+
+volumes:
+  pgdata:

@@ -1,18 +1,18 @@
 This is a distribution of
 
-       Camunda Platform v${project.version}
+       Fasti BPM Platform v${project.version}
 
-visit
-       http://docs.camunda.org/
+an independent fork of Camunda 7 Community Edition 7.24.0. Fasti BPM is
+not affiliated with, sponsored by or endorsed by Camunda Services GmbH.
+"Camunda" is a trademark of Camunda Services GmbH. Most of the Camunda 7
+documentation applies:
+       https://docs.camunda.org/manual/7.24/
 
-The Camunda Platform is a dual-license Java-based framework.
-This particular copy of the Camunda Platform is released either
-under the Apache License 2.0 (Community Platform) OR a commercial
-license agreement (Enterprise Platform).
+Fasti BPM Platform is released under the Apache License 2.0.
 
 License information can be found in the LICENSE file.
  
-The Camunda Platform includes libraries developed by third
+Fasti BPM Platform includes libraries developed by third
 parties. For license and attribution notices for these libraries,
 please refer to the documentation that accompanies this distribution
 (see the LICENSE_BOOK-${project.version} file).
@@ -30,7 +30,7 @@ Contents:
 
   server/
         This directory contains a preconfigured distribution 
-        of Apache Tomcat with Camunda Platform readily 
+        of Apache Tomcat with Fasti BPM Platform readily 
         installed. 
 
         run the
@@ -49,11 +49,24 @@ Contents:
         The engine create script contain the engine and history tables.
 
         Execute the current upgrade script to make the database compatible
-        with the newest Camunda Platform release.
+        with this release of Fasti BPM Platform.
 
 ==================
 
-Camunda Platform version: ${project.version}
+Dang nhap mot lan (OpenID Connect) / Single sign-on (OpenID Connect):
+
+  Sao chep server/apache-tomcat-${version.tomcat}/conf/fasti-oidc.properties.example
+  thanh fasti-oidc.properties, dien nha cung cap va client, roi khoi dong lai.
+  Khong co tep nay thi nguoi dung dang nhap bang mat khau nhu truoc.
+
+  Copy server/apache-tomcat-${version.tomcat}/conf/fasti-oidc.properties.example
+  to fasti-oidc.properties, fill in the provider and the client, and restart.
+  Without that file users sign in with a password as before. The same file
+  enables bearer tokens on /engine-rest (fasti.security.oidc.rest.*).
+
+==================
+
+Fasti BPM Platform version: ${project.version}
 Apache Tomcat Server version: ${version.tomcat}
 
 =================

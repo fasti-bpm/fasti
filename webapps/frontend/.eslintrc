@@ -1,15 +1,27 @@
 {
   "rules": {
-    "space-before-blocks": [ 2, "always"],
-    "space-before-function-paren": [ 2, "never" ],
-    "semi": [ 2, "always" ],
+    "space-before-blocks": [
+      2,
+      "always"
+    ],
+    "space-before-function-paren": [
+      2,
+      "never"
+    ],
+    "semi": [
+      2,
+      "always"
+    ],
     "no-console": 1,
     "no-self-assign": 0,
     "no-useless-escape": "off",
-    "i18n-json/sorted-keys": [2, {
-      "order": "asc",
-      "indentSpaces": 2
-    }],
+    "i18n-json/sorted-keys": [
+      2,
+      {
+        "order": "asc",
+        "indentSpaces": 2
+      }
+    ],
     "i18n-json/valid-json": 0,
     "i18n-json/valid-message-syntax": 0
   },
@@ -20,10 +32,25 @@
   },
   "overrides": [
     {
-      "files": ["*.json"],
+      "files": [
+        "*.json"
+      ],
       "rules": {
         "license-header/header": "off",
         "prettier/prettier": "off"
+      }
+    },
+    {
+      "files": [
+        "ui/forms/client/scripts/broker-client.js",
+        "ui/forms/client/scripts/fasti-form-frame.js",
+        "ui/forms/client/scripts/protocol.js"
+      ],
+      "rules": {
+        "license-header/header": [
+          "error",
+          "./scripts/fasti-license-header.js"
+        ]
       }
     }
   ],

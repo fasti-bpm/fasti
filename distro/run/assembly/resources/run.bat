@@ -8,7 +8,7 @@ SET WEBAPPS_PATH=%BASEDIR%webapps
 SET OAUTH2_PATH=%BASEDIR%oauth2
 SET REST_PATH=%BASEDIR%rest
 SET EXAMPLE_PATH=%BASEDIR%example
-SET APPNAME=Camunda Run
+SET APPNAME=Fasti BPM Run
 
 IF [%~1]==[start] GOTO Startup
 IF [%~1]==[stop] GOTO Stop
@@ -50,7 +50,7 @@ SET JAVA_VERSION=%JAVA_VERSION:"=%
 ECHO Java version is %JAVA_VERSION%
 FOR /f "delims=. tokens=1" %%v in ("%JAVA_VERSION%") do (
   IF %%v LSS %EXPECTED_JAVA_VERSION% (
-    ECHO You must use at least JDK 17 to start Camunda Platform Run.
+    ECHO You must use at least JDK 17 to start Fasti BPM Run.
     GOTO :EOF
   )
 )
@@ -148,8 +148,8 @@ GOTO End
 REM remove argument
 SHIFT
 
-REM shut down Camunda Run
-ECHO Camunda Run is shutting down.
+REM shut down Fasti BPM Run
+ECHO Fasti BPM Run is shutting down.
 TASKKILL /FI "WINDOWTITLE eq %APPNAME%"
 
 GOTO End
@@ -158,11 +158,11 @@ GOTO End
 ECHO Usage: run.bat [start^|stop] (options...)
 :ArgsHelp
 ECHO Options:
-ECHO   --webapps    - Enables the Camunda Platform Webapps
-ECHO   --oauth2     - Enables the Camunda Platform Spring Security OAuth2 integration
+ECHO   --webapps    - Enables the Fasti BPM web apps
+ECHO   --oauth2     - Enables the Fasti BPM Spring Security OAuth2 integration
 ECHO   --rest       - Enables the REST API
 ECHO   --example    - Enables the example application
-ECHO   --production - Applies the production.yaml configuration file
-ECHO   --detached   - Starts Camunda Run as a detached process
+ECHO   --production - Applies the production.yml configuration file
+ECHO   --detached   - Starts Fasti BPM Run as a detached process
 
 :End

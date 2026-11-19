@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright Fasti BPM contributors -->
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  id="order-definitions" targetNamespace="https://example.com/bpmn">
+  <bpmn:message id="msg-payment" name="PaymentConfirmed" />
+  <bpmn:process id="order" name="Order" isExecutable="true" camunda:historyTimeToLive="P30D">
+    <bpmn:startEvent id="start" />
+    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="approve" />
+    <bpmn:userTask id="approve" name="Approve order" camunda:candidateGroups="sales" />
+    <bpmn:sequenceFlow id="f2" sourceRef="approve" targetRef="charge" />
+    <bpmn:serviceTask id="charge" name="Charge card" camunda:type="external" camunda:topic="charge-card" />
+    <bpmn:sequenceFlow id="f3" sourceRef="charge" targetRef="wait-payment" />
+    <bpmn:intermediateCatchEvent id="wait-payment" name="Payment confirmed">
+      <bpmn:messageEventDefinition messageRef="msg-payment" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="f4" sourceRef="wait-payment" targetRef="end" />
+    <bpmn:endEvent id="end" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="order-diagram">
+    <bpmndi:BPMNPlane id="order-plane" bpmnElement="order">
+      <bpmndi:BPMNShape id="start-di" bpmnElement="start">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="approve-di" bpmnElement="approve">
+        <dc:Bounds x="240" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="charge-di" bpmnElement="charge">
+        <dc:Bounds x="400" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="wait-payment-di" bpmnElement="wait-payment">
+        <dc:Bounds x="562" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end-di" bpmnElement="end">
+        <dc:Bounds x="662" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="f1-di" bpmnElement="f1">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="240" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f2-di" bpmnElement="f2">
+        <di:waypoint x="340" y="120" />
+        <di:waypoint x="400" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f3-di" bpmnElement="f3">
+        <di:waypoint x="500" y="120" />
+        <di:waypoint x="562" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f4-di" bpmnElement="f4">
+        <di:waypoint x="598" y="120" />
+        <di:waypoint x="662" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -128,14 +128,15 @@ public class DefaultJobRetryCmd extends JobRetryCmd {
     String type = job.getJobHandlerType();
     ActivityImpl activity = null;
 
-    if (SUPPORTED_TYPES.contains(type)) {
+    if (SUPPORTED_TYPES.contains(type) && job.getProcessDefinitionId() != null) {
       DeploymentCache deploymentCache = Context.getProcessEngineConfiguration().getDeploymentCache();
       ProcessDefinitionEntity processDefinitionEntity =
           deploymentCache.findDeployedProcessDefinitionById(job.getProcessDefinitionId());
       activity = processDefinitionEntity.findActivity(job.getActivityId());
 
     } else {
-      // noop, because activity type is not supported
+      // noop, because activity type is not supported or the job does not
+      // reference a process definition; the default retry strategy applies
     }
 
     return activity;

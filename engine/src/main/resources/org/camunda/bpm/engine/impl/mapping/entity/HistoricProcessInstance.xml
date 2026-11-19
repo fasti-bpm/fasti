@@ -407,7 +407,7 @@
 
     <foreach collection="queries" item="query">
 
-      <if test="query != null &amp;&amp; (query.withIncidents || query.withRootIncidents || query.incidentStatus != null || query.incidentMessage != null || query.incidentMessageLike != null || query.incidentType != null || (incidentIds != null &amp;&amp; incidentIds.length > 0))">
+      <if test="query != null &amp;&amp; (query.withIncidents || query.withRootIncidents || query.incidentStatus != null || query.incidentMessage != null || query.incidentMessageLike != null || query.incidentType != null || (query.incidentIds != null &amp;&amp; query.incidentIds.length > 0))">
         <bind name="INC_JOIN" value="true" />
         <if test="query.isOrQueryActive">
           <bind name="JOIN_TYPE" value="'left join'" />
@@ -575,6 +575,12 @@
               ${queryType} SELF.END_TIME_ is not NULL
             </if>
 
+            <!-- The incident table can be left-joined (if an incident criterion is used
+              in an 'or' query), so having an incident must be a condition of its own. -->
+            <if test="query.withIncidents">
+              ${queryType} INC.ID_ is not null
+            </if>
+
             <if test="query.incidentType != null">
               ${queryType} INC.INCIDENT_TYPE_ = #{query.incidentType}
             </if>
@@ -595,7 +601,7 @@
             </if>
 
             <if test="query.incidentStatus == 'open'">
-              ${queryType} INC.END_TIME_ is null
+              ${queryType} (INC.ID_ is not null and INC.END_TIME_ is null)
             </if>
 
             <if test="query.incidentStatus == 'resolved'">

@@ -18,6 +18,7 @@ package org.camunda.connect.impl;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.camunda.connect.spi.CloseableConnectorResponse;
 
@@ -35,15 +36,33 @@ public abstract class AbstractCloseableConnectorResponse extends AbstractConnect
   /**
    * Implements the default close behavior
    */
+  private final AtomicBoolean closed = new AtomicBoolean(false);
+
+  /**
+   * Closes the underlying resource. The resource is closed at most once:
+   * further invocations have no effect, also if the first attempt failed.
+   */
   public void close() {
+    if (!closed.compareAndSet(false, true)) {
+      return;
+    }
     Closeable closable = getClosable();
     try {
       LOG.closingResponse(this);
-      closable.close();
+      if (closable != null) {
+        closable.close();
+      }
       LOG.successfullyClosedResponse(this);
     } catch (IOException e) {
       throw LOG.exceptionWhileClosingResponse(e);
     }
+  }
+
+  /**
+   * @return true if {@link #close()} has been invoked
+   */
+  public boolean isClosed() {
+    return closed.get();
   }
 
   /**

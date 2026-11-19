@@ -44,7 +44,16 @@ import org.junit.Test;
  */
 public class SoapHttpConnectorSystemPropertiesTest {
 
-  public static final int PORT = 51234;
+  // a free port, so the tests do not depend on one fixed port being available
+  public static final int PORT = freePort();
+
+  private static int freePort() {
+    try (java.net.ServerSocket socket = new java.net.ServerSocket(0)) {
+      return socket.getLocalPort();
+    } catch (java.io.IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 
   @Rule
   public WireMockRule wireMockRule = new WireMockRule(

@@ -67,7 +67,7 @@ public class DateFormType extends AbstractFormFieldType {
         return Variables.dateValue(null, propertyValue.isTransient());
       }
       try {
-        return Variables.dateValue((Date) dateFormat.parseObject(strValue), propertyValue.isTransient());
+        return Variables.dateValue((Date) getDateFormat().parseObject(strValue), propertyValue.isTransient());
       } catch (ParseException e) {
         throw new ProcessEngineException("Could not parse value '"+value+"' as date using date format '"+datePattern+"'.");
       }
@@ -81,7 +81,7 @@ public class DateFormType extends AbstractFormFieldType {
     if(modelValue.getValue() == null) {
       return Variables.stringValue("", modelValue.isTransient());
     } else if(modelValue.getType() == ValueType.DATE) {
-      return Variables.stringValue(dateFormat.format(modelValue.getValue()), modelValue.isTransient());
+      return Variables.stringValue(getDateFormat().format(modelValue.getValue()), modelValue.isTransient());
     }
     else {
       throw new ProcessEngineException("Expected value to be of type '"+ValueType.DATE+"' but got '"+modelValue.getType()+"'.");
@@ -94,8 +94,12 @@ public class DateFormType extends AbstractFormFieldType {
     if (propertyValue==null || "".equals(propertyValue)) {
       return null;
     }
+    if (propertyValue instanceof Date) {
+      // e.g. the result of an expression, it is a model value already
+      return propertyValue;
+    }
     try {
-      return dateFormat.parseObject(propertyValue.toString());
+      return getDateFormat().parseObject(propertyValue.toString());
     } catch (ParseException e) {
       throw new ProcessEngineException("invalid date value "+propertyValue);
     }
@@ -105,7 +109,16 @@ public class DateFormType extends AbstractFormFieldType {
     if (modelValue==null) {
       return null;
     }
-    return dateFormat.format(modelValue);
+    return getDateFormat().format(modelValue);
+  }
+
+  /**
+   * A form type is shared by all threads that work with the forms of the engine,
+   * while a {@link DateFormat} must not be used concurrently. Therefore every
+   * conversion works with its own copy of the format.
+   */
+  protected DateFormat getDateFormat() {
+    return (DateFormat) dateFormat.clone();
   }
 
 }

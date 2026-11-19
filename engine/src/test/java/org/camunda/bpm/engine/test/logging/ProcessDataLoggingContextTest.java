@@ -122,6 +122,7 @@ public class ProcessDataLoggingContextTest {
       .setLoggingContextBusinessKey("businessKey")
       .setLoggingContextProcessDefinitionId("processDefinitionId")
       .setLoggingContextProcessInstanceId("processInstanceId")
+      .setLoggingContextRootProcessInstanceId(null)
       .setLoggingContextTenantId("tenantId")
       .setLoggingContextEngineName("engineName");
   }
@@ -1074,6 +1075,69 @@ public class ProcessDataLoggingContextTest {
     @Override
     public void notify(DelegateExecution execution) {
       throw new IllegalArgumentException("I am failing!");
+    }
+  }
+
+  @Test
+  @WatchLogger(loggerNames = {NestedLoggingDelegate.LOGGER_NAME}, level = "DEBUG")
+  public void shouldLogRootProcessInstanceIdIfConfigured() {
+    // given
+    engineRule.getProcessEngineConfiguration()
+      .setLoggingContextRootProcessInstanceId("rootProcessInstanceId");
+
+    manageDeployment("called.bpmn", Bpmn.createExecutableProcess("calledProcess")
+      .startEvent()
+      .serviceTask("logTask")
+        .camundaClass(NestedLoggingDelegate.class.getName())
+      .userTask("calledWaitState")
+      .endEvent()
+      .done());
+    manageDeployment(Bpmn.createExecutableProcess(PROCESS)
+      .startEvent("start")
+      .callActivity("callActivity")
+        .calledElement("calledProcess")
+      .endEvent("end")
+      .done());
+
+    // when
+    ProcessInstance rootInstance = runtimeService.startProcessInstanceByKey(PROCESS, B_KEY);
+
+    // then
+    ProcessInstance calledInstance = runtimeService.createProcessInstanceQuery()
+      .superProcessInstanceId(rootInstance.getId())
+      .singleResult();
+
+    List<ILoggingEvent> customLogs = loggingRule.getLog();
+    assertThat(customLogs).hasSize(2);
+
+    for (ILoggingEvent logEvent : customLogs) {
+      assertThat(logEvent.getMDCPropertyMap()).containsEntry("processInstanceId", calledInstance.getId());
+      assertThat(logEvent.getMDCPropertyMap()).containsEntry("rootProcessInstanceId", rootInstance.getId());
+    }
+  }
+
+  @Test
+  @WatchLogger(loggerNames = {NestedLoggingDelegate.LOGGER_NAME}, level = "DEBUG")
+  public void shouldNotLogRootProcessInstanceIdByDefault() {
+    // given
+    manageDeployment(Bpmn.createExecutableProcess(PROCESS)
+      .startEvent("start")
+      .serviceTask("logTask")
+        .camundaClass(NestedLoggingDelegate.class.getName())
+      .userTask("waitState")
+      .endEvent("end")
+      .done());
+
+    // when
+    ProcessInstance instance = runtimeService.startProcessInstanceByKey(PROCESS, B_KEY);
+
+    // then
+    List<ILoggingEvent> customLogs = loggingRule.getLog();
+    assertThat(customLogs).hasSize(2);
+
+    for (ILoggingEvent logEvent : customLogs) {
+      assertThat(logEvent.getMDCPropertyMap()).containsEntry("processInstanceId", instance.getId());
+      assertThat(logEvent.getMDCPropertyMap()).doesNotContainKey("rootProcessInstanceId");
     }
   }
 }

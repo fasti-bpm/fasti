@@ -63,4 +63,8 @@ public class HttpConnectorLogger extends ConnectLogger {
         + " Response: {}", statusCode, connectorResponse));
   }
 
+  public void unableToCloseResponse(Exception cause) {
+    logWarn("011", "Unable to close HTTP response: {}", cause.getMessage(), cause);
+  }
+
 }

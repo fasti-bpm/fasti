@@ -98,6 +98,7 @@ public abstract class AbstractSetStateCmd implements Command<Void> {
     JobHandlerConfiguration jobHandlerConfiguration = getJobHandlerConfiguration();
 
     timer.setDuedate(executionDate);
+    timer.setRetries(commandContext.getProcessEngineConfiguration().getDefaultNumberOfRetries());
     timer.setJobHandlerType(getDelayedExecutionJobHandlerType());
     timer.setJobHandlerConfigurationRaw(jobHandlerConfiguration.toCanonicalString());
     timer.setDeploymentId(getDeploymentId(commandContext));

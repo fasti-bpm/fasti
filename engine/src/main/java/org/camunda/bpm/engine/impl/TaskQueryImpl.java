@@ -20,8 +20,10 @@ import static java.lang.Boolean.TRUE;
 import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureNotEmpty;
 import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureNotNull;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -504,6 +506,26 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
     this.candidateGroups = candidateGroups;
     expressions.remove("taskCandidateGroupIn");
     return this;
+  }
+
+  /**
+   * An expression of the candidate groups, such as <code>${currentUserGroups()}</code>
+   * for a user without groups (or without authentication), may yield no group at all
+   * (an empty list or <code>null</code>). Unlike an empty list
+   * passed to {@link #taskCandidateGroupIn(List)}, which is refused, this is not a
+   * mistake of the caller: the criterion then matches no task, instead of failing
+   * the query (and every filter count computed together with it).
+   */
+  @Override
+  protected void applyExpressionValue(String methodName, Object value)
+      throws InvocationTargetException, IllegalAccessException {
+    if ("taskCandidateGroupIn".equals(methodName)
+        && (value == null || value instanceof Collection && ((Collection<?>) value).isEmpty())) {
+      this.candidateGroups = new ArrayList<>();
+      expressions.remove("taskCandidateGroupIn");
+      return;
+    }
+    super.applyExpressionValue(methodName, value);
   }
 
   @Override
@@ -1161,16 +1183,18 @@ public class TaskQueryImpl extends AbstractQuery<TaskQuery, Task> implements Tas
         }
       }
     } else if (candidateGroup != null) {
-      cachedCandidateGroups = Collections.singletonList(candidateGroup);
+      cachedCandidateGroups = new ArrayList<>(Collections.singletonList(candidateGroup));
     } else if (candidateGroups != null) {
-      cachedCandidateGroups = candidateGroups;
+      // copy the list, so that neither the criterion of the query nor
+      // the list provided by the caller is modified below
+      cachedCandidateGroups = new ArrayList<>(candidateGroups);
     }
 
     if (candidateUser != null) {
       List<String> groupsForCandidateUser = getGroupsForCandidateUser(candidateUser);
 
       if (cachedCandidateGroups == null) {
-        cachedCandidateGroups = groupsForCandidateUser;
+        cachedCandidateGroups = new ArrayList<>(groupsForCandidateUser);
       } else {
         for (String group : groupsForCandidateUser) {
           if (!cachedCandidateGroups.contains(group)) {

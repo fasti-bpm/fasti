@@ -88,7 +88,9 @@ public abstract class AbstractSearchQueryDto {
         throw new RestException(Status.INTERNAL_SERVER_ERROR, e, "Server error.");
       } catch (IllegalAccessException e) {
         throw new RestException(Status.INTERNAL_SERVER_ERROR, e, "Server error.");
-      } catch (InvocationTargetException e) {
+      } catch (InvocationTargetException | IllegalArgumentException e) {
+        // IllegalArgumentException: the converted value does not fit the parameter (e.g. an
+        // empty value for a list parameter); a client error, not a server error
         throw new InvalidRequestException(Status.BAD_REQUEST, e, "Cannot set query parameter '" + key + "' to value '" + value + "'");
       } catch (RestException e) {
         throw new InvalidRequestException(e.getStatus(), e,

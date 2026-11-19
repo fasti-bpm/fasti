@@ -17,6 +17,7 @@
 package org.camunda.bpm.engine.impl.bpmn.behavior;
 
 import org.camunda.bpm.engine.delegate.Expression;
+import org.camunda.bpm.engine.impl.context.Context;
 import org.camunda.bpm.engine.impl.migration.instance.MigratingActivityInstance;
 import org.camunda.bpm.engine.impl.migration.instance.MigratingCalledProcessInstance;
 import org.camunda.bpm.engine.impl.migration.instance.parser.MigratingInstanceParseContext;
@@ -59,7 +60,15 @@ public class CallActivityBehavior extends CallableElementActivityBehavior implem
         executionEntity,
         executionEntity.getProcessDefinitionTenantId(),
         getCallableElement());
+    int nestingDepth = executionEntity.getProcessInstance().getCallActivityNestingDepth() + 1;
+    int maxNestingDepth = Context.getProcessEngineConfiguration().getMaxCallActivityNestingDepth();
+    if (maxNestingDepth > 0 && nestingDepth > maxNestingDepth) {
+      throw LOG.callActivityNestingDepthExceeded(executionEntity.getActivityId(),
+          executionEntity.getProcessDefinitionId(), definition.getId(), maxNestingDepth);
+    }
+
     PvmProcessInstance processInstance = execution.createSubProcessInstance(definition, businessKey);
+    ((ExecutionEntity) processInstance).setCallActivityNestingDepth(nestingDepth);
     processInstance.start(variables);
   }
 

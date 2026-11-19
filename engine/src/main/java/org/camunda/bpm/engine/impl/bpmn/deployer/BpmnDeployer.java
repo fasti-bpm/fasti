@@ -134,11 +134,21 @@ public class BpmnDeployer extends AbstractDefinitionDeployer<ProcessDefinitionEn
   }
 
   @Override
-  protected void definitionAddedToDeploymentCache(DeploymentEntity deployment, ProcessDefinitionEntity definition, Properties properties) {
+  protected void registerDefinition(DeploymentEntity deployment, ProcessDefinitionEntity definition, Properties properties) {
+    // The job declarations must be linked to their job definitions before the
+    // definition is added to the deployment cache. From then on other threads
+    // can use the definition to create jobs, and a job that is created from a
+    // declaration without job definition id lacks the reference to its
+    // job definition and process definition.
     List<JobDeclaration<?, ?>> declarations = properties.get(JOB_DECLARATIONS_PROPERTY).get(definition.getKey());
 
     updateJobDeclarations(declarations, definition, deployment.isNew());
 
+    super.registerDefinition(deployment, definition, properties);
+  }
+
+  @Override
+  protected void definitionAddedToDeploymentCache(DeploymentEntity deployment, ProcessDefinitionEntity definition, Properties properties) {
     ProcessDefinitionEntity latestDefinition = findLatestDefinitionByKeyAndTenantId(definition.getKey(), definition.getTenantId());
 
     if (deployment.isNew()) {

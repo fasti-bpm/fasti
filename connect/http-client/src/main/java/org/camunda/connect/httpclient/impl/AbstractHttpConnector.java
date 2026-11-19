@@ -79,7 +79,13 @@ public abstract class AbstractHttpConnector<Q extends HttpBaseRequest<Q, R>, R e
     } catch (Exception e) {
       throw LOG.unableToExecuteRequest(e);
     }
-    handleErrorResponse(request, invocationResult);
+    try {
+      handleErrorResponse(request, invocationResult);
+    } catch (RuntimeException e) {
+      // the response is not handed out to the caller, so nobody else can release it
+      closeResponse(invocationResult);
+      throw e;
+    }
     return invocationResult;
   }
 
@@ -91,6 +97,16 @@ public abstract class AbstractHttpConnector<Q extends HttpBaseRequest<Q, R>, R e
       Object handleHttpError = Optional.ofNullable(configOptions.get("throw-http-error")).orElse("FALSE");
       if (Boolean.parseBoolean(handleHttpError.toString()) && statusCode >= 400 && statusCode <= 599) {
         throw LOG.httpRequestError(statusCode, connectorResponse);
+      }
+    }
+  }
+
+  protected void closeResponse(R response) {
+    if (response != null) {
+      try {
+        response.close();
+      } catch (RuntimeException e) {
+        LOG.unableToCloseResponse(e);
       }
     }
   }

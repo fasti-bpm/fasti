@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.camunda.bpm.engine.OptimisticLockingException;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.ProcessEngineServices;
@@ -344,6 +345,13 @@ public class TaskEntity extends AbstractVariableScope implements Task, DelegateT
       // execution.
       if (executionId !=null) {
         ExecutionEntity execution = getExecution();
+        if (execution == null) {
+          // the execution no longer exists, typically because a concurrent transaction
+          // (another node or thread) completed this task or ended the instance first;
+          // report a concurrent modification instead of failing with a NullPointerException
+          throw new OptimisticLockingException("Cannot complete " + this + ": execution "
+              + executionId + " no longer exists, possibly deleted concurrently");
+        }
         execution.removeTask(this);
         execution.signal(null, null);
       }

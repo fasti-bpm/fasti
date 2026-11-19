@@ -615,6 +615,10 @@
                   <if test="query.candidateGroupLike != null">
                     I.GROUP_ID_ LIKE #{query.candidateGroupLike}
                   </if>
+                  <!-- the candidate groups are empty (an expression that yielded no group): no match -->
+                  <if test="query.candidateUser == null &amp;&amp; query.candidateGroupLike == null &amp;&amp; (query.candidateGroups == null || query.candidateGroups.size == 0)">
+                    1 = 0
+                  </if>
                   )
                 </if>
 

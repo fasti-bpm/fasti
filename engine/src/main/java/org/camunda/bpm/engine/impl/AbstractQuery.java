@@ -297,14 +297,21 @@ public abstract class AbstractQuery<T extends Query<?,?>, U> extends ListQueryPa
       }
 
       try {
-        Method method = getMethod(methodName);
-        method.invoke(this, value);
+        applyExpressionValue(methodName, value);
       } catch (InvocationTargetException e) {
         throw new ProcessEngineException("Unable to invoke method '" + methodName + "' on class '" + getClass().getCanonicalName() + "'", e);
       } catch (IllegalAccessException e) {
         throw new ProcessEngineException("Unable to access method '" + methodName + "' on class '" + getClass().getCanonicalName() + "'", e);
       }
     }
+  }
+
+  /**
+   * Sets the criterion of the given method to the value of its expression.
+   */
+  protected void applyExpressionValue(String methodName, Object value)
+      throws InvocationTargetException, IllegalAccessException {
+    getMethod(methodName).invoke(this, value);
   }
 
   /**

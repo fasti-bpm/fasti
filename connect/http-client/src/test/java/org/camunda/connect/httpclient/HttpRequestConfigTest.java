@@ -44,7 +44,16 @@ public class HttpRequestConfigTest {
 
   public static final String EXAMPLE_URL = "http://camunda.org/example";
 
-  public static final int PORT = 51234;
+  // a free port, so the tests do not depend on one fixed port being available
+  public static final int PORT = freePort();
+
+  private static int freePort() {
+    try (java.net.ServerSocket socket = new java.net.ServerSocket(0)) {
+      return socket.getLocalPort();
+    } catch (java.io.IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 
   @Rule
   public WireMockRule wireMockRule = new WireMockRule(
@@ -319,7 +328,9 @@ public class HttpRequestConfigTest {
   public void shouldNotChangeDefaultConfig() {
     // given
     HttpClient client = (HttpClient) getInternalState(connector, "httpClient");
-    connector.createRequest().url(EXAMPLE_URL).get()
+    // the local stub server keeps the test independent of internet access
+    wireMockRule.stubFor(get(urlEqualTo("/")).willReturn(aResponse().withStatus(200)));
+    connector.createRequest().url("http://localhost:" + PORT).get()
         .configOption(RequestConfigOption.CONNECTION_TIMEOUT.getName(), Timeout.ofSeconds(10))
         .configOption(RequestConfigOption.CONNECTION_REQUEST_TIMEOUT.getName(), Timeout.ofSeconds(10))
         .configOption(RequestConfigOption.CONNECTION_KEEP_ALIVE.getName(), Timeout.ofSeconds(10))

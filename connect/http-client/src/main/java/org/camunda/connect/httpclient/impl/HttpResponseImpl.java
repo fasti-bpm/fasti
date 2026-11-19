@@ -23,6 +23,7 @@ import java.util.Map;
 
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
 import org.camunda.commons.utils.IoUtil;
 import org.camunda.connect.httpclient.HttpResponse;
 import org.camunda.connect.impl.AbstractCloseableConnectorResponse;
@@ -59,18 +60,35 @@ public class HttpResponseImpl extends AbstractCloseableConnectorResponse impleme
   }
 
   protected void collectResponseParameters(Map<String, Object> responseParameters) {
-    responseParameters.put(PARAM_NAME_STATUS_CODE, httpResponse.getCode());
-    collectResponseHeaders();
+    try {
+      responseParameters.put(PARAM_NAME_STATUS_CODE, httpResponse.getCode());
+      collectResponseHeaders();
 
-    if (httpResponse.getEntity() != null) {
-      try {
-        String response = IoUtil.inputStreamAsString(httpResponse.getEntity().getContent());
-        responseParameters.put(PARAM_NAME_RESPONSE, response);
-      } catch (IOException e) {
-        throw LOG.unableToReadResponse(e);
-      } finally {
-        IoUtil.closeSilently(httpResponse);
+      HttpEntity entity = httpResponse.getEntity();
+      if (entity != null) {
+        try {
+          String response = IoUtil.inputStreamAsString(entity.getContent());
+          responseParameters.put(PARAM_NAME_RESPONSE, response);
+        } catch (IOException e) {
+          throw LOG.unableToReadResponse(e);
+        }
       }
+    } finally {
+      // the response is either completely buffered or cannot be read at all,
+      // in both cases the underlying HTTP response is not needed anymore
+      closeQuietly();
+    }
+  }
+
+  /**
+   * Releases the underlying HTTP response, if that did not happen yet. A
+   * failure is logged and not propagated.
+   */
+  protected void closeQuietly() {
+    try {
+      close();
+    } catch (RuntimeException e) {
+      LOG.unableToCloseResponse(e);
     }
   }
 

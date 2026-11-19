@@ -600,4 +600,82 @@ public class ProcessInstanceQueryOrTest {
     assertThat(processInstances.size()).isEqualTo(2);
   }
 
+  @Test
+  @Deployment(resources={"org/camunda/bpm/engine/test/api/oneTaskProcess.bpmn20.xml"})
+  public void shouldReturnByWithIncidentOrProcessDefinitionKey() {
+    // given
+    String instanceWithoutIncident = runtimeService.startProcessInstanceByKey("oneTaskProcess").getId();
+    String instanceWithIncident = startInstanceWithIncident();
+    startInstanceOfOtherProcess();
+
+    // when
+    ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery()
+        .or()
+          .withIncident()
+          .processDefinitionKey("oneTaskProcess")
+        .endOr();
+
+    // then
+    assertThat(query.list()).extracting("id")
+        .containsExactlyInAnyOrder(instanceWithoutIncident, instanceWithIncident);
+    assertThat(query.count()).isEqualTo(2L);
+  }
+
+  @Test
+  @Deployment(resources={"org/camunda/bpm/engine/test/api/oneTaskProcess.bpmn20.xml"})
+  public void shouldReturnByWithIncidentAndOrQuery() {
+    // given
+    runtimeService.startProcessInstanceByKey("oneTaskProcess");
+    String instanceWithIncident = startInstanceWithIncident();
+    startInstanceOfOtherProcess();
+
+    // when
+    ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery()
+        .withIncident()
+        .or()
+          .processDefinitionKeyIn("oneTaskProcess", "process")
+          .processInstanceBusinessKey("aBusinessKey")
+        .endOr();
+
+    // then
+    assertThat(query.list()).extracting("id").containsExactly(instanceWithIncident);
+    assertThat(query.count()).isEqualTo(1L);
+  }
+
+  protected String startInstanceWithIncident() {
+    BpmnModelInstance failingProcess = Bpmn.createExecutableProcess("process")
+        .startEvent().camundaAsyncBefore()
+          .userTask()
+        .endEvent()
+        .done();
+
+    deploymentIds.add(repositoryService
+        .createDeployment()
+        .addModelInstance("failing.bpmn", failingProcess)
+        .deploy()
+        .getId());
+
+    String processInstanceId = runtimeService.startProcessInstanceByKey("process").getId();
+
+    String jobId = managementService.createJobQuery().processInstanceId(processInstanceId).singleResult().getId();
+    managementService.setJobRetries(jobId, 0);
+
+    return processInstanceId;
+  }
+
+  protected String startInstanceOfOtherProcess() {
+    BpmnModelInstance otherProcess = Bpmn.createExecutableProcess("otherProcess")
+        .startEvent()
+        .userTask()
+        .endEvent()
+        .done();
+
+    deploymentIds.add(repositoryService
+        .createDeployment()
+        .addModelInstance("other.bpmn", otherProcess)
+        .deploy()
+        .getId());
+
+    return runtimeService.startProcessInstanceByKey("otherProcess").getId();
+  }
 }

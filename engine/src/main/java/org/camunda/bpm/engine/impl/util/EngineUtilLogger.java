@@ -25,6 +25,7 @@ import java.util.List;
 import org.camunda.bpm.engine.ClassLoadingException;
 import org.camunda.bpm.engine.ParseException;
 import org.camunda.bpm.engine.Problem;
+import org.camunda.bpm.engine.BadUserRequestException;
 import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.exception.NotFoundException;
 import org.camunda.bpm.engine.impl.ProcessEngineLogger;
@@ -51,7 +52,8 @@ public class EngineUtilLogger extends ProcessEngineLogger {
   }
 
   public ProcessEngineException parsingFailureException(String name, Throwable cause) {
-    return new ProcessEngineException(exceptionMessage(
+    // the resource (e.g. a deployed BPMN file with a DOCTYPE) cannot be parsed: a bad request
+    return new BadUserRequestException(exceptionMessage(
         "003",
         "Could not parse '{}'. {}", name, cause.getMessage()), cause);
   }

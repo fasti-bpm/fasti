@@ -142,6 +142,14 @@ public class ExecutionEntity extends PvmExecutionImpl implements Execution, Proc
   protected transient ExecutionEntity subProcessInstance;
 
   /**
+   * Only relevant for process instances: the number of process instances that call
+   * activities have started nested into each other within the current command to get
+   * to this process instance. It is 0 for a process instance that was not started
+   * by a call activity within the current command. This value is not persisted.
+   */
+  protected transient int callActivityNestingDepth;
+
+  /**
    * reference to a subcaseinstance, not-null if currently subcase is started
    * from this execution
    */
@@ -965,6 +973,14 @@ public class ExecutionEntity extends PvmExecutionImpl implements Execution, Proc
   public ExecutionEntity getSubProcessInstance() {
     ensureSubProcessInstanceInitialized();
     return subProcessInstance;
+  }
+
+  public int getCallActivityNestingDepth() {
+    return callActivityNestingDepth;
+  }
+
+  public void setCallActivityNestingDepth(int callActivityNestingDepth) {
+    this.callActivityNestingDepth = callActivityNestingDepth;
   }
 
   @Override

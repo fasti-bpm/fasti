@@ -24,6 +24,7 @@ import org.camunda.bpm.engine.impl.core.variable.scope.AbstractVariableScope;
 import org.camunda.bpm.engine.impl.pvm.delegate.ActivityExecution;
 import org.camunda.connect.ConnectorException;
 import org.camunda.connect.Connectors;
+import org.camunda.connect.spi.CloseableConnectorResponse;
 import org.camunda.connect.spi.Connector;
 import org.camunda.connect.spi.ConnectorRequest;
 import org.camunda.connect.spi.ConnectorResponse;
@@ -33,6 +34,8 @@ import org.camunda.connect.spi.ConnectorResponse;
  *
  */
 public class ServiceTaskConnectorActivityBehavior extends TaskActivityBehavior {
+
+  protected static final ConnectPluginLogger LOG = ConnectPluginLogger.LOGGER;
 
   /** the id of the connector */
   protected String connectorId;
@@ -59,7 +62,12 @@ public class ServiceTaskConnectorActivityBehavior extends TaskActivityBehavior {
         applyInputParameters(execution, request);
         // execute the request and obtain a response:
         ConnectorResponse response = request.execute();
-        applyOutputParameters(execution, response);
+        try {
+          applyOutputParameters(execution, response);
+        } finally {
+          // the response is not used after the output mapping
+          closeResponse(response);
+        }
         leave(execution);
         return null;
       }
@@ -86,6 +94,20 @@ public class ServiceTaskConnectorActivityBehavior extends TaskActivityBehavior {
       connectorOutputVariableScope.readFromResponse(response);
       // map variables to parent scope.
       ioMapping.executeOutputParameters(connectorOutputVariableScope);
+    }
+  }
+
+  /**
+   * Releases the resources of a {@link CloseableConnectorResponse}. A failure
+   * to do so is logged and does not fail the activity.
+   */
+  protected void closeResponse(ConnectorResponse response) {
+    if (response instanceof CloseableConnectorResponse) {
+      try {
+        ((CloseableConnectorResponse) response).close();
+      } catch (Exception e) {
+        LOG.unableToCloseConnectorResponse(connectorId, e);
+      }
     }
   }
 

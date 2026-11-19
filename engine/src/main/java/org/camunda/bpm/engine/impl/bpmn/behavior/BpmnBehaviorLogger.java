@@ -283,4 +283,19 @@ public class BpmnBehaviorLogger extends ProcessEngineLogger {
         escalationCode));
   }
 
+  public ProcessEngineException callActivityNestingDepthExceeded(String activityId, String processDefinitionId,
+      String calledProcessDefinitionId, int maxNestingDepth) {
+    return new ProcessEngineException(
+      exceptionMessage(
+        "044",
+        "Call activity '{}' of process definition '{}' cannot start an instance of process definition '{}': "
+        + "call activities have already started {} nested process instances without a wait state in between. "
+        + "Probably the processes call each other endlessly. "
+        + "The limit is defined by the process engine configuration property 'maxCallActivityNestingDepth'.",
+        activityId,
+        processDefinitionId,
+        calledProcessDefinitionId,
+        maxNestingDepth));
+  }
+
 }

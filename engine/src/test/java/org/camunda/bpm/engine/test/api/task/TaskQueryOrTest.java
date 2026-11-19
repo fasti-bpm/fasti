@@ -24,6 +24,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +32,7 @@ import java.util.Map;
 
 import org.camunda.bpm.engine.CaseService;
 import org.camunda.bpm.engine.FilterService;
+import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.RuntimeService;
@@ -293,6 +295,98 @@ public class TaskQueryOrTest {
 
     // then
     assertEquals(2, tasks.size());
+  }
+
+  @Test
+  public void shouldReturnTasksWithTaskCandidateUserOfGroupOrTaskCandidateGroup() {
+    // given a candidate user who is a member of a group
+    IdentityService identityService = processEngineRule.getIdentityService();
+    identityService.saveUser(identityService.newUser("johndoe"));
+    identityService.saveGroup(identityService.newGroup("Sales"));
+    identityService.createMembership("johndoe", "Sales");
+
+    try {
+      Task task1 = taskService.newTask();
+      taskService.saveTask(task1);
+      taskService.addCandidateUser(task1.getId(), "johndoe");
+
+      Task task2 = taskService.newTask();
+      taskService.saveTask(task2);
+      taskService.addCandidateGroup(task2.getId(), "Controlling");
+
+      Task task3 = taskService.newTask();
+      taskService.saveTask(task3);
+      taskService.addCandidateGroup(task3.getId(), "Sales");
+
+      Task task4 = taskService.newTask();
+      taskService.saveTask(task4);
+      taskService.addCandidateGroup(task4.getId(), "Accounting");
+
+      // when
+      TaskQuery query = taskService.createTaskQuery()
+        .or()
+          .taskCandidateUser("johndoe")
+          .taskCandidateGroup("Controlling")
+        .endOr();
+
+      // then
+      assertThat(query.list()).extracting("id")
+        .containsExactlyInAnyOrder(task1.getId(), task2.getId(), task3.getId());
+      assertThat(query.count()).isEqualTo(3L);
+    } finally {
+      identityService.deleteMembership("johndoe", "Sales");
+      identityService.deleteGroup("Sales");
+      identityService.deleteUser("johndoe");
+    }
+  }
+
+  @Test
+  public void shouldNotModifyCandidateGroupsOfQueryWithTaskCandidateUserOfGroup() {
+    // given a candidate user who is a member of a group
+    IdentityService identityService = processEngineRule.getIdentityService();
+    identityService.saveUser(identityService.newUser("johndoe"));
+    identityService.saveGroup(identityService.newGroup("Sales"));
+    identityService.createMembership("johndoe", "Sales");
+
+    try {
+      Task task1 = taskService.newTask();
+      taskService.saveTask(task1);
+      taskService.addCandidateGroup(task1.getId(), "Controlling");
+
+      Task task2 = taskService.newTask();
+      taskService.saveTask(task2);
+      taskService.addCandidateGroup(task2.getId(), "Sales");
+
+      List<String> candidateGroups = new ArrayList<>();
+      candidateGroups.add("Controlling");
+
+      TaskQueryImpl query = (TaskQueryImpl) taskService.createTaskQuery()
+        .or()
+          .taskCandidateUser("johndoe")
+          .taskCandidateGroupIn(candidateGroups)
+        .endOr();
+
+      // when
+      List<Task> tasks = query.list();
+
+      // then
+      assertThat(tasks).hasSize(2);
+      // the groups of the candidate user are not added to the criteria of the query
+      assertThat(candidateGroups).containsExactly("Controlling");
+      assertThat(query.getQueries().get(1).getCandidateGroupsInternal()).containsExactly("Controlling");
+
+      // and the query also works with an unmodifiable list of groups
+      assertThat(taskService.createTaskQuery()
+        .or()
+          .taskCandidateUser("johndoe")
+          .taskCandidateGroupIn(Collections.singletonList("Controlling"))
+        .endOr()
+        .count()).isEqualTo(2L);
+    } finally {
+      identityService.deleteMembership("johndoe", "Sales");
+      identityService.deleteGroup("Sales");
+      identityService.deleteUser("johndoe");
+    }
   }
 
   @Test

@@ -16,7 +16,7 @@
  */
 package org.camunda.bpm.engine.impl.dmn.result;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -37,7 +37,8 @@ public class CollectEntriesDecisionResultMapper implements DecisionResultMapper 
   @Override
   public Object mapDecisionResult(DmnDecisionResult decisionResult) {
     if (decisionResult.isEmpty()) {
-      return Collections.emptyList();
+      // a modifiable list, like the one returned for a result with entries
+      return new ArrayList<Object>();
 
     } else {
 

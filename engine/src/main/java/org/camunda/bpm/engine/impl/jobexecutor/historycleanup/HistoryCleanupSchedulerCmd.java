@@ -54,6 +54,12 @@ public class HistoryCleanupSchedulerCmd implements Command<Void> {
 
     JobEntity jobEntity = commandContext.getJobManager().findJobById(jobId);
 
+    if (jobEntity == null) {
+      // the job was removed in the meantime, e.g. because another engine
+      // reconfigured the history cleanup jobs; there is nothing to reschedule
+      return null;
+    }
+
     boolean rescheduled = false;
 
     if (isRescheduleNow) {

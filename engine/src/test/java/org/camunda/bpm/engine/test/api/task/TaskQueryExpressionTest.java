@@ -194,14 +194,10 @@ public class TaskQueryExpressionTest {
 
     assertCount(taskQuery().taskCandidateGroupInExpression("${currentUserGroups()}"), 0);
 
+    // no groups: the expression yields no group and matches no task (instead of failing)
     setCurrentUser(userWithoutGroups);
-    try {
-      taskQuery().taskCandidateGroupInExpression("${currentUserGroups()}").count();
-      fail("Exception expected");
-    }
-    catch (ProcessEngineException e) {
-      // expected because currentUserGroups will return null
-    }
+    assertCount(taskQuery().taskCandidateGroupInExpression("${currentUserGroups()}"), 0);
+    assertCount(taskQuery().taskCandidateGroupInExpression("${currentUserGroups()}").includeAssignedTasks(), 0);
   }
 
   @Test

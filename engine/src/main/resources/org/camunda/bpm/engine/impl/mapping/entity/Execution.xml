@@ -378,6 +378,11 @@
               </if>
               )
             </foreach>
+            <!-- The incident table is left-joined as soon as an 'or' query is used,
+              so having an incident must be a condition of its own. -->
+            <if test="query.withIncident">
+              ${queryType} INC.ID_ is not null
+            </if>
             <if test="query.incidentType != null">
               ${queryType} INC.INCIDENT_TYPE_ = #{query.incidentType}
             </if>

@@ -16,6 +16,7 @@
  */
 package org.camunda.bpm.engine.impl.core;
 
+import org.camunda.bpm.engine.BadUserRequestException;
 import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.impl.ProcessEngineLogger;
 import org.camunda.bpm.engine.impl.core.instance.CoreExecution;
@@ -73,7 +74,8 @@ public class CoreLogger extends ProcessEngineLogger {
   }
 
   public ProcessEngineException javaSerializationProhibitedException(String variableName) {
-    return new ProcessEngineException(exceptionMessage("007",
+    // the client asked for a forbidden format: a bad request, not a server error
+    return new BadUserRequestException(exceptionMessage("007",
         MessageFormat.format(ERROR_MSG, variableName)));
   }
 

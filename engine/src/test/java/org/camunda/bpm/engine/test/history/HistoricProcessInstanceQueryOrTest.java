@@ -975,8 +975,145 @@ public class HistoricProcessInstanceQueryOrTest {
             .endOr()
             .list();
 
-    // then
-    assertEquals(1, processInstances.size());
+    // then the instance with the incident and the instance with the variable value are returned
+    assertEquals(2, processInstances.size());
   }
 
+  @Test
+  @RequiredHistoryLevel(ProcessEngineConfiguration.HISTORY_FULL)
+  @Deployment(resources={"org/camunda/bpm/engine/test/api/oneTaskProcess.bpmn20.xml"})
+  public void shouldReturnByWithIncidentsOrProcessDefinitionKey() {
+    // given
+    String instanceWithoutIncident = runtimeService.startProcessInstanceByKey("oneTaskProcess").getId();
+    String instanceWithIncident = startInstanceWithIncident();
+    startInstanceOfOtherProcess();
+
+    // when
+    HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery()
+        .or()
+          .withIncidents()
+          .processDefinitionKey("oneTaskProcess")
+        .endOr();
+
+    // then
+    assertThat(query.list()).extracting("id")
+        .containsExactlyInAnyOrder(instanceWithoutIncident, instanceWithIncident);
+    assertThat(query.count()).isEqualTo(2L);
+  }
+
+  @Test
+  @RequiredHistoryLevel(ProcessEngineConfiguration.HISTORY_FULL)
+  @Deployment(resources={"org/camunda/bpm/engine/test/api/oneTaskProcess.bpmn20.xml"})
+  public void shouldReturnByIncidentStatusOpenOrProcessDefinitionKey() {
+    // given
+    String instanceWithoutIncident = runtimeService.startProcessInstanceByKey("oneTaskProcess").getId();
+    String instanceWithIncident = startInstanceWithIncident();
+    startInstanceOfOtherProcess();
+
+    // when
+    HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery()
+        .or()
+          .incidentStatus("open")
+          .processDefinitionKey("oneTaskProcess")
+        .endOr();
+
+    // then
+    assertThat(query.list()).extracting("id")
+        .containsExactlyInAnyOrder(instanceWithoutIncident, instanceWithIncident);
+    assertThat(query.count()).isEqualTo(2L);
+  }
+
+  @Test
+  @RequiredHistoryLevel(ProcessEngineConfiguration.HISTORY_FULL)
+  @Deployment(resources={"org/camunda/bpm/engine/test/api/oneTaskProcess.bpmn20.xml"})
+  public void shouldReturnByIncidentIdInOrProcessDefinitionKey() {
+    // given
+    String instanceWithoutIncident = runtimeService.startProcessInstanceByKey("oneTaskProcess").getId();
+    String instanceWithIncident = startInstanceWithIncident();
+    startInstanceOfOtherProcess();
+
+    String incidentId = historyService.createHistoricIncidentQuery().singleResult().getId();
+
+    // when
+    HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery()
+        .or()
+          .incidentIdIn(incidentId)
+          .processDefinitionKey("oneTaskProcess")
+        .endOr();
+
+    // then
+    assertThat(query.list()).extracting("id")
+        .containsExactlyInAnyOrder(instanceWithoutIncident, instanceWithIncident);
+    assertThat(query.count()).isEqualTo(2L);
+  }
+
+  @Test
+  @RequiredHistoryLevel(ProcessEngineConfiguration.HISTORY_FULL)
+  @Deployment(resources={"org/camunda/bpm/engine/test/api/oneTaskProcess.bpmn20.xml"})
+  public void shouldReturnByWithIncidentsAndOrQueryWithIncidentCriterion() {
+    // given
+    runtimeService.startProcessInstanceByKey("oneTaskProcess");
+    String instanceWithIncident = startInstanceWithIncident();
+    startInstanceOfOtherProcess();
+
+    // when
+    HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery()
+        .withIncidents()
+        .or()
+          .incidentType("failedJob")
+          .processDefinitionKey("oneTaskProcess")
+        .endOr();
+
+    // then
+    assertThat(query.list()).extracting("id").containsExactly(instanceWithIncident);
+    assertThat(query.count()).isEqualTo(1L);
+  }
+
+  @Test
+  @RequiredHistoryLevel(ProcessEngineConfiguration.HISTORY_FULL)
+  @Deployment(resources={"org/camunda/bpm/engine/test/api/oneTaskProcess.bpmn20.xml"})
+  public void shouldReturnByIncidentStatusOpenAndOrQueryWithIncidentCriterion() {
+    // given
+    runtimeService.startProcessInstanceByKey("oneTaskProcess");
+    String instanceWithIncident = startInstanceWithIncident();
+    startInstanceOfOtherProcess();
+
+    // when
+    HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery()
+        .incidentStatus("open")
+        .or()
+          .incidentType("failedJob")
+          .processDefinitionKey("oneTaskProcess")
+        .endOr();
+
+    // then
+    assertThat(query.list()).extracting("id").containsExactly(instanceWithIncident);
+    assertThat(query.count()).isEqualTo(1L);
+  }
+
+  protected String startInstanceWithIncident() {
+    deployFailingProcess("process");
+    String processInstanceId = runtimeService.startProcessInstanceByKey("process").getId();
+
+    String jobId = managementService.createJobQuery().processInstanceId(processInstanceId).singleResult().getId();
+    managementService.setJobRetries(jobId, 0);
+
+    return processInstanceId;
+  }
+
+  protected String startInstanceOfOtherProcess() {
+    BpmnModelInstance otherProcess = Bpmn.createExecutableProcess("otherProcess")
+        .startEvent()
+        .userTask()
+        .endEvent()
+        .done();
+
+    deploymentIds.add(repositoryService
+        .createDeployment()
+        .addModelInstance("other.bpmn", otherProcess)
+        .deploy()
+        .getId());
+
+    return runtimeService.startProcessInstanceByKey("otherProcess").getId();
+  }
 }

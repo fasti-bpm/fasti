@@ -16,8 +16,12 @@
  */
 package org.camunda.bpm.engine.impl.jobexecutor.setInitialRetries;
 
+import java.util.Date;
+
 import org.camunda.bpm.engine.ManagementService;
 import org.camunda.bpm.engine.RuntimeService;
+import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
+import org.camunda.bpm.engine.impl.util.ClockUtil;
 import org.camunda.bpm.engine.runtime.Job;
 import org.camunda.bpm.engine.test.ProcessEngineRule;
 import org.camunda.bpm.engine.test.jobexecutor.FailingDelegate;
@@ -143,4 +147,36 @@ public class JobDeclarationRetriesTest {
         .endEvent()
         .done();
   }
+
+  @Test
+  public void shouldUseDefaultNumberOfRetriesForDelayedSuspensionJob() {
+    // given
+    ProcessEngineConfigurationImpl configuration = engineRule.getProcessEngineConfiguration();
+    int defaultNumberOfRetries = configuration.getDefaultNumberOfRetries();
+    configuration.setDefaultNumberOfRetries(6);
+
+    String processDefinitionName = "shouldUseDefaultNumberOfRetriesForDelayedSuspensionJob";
+    testRule.deploy(Bpmn.createExecutableProcess(processDefinitionName)
+        .camundaHistoryTimeToLive(180)
+        .startEvent()
+        .userTask()
+        .endEvent()
+        .done());
+
+    try {
+      // when
+      engineRule.getRepositoryService().suspendProcessDefinitionByKey(processDefinitionName, false,
+          new Date(ClockUtil.getCurrentTime().getTime() + 60 * 60 * 1000L));
+
+      // then
+      Job job = managementService.createJobQuery().timers().singleResult();
+      Assert.assertEquals(6, job.getRetries());
+    } finally {
+      configuration.setDefaultNumberOfRetries(defaultNumberOfRetries);
+      for (Job job : managementService.createJobQuery().list()) {
+        managementService.deleteJob(job.getId());
+      }
+    }
+  }
+
 }

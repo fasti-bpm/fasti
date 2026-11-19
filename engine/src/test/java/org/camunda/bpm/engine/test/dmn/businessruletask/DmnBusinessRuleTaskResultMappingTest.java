@@ -272,6 +272,33 @@ public class DmnBusinessRuleTaskResultMappingTest extends PluggableProcessEngine
     assertTrue(result.isEmpty());
   }
 
+  @Deployment(resources = { COLLECT_ENTRIES_BPMN, TEST_DECISION })
+  @Test
+  public void testCollectEntriesEmptyResultCanBeModified() {
+    ProcessInstance processInstance = startTestProcess("empty result");
+
+    @SuppressWarnings("unchecked")
+    List<Object> result = (List<Object>) runtimeService.getVariable(processInstance.getId(), "result");
+    assertTrue(result.isEmpty());
+
+    // an empty result is as modifiable as a result with entries
+    result.add("foo");
+    assertEquals(1, result.size());
+  }
+
+  @Deployment(resources = { COLLECT_ENTRIES_BPMN, TEST_DECISION })
+  @Test
+  public void testCollectEntriesResultCanBeModified() {
+    ProcessInstance processInstance = startTestProcess("single entry list");
+
+    @SuppressWarnings("unchecked")
+    List<Object> result = (List<Object>) runtimeService.getVariable(processInstance.getId(), "result");
+
+    result.add("bar");
+    Collections.sort((List) result);
+    assertEquals(3, result.size());
+  }
+
   protected ProcessInstance startTestProcess(String input) {
     return runtimeService.startProcessInstanceByKey("testProcess", Collections.<String, Object>singletonMap("input", input));
   }

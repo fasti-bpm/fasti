@@ -1056,6 +1056,7 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
   protected String loggingContextProcessDefinitionId = "processDefinitionId";
   protected String loggingContextProcessDefinitionKey;// default == null => disabled by default
   protected String loggingContextProcessInstanceId = "processInstanceId";
+  protected String loggingContextRootProcessInstanceId;// default == null => disabled by default
   protected String loggingContextTenantId = "tenantId";
   protected String loggingContextEngineName = "engineName";
 
@@ -1101,6 +1102,15 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
    * Size of batch in which removal time data will be updated. {@link ProcessSetRemovalTimeJobHandler#MAX_CHUNK_SIZE} must be respected.
    */
   protected int removalTimeUpdateChunkSize = 500;
+
+  /**
+   * The maximum number of process instances that call activities can start nested
+   * into each other within one command, i.e. without a wait state in between.
+   * A process instance that would exceed the limit is not started, the command fails instead.
+   * This stops processes that call themselves (directly or via other processes) endlessly
+   * before the memory is exhausted. A value of 0 or less disables the limit.
+   */
+  protected int maxCallActivityNestingDepth = 1000;
 
   /**
    * This legacy behavior sets the retry counter to 3 in the context when running a the job for the first time.
@@ -1766,12 +1776,18 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
 
   protected static Properties databaseTypeMappings = getDefaultDatabaseTypeMappings();
   protected static final String MY_SQL_PRODUCT_NAME = "MySQL";
+  /**
+   * The product name MariaDB Connector/J reports. MariaDB has no database type of its own any
+   * more; it uses the MySQL dialect, as it does when connected through MySQL Connector/J.
+   */
+  protected static final String MARIA_DB_PRODUCT_NAME = "MariaDB";
   protected static final String POSTGRES_DB_PRODUCT_NAME = "PostgreSQL";
 
   protected static Properties getDefaultDatabaseTypeMappings() {
     Properties databaseTypeMappings = new Properties();
     databaseTypeMappings.setProperty("H2", "h2");
     databaseTypeMappings.setProperty(MY_SQL_PRODUCT_NAME, "mysql");
+    databaseTypeMappings.setProperty(MARIA_DB_PRODUCT_NAME, "mysql");
     databaseTypeMappings.setProperty("Oracle", "oracle");
     databaseTypeMappings.setProperty(POSTGRES_DB_PRODUCT_NAME, "postgres");
     databaseTypeMappings.setProperty("Microsoft SQL Server", "mssql");
@@ -5293,6 +5309,15 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
     return this;
   }
 
+  public String getLoggingContextRootProcessInstanceId() {
+    return loggingContextRootProcessInstanceId;
+  }
+
+  public ProcessEngineConfigurationImpl setLoggingContextRootProcessInstanceId(String loggingContextRootProcessInstanceId) {
+    this.loggingContextRootProcessInstanceId = loggingContextRootProcessInstanceId;
+    return this;
+  }
+
   public String getLoggingContextTenantId() {
     return loggingContextTenantId;
   }
@@ -5378,6 +5403,15 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
 
   public ProcessEngineConfigurationImpl setReevaluateTimeCycleWhenDue(boolean reevaluateTimeCycleWhenDue) {
     this.reevaluateTimeCycleWhenDue = reevaluateTimeCycleWhenDue;
+    return this;
+  }
+
+  public int getMaxCallActivityNestingDepth() {
+    return maxCallActivityNestingDepth;
+  }
+
+  public ProcessEngineConfigurationImpl setMaxCallActivityNestingDepth(int maxCallActivityNestingDepth) {
+    this.maxCallActivityNestingDepth = maxCallActivityNestingDepth;
     return this;
   }
 

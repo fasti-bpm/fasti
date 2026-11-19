@@ -1,0 +1,9 @@
+{
+  "id": "e2e_form",
+  "type": "default",
+  "schemaVersion": 16,
+  "components": [
+    { "id": "Field_comment", "key": "comment", "label": "Comment", "type": "textfield", "validate": { "required": true } },
+    { "id": "Field_approved", "key": "approved", "label": "Approved", "type": "checkbox" }
+  ]
+}

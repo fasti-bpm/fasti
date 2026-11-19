@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="defs_e2e_modeler" targetNamespace="http://fasti.dev/e2e">
+  <bpmn:process id="e2e_modeler" name="E2E modeler" isExecutable="true" camunda:historyTimeToLive="P1D">
+    <bpmn:startEvent id="start" name="Start" camunda:initiator="initiator" />
+    <bpmn:endEvent id="end" name="End"  />
+    <bpmn:sequenceFlow id="flow1" sourceRef="start" targetRef="end" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="diagram_e2e_modeler">
+    <bpmndi:BPMNPlane id="plane_e2e_modeler" bpmnElement="e2e_modeler">
+      <bpmndi:BPMNShape id="start_di" bpmnElement="start"><dc:Bounds x="150" y="102" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_di" bpmnElement="end"><dc:Bounds x="246" y="102" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow1_di" bpmnElement="flow1"><di:waypoint x="186" y="120" /><di:waypoint x="246" y="120" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

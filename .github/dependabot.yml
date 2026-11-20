@@ -13,11 +13,61 @@ updates:
     ignore:
       # The engine follows Camunda 7 CE 7.24.0; those artifacts are not upgraded by bot.
       - dependency-name: "org.camunda.*"
+      - dependency-name: "org.camunda:*"
       # Major upgrades of Java libraries (for example JUnit, Tomcat, test tooling) are done
       # by hand in a dedicated change with the full test suite; the bot proposes minor and
       # patch releases only.
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # Declared at several majors across modules: Dependabot computes one target from the
+      # oldest declaration and writes it into all of them, which downgrades the newer ones.
+      # These floors keep it from doing so (a POM cleanup to one version per artifact can
+      # drop them).
+      - dependency-name: "org.mockito:mockito-core"
+        versions: ["(,5)"]
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+        versions: ["(,3)"]
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+        versions: ["(,3)"]
+      - dependency-name: "org.apache.felix:maven-bundle-plugin"
+        versions: ["(,5)"]
+      - dependency-name: "org.codehaus.mojo:build-helper-maven-plugin"
+        versions: ["(,3)"]
+      - dependency-name: "org.apache.maven.plugins:maven-dependency-plugin"
+        versions: ["(,3.1.2)"]
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+        versions: ["(,3)"]
+      - dependency-name: "com.nimbusds:nimbus-jose-jwt"
+        versions: ["(,10)"]
+      - dependency-name: "io.rest-assured:*"
+        versions: ["(,6)"]
+      - dependency-name: "org.wildfly.core:*"
+        versions: ["(,29)"]
+      - dependency-name: "org.wildfly:*"
+        versions: ["(,27)"]
+      # Break the build or the POM structure when upgraded; upgraded by hand
+      - dependency-name: "org.jboss.arquillian:*"
+      - dependency-name: "org.jboss.arquillian.*"
+      - dependency-name: "org.wildfly.arquillian:*"
+      - dependency-name: "org.apache.httpcomponents.client5:httpclient5-parent"
+      - dependency-name: "org.apache.httpcomponents:httpcore"
+      - dependency-name: "org.jboss:jboss-vfs"
+      - dependency-name: "com.networknt:json-schema-validator"
+      - dependency-name: "org.openapitools:openapi-generator-maven-plugin"
+      - dependency-name: "org.jruby:jruby-complete"
+      - dependency-name: "com.ibm.db2:jcc"
+      # 2.7 and later drop the .gitignore placeholders that keep empty webapp folders
+      - dependency-name: "org.apache.maven.plugins:maven-resources-plugin"
+      # Stay on the current LTS or stable line (patch releases only); moving to a newer line
+      # is a dedicated change with the full test suite and database matrix.
+      - dependency-name: "com.fasterxml.jackson*"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "org.graalvm.*"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "org.mybatis:mybatis"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "io.quarkus*"
+        update-types: ["version-update:semver-minor"]
     groups:
       maven-minor-and-patch:
         applies-to: version-updates
@@ -42,6 +92,9 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # 1.14 removed ui/safe-active-element and ui/safe-blur, which the cockpit sidebar uses
+      - dependency-name: "jquery-ui"
+        versions: [">=1.14.0"]
     groups:
       classic-web-apps:
         applies-to: version-updates

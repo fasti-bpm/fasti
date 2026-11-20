@@ -17,3 +17,6 @@ jobs:
       - uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
         with:
           fail-on-severity: high
+          # AngularJS 1.8.x of the classic web apps (deprecated, off by default): every
+          # release is affected and there is no fixed open-source release.
+          allow-ghsas: GHSA-7x27-g8rg-x87w, GHSA-4w4v-5hc9-xrr2

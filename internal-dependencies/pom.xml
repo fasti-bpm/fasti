@@ -55,17 +55,17 @@
       <dependency>
         <groupId>commons-logging</groupId>
         <artifactId>commons-logging</artifactId>
-        <version>1.1.1</version>
+        <version>1.4.0</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
-        <version>3.20.0</version>
+        <version>3.22.0</version>
       </dependency>
       <dependency>
         <groupId>commons-io</groupId>
         <artifactId>commons-io</artifactId>
-        <version>2.17.0</version>
+        <version>2.22.0</version>
       </dependency>
       <dependency>
         <groupId>commons-fileupload</groupId>
@@ -76,7 +76,7 @@
       <dependency>
         <groupId>com.sun.xml.bind</groupId>
         <artifactId>jaxb-xjc</artifactId>
-        <version>2.3.6</version>
+        <version>2.3.9</version>
       </dependency>
       <dependency>
         <groupId>javax.servlet</groupId>
@@ -138,7 +138,7 @@
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-email</artifactId>
-        <version>1.5</version>
+        <version>1.6.0</version>
       </dependency>
         <!-- Web service -->
       <dependency>
@@ -181,7 +181,7 @@
       <dependency>
         <groupId>org.xmlunit</groupId>
         <artifactId>xmlunit-core</artifactId>
-        <version>2.11.0</version>
+        <version>2.14.0</version>
       </dependency>
 
       <dependency>
@@ -203,19 +203,19 @@
       <dependency>
         <groupId>org.osgi</groupId>
         <artifactId>org.osgi.core</artifactId>
-        <version>4.2.0</version>
+        <version>4.3.1</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.osgi</groupId>
         <artifactId>org.osgi.compendium</artifactId>
-        <version>4.2.0</version>
+        <version>4.3.1</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.felix</groupId>
         <artifactId>org.apache.felix.fileinstall</artifactId>
-        <version>3.0.2</version>
+        <version>3.7.4</version>
         <optional>true</optional>
       </dependency>
       <dependency>
@@ -232,13 +232,13 @@
       <dependency>
         <groupId>wsdl4j</groupId>
         <artifactId>wsdl4j</artifactId>
-        <version>1.6.2</version>
+        <version>1.6.3</version>
       </dependency>
       <!-- Camel integration -->
       <dependency>
         <groupId>org.apache.camel</groupId>
         <artifactId>camel-spring</artifactId>
-        <version>2.10.0</version>
+        <version>2.25.4</version>
       </dependency>
       <!-- Mule integration -->
       <dependency>
@@ -357,7 +357,7 @@
       <dependency>
         <groupId>org.skyscreamer</groupId>
         <artifactId>jsonassert</artifactId>
-        <version>1.5.0</version>
+        <version>1.5.3</version>
       </dependency>
 
       <!-- TestContainers dependencies -->

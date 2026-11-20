@@ -17,7 +17,7 @@
   </description>
 
   <properties>
-    <version.slf4j>1.7.26</version.slf4j>
+    <version.slf4j>1.7.36</version.slf4j>
   </properties>
 
   <dependencyManagement>

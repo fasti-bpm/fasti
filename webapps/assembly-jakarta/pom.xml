@@ -22,7 +22,7 @@
     <jakarta.webapp>${project.build.directory}/generated-resources/jakarta-webapp</jakarta.webapp>
     <jakarta.runtime>${project.build.directory}/generated-resources/jakarta-runtime</jakarta.runtime>
 
-    <version.resteasy>6.2.8.Final</version.resteasy>
+    <version.resteasy>6.2.20.Final</version.resteasy>
     <version.jetty>11.0.26</version.jetty>
     <version.jersey2>3.1.1</version.jersey2>
 
@@ -422,7 +422,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>license-maven-plugin</artifactId>
-        <version>1.14</version>
+        <version>1.20</version>
         <configuration>
           <excludedScopes>test</excludedScopes>
         </configuration>

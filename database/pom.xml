@@ -22,13 +22,13 @@
     <!-- database driver versions -->
     <version.h2>2.5.252</version.h2>
     <version.h2-v1>1.4.200</version.h2-v1><!-- used for instance migration qa -->
-    <version.oracle>23.5.0.24.07</version.oracle>
+    <version.oracle>23.26.4.0.0</version.oracle>
     <version.mysql>9.7.0</version.mysql>
-    <version.sqlserver>13.4.0.jre11</version.sqlserver>
+    <version.sqlserver>13.6.2.jre11</version.sqlserver>
     <version.db2-11.5>11.5.0.0</version.db2-11.5>
     <version.db2>${version.db2-11.5}</version.db2>
     <version.postgresql>42.7.14</version.postgresql>
-    <version.liquibase>4.8.0</version.liquibase>
+    <version.liquibase>4.33.0</version.liquibase>
 
     <!-- version of the database schema that this code base creates and expects. It names the SQL
       create and drop scripts and selects the upgrade and patch scripts. It is independent of the

@@ -47,7 +47,7 @@ runs:
               <id>google-maven-central</id>
               <name>Google mirror of Maven Central</name>
               <url>${mirror}</url>
-              <mirrorOf>central</mirrorOf>
+              <mirrorOf>central,maven-central</mirrorOf>
             </mirror>
           </mirrors>
         </settings>

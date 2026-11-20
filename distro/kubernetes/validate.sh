@@ -65,6 +65,21 @@ refuse "unknown value (schema)" "${db[@]}" --set replicas=2
 refuse "malformed digest (schema)" "${db[@]}" --set image.digest=latest
 refuse "neither webapps nor rest" "${db[@]}" --set components.webapps=false --set components.rest=false
 
+# rendered output of ci/edge-values.yaml
+expect() {
+  local what=$1 pattern=$2
+  if grep -Eq -- "$pattern" "$out/rendered/edge.yaml"; then echo "ok: $what"; else echo "FAIL: $what"; fail=1; fi
+}
+expect_not() {
+  local what=$1 pattern=$2
+  if grep -Eq -- "$pattern" "$out/rendered/edge.yaml"; then echo "FAIL: $what"; fail=1; else echo "ok: $what"; fi
+}
+expect "Recreate strategy" '^    type: Recreate$'
+expect_not "no rollingUpdate with Recreate" 'rollingUpdate:'
+expect "PDB maxUnavailable 0 kept" '^  maxUnavailable: 0$'
+expect "pool minIdle 0 kept" 'name: FASTI_DB_CONN_MINIDLE'
+expect "helm test pod admitted by the NetworkPolicy" '^        - podSelector:$'
+
 manifests=()
 for file in "$here"/manifests/*.yaml; do
   case "$(basename "$file")" in kustomization.yaml) continue ;; esac

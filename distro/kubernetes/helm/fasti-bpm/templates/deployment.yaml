@@ -20,7 +20,11 @@ spec:
     matchLabels:
       {{- include "fasti.selectorLabels" . | nindent 6 }}
   strategy:
-    {{- toYaml .Values.updateStrategy | nindent 4 }}
+    type: {{ .Values.updateStrategy.type }}
+    {{- if and (eq .Values.updateStrategy.type "RollingUpdate") .Values.updateStrategy.rollingUpdate }}
+    rollingUpdate:
+      {{- toYaml .Values.updateStrategy.rollingUpdate | nindent 6 }}
+    {{- end }}
   template:
     metadata:
       labels:
@@ -105,13 +109,13 @@ spec:
             - name: FASTI_DB_TABLE_PREFIX
               value: {{ . | quote }}
             {{- end }}
-            {{- with .Values.database.pool.maxActive }}
+            {{- if ne (toString .Values.database.pool.maxActive) "" }}
             - name: FASTI_DB_CONN_MAXACTIVE
-              value: {{ . | quote }}
+              value: {{ .Values.database.pool.maxActive | quote }}
             {{- end }}
-            {{- with .Values.database.pool.minIdle }}
+            {{- if ne (toString .Values.database.pool.minIdle) "" }}
             - name: FASTI_DB_CONN_MINIDLE
-              value: {{ . | quote }}
+              value: {{ .Values.database.pool.minIdle | quote }}
             {{- end }}
             {{- with .Values.database.waitFor }}
             - name: FASTI_WAIT_FOR

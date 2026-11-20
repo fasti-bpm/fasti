@@ -2,7 +2,8 @@
 SPDX-License-Identifier: Apache-2.0
 Copyright Fasti BPM contributors
 */}}
-{{/* helm test: readiness through the Service, with the image of the release (busybox wget) */}}
+{{/* helm test: readiness through the Service, with the image of the release (busybox wget);
+the NetworkPolicy of the chart admits this pod by its labels */}}
 apiVersion: v1
 kind: Pod
 metadata:
@@ -35,7 +36,16 @@ spec:
     - name: wget
       image: {{ include "fasti.image" . | quote }}
       imagePullPolicy: {{ .Values.image.pullPolicy }}
-      command: ["wget", "-q", "-O", "-", "http://{{ include "fasti.fullname" . }}:{{ .Values.service.port }}/actuator/health/readiness"]
+      # a few attempts: network policy controllers may admit a new pod only after a moment
+      command:
+        - sh
+        - -c
+        - |
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            wget -q -T 5 -O - "http://{{ include "fasti.fullname" . }}:{{ .Values.service.port }}/actuator/health/readiness" && exit 0
+            sleep 3
+          done
+          exit 1
       resources:
         requests:
           cpu: 10m

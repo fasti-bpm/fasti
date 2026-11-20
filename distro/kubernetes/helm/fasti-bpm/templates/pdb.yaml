@@ -13,8 +13,11 @@ metadata:
 spec:
   {{- if ne (toString .Values.pdb.minAvailable) "" }}
   minAvailable: {{ .Values.pdb.minAvailable }}
+  {{- else if ne (toString .Values.pdb.maxUnavailable) "" }}
+  {{- /* 0 is kept: no voluntary disruption at all */}}
+  maxUnavailable: {{ .Values.pdb.maxUnavailable }}
   {{- else }}
-  maxUnavailable: {{ default 1 .Values.pdb.maxUnavailable }}
+  maxUnavailable: 1
   {{- end }}
   selector:
     matchLabels:

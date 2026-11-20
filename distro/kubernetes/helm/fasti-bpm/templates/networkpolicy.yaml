@@ -30,6 +30,11 @@ spec:
       {{- with .Values.networkPolicy.ingressFrom }}
       from:
         {{- toYaml . | nindent 8 }}
+        # the pod of "helm test"
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "fasti.name" $ }}-test
+              app.kubernetes.io/instance: {{ $.Release.Name }}
       {{- end }}
   {{- if .Values.networkPolicy.egress }}
   egress:

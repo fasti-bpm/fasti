@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Fasti BPM contributors
+
+# values whose zero or non-default forms are easy to drop by mistake (CI: validate.sh checks the
+# rendered output)
+database:
+  url: jdbc:sqlserver://mssql:1433;databaseName=fasti
+  driver: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  existingSecret: fasti-db
+  pool:
+    maxActive: 20
+    minIdle: 0
+updateStrategy:
+  type: Recreate
+pdb:
+  maxUnavailable: 0
+networkPolicy:
+  enabled: true
+  ingressFrom:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx

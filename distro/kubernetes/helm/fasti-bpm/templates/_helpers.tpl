@@ -94,7 +94,7 @@ app.kubernetes.io/part-of: fasti-bpm
 {{- fail "oidc.rest.bearerEnabled needs oidc.rest.audiences" -}}
 {{- end -}}
 {{- end -}}
-{{- if and .Values.pdb.enabled .Values.pdb.maxUnavailable .Values.pdb.minAvailable -}}
+{{- if and .Values.pdb.enabled (ne (toString .Values.pdb.maxUnavailable) "") (ne (toString .Values.pdb.minAvailable) "") -}}
 {{- fail "pdb: set maxUnavailable or minAvailable, not both" -}}
 {{- end -}}
 {{- if and .Values.metrics.serviceMonitor.enabled (ne .Values.metrics.serviceMonitor.port "http") (not .Values.metrics.extraPort.enabled) -}}

@@ -126,11 +126,11 @@ public final class AbsenceCommands {
       if (until == null) {
         throw new BadUserRequestException("The end of the absence (until) is required.");
       }
-      if (!until.after(start)) {
-        throw new BadUserRequestException("The end of the absence must be after its start.");
-      }
       if (!until.after(now)) {
         throw new BadUserRequestException("The end of the absence must be in the future.");
+      }
+      if (!until.after(start)) {
+        throw new BadUserRequestException("The end of the absence must be after its start.");
       }
       if (substituteId == null || substituteId.isEmpty()) {
         throw new BadUserRequestException("A substitute is required.");

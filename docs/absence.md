@@ -24,8 +24,10 @@ user go to the substitute. Asked for on the forum in
 - **Every substitution is recorded**: the task gets a comment such as
   "Assigned to bob as substitute for alice, who is absent." and the local task variables
   `fasti_absentAssignee` (the absent user) and `fasti_absenceSubstitute` (who got the task).
-  The variables can be queried (`taskVariables=fasti_absentAssignee_eq_alice`) and stay in the
-  history. They are removed once the task moves on from the substitute, for example back to
+  The variables can be queried (`POST /task` with
+  `{"taskVariables": [{"name": "fasti_absentAssignee", "operator": "eq", "value": "alice"}]}`;
+  the `GET` syntax `name_operator_value` cannot hold the underscores of the names) and stay in
+  the history (`includeDeleted`). They are removed once the task moves on from the substitute, for example back to
   the absent user after their return.
 - **Tasks the user had before the absence** are not moved automatically: the user (or an
   administrator) hands them over explicitly with **Hand over my open tasks now**. Suspended

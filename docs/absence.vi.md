@@ -24,8 +24,10 @@ cho hoặc giao cho người đó sẽ chuyển sang người thay thế. Nhu c�
 - **Mỗi lần thay thế đều được ghi lại**: công việc có một bình luận như
   "Assigned to bob as substitute for alice, who is absent." và các biến cục bộ
   `fasti_absentAssignee` (người vắng mặt) và `fasti_absenceSubstitute` (người nhận việc). Có thể
-  truy vấn các biến này (`taskVariables=fasti_absentAssignee_eq_alice`) và chúng còn lại trong
-  lịch sử. Chúng bị xóa khi công việc rời khỏi người thay thế, ví dụ quay về người vắng mặt sau
+  truy vấn các biến này (`POST /task` với
+  `{"taskVariables": [{"name": "fasti_absentAssignee", "operator": "eq", "value": "alice"}]}`;
+  cú pháp `GET` dạng `name_operator_value` không chứa được dấu gạch dưới trong tên biến) và chúng
+  còn lại trong lịch sử (`includeDeleted`). Chúng bị xóa khi công việc rời khỏi người thay thế, ví dụ quay về người vắng mặt sau
   khi họ trở lại.
 - **Công việc người dùng đã có trước khi vắng mặt** không tự động chuyển: người dùng (hoặc quản
   trị viên) bàn giao một cách tường minh bằng **Bàn giao ngay công việc đang mở của tôi**. Công

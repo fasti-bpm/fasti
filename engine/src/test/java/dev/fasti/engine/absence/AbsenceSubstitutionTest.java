@@ -401,7 +401,7 @@ public class AbsenceSubstitutionTest {
         .isInstanceOf(BadUserRequestException.class).hasMessageContaining("does not exist");
     assertThatThrownBy(() -> absences.setAbsence("nobody", from, until, "bob", null))
         .isInstanceOf(BadUserRequestException.class).hasMessageContaining("does not exist");
-    assertThatThrownBy(() -> absences.setAbsence("alice", until, from, "bob", null))
+    assertThatThrownBy(() -> absences.setAbsence("alice", at(Duration.ofDays(2)), until, "bob", null))
         .isInstanceOf(BadUserRequestException.class).hasMessageContaining("after its start");
     assertThatThrownBy(() -> absences.setAbsence("alice", at(Duration.ofDays(-3)), at(Duration.ofDays(-1)), "bob", null))
         .isInstanceOf(BadUserRequestException.class).hasMessageContaining("in the future");

@@ -58,7 +58,7 @@ test.describe('Absence', () => {
       await section.getByRole('combobox', { name: /^Substitute/ }).fill(substitute);
       await section.getByLabel('Note for your substitute').fill('Handover notes in the team wiki');
       await section.getByRole('button', { name: 'Save absence' }).click();
-      await expect(app.getByText('Absence saved')).toBeVisible();
+      await expect(app.getByText('Absence saved', { exact: true })).toBeVisible();
       await expect(section.getByText(/Tasks go to Sam Substitute/)).toBeVisible();
       const stored = await api.get<{ status: string; substituteId: string; note: string }>(`user/${user}/absence`);
       expect(stored).toMatchObject({ status: 'active', substituteId: substitute, note: 'Handover notes in the team wiki' });
@@ -76,7 +76,7 @@ test.describe('Absence', () => {
       await expect(app.getByRole('region', { name: 'Absence' })).toBeVisible();
 
       await app.getByRole('region', { name: 'Absence' }).getByRole('button', { name: 'End absence' }).click();
-      await expect(app.getByText('Absence ended')).toBeVisible();
+      await expect(app.getByText('Absence ended', { exact: true })).toBeVisible();
       await expect.poll(async () => (await api.get<{ status: string }>(`user/${user}/absence`)).status).toBe('none');
     } finally {
       await api.delete(`user/${user}/absence`);
@@ -101,14 +101,14 @@ test.describe('Absence', () => {
       await section.getByLabel(/^Until/).fill(inputValue(new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)));
       await section.getByRole('combobox', { name: /^Substitute/ }).fill(user);
       await section.getByRole('button', { name: 'Save absence' }).click();
-      await expect(app.getByText('Absence saved')).toBeVisible();
+      await expect(app.getByText('Absence saved', { exact: true })).toBeVisible();
 
       // the task from before is handed over on request
       await section.getByRole('button', { name: 'Hand over the open task now' }).click();
       const confirm = dialog(app);
       await expect(confirm).toContainText('Anna Absent');
       await confirm.getByRole('button', { name: 'Hand over' }).click();
-      await expect(app.getByText(/1 task handed over to/)).toBeVisible();
+      await expect(app.getByText(/^1 task handed over to/)).toBeVisible();
       await expect.poll(async () => (await onlyTask(api, before.id)).assignee).toBe(user);
 
       // a new task for the absent user goes to the substitute right away

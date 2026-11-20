@@ -65,6 +65,8 @@ public class LdapConfiguration {
 
   protected boolean sortControlSupported = false;
   protected boolean useSsl = false;
+  /** accept any certificate of the LDAP server; applies to the LDAP connections only */
+  protected boolean acceptUntrustedCertificates = false;
   protected boolean usePosixGroups = false;
   protected boolean allowAnonymousLogin = false;
 
@@ -250,6 +252,18 @@ public class LdapConfiguration {
 
   public void setUseSsl(boolean useSsl) {
     this.useSsl = useSsl;
+  }
+
+  /**
+   * @return <code>true</code> if the connections to the LDAP server accept any server
+   * certificate; other TLS connections of the application are not affected
+   */
+  public boolean isAcceptUntrustedCertificates() {
+    return acceptUntrustedCertificates;
+  }
+
+  public void setAcceptUntrustedCertificates(boolean acceptUntrustedCertificates) {
+    this.acceptUntrustedCertificates = acceptUntrustedCertificates;
   }
 
   public boolean isUsePosixGroups() {

@@ -16,42 +16,121 @@
  */
 package org.camunda.bpm.identity.impl.ldap.util;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
+import javax.net.SocketFactory;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+/**
+ * Support for the option <code>acceptUntrustedCertificates</code> of the LDAP plugin.
+ *
+ * <p>Untrusted certificates are accepted for the connections to the LDAP server only: the LDAP
+ * client hands {@link UntrustedCertificatesSocketFactory} to JNDI with the environment property
+ * {@link #SOCKET_FACTORY_PROPERTY}. The default {@link SSLContext} of the JVM, which is used by
+ * every other TLS connection of the application, stays untouched.</p>
+ */
+public final class CertificateHelper {
 
-public class CertificateHelper {
-  
-  public static void acceptUntrusted() {
-    try {
-      SSLContext sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(new KeyManager[0], new TrustManager[] { new DefaultTrustManager() }, new SecureRandom());
-      SSLContext.setDefault(sslContext);
-    } catch (Exception ex) {
-      throw new RuntimeException("Could not change SSL TrustManager to accept arbitrary certificates", ex);
+  /** the JNDI environment property that names the socket factory of LDAP connections */
+  public static final String SOCKET_FACTORY_PROPERTY = "java.naming.ldap.factory.socket";
+
+  private CertificateHelper() {
+  }
+
+  /**
+   * Socket factory for LDAP connections that accepts any server certificate. JNDI instantiates it
+   * by name and calls {@link #getDefault()}.
+   */
+  public static class UntrustedCertificatesSocketFactory extends SSLSocketFactory {
+
+    private static final UntrustedCertificatesSocketFactory INSTANCE = new UntrustedCertificatesSocketFactory();
+
+    private final SSLSocketFactory delegate;
+
+    public UntrustedCertificatesSocketFactory() {
+      try {
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(new KeyManager[0], new TrustManager[] { new AcceptAllTrustManager() }, new SecureRandom());
+        delegate = sslContext.getSocketFactory();
+      } catch (GeneralSecurityException ex) {
+        throw new IllegalStateException("Could not create an SSL context that accepts untrusted certificates", ex);
+      }
+    }
+
+    /** called by JNDI */
+    public static SocketFactory getDefault() {
+      return INSTANCE;
+    }
+
+    @Override
+    public String[] getDefaultCipherSuites() {
+      return delegate.getDefaultCipherSuites();
+    }
+
+    @Override
+    public String[] getSupportedCipherSuites() {
+      return delegate.getSupportedCipherSuites();
+    }
+
+    @Override
+    public Socket createSocket() throws IOException {
+      return delegate.createSocket();
+    }
+
+    @Override
+    public Socket createSocket(Socket socket, String host, int port, boolean autoClose) throws IOException {
+      return delegate.createSocket(socket, host, port, autoClose);
+    }
+
+    @Override
+    public Socket createSocket(String host, int port) throws IOException {
+      return delegate.createSocket(host, port);
+    }
+
+    @Override
+    public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException {
+      return delegate.createSocket(host, port, localHost, localPort);
+    }
+
+    @Override
+    public Socket createSocket(InetAddress host, int port) throws IOException {
+      return delegate.createSocket(host, port);
+    }
+
+    @Override
+    public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort) throws IOException {
+      return delegate.createSocket(address, port, localAddress, localPort);
     }
   }
 
-  private static class DefaultTrustManager implements X509TrustManager {
+  /**
+   * Accepts every certificate chain. A plain {@link X509TrustManager} (not an extended one), so
+   * that the host name of the server is still verified where JNDI asks for it, as before.
+   */
+  private static class AcceptAllTrustManager implements X509TrustManager {
 
     @Override
-    public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+    public void checkClientTrusted(X509Certificate[] chain, String authType) {
+      // accepted by configuration
     }
 
     @Override
-    public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+    public void checkServerTrusted(X509Certificate[] chain, String authType) {
+      // accepted by configuration
     }
 
     @Override
     public X509Certificate[] getAcceptedIssuers() {
-      return null;
+      return new X509Certificate[0];
     }
-
   }
 }

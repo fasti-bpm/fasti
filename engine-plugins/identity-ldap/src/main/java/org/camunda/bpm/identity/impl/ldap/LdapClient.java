@@ -17,6 +17,8 @@
 package org.camunda.bpm.identity.impl.ldap;
 
 import org.camunda.bpm.engine.impl.identity.IdentityProviderException;
+import org.camunda.bpm.identity.impl.ldap.util.CertificateHelper;
+import org.camunda.bpm.identity.impl.ldap.util.CertificateHelper.UntrustedCertificatesSocketFactory;
 import org.camunda.bpm.identity.impl.ldap.util.LdapPluginLogger;
 
 import javax.naming.AuthenticationException;
@@ -57,6 +59,35 @@ public class LdapClient {
   }
 
   public LdapContext openContext(String dn, String password) {
+    Hashtable<String, String> env = createEnvironment(dn, password);
+
+    // JNDI loads the socket factory with the context class loader, which may not see this plugin
+    boolean ownSocketFactory = UntrustedCertificatesSocketFactory.class.getName()
+        .equals(env.get(CertificateHelper.SOCKET_FACTORY_PROPERTY));
+    Thread thread = Thread.currentThread();
+    ClassLoader contextClassLoader = thread.getContextClassLoader();
+    if (ownSocketFactory) {
+      thread.setContextClassLoader(LdapClient.class.getClassLoader());
+    }
+
+    try {
+      return new InitialLdapContext(env, null);
+
+    } catch (AuthenticationException e) {
+      throw new LdapAuthenticationException("Could not authenticate with LDAP server", e);
+
+    } catch (NamingException e) {
+      throw new IdentityProviderException("Could not connect to LDAP server", e);
+
+    } finally {
+      if (ownSocketFactory) {
+        thread.setContextClassLoader(contextClassLoader);
+      }
+    }
+  }
+
+  /** The JNDI environment of a connection to the LDAP server. */
+  protected Hashtable<String, String> createEnvironment(String dn, String password) {
     Hashtable<String, String> env = new Hashtable<>();
     env.put(Context.INITIAL_CONTEXT_FACTORY, ldapConfiguration.getInitialContextFactory());
     env.put(Context.SECURITY_AUTHENTICATION, ldapConfiguration.getSecurityAuthentication());
@@ -79,16 +110,29 @@ public class LdapClient {
       env.putAll(contextProperties);
     }
 
-    try {
-      return new InitialLdapContext(env, null);
-
-    } catch (AuthenticationException e) {
-      throw new LdapAuthenticationException("Could not authenticate with LDAP server", e);
-
-    } catch (NamingException e) {
-      throw new IdentityProviderException("Could not connect to LDAP server", e);
-
+    // untrusted certificates are accepted for TLS connections to the LDAP server only, never for
+    // the whole JVM; a plain connection must not get an SSL socket
+    if (ldapConfiguration.isAcceptUntrustedCertificates() && usesSsl(env)
+        && !env.containsKey(CertificateHelper.SOCKET_FACTORY_PROPERTY)) {
+      env.put(CertificateHelper.SOCKET_FACTORY_PROPERTY, UntrustedCertificatesSocketFactory.class.getName());
     }
+    return env;
+  }
+
+  /** Whether JNDI connects with TLS: by the security protocol or by an <code>ldaps</code> URL. */
+  protected static boolean usesSsl(Hashtable<String, String> env) {
+    if ("ssl".equalsIgnoreCase(env.get(Context.SECURITY_PROTOCOL))) {
+      return true;
+    }
+    String urls = env.get(Context.PROVIDER_URL);
+    if (urls != null) {
+      for (String url : urls.trim().split("\\s+")) {
+        if (url.regionMatches(true, 0, "ldaps:", 0, "ldaps:".length())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   protected LdapContext openContext() {

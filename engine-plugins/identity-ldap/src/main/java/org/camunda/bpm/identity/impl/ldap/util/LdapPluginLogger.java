@@ -38,7 +38,7 @@ public class LdapPluginLogger extends BaseLogger {
   }
 
   public void acceptingUntrustedCertificates() {
-    logWarn("002", "Enabling accept of untrusted certificates. Use at own risk.");
+    logWarn("002", "Enabling accept of untrusted certificates for the connections to the LDAP server. Use at own risk.");
   }
 
   public void exceptionWhenClosingLdapContext(Exception e) {

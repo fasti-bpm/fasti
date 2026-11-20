@@ -24,7 +24,6 @@ import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.cfg.ProcessEnginePlugin;
 import org.camunda.bpm.identity.impl.ldap.LdapConfiguration;
 import org.camunda.bpm.identity.impl.ldap.LdapIdentityProviderFactory;
-import org.camunda.bpm.identity.impl.ldap.util.CertificateHelper;
 import org.camunda.bpm.identity.impl.ldap.util.LdapPluginLogger;
 
 /**
@@ -39,14 +38,12 @@ import org.camunda.bpm.identity.impl.ldap.util.LdapPluginLogger;
  */
 public class LdapIdentityProviderPlugin extends LdapConfiguration implements ProcessEnginePlugin {
 
-  protected boolean acceptUntrustedCertificates = false;
-
   public void preInit(ProcessEngineConfigurationImpl processEngineConfiguration) {
 
     LdapPluginLogger.INSTANCE.pluginActivated(getClass().getSimpleName(), processEngineConfiguration.getProcessEngineName());
 
     if(acceptUntrustedCertificates) {
-      CertificateHelper.acceptUntrusted();
+      // the LDAP client accepts untrusted certificates for its own connections only
       LdapPluginLogger.INSTANCE.acceptingUntrustedCertificates();
     }
 
@@ -62,14 +59,6 @@ public class LdapIdentityProviderPlugin extends LdapConfiguration implements Pro
 
   public void postProcessEngineBuild(ProcessEngine processEngine) {
     // nothing to do
-  }
-
-  public void setAcceptUntrustedCertificates(boolean acceptUntrustedCertificates) {
-    this.acceptUntrustedCertificates = acceptUntrustedCertificates;
-  }
-
-  public boolean isAcceptUntrustedCertificates() {
-    return acceptUntrustedCertificates;
   }
 
 }

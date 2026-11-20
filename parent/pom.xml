@@ -32,7 +32,7 @@
     <version.resteasy>3.15.6.Final</version.resteasy>
     <version.jersey2>2.48</version.jersey2>
     <!-- use minimum version of resteasy and jersey -->
-    <version.jaxrs.api>2.0.1.Final</version.jaxrs.api>
+    <version.jaxrs.api>2.0.2.Final</version.jaxrs.api>
     <version.groovy>4.0.33</version.groovy>
     <version.graal.js>25.0.5.0.3</version.graal.js>
     <!-- json-smart and accessors-smart are runtime dependencies of json-path -->
@@ -53,13 +53,13 @@
     <version.cronutils>9.2.1</version.cronutils>
 
     <version.slf4j>2.0.20</version.slf4j>
-    <version.logback>1.6.6</version.logback>
+    <version.logback>1.6.7</version.logback>
     <version.junit>4.13.2</version.junit>
     <version.assertj>3.27.7</version.assertj>
     <version.mockito>5.24.0</version.mockito>
     <version.wiremock>3.13.2</version.wiremock>
     <version.testcontainers>1.21.4</version.testcontainers>
-    <version.unirest-java>2.3.10</version.unirest-java>
+    <version.unirest-java>2.4.03</version.unirest-java>
 
     <version.commonj>1.1.0</version.commonj>
     <version.bouncycastle>1.87</version.bouncycastle>
@@ -76,14 +76,14 @@
 
     <version.arquillian>1.1.10.Final</version.arquillian>
     <version.shrinkwrap.resolvers>2.2.7</version.shrinkwrap.resolvers>
-    <version.selenium>4.10.0</version.selenium>
+    <version.selenium>4.52.0</version.selenium>
     <version.freemarker>2.3.35</version.freemarker>
 
-    <version.jboss-javaee-spec>3.0.2.Final</version.jboss-javaee-spec>
+    <version.jboss-javaee-spec>3.0.3.Final</version.jboss-javaee-spec>
     <version.jakarta-ee-spec>10.0.0</version.jakarta-ee-spec>
     <version.jakarta-ee11-spec>11.0.0</version.jakarta-ee11-spec>
 
-    <version.eirslett.frontend.maven.plugin>1.12.1</version.eirslett.frontend.maven.plugin>
+    <version.eirslett.frontend.maven.plugin>1.15.4</version.eirslett.frontend.maven.plugin>
     <version.nodejs>20.14.0</version.nodejs>
     <version.npm>10.7.0</version.npm>
 
@@ -253,7 +253,7 @@
         <plugin>
           <groupId>org.codehaus.cargo</groupId>
           <artifactId>cargo-maven3-plugin</artifactId>
-          <version>1.10.20</version>
+          <version>1.10.30</version>
         </plugin>
         <plugin>
           <groupId>net.kennychua</groupId>
@@ -271,17 +271,17 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>clirr-maven-plugin</artifactId>
-          <version>2.8</version>
+          <version>2.9</version>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
-          <version>1.4.0</version>
+          <version>1.6.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-war-plugin</artifactId>
-          <version>3.3.2</version>
+          <version>3.5.1</version>
         </plugin>
 
         <plugin>

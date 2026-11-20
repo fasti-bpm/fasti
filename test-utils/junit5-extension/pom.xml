@@ -17,7 +17,7 @@
   </parent>
 
   <properties>
-    <version.junit5>5.9.3</version.junit5>
+    <version.junit5>5.14.4</version.junit5>
   </properties>
   
   <dependencyManagement>

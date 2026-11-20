@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Fasti BPM contributors
+
+# Sets up the JDK and Maven for a job that builds with ./mvnw. Many jobs run at the same
+# time (Java 17 and 21, end-to-end tests, CodeQL, times the open pull requests), and Maven
+# Central answers bursts of downloads with HTTP 429, so:
+# - the Maven distribution of the wrapper (~/.m2/wrapper) is cached, and downloaded with
+#   retries when the cache has none (the wrapper itself does not retry);
+# - the local repository (~/.m2/repository) is restored from the cache, falling back to the
+#   newest entry of an older POM state, so that a changed POM downloads only what changed.
+#   This action only restores it: the job saves it with actions/cache/save and the outputs
+#   below (build.yml does that on main, so pull requests reuse the entries of main).
+# HTTP retries of Maven itself (including on 429) are set in .mvn/maven.config.
+name: Set up Java and Maven
+description: JDK, cached Maven distribution and local repository, and a retried wrapper download
+inputs:
+  java-version:
+    description: The JDK version (Temurin)
+    required: true
+outputs:
+  repository-cache-key:
+    description: The cache key for the local repository of the current POM state
+    value: ${{ steps.key.outputs.key }}
+  repository-cache-hit:
+    description: Whether the local repository was restored from an exact match of the key
+    value: ${{ steps.repository.outputs.cache-hit }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+      with:
+        distribution: temurin
+        java-version: ${{ inputs.java-version }}
+    - name: Cache the Maven distribution
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.m2/wrapper
+        key: maven-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties') }}
+    # computed once here: after the build, target directories contain copies of the POMs
+    - id: key
+      shell: bash
+      run: echo "key=maven-repository-${RUNNER_OS}-${{ hashFiles('**/pom.xml') }}" >> "$GITHUB_OUTPUT"
+    - id: repository
+      name: Restore the local Maven repository
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.m2/repository
+        key: ${{ steps.key.outputs.key }}
+        restore-keys: maven-repository-${{ runner.os }}-
+    - name: Download the Maven distribution
+      shell: bash
+      run: |
+        for attempt in 1 2 3 4 5; do
+          if ./mvnw -B -ntp --version; then
+            exit 0
+          fi
+          echo "::warning::Downloading the Maven distribution failed (attempt ${attempt} of 5)"
+          sleep $((attempt * 20))
+        done
+        exit 1

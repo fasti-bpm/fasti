@@ -47,7 +47,8 @@ updates:
         applies-to: version-updates
         update-types: ["minor", "patch"]
   - package-ecosystem: github-actions
-    directory: /
+    # the workflows and the local composite actions they use
+    directories: ["/", "/.github/actions/*"]
     schedule:
       interval: weekly
     open-pull-requests-limit: 2

@@ -54,11 +54,9 @@ jobs:
           # the licence header check (part of the web UI build) compares with the 7.24.0 tag
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+      - uses: ./.github/actions/setup-maven
         with:
-          distribution: temurin
           java-version: '21'
-          cache: maven
       - name: Build the distribution
         run: ./mvnw -B -ntp -pl distro/docker -am package -DskipTests
       - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0

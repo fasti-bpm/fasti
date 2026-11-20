@@ -295,6 +295,39 @@ public class TaskFourEyesRestServiceTest extends AbstractRestServiceTest {
   }
 
   @Test
+  public void shouldAnswer403WhenAListenerCompletesTheGuardedTask() {
+    // approve is completed right away by a listener, as alice, who just drafted
+    BpmnModelInstance model = Bpmn.createExecutableProcess("autoApprove").camundaHistoryTimeToLive(180)
+        .startEvent()
+        .userTask("draft").camundaAssignee("alice")
+        .userTask("approve").camundaAssignee("alice")
+          .camundaTaskListenerClass("create", AutoCompleteListener.class)
+        .endEvent().done();
+    UserTask approve = model.getModelElementById("approve");
+    CamundaProperty property = model.newInstance(CamundaProperty.class);
+    property.setCamundaName(FourEyesService.PROPERTY_NAME);
+    property.setCamundaValue("draft");
+    approve.getExtensionElements().addExtensionElement(CamundaProperties.class).getCamundaProperties().add(property);
+    engine.getRepositoryService().createDeployment().addModelInstance("autoApprove.bpmn", model).deploy();
+    String pi = engine.getRuntimeService().startProcessInstanceByKey("autoApprove").getId();
+    Task draft = engine.getTaskService().createTaskQuery().processInstanceId(pi).singleResult();
+    as("alice");
+
+    given().pathParam("id", draft.getId()).contentType(ContentType.JSON).body(EMPTY_JSON_OBJECT)
+    .then().expect()
+        .statusCode(Status.FORBIDDEN.getStatusCode())
+        .body("type", equalTo("FourEyesViolationException"))
+    .when().post(TASK_URL + "/complete");
+  }
+
+  public static class AutoCompleteListener implements org.camunda.bpm.engine.delegate.TaskListener {
+    @Override
+    public void notify(org.camunda.bpm.engine.delegate.DelegateTask delegateTask) {
+      delegateTask.complete();
+    }
+  }
+
+  @Test
   public void shouldAnswer404ForAMissingTask() {
     as("alice");
     given().pathParam("id", "missing")

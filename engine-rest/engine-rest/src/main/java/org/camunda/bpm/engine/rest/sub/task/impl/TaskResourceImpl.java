@@ -33,6 +33,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
 
 import dev.fasti.engine.foureyes.FourEyes;
+import dev.fasti.engine.foureyes.FourEyesViolationException;
 import org.camunda.bpm.engine.AuthorizationException;
 import org.camunda.bpm.engine.BadUserRequestException;
 import org.camunda.bpm.engine.FormService;
@@ -138,6 +139,7 @@ public class TaskResourceImpl implements TaskResource {
       throw new RestException(Status.BAD_REQUEST, e, errorMessage);
 
     } catch (ProcessEngineException e) {
+      rethrowFourEyesViolation(e);
       String errorMessage = String.format("Cannot complete task %s: %s", taskId, e.getMessage());
       throw new RestException(Status.INTERNAL_SERVER_ERROR, e, errorMessage);
     }
@@ -174,6 +176,7 @@ public class TaskResourceImpl implements TaskResource {
       throw new RestException(Status.BAD_REQUEST, e, errorMessage);
 
     } catch (ProcessEngineException e) {
+      rethrowFourEyesViolation(e);
       String errorMessage = String.format("Cannot submit task form %s: %s", taskId, e.getMessage());
       throw new RestException(Status.INTERNAL_SERVER_ERROR, e, errorMessage);
     }
@@ -226,6 +229,18 @@ public class TaskResourceImpl implements TaskResource {
     }
 
     return HalTask.generate(task, engine);
+  }
+
+  /**
+   * A four-eyes refusal from a task listener (a guarded task completed by a listener of another
+   * task) reaches here wrapped by the engine; it is answered like the direct refusal, with 403.
+   */
+  protected static void rethrowFourEyesViolation(ProcessEngineException e) {
+    for (Throwable cause = e.getCause(); cause != null && cause != cause.getCause(); cause = cause.getCause()) {
+      if (cause instanceof FourEyesViolationException) {
+        throw (FourEyesViolationException) cause;
+      }
+    }
   }
 
   @Override

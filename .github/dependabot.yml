@@ -11,6 +11,11 @@ updates:
     ignore:
       # The engine follows Camunda 7 CE 7.24.0; those artifacts are not upgraded by bot.
       - dependency-name: "org.camunda.*"
+      # Major upgrades of Java libraries (for example JUnit, Tomcat, test tooling) are done
+      # by hand in a dedicated change with the full test suite; the bot proposes minor and
+      # patch releases only.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: /webapps/frontend-next
     schedule:

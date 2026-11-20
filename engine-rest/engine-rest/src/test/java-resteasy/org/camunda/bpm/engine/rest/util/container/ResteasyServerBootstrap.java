@@ -16,7 +16,6 @@
  */
 package org.camunda.bpm.engine.rest.util.container;
 
-import java.util.Properties;
 import javax.ws.rs.core.Application;
 import org.jboss.resteasy.plugins.server.netty.NettyJaxrsServer;
 
@@ -40,8 +39,7 @@ public class ResteasyServerBootstrap extends EmbeddedServerBootstrap {
 
   @Override
   protected void setupServer(Application application) {
-    Properties serverProperties = readProperties();
-    int port = Integer.parseInt(serverProperties.getProperty(PORT_PROPERTY));
+    int port = reservePort();
 
     server = new NettyJaxrsServer();
     server.setRootResourcePath(ROOT_RESOURCE_PATH);

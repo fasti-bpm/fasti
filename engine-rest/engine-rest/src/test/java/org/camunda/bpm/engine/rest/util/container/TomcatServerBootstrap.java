@@ -17,7 +17,6 @@
 package org.camunda.bpm.engine.rest.util.container;
 
 import java.io.File;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.catalina.LifecycleException;
@@ -78,11 +77,7 @@ public abstract class TomcatServerBootstrap extends AbstractServerBootstrap {
 
   @Override
   protected void startServer(int startUpRetries) {
-    Properties serverProperties = readProperties();
-    int port = Integer.parseInt(serverProperties.getProperty(PORT_PROPERTY));
-
     tomcat = new Tomcat();
-    tomcat.setPort(port);
     tomcat.setBaseDir(getWorkingDir());
     // Tomcat 9 no longer creates the default HTTP connector implicitly on start
     tomcat.getConnector();
@@ -116,6 +111,8 @@ public abstract class TomcatServerBootstrap extends AbstractServerBootstrap {
     tomcat.addWebapp(tomcat.getHost(), contextPath, webAppPath);
 
     try {
+      // the port is chosen right before the start, after the web application has been built
+      tomcat.getConnector().setPort(reservePort());
       tomcat.start();
       if (LifecycleState.FAILED.equals(tomcat.getConnector().getState())) {
         stop();

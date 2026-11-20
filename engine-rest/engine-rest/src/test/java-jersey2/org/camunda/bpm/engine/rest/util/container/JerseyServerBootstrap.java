@@ -19,7 +19,6 @@ package org.camunda.bpm.engine.rest.util.container;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.UriBuilder;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -57,8 +56,7 @@ public class JerseyServerBootstrap extends EmbeddedServerBootstrap {
     properties.put(ServerProperties.TRACING, "ALL");
     rc.addProperties(properties);
 
-    Properties serverProperties = readProperties();
-    int port = Integer.parseInt(serverProperties.getProperty(PORT_PROPERTY));
+    int port = reservePort();
     URI serverUri = UriBuilder.fromPath(ROOT_RESOURCE_PATH).scheme("http").host("localhost").port(port).build();
     try {
       server = GrizzlyHttpServerFactory.createHttpServer(serverUri, rc, false);

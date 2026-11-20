@@ -18,7 +18,8 @@
   <properties>
     <!-- embedded Tomcat of the javax (Servlet 4.0) line for the engine-rest tests -->
     <version.tomcat>${version.tomcat9}</version.tomcat>
-    <rest.http.port>38080</rest.http.port>
+    <!-- 0: every test server start takes a free port; set a positive value to fix the port -->
+    <rest.http.port>0</rest.http.port>
     <javax.activation.version>1.1.1</javax.activation.version>
   </properties>
 

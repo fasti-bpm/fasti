@@ -18,7 +18,6 @@ package org.camunda.bpm.engine.rest.util.container;
 
 import io.undertow.servlet.api.DeploymentInfo;
 import java.net.BindException;
-import java.util.Properties;
 import org.jboss.resteasy.plugins.server.undertow.UndertowJaxrsServer;
 
 public class ResteasyUndertowServerBootstrap extends AbstractServerBootstrap {
@@ -56,8 +55,7 @@ public class ResteasyUndertowServerBootstrap extends AbstractServerBootstrap {
   }
 
   protected void setupServer() {
-    Properties serverProperties = readProperties();
-    int port = Integer.parseInt(serverProperties.getProperty(PORT_PROPERTY));
+    int port = reservePort();
 
     this.server = new UndertowJaxrsServer();
     this.server.setPort(port);

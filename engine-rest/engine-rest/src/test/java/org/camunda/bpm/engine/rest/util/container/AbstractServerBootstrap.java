@@ -18,6 +18,8 @@ package org.camunda.bpm.engine.rest.util.container;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.util.Properties;
 import org.camunda.bpm.engine.rest.AbstractRestServiceTest;
 
@@ -28,6 +30,42 @@ public abstract class AbstractServerBootstrap {
   protected static final String PROPERTIES_FILE = "/testconfig.properties";
 
   protected static final int STARTUP_RETRIES = 3;
+
+  /** port of the test server that was set up last; the tests send their requests to it */
+  private static volatile int serverPort = -1;
+
+  /**
+   * Returns the port of the test server that was set up last, or -1 if none has been set up.
+   */
+  public static int getServerPort() {
+    return serverPort;
+  }
+
+  /**
+   * Chooses the port for the next server start. A positive value of the property
+   * rest.http.port is used as it is; with 0 (the build default) a free port is taken for
+   * every start, so that a port held by another process or by a socket of an earlier
+   * test class (for example in TIME_WAIT) does not make the server fail to bind.
+   */
+  protected int reservePort() {
+    String configured = readProperties().getProperty(PORT_PROPERTY, "0").trim();
+    int port = configured.isEmpty() ? 0 : Integer.parseInt(configured);
+    if (port <= 0) {
+      port = findFreePort();
+    }
+    serverPort = port;
+    return port;
+  }
+
+  protected static int findFreePort() {
+    try (ServerSocket socket = new ServerSocket()) {
+      socket.setReuseAddress(true);
+      socket.bind(new InetSocketAddress(0));
+      return socket.getLocalPort();
+    } catch (IOException e) {
+      throw new ServerBootstrapException(e);
+    }
+  }
 
   public abstract void stop();
 

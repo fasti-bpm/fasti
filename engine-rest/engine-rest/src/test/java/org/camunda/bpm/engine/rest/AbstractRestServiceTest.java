@@ -36,6 +36,7 @@ import org.camunda.bpm.engine.rest.hal.Hal;
 import org.camunda.bpm.engine.rest.helper.MockProvider;
 import org.camunda.bpm.engine.rest.spi.ProcessEngineProvider;
 import org.camunda.bpm.engine.rest.spi.impl.MockedProcessEngineProvider;
+import org.camunda.bpm.engine.rest.util.container.AbstractServerBootstrap;
 import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.Incident;
 import org.camunda.bpm.engine.runtime.TransitionInstance;
@@ -201,7 +202,9 @@ public abstract class AbstractRestServiceTest {
       }
     }
 
-    PORT = Integer.parseInt(connectionProperties.getProperty(PORT_PROPERTY));
+    // the test server may run on a port chosen at start (see AbstractServerBootstrap#reservePort)
+    int serverPort = AbstractServerBootstrap.getServerPort();
+    PORT = serverPort > 0 ? serverPort : Integer.parseInt(connectionProperties.getProperty(PORT_PROPERTY));
     RestAssured.port = PORT;
   }
 

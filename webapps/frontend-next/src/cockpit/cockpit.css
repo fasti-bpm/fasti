@@ -1993,3 +1993,93 @@ a.trend:hover {
     width: 100%;
   }
 }
+
+/* --- the audit trail (AuditTrailPage) ------------------------------------- */
+
+.audit-trail__settings {
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
+.audit-trail__what {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-wrap: anywhere;
+}
+
+.audit-trail__type {
+  display: inline-block;
+  padding: 0 var(--s-2);
+  border-radius: var(--r-full);
+  background: var(--surface-subtle);
+  color: var(--text);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+}
+
+.audit-trail__type--audit {
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+}
+
+.audit-trail__type--incident {
+  background: var(--danger-soft);
+}
+
+.audit-trail__details > summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: var(--fs-sm);
+}
+
+.audit-trail__details > summary:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--r-xs);
+}
+
+.audit-trail__facts {
+  display: grid;
+  gap: var(--s-1);
+  margin: var(--s-2) 0 0;
+  min-width: 16rem;
+  font-size: var(--fs-sm);
+}
+
+.audit-trail__fact {
+  display: grid;
+  grid-template-columns: minmax(7rem, auto) 1fr;
+  gap: var(--s-2);
+}
+
+.audit-trail__fact dt {
+  color: var(--text-muted);
+}
+
+.audit-trail__fact dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.audit-trail__result {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.audit-trail__result .notice p {
+  margin: 0 0 var(--s-1);
+}
+
+.audit-trail__broken th,
+.audit-trail__broken td {
+  color: var(--danger);
+}
+
+@media (max-width: 640px) {
+  .audit-trail__fact {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}

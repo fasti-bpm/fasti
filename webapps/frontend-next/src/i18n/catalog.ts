@@ -10,11 +10,12 @@
  * other `.ts` file in the folder holds a part of its messages. The parts are
  * merged; how the keys are split among the files does not matter.
  */
+import type audit from './locales/en/audit';
 import type core from './locales/en/core';
 import type ops from './locales/en/ops';
 import type tools from './locales/en/tools';
 
-type English = typeof core & typeof ops & typeof tools;
+type English = typeof core & typeof ops & typeof tools & typeof audit;
 
 /**
  * Plural categories of `Intl.PluralRules` that a message may have as a

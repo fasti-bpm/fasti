@@ -35,6 +35,7 @@ import { tenantScope } from '../lib/userPrefs';
 import { getLatestDefinitions } from '../api/cockpit';
 import { Button, Dialog, EmptyState, ErrorState, Loading, Skeleton, cx } from '../ui';
 import { OperationLogTable } from './AuditPage';
+import { AuditTrailTable, useAuditStatus } from './AuditTrailPage';
 import { VariableColumnsError, VariableColumnsPicker, useColumnValues, useVariableColumns, variableColumnsOf } from './VariableColumns';
 import { SavedViews, VIEW_PARAM, currentFilters, viewChanges, type BuiltInView } from './SavedViews';
 import { InstanceTimeline } from './Timeline';
@@ -646,6 +647,7 @@ export function HistoricInstancePage() {
   );
   const nodes = useMemo(() => flowNodes(xml.data), [xml.data]);
   const tab = params.get('tab') ?? 'activities';
+  const auditStatus = useAuditStatus();
 
   const activityColumns = useMemo<Column<HistoricActivity>[]>(
     () => [
@@ -842,6 +844,9 @@ export function HistoricInstancePage() {
             <Tabs.Trigger className="ctabs__tab" value="timeline">{t('timeline.title')}</Tabs.Trigger>
             <Tabs.Trigger className="ctabs__tab" value="variables">{t('cockpit.instance.tab.variables')}</Tabs.Trigger>
             <Tabs.Trigger className="ctabs__tab" value="log">{t('ops.audit.title')}</Tabs.Trigger>
+            {auditStatus.data?.enabled && (
+              <Tabs.Trigger className="ctabs__tab" value="trail">{t('audit.tab')}</Tabs.Trigger>
+            )}
             <Tabs.Trigger className="ctabs__tab" value="incidents">{t('cockpit.incidents.title')}</Tabs.Trigger>
             <Tabs.Trigger className="ctabs__tab" value="jobs">{t('ops.history.jobLog')}</Tabs.Trigger>
             <Tabs.Trigger className="ctabs__tab" value="case">{t('task.tab.case')}</Tabs.Trigger>
@@ -876,6 +881,11 @@ export function HistoricInstancePage() {
           <Tabs.Content className="ctabs__content" value="log">
             <OperationLogTable query={{ processInstanceId: id }} />
           </Tabs.Content>
+          {auditStatus.data?.enabled && (
+            <Tabs.Content className="ctabs__content" value="trail">
+              <AuditTrailTable query={{ processInstanceId: id, sortOrder: 'asc' }} pageParam="tpage" showCase={false} />
+            </Tabs.Content>
+          )}
           <Tabs.Content className="ctabs__content" value="incidents">
             {list(t('cockpit.incidents.title'), incidents, incidentColumns, (row) => row.id)}
           </Tabs.Content>

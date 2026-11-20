@@ -9,6 +9,7 @@ import { formatDateTime, formatRelative } from '../lib/dates';
 import { onPreferencesReplaced, readPreference, writePreference } from '../lib/storage';
 import type { AnyKey, LocaleManifest, MessageKey } from './catalog';
 import { PLURAL_VARIANTS } from './catalog';
+import enAudit from './locales/en/audit';
 import enCore from './locales/en/core';
 import enOps from './locales/en/ops';
 import enTools from './locales/en/tools';
@@ -21,7 +22,7 @@ export type Locale = string;
 type Messages = Partial<Record<string, string>>;
 
 /** English is bundled: it is the fallback of every other language. */
-const english: Messages = { ...enCore, ...enOps, ...enTools } satisfies Record<AnyKey, string>;
+const english: Messages = { ...enCore, ...enOps, ...enTools, ...enAudit } satisfies Record<AnyKey, string>;
 
 // Every folder below locales/ is a language: its manifest is bundled, its
 // messages are separate chunks loaded when the language is chosen.

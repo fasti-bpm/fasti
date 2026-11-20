@@ -251,6 +251,12 @@ export const routes: RouteObject[] = [
                 }),
               },
               {
+                path: 'audit-trail',
+                lazy: async () => ({
+                  Component: (await import('../cockpit/AuditTrailPage')).AuditTrailPage,
+                }),
+              },
+              {
                 path: 'cleanup',
                 lazy: async () => ({
                   Component: (await import('../cockpit/CleanupPage')).CleanupPage,

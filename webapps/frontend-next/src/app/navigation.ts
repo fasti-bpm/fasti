@@ -26,6 +26,7 @@ export const COCKPIT_GROUPS: { label: MessageKey; sections: Section[] }[] = [
       { to: '/cockpit/history', label: 'ops.nav.history' },
       { to: '/cockpit/decision-history', label: 'ops.nav.decisionHistory' },
       { to: '/cockpit/audit', label: 'ops.nav.audit' },
+      { to: '/cockpit/audit-trail', label: 'audit.nav' },
     ],
   },
   {

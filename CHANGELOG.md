@@ -23,6 +23,28 @@ entries below describe the differences from that release.
   TLS, HorizontalPodAutoscaler, NetworkPolicy, ServiceMonitor and OpenID Connect settings. A
   values schema rejects unknown keys. Guide: `docs/install-kubernetes.md`. CI checks the chart
   and the manifests with `helm lint` and kubeconform against Kubernetes 1.29–1.33.
+- Observability for Fasti BPM Run and the container image, all off by default
+  ([docs](docs/install-docker.md#13-observability)):
+  - JSON logs: `fasti.logging.format=json` (`FASTI_LOG_FORMAT=json` in the image) writes one
+    JSON object per log line in the Elastic Common Schema, through the structured logging of
+    Spring Boot; `logstash` and `gelf` are available as well.
+  - Prometheus metrics at `/actuator/prometheus` with `fasti.metrics.prometheus.enabled=true`:
+    JVM, HTTP, connection pool, job executor thread pool and process engine metrics. On the
+    port of the application a scrape token is required (`Authorization: Bearer`,
+    `fasti.metrics.prometheus.token`, `FASTI_METRICS_PROMETHEUS_TOKEN(_FILE)`); without one Run
+    only starts if the actuator has a management port of its own (`management.server.port`,
+    `FASTI_MANAGEMENT_PORT`). While the switch is off the endpoint does not exist, even for
+    configurations that expose every actuator endpoint.
+  - Engine metrics for Micrometer, also in the Spring Boot starter (`fasti.metrics.engine.*`):
+    counters of started and ended root process instances, activity instances, executed,
+    failed, acquired and rejected jobs and evaluated decisions, and gauges of active process
+    instances, open user tasks, incidents, due and failed jobs and open external tasks (read
+    from the database at most every 30 s). Tags are limited to the engine name and a fixed
+    result or state.
+  - OpenTelemetry tracing with `fasti.tracing.enabled=true`: spans for HTTP requests, the
+    engine commands they run and each job execution, exported over OTLP/HTTP to
+    `management.opentelemetry.tracing.export.otlp.endpoint` or `OTEL_EXPORTER_OTLP_ENDPOINT`.
+    Nothing is sent while no endpoint is set.
 
 ### Fixed
 

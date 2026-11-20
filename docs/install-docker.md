@@ -4,7 +4,8 @@ English | [Tiếng Việt](install-docker.vi.md) | [Deutsch](install-docker.de.m
 
 A step-by-step guide: a quick trial with H2, production with PostgreSQL (`docker run` or
 `docker compose`), connecting to an existing Camunda 7 database, side-by-side mode, health
-checks, upgrade, rollback and troubleshooting. Full image reference:
+checks, upgrade, rollback, troubleshooting and observability (JSON logs, Prometheus metrics,
+tracing). Full image reference:
 [distro/docker/README.md](../distro/docker/README.md). Fasti BPM is built on Camunda 7 CE
 7.24.0 and is an independent project, not affiliated with Camunda Services GmbH.
 
@@ -282,3 +283,122 @@ Ready-made Tomcat 1.0.0 bundle (download page: https://fasti.dev/download):
 - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
 Verify the checksum before extracting, for example `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
+
+<a id="13-observability"></a>
+
+## 13. Observability
+
+JSON logs, Prometheus metrics and OpenTelemetry tracing are all **off by default**. Each one is
+switched on by an environment variable of the image; the same settings work as Spring Boot
+properties for Fasti BPM Run outside Docker (`configuration/default.yml` or
+`production.yml`, see the commented examples there).
+
+| Variable | Property | Effect |
+|---|---|---|
+| `FASTI_LOG_FORMAT=json` | `fasti.logging.format` | one JSON object per log line ([Elastic Common Schema](https://www.elastic.co/guide/en/ecs/current/)); also `logstash`, `gelf`; `text` is the default |
+| `FASTI_METRICS_PROMETHEUS_ENABLED=true` | `fasti.metrics.prometheus.enabled` | Prometheus metrics at `/actuator/prometheus` |
+| `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | `fasti.metrics.prometheus.token` | scrape token, sent as `Authorization: Bearer <token>` |
+| `FASTI_MANAGEMENT_PORT` | `management.server.port` | the actuator (health **and** metrics) on a port of its own |
+| `FASTI_TRACING_ENABLED=true` | `fasti.tracing.enabled` | OpenTelemetry spans for HTTP requests, engine commands and job executions |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `management.opentelemetry.tracing.export.otlp.endpoint` | where spans are sent (OTLP over HTTP, port 4318) |
+
+### JSON logs
+
+```bash
+docker run -d --name fasti -p 8080:8080 -e FASTI_LOG_FORMAT=json ... fastidev/fasti-bpm:1.0.1
+docker logs fasti | head -1
+# {"@timestamp":"2026-11-21T09:12:03.120Z","log":{"level":"INFO","logger":"org.camunda.bpm.run.CamundaBpmRun"},
+#  "process":{"pid":1,"thread":{"name":"main"}},"service":{"name":"fasti-bpm","version":"1.0.1","node":{}},
+#  "message":"Starting CamundaBpmRun v1.0.1 using Java 21 ...","ecs":{"version":"8.11"}}
+```
+
+The service name is `fasti-bpm` unless `SPRING_APPLICATION_NAME` is set. Stack traces are part
+of the JSON object, so a log collector (Fluent Bit, Vector, Filebeat, Loki/Promtail) can parse
+each line without multi-line rules. The few lines the entrypoint prints before the JVM starts
+(`fasti-entrypoint: ...`) stay plain text.
+
+### Prometheus metrics
+
+The metrics include the JVM, HTTP requests (`http_server_requests_seconds`), the connection
+pool (`hikaricp_*`), the thread pool of the job executor (`executor_*`) and the process engine:
+
+| Metric | Type | Meaning |
+|---|---|---|
+| `fasti_engine_process_instances_started_total` | counter | started root process instances |
+| `fasti_engine_process_instances_ended_total{state="completed"\|"canceled"}` | counter | ended root process instances |
+| `fasti_engine_activity_instances_started_total`, `..._ended_total` | counter | activity instances |
+| `fasti_engine_jobs_executed_total{result="successful"\|"failed"}` | counter | job executions |
+| `fasti_engine_jobs_acquired_total{result="success"\|"failure"}`, `fasti_engine_jobs_acquisition_attempts_total`, `fasti_engine_jobs_rejected_total`, `fasti_engine_jobs_locked_exclusive_total` | counter | job acquisition |
+| `fasti_engine_decision_instances_evaluated_total`, `fasti_engine_decision_elements_evaluated_total` | counter | DMN evaluations |
+| `fasti_engine_process_instances_active`, `fasti_engine_tasks_open`, `fasti_engine_incidents_open`, `fasti_engine_jobs_executable`, `fasti_engine_jobs_failed`, `fasti_engine_external_tasks_open` | gauge | current state, read from the database at most every 30 s (`FASTI_METRICS_ENGINE_GAUGES_REFRESH_INTERVAL`) |
+
+Every engine metric has the tag `engine` (the engine name); process definition keys or activity
+ids are never tags, so the number of series stays small. The counters start at zero when a node
+starts and count what that node executed; the gauges show the whole database (sum the counters,
+not the gauges, across nodes). The counters move only while the engine metrics are on
+(`camunda.bpm.metrics.enabled`, the default).
+
+The metrics are **not public**. Pick one of two ways:
+
+1. **Scrape token** on the application port. Every request needs
+   `Authorization: Bearer <token>`, otherwise the answer is `401`:
+
+   ```bash
+   openssl rand -hex 32 > metrics-token && chmod 0644 metrics-token
+   docker run -d --name fasti -p 8080:8080 \
+     -e FASTI_METRICS_PROMETHEUS_ENABLED=true \
+     -e FASTI_METRICS_PROMETHEUS_TOKEN_FILE=/run/secrets/metrics-token \
+     -v "$PWD/metrics-token:/run/secrets/metrics-token:ro" ... fastidev/fasti-bpm:1.0.1
+   curl -s -H "Authorization: Bearer $(cat metrics-token)" http://localhost:8080/actuator/prometheus | head
+   ```
+
+   Prometheus:
+
+   ```yaml
+   scrape_configs:
+     - job_name: fasti
+       metrics_path: /actuator/prometheus
+       authorization:
+         credentials_file: /etc/prometheus/fasti-metrics-token
+       static_configs:
+         - targets: ["fasti:8080"]
+   ```
+
+2. **Management port** that only the monitoring network reaches, for example
+   `-e FASTI_MANAGEMENT_PORT=9464` without publishing port 9464 to the outside. No token is
+   needed there (a configured token is still checked). The health endpoints move to that port
+   as well: the image's `HEALTHCHECK` follows `FASTI_MANAGEMENT_PORT`, but Kubernetes probes and
+   load balancers must use the management port too.
+
+Without either, a node with `FASTI_METRICS_PROMETHEUS_ENABLED=true` refuses to start. While the
+switch is off the endpoint does not exist at all, even if a configuration file exposes every
+actuator endpoint (`management.endpoints.web.exposure.include: "*"`).
+
+### Tracing (OpenTelemetry)
+
+```bash
+docker run -d --name fasti -p 8080:8080 \
+  -e FASTI_TRACING_ENABLED=true \
+  -e OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 \
+  ... fastidev/fasti-bpm:1.0.1
+```
+
+Each HTTP request becomes a trace; the engine commands it runs (for example a process
+definition query or `StartProcessInstanceCmd`) are child spans, with the command name in the
+attribute `fasti.engine.command`. Each job execution starts a trace of its own (`job
+execution`). Incoming W3C `traceparent` headers are continued. The service name is `fasti-bpm`
+(`OTEL_SERVICE_NAME` changes it).
+
+- Spans are only sent once an endpoint is set (`OTEL_EXPORTER_OTLP_ENDPOINT`, which gets
+  `/v1/traces` appended, or the full URL in `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`); without one
+  no network connection is made. OTLP is sent over HTTP (`http/protobuf`, port 4318), not gRPC.
+- With tracing on, every request is sampled. For high request rates lower it, for example
+  `-e MANAGEMENT_TRACING_SAMPLING_PROBABILITY=0.1` (or `OTEL_TRACES_SAMPLER_ARG`).
+- `FASTI_TRACING_ENGINE_ENABLED=false` keeps the HTTP spans and leaves out the engine commands.
+- With tracing on, text log lines carry the trace and span ids; JSON log lines have them as
+  `traceId` and `spanId`.
+- Requests to the actuator (health checks, metric scrapes) are not traced; with tracing on they
+  are not counted in `http_server_requests_seconds` either.
+- With tracing on, the Prometheus endpoint also has the timers `fasti_engine_command_seconds` and
+  `fasti_engine_job_seconds` (tags `engine`, `error`).
+- Only spans are exported over OTLP. Metrics stay on the Prometheus endpoint; logs on stdout.

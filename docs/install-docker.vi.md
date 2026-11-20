@@ -4,7 +4,7 @@
 
 Hướng dẫn từng bước: thử nhanh với H2, chạy production với PostgreSQL (`docker run` hoặc
 `docker compose`), nối vào cơ sở dữ liệu Camunda 7 có sẵn, chạy song song, health check, nâng cấp,
-quay lại và xử lý sự cố. Tham chiếu đầy đủ của image: [distro/docker/README.vi.md](../distro/docker/README.vi.md).
+quay lại, xử lý sự cố và giám sát (log JSON, metrics Prometheus, tracing). Tham chiếu đầy đủ của image: [distro/docker/README.vi.md](../distro/docker/README.vi.md).
 Fasti BPM được xây dựng trên Camunda 7 CE 7.24.0 và là dự án độc lập, không liên kết với Camunda
 Services GmbH.
 
@@ -279,3 +279,121 @@ Gói Tomcat 1.0.0 dựng sẵn (trang tải: https://fasti.dev/download):
 
 Kiểm tra checksum trước khi giải nén, ví dụ `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
 
+
+<a id="13-observability"></a>
+
+## 13. Giám sát: log JSON, metrics, tracing
+
+Log JSON, metrics Prometheus và tracing OpenTelemetry đều **tắt theo mặc định**. Mỗi tính năng
+bật bằng một biến môi trường của image; cùng các thiết lập đó dùng được dưới dạng thuộc tính
+Spring Boot cho Fasti BPM Run chạy ngoài Docker (`configuration/default.yml` hoặc
+`production.yml`, xem các ví dụ đã chú thích sẵn trong đó).
+
+| Biến | Thuộc tính | Tác dụng |
+|---|---|---|
+| `FASTI_LOG_FORMAT=json` | `fasti.logging.format` | mỗi dòng log là một đối tượng JSON ([Elastic Common Schema](https://www.elastic.co/guide/en/ecs/current/)); có thêm `logstash`, `gelf`; mặc định `text` |
+| `FASTI_METRICS_PROMETHEUS_ENABLED=true` | `fasti.metrics.prometheus.enabled` | metrics Prometheus tại `/actuator/prometheus` |
+| `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | `fasti.metrics.prometheus.token` | token để scrape, gửi dạng `Authorization: Bearer <token>` |
+| `FASTI_MANAGEMENT_PORT` | `management.server.port` | actuator (health **và** metrics) chạy trên cổng riêng |
+| `FASTI_TRACING_ENABLED=true` | `fasti.tracing.enabled` | span OpenTelemetry cho request HTTP, lệnh của engine và mỗi lần chạy job |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `management.opentelemetry.tracing.export.otlp.endpoint` | nơi nhận span (OTLP qua HTTP, cổng 4318) |
+
+### Log JSON
+
+```bash
+docker run -d --name fasti -p 8080:8080 -e FASTI_LOG_FORMAT=json ... fastidev/fasti-bpm:1.0.1
+docker logs fasti | head -1
+# {"@timestamp":"2026-11-21T09:12:03.120Z","log":{"level":"INFO","logger":"org.camunda.bpm.run.CamundaBpmRun"},
+#  "process":{"pid":1,"thread":{"name":"main"}},"service":{"name":"fasti-bpm","version":"1.0.1","node":{}},
+#  "message":"Starting CamundaBpmRun v1.0.1 using Java 21 ...","ecs":{"version":"8.11"}}
+```
+
+Tên dịch vụ là `fasti-bpm`, trừ khi đặt `SPRING_APPLICATION_NAME`. Stack trace nằm trong chính
+đối tượng JSON, nên bộ thu log (Fluent Bit, Vector, Filebeat, Loki/Promtail) đọc từng dòng mà
+không cần luật ghép nhiều dòng. Vài dòng entrypoint in ra trước khi JVM khởi động
+(`fasti-entrypoint: ...`) vẫn là văn bản thường.
+
+### Metrics Prometheus
+
+Có metrics của JVM, request HTTP (`http_server_requests_seconds`), connection pool
+(`hikaricp_*`), thread pool của job executor (`executor_*`) và của process engine:
+
+| Metric | Loại | Ý nghĩa |
+|---|---|---|
+| `fasti_engine_process_instances_started_total` | counter | số process instance gốc đã khởi động |
+| `fasti_engine_process_instances_ended_total{state="completed"\|"canceled"}` | counter | số process instance gốc đã kết thúc |
+| `fasti_engine_activity_instances_started_total`, `..._ended_total` | counter | activity instance |
+| `fasti_engine_jobs_executed_total{result="successful"\|"failed"}` | counter | số lần chạy job |
+| `fasti_engine_jobs_acquired_total{result="success"\|"failure"}`, `fasti_engine_jobs_acquisition_attempts_total`, `fasti_engine_jobs_rejected_total`, `fasti_engine_jobs_locked_exclusive_total` | counter | việc lấy job |
+| `fasti_engine_decision_instances_evaluated_total`, `fasti_engine_decision_elements_evaluated_total` | counter | số lần đánh giá DMN |
+| `fasti_engine_process_instances_active`, `fasti_engine_tasks_open`, `fasti_engine_incidents_open`, `fasti_engine_jobs_executable`, `fasti_engine_jobs_failed`, `fasti_engine_external_tasks_open` | gauge | trạng thái hiện tại, đọc từ cơ sở dữ liệu nhiều nhất 30 giây một lần (`FASTI_METRICS_ENGINE_GAUGES_REFRESH_INTERVAL`) |
+
+Mọi metric của engine có tag `engine` (tên engine); key của process definition hay id của
+activity không bao giờ thành tag, nên số chuỗi thời gian luôn nhỏ. Counter bắt đầu từ 0 khi node
+khởi động và đếm những gì node đó chạy; gauge cho biết toàn bộ cơ sở dữ liệu (khi có nhiều node:
+cộng counter, không cộng gauge). Counter chỉ tăng khi metrics của engine bật
+(`camunda.bpm.metrics.enabled`, mặc định bật).
+
+Metrics **không công khai**. Chọn một trong hai cách:
+
+1. **Token scrape** trên cổng của ứng dụng. Mỗi request phải có
+   `Authorization: Bearer <token>`, nếu không sẽ nhận `401`:
+
+   ```bash
+   openssl rand -hex 32 > metrics-token && chmod 0644 metrics-token
+   docker run -d --name fasti -p 8080:8080 \
+     -e FASTI_METRICS_PROMETHEUS_ENABLED=true \
+     -e FASTI_METRICS_PROMETHEUS_TOKEN_FILE=/run/secrets/metrics-token \
+     -v "$PWD/metrics-token:/run/secrets/metrics-token:ro" ... fastidev/fasti-bpm:1.0.1
+   curl -s -H "Authorization: Bearer $(cat metrics-token)" http://localhost:8080/actuator/prometheus | head
+   ```
+
+   Prometheus:
+
+   ```yaml
+   scrape_configs:
+     - job_name: fasti
+       metrics_path: /actuator/prometheus
+       authorization:
+         credentials_file: /etc/prometheus/fasti-metrics-token
+       static_configs:
+         - targets: ["fasti:8080"]
+   ```
+
+2. **Cổng management** chỉ mạng giám sát truy cập được, ví dụ `-e FASTI_MANAGEMENT_PORT=9464`
+   và không publish cổng 9464 ra ngoài. Ở cổng này không cần token (nếu đã cấu hình token thì
+   vẫn kiểm tra). Các endpoint health cũng chuyển sang cổng đó: `HEALTHCHECK` của image tự theo
+   `FASTI_MANAGEMENT_PORT`, nhưng probe của Kubernetes và load balancer cũng phải dùng cổng
+   management.
+
+Không có cách nào trong hai cách trên thì node có `FASTI_METRICS_PROMETHEUS_ENABLED=true` sẽ từ
+chối khởi động. Khi công tắc tắt, endpoint hoàn toàn không tồn tại, kể cả khi tệp cấu hình mở mọi
+endpoint của actuator (`management.endpoints.web.exposure.include: "*"`).
+
+### Tracing (OpenTelemetry)
+
+```bash
+docker run -d --name fasti -p 8080:8080 \
+  -e FASTI_TRACING_ENABLED=true \
+  -e OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 \
+  ... fastidev/fasti-bpm:1.0.1
+```
+
+Mỗi request HTTP thành một trace; các lệnh engine mà request chạy (ví dụ truy vấn process
+definition hay `StartProcessInstanceCmd`) là span con, tên lệnh nằm trong thuộc tính
+`fasti.engine.command`. Mỗi lần chạy job mở một trace riêng (`job execution`). Header W3C
+`traceparent` gửi đến được nối tiếp. Tên dịch vụ là `fasti-bpm` (đổi bằng `OTEL_SERVICE_NAME`).
+
+- Span chỉ được gửi khi đã đặt endpoint (`OTEL_EXPORTER_OTLP_ENDPOINT`, tự thêm `/v1/traces`,
+  hoặc URL đầy đủ trong `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`); chưa đặt thì không mở kết nối mạng
+  nào. OTLP gửi qua HTTP (`http/protobuf`, cổng 4318), không dùng gRPC.
+- Khi bật tracing, mọi request đều được lấy mẫu. Với lưu lượng lớn hãy giảm, ví dụ
+  `-e MANAGEMENT_TRACING_SAMPLING_PROBABILITY=0.1` (hoặc `OTEL_TRACES_SAMPLER_ARG`).
+- `FASTI_TRACING_ENGINE_ENABLED=false` giữ span HTTP và bỏ span của lệnh engine.
+- Khi bật tracing, dòng log văn bản có trace id và span id; dòng log JSON có chúng ở `traceId`
+  và `spanId`.
+- Request tới actuator (health check, scrape metrics) không được trace; khi bật tracing chúng cũng
+  không được đếm trong `http_server_requests_seconds`.
+- Khi bật tracing, endpoint Prometheus có thêm timer `fasti_engine_command_seconds` và
+  `fasti_engine_job_seconds` (tag `engine`, `error`).
+- Chỉ span được gửi qua OTLP. Metrics vẫn ở endpoint Prometheus; log vẫn ra stdout.

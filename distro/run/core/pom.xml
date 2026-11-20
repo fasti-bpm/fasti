@@ -91,7 +91,44 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
-    
+
+    <!-- Prometheus endpoint below /actuator; off unless fasti.metrics.prometheus.enabled=true -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
+
+    <!-- tracing with OpenTelemetry, exported over OTLP/HTTP; off unless fasti.tracing.enabled=true.
+      Instead of spring-boot-starter-opentelemetry: without the OTLP metrics registry (which
+      pushes to localhost:4318 by default) and with the HTTP client of the JDK instead of OkHttp
+      and the Kotlin standard library -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-micrometer-tracing-opentelemetry</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-opentelemetry</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-tracing-bridge-otel</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-exporter-otlp</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>io.opentelemetry</groupId>
+          <artifactId>opentelemetry-exporter-sender-okhttp</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-exporter-sender-jdk</artifactId>
+    </dependency>
+
     <!-- Graal.js -->
     
     <dependency>

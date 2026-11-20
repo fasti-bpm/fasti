@@ -89,6 +89,19 @@ logging:
    level.root: INFO
    file.name: logs/camunda-bpm-run.log
 
+# Observability, all off by default: JSON log lines (console and file), Prometheus metrics at
+# /actuator/prometheus (scrape token required on this port; or serve the actuator on a
+# management.server.port that only the monitoring network reaches), OpenTelemetry tracing over
+# OTLP/HTTP. Lower the sampling probability (1.0 when tracing is on) for high request rates.
+#fasti.logging.format: json
+#fasti.metrics.prometheus:
+#  enabled: true
+#  token: ${FASTI_METRICS_TOKEN}
+#fasti.tracing.enabled: true
+#management:
+#  opentelemetry.tracing.export.otlp.endpoint: https://otel-collector.example.com:4318/v1/traces
+#  tracing.sampling.probability: 0.1
+
 # Bearer tokens (JWT access tokens of an OpenID Connect provider) on the REST API. When enabled,
 # every REST request needs a valid token (401 otherwise); the user, groups and tenants of the
 # token become the engine identity. Basic authentication keeps working only together with

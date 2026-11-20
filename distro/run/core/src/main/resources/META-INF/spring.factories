@@ -1,0 +1,3 @@
+# Environment Post Processors
+org.springframework.boot.EnvironmentPostProcessor=\
+dev.fasti.run.observability.FastiObservabilityEnvironmentPostProcessor

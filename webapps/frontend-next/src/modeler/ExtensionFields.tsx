@@ -11,9 +11,11 @@ import {
   LISTENER_TYPES,
   listenerEvents,
   readFormFields,
+  readFourEyes,
   readListeners,
   readParameters,
   writeFormFields,
+  writeFourEyes,
   writeListeners,
   writeParameters,
   type CreateGeneric,
@@ -278,6 +280,62 @@ export function FormFieldsSection({ access }: { access: ExtensionAccess }) {
           </>
         )}
       />
+    </Section>
+  );
+}
+
+/**
+ * The four-eyes rule of a user task: the earlier user tasks of the process whose completers may
+ * not complete this one (extension property `fasti:fourEyes`). The task itself may be named, so
+ * that each repetition (loop, multi-instance) needs another person. Names that are no user task
+ * of the process are shown so that they can be removed; the engine refuses to deploy them.
+ */
+export function FourEyesSection({
+  access,
+  self,
+  candidates,
+}: {
+  access: ExtensionAccess;
+  self: { id: string; name: string };
+  candidates: { id: string; name: string }[];
+}) {
+  const { t } = useI18n();
+  const checked = readFourEyes(access.values);
+  const others = candidates.filter((candidate) => candidate.id !== self.id);
+  const known = new Set([self.id, ...others.map((candidate) => candidate.id)]);
+  const unknown = checked.filter((id) => !known.has(id));
+  const toggle = (id: string, on: boolean) => {
+    const next = on ? [...checked.filter((entry) => entry !== id), id] : checked.filter((entry) => entry !== id);
+    access.write(writeFourEyes(access.values, next, access.create));
+  };
+  const option = (id: string, label: ReactNode) => (
+    <label key={id} className="props-check props-check--four-eyes">
+      <input type="checkbox" checked={checked.includes(id)} onChange={(event) => toggle(id, event.target.checked)} />
+      <span>{label}</span>
+    </label>
+  );
+  return (
+    <Section title={t('props.fourEyes')} count={checked.length}>
+      <p id="props-four-eyes-hint" className="props-field__hint">
+        {t('props.fourEyesHint')}
+      </p>
+      <div className="props-four-eyes" role="group" aria-label={t('props.fourEyes')} aria-describedby="props-four-eyes-hint">
+        {others.map((candidate) =>
+          option(
+            candidate.id,
+            candidate.name ? (
+              <>
+                {candidate.name} <span className="mono props-four-eyes__id">{candidate.id}</span>
+              </>
+            ) : (
+              <span className="mono">{candidate.id}</span>
+            ),
+          ),
+        )}
+        {option(self.id, t('props.fourEyesSelf'))}
+        {unknown.map((id) => option(id, t('props.fourEyesUnknown', { id })))}
+      </div>
+      {others.length === 0 && <p className="props-field__hint">{t('props.fourEyesNone')}</p>}
     </Section>
   );
 }

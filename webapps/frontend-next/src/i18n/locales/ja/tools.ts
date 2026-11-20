@@ -565,6 +565,20 @@ const messages: Catalog = {
   'absence.task.other': '{name} の代理として {assignee} に割り当てられました。',
   'absence.card': '{name} の代理',
   'absence.card.title': '不在中の {name} の代理として保持',
+  'fourEyes.title': '4つの目の原則',
+  'fourEyes.badge': '4つの目',
+  'fourEyes.you': 'このタスクが確認する、この案件の前のステップ（{steps}）をあなたが完了しました。このタスクは別の人が完了する必要があります。',
+  'fourEyes.assignee': '{name} はこのタスクが確認する、この案件の前のステップ（{steps}）を完了したため、このタスクを完了できません。別の人に割り当ててください。',
+  'fourEyes.info': 'このタスクが確認する、この案件の前のステップ（{steps}）を完了した人は、このタスクを完了できません。',
+  'fourEyes.formHint': 'このタスクは別の人が完了する必要があります（4つの目の原則）。',
+  'fourEyes.refused': 'このタスクは別の人が完了する必要があります',
+  'fourEyes.refusedHint': 'あなたまたは担当者が、このタスクが確認する前のステップを完了しています。別の人に割り当ててください。',
+  'props.fourEyes': '4つの目の原則',
+  'props.fourEyesHint': 'ここでチェックしたステップを完了した人は、同じ案件でこのタスクを完了できません。',
+  'props.fourEyesSelf': 'このタスク自身（繰り返しのたびに別の人が必要）',
+  'props.fourEyesNone': 'プロセスにはまだ他の User task がありません。',
+  'props.fourEyesUnknown': '{id}（このプロセスの User task ではありません）',
+  'readiness.fourEyesSteps': '4つの目の原則（fasti:fourEyes）には同じプロセスの User task だけを指定できます。それ以外はエンジンがデプロイを拒否します。',
 };
 
 export default messages;

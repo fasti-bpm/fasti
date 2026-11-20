@@ -481,3 +481,18 @@
     min-width: 900px;
   }
 }
+
+/* four-eyes rule of a user task: one check box per earlier user task */
+.props-four-eyes {
+  display: grid;
+  gap: var(--s-1);
+}
+
+.props-four-eyes__id {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.props-check--four-eyes {
+  font-weight: var(--fw-regular);
+}

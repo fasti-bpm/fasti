@@ -7,6 +7,7 @@ import type { ButtonHTMLAttributes, ComponentType, ReactNode } from 'react';
 import { Dialog as RadixDialog, Tooltip as RadixTooltip } from 'radix-ui';
 import { AlertTriangle, Inbox, LoaderCircle, Lock, SearchX, WifiOff, X } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
+import { FOUR_EYES_VIOLATION } from '../api/fourEyes';
 import { isApiError } from '../api/http';
 import { isQuietFocus, lastMenuTrigger } from './menu';
 import { useI18n, type MessageKey, type MessageParams, type Translate } from '../i18n';
@@ -244,6 +245,10 @@ export function describeError(error: unknown, t: Translate): { title: string; de
       case 'unauthorized':
         return { title: t('error.unauthorized') };
       case 'forbidden':
+        // the four-eyes control: someone else has to do it, no permission would help
+        if (error.serverType === FOUR_EYES_VIOLATION) {
+          return { title: t('fourEyes.refused'), detail, hint: t('fourEyes.refusedHint') };
+        }
         return { title: t('error.forbidden'), detail, hint: t('error.hint.forbidden') };
       case 'notFound':
         return { title: t('error.notFound'), detail, hint: t('error.hint.notFound') };

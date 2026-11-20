@@ -565,6 +565,20 @@ const messages: Catalog = {
   'absence.task.other': 'Ditugaskan kepada {assignee} sebagai pengganti {name}.',
   'absence.card': 'Untuk {name}',
   'absence.card.title': 'Dipegang sebagai pengganti {name}, yang sedang tidak hadir',
+  'fourEyes.title': 'Kontrol empat mata',
+  'fourEyes.badge': 'Empat mata',
+  'fourEyes.you': 'Anda telah menyelesaikan langkah sebelumnya dari berkas ini yang diperiksa tugas ini ({steps}), jadi orang lain harus menyelesaikannya.',
+  'fourEyes.assignee': '{name} telah menyelesaikan langkah sebelumnya dari berkas ini yang diperiksa tugas ini ({steps}) dan tidak dapat menyelesaikannya. Tugaskan kepada orang lain.',
+  'fourEyes.info': 'Siapa pun yang menyelesaikan langkah sebelumnya dari berkas ini yang diperiksa tugas ini ({steps}) tidak dapat menyelesaikannya.',
+  'fourEyes.formHint': 'Orang lain harus menyelesaikan tugas ini (kontrol empat mata).',
+  'fourEyes.refused': 'Orang lain harus menyelesaikan tugas ini',
+  'fourEyes.refusedHint': 'Anda atau penerima tugas telah menyelesaikan langkah sebelumnya yang diperiksa tugas ini. Tugaskan kepada orang lain.',
+  'props.fourEyes': 'Kontrol empat mata',
+  'props.fourEyesHint': 'Siapa pun yang menyelesaikan langkah yang dicentang di sini tidak dapat menyelesaikan tugas ini dalam berkas yang sama.',
+  'props.fourEyesSelf': 'Tugas ini sendiri (setiap pengulangan memerlukan orang lain)',
+  'props.fourEyesNone': 'Proses belum memiliki user task lain.',
+  'props.fourEyesUnknown': '{id} (bukan user task dari proses ini)',
+  'readiness.fourEyesSteps': 'Kontrol empat mata (fasti:fourEyes) hanya boleh menyebut user task dari proses yang sama; jika tidak, engine menolak deployment.',
 };
 
 export default messages;

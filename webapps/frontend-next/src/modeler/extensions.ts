@@ -4,12 +4,13 @@
  */
 /**
  * Reading and writing the Camunda 7 extension elements of a BPMN element
- * (input/output mappings, listeners, generated form fields). The editor knows
- * no schema for them, so they are generic elements: attributes are plain
- * properties, text is `$body` and nested elements are `$children`. Changes
- * always build new elements, so the editor can undo them, and whatever the
- * panel does not edit (scripts, lists, maps, fields of listeners, validation
- * of form fields) is carried over unchanged.
+ * (input/output mappings, listeners, generated form fields, the four-eyes
+ * property). The editor knows no schema for them, so they are generic
+ * elements: attributes are plain properties, text is `$body` and nested
+ * elements are `$children`. Changes always build new elements, so the editor
+ * can undo them, and whatever the panel does not edit (scripts, lists, maps,
+ * fields of listeners, validation of form fields, other extension properties)
+ * is carried over unchanged.
  */
 export interface Generic {
   $type: string;
@@ -180,6 +181,69 @@ export function writeFormFields(values: Generic[], fields: FormField[], create: 
   }
   const children = [...built, ...others];
   return replace(values, 'formData', children.length ? [create('formData', { ...keep, $children: children })] : []);
+}
+
+// --- four-eyes control (Fasti) -------------------------------------------------
+
+/** The extension property of a user task that names the earlier user tasks it checks. */
+export const FOUR_EYES_PROPERTY = 'fasti:fourEyes';
+
+const isFourEyes = (child: Generic) => isA(child, 'property') && child.name === FOUR_EYES_PROPERTY;
+
+/** The ids of the earlier user tasks a user task checks, in the order written. */
+export function readFourEyes(values: Generic[]): string[] {
+  const ids: string[] = [];
+  for (const properties of values.filter((value) => isA(value, 'properties'))) {
+    for (const child of (properties.$children ?? []).filter(isFourEyes)) {
+      for (const part of text(child.value).split(',')) {
+        const id = part.trim();
+        if (id && !ids.includes(id)) ids.push(id);
+      }
+    }
+  }
+  return ids;
+}
+
+/** Writes the four-eyes property; other extension properties stay, an empty list removes it. */
+export function writeFourEyes(values: Generic[], ids: string[], create: CreateGeneric): Generic[] {
+  const properties = values.find((value) => isA(value, 'properties'));
+  const others = (properties?.$children ?? []).filter((child) => !isFourEyes(child));
+  const keep: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(properties ?? {})) {
+    if (!key.startsWith('$')) keep[key] = value;
+  }
+  const children = [
+    ...others,
+    ...(ids.length ? [create('property', { name: FOUR_EYES_PROPERTY, value: ids.join(',') })] : []),
+  ];
+  return replace(values, 'properties', children.length ? [create('properties', { ...keep, $children: children })] : []);
+}
+
+/** An element of the model as far as the four-eyes field needs it. */
+export interface FlowNode {
+  $type: string;
+  id: string;
+  name?: string;
+  $parent?: FlowNode;
+  flowElements?: FlowNode[];
+}
+
+/**
+ * The user tasks of the process that holds the element, also inside sub-processes, in the
+ * order of the model: the steps a four-eyes rule may name.
+ */
+export function userTasksOfProcess(element: FlowNode): { id: string; name: string }[] {
+  let process: FlowNode | undefined = element;
+  while (process && process.$type !== 'bpmn:Process') process = process.$parent;
+  const tasks: { id: string; name: string }[] = [];
+  const visit = (node: FlowNode) => {
+    for (const child of node.flowElements ?? []) {
+      if (child.$type === 'bpmn:UserTask') tasks.push({ id: child.id, name: child.name ?? '' });
+      visit(child);
+    }
+  };
+  if (process) visit(process);
+  return tasks;
 }
 
 /** Replaces the extension elements of one kind, at the place of the first of them. */

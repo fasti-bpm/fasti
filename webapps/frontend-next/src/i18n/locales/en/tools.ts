@@ -582,6 +582,20 @@ const messages = {
   'absence.task.other': 'Assigned to {assignee} as substitute for {name}.',
   'absence.card': 'For {name}',
   'absence.card.title': 'Held as substitute for {name}, who is away',
+  'fourEyes.title': 'Four-eyes check',
+  'fourEyes.badge': 'Four eyes',
+  'fourEyes.you': 'You completed an earlier step of this case that this task checks ({steps}), so another person must complete it.',
+  'fourEyes.assignee': '{name} completed an earlier step of this case that this task checks ({steps}) and cannot complete it. Assign it to another person.',
+  'fourEyes.info': 'Whoever completed an earlier step of this case that this task checks ({steps}) cannot complete it.',
+  'fourEyes.formHint': 'Another person must complete this task (four-eyes check).',
+  'fourEyes.refused': 'Another person must complete this task',
+  'fourEyes.refusedHint': 'You or the assignee completed an earlier step that this task checks. Assign it to someone else.',
+  'props.fourEyes': 'Four-eyes check',
+  'props.fourEyesHint': 'Whoever completed a step ticked here cannot complete this task in the same case.',
+  'props.fourEyesSelf': 'This task itself (each repetition needs another person)',
+  'props.fourEyesNone': 'The process has no other user tasks yet.',
+  'props.fourEyesUnknown': '{id} (not a user task of this process)',
+  'readiness.fourEyesSteps': 'The four-eyes check (fasti:fourEyes) may only name user tasks of the same process; the engine refuses the deployment otherwise.',
 };
 
 export default messages;

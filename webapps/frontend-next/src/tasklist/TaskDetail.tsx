@@ -27,6 +27,7 @@ import { DocumentationText, modelDocumentation } from '../lib/documentation';
 import { keyOfDefinitionId } from '../bpmn/diagrams';
 import { OverflowRow } from '../app/OverflowMenu';
 import { SubstituteNotice } from '../absence/SubstituteNotice';
+import { FourEyesNotice, useFourEyes } from './FourEyesNotice';
 const BpmnDiagram = lazy(() => import('../bpmn/BpmnDiagram'));
 
 const OPERATIONS: Record<string, MessageKey> = {
@@ -251,6 +252,8 @@ export function TaskDetail({
     () => modelDocumentation(xml.data, task?.taskDefinitionKey),
     [xml.data, task?.taskDefinitionKey],
   );
+  // whether the four-eyes control would refuse the completion by the signed-in user
+  const fourEyes = useFourEyes(task);
 
   // a task completed or deleted elsewhere is gone, even with the data read before
   if (query.isError && (!task || isApiError(query.error, 'notFound'))) {
@@ -283,6 +286,8 @@ export function TaskDetail({
 
   const mine = task.assignee === session.userId;
   const resolving = task.delegationState === 'PENDING';
+  // resolving a delegated task hands it back to its owner, which the control allows
+  const fourEyesBlocked = !!fourEyes.data?.blocked && !resolving;
   const processName =
     preview?.processDefinitionName ?? definition.data?.name ?? definition.data?.key ?? null;
   // the description tab only when there is something to read; kept while the model loads for a link to it
@@ -326,6 +331,7 @@ export function TaskDetail({
 
       <TaskMeta task={task} actions={actions} />
       <SubstituteNotice task={task} />
+      {fourEyes.data && <FourEyesNotice status={fourEyes.data} />}
 
       {documentation.step && (
         <details className="step-doc">
@@ -373,7 +379,7 @@ export function TaskDetail({
         </OverflowRow>
 
         <Tabs.Content className="tabs__panel" value="form">
-          {mine && !resolving && (
+          {mine && !resolving && !fourEyesBlocked && (
             <label className="checkbox get-next__after">
               <input
                 type="checkbox"
@@ -385,9 +391,11 @@ export function TaskDetail({
           )}
           <FormHost
             target={{ type: 'task', taskId: task.id }}
-            disabled={!mine}
+            disabled={!mine || fourEyesBlocked}
             disabledHint={
-              task.assignee ? (
+              mine && fourEyesBlocked ? (
+                t('fourEyes.formHint')
+              ) : task.assignee ? (
                 t('task.form.assignedToOther', { user: task.assignee })
               ) : (
                 <>

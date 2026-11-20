@@ -42,6 +42,23 @@ function implemented(element: Element): boolean {
   );
 }
 
+/**
+ * The earlier user tasks a user task names in its four-eyes property (`fasti:fourEyes`), or
+ * `null` without one.
+ */
+function fourEyesSteps(task: Element): string[] | null {
+  const properties = Array.from(task.getElementsByTagNameNS(CAMUNDA, 'property')).filter(
+    (property) => property.getAttribute('name') === 'fasti:fourEyes',
+  );
+  if (properties.length === 0) return null;
+  return properties.flatMap((property) =>
+    (property.getAttribute('value') ?? '')
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean),
+  );
+}
+
 /** The steps of a process or sub process that sequence flows connect. */
 const STEP = /(Task|task|Gateway|Event|subProcess|callActivity|transaction)$/;
 
@@ -91,6 +108,9 @@ function checkBpmn(text: string): Finding[] {
       findings.push({ level: 'warning', message: 'readiness.noEnd', element: name });
     }
     const flows = Array.from(process.getElementsByTagNameNS(BPMN, 'sequenceFlow'));
+    const userTasks = new Set(
+      Array.from(process.getElementsByTagNameNS(BPMN, 'userTask')).map((task) => task.getAttribute('id')),
+    );
     for (const element of Array.from(process.getElementsByTagNameNS(BPMN, '*'))) {
       const kind = element.localName;
       const id = element.getAttribute('id');
@@ -109,6 +129,11 @@ function checkBpmn(text: string): Finding[] {
       } else if (kind === 'userTask') {
         if (!camunda(element, 'assignee') && !camunda(element, 'candidateUsers') && !camunda(element, 'candidateGroups')) {
           findings.push({ level: 'warning', message: 'readiness.noAssignee', element: label(element) });
+        }
+        // the engine refuses a four-eyes rule that names anything but user tasks of the process
+        const steps = fourEyesSteps(element);
+        if (steps && (steps.length === 0 || steps.some((step) => !userTasks.has(step)))) {
+          findings.push({ level: 'error', message: 'readiness.fourEyesSteps', element: label(element) });
         }
       } else if (kind === 'exclusiveGateway') {
         // the rules the engine applies when it parses an exclusive gateway

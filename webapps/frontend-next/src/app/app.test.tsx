@@ -598,6 +598,128 @@ describe('tasklist', () => {
     await waitFor(() => expect(router.state.location.search).toContain('task=t2'));
   });
 
+  it('says that another person must complete a task whose earlier step the user did', async () => {
+    const fourEyes = (assignee: string | null) => ({
+      taskId: 't1',
+      enabled: true,
+      guarded: true,
+      earlierSteps: [{ id: 'prepare', name: 'Prepare invoice' }],
+      userId: 'demo',
+      userExcluded: true,
+      userSteps: ['prepare'],
+      assignee,
+      assigneeExcluded: assignee === 'demo',
+      assigneeSteps: assignee === 'demo' ? ['prepare'] : [],
+      blocked: true,
+    });
+    const server = backend({
+      routes: {
+        [`GET ${ENGINE}/task/t1/four-eyes`]: () => json(fourEyes(server.state.tasks[0]?.assignee ?? null)),
+      },
+    });
+    server.state.tasks = [task('t1', 'Approve invoice', 'demo'), task('t2', 'Prepare transfer', 'mary')];
+    renderApp('/tasklist?filter=f1&task=t1');
+
+    expect(await screen.findByText('Four-eyes check')).toBeVisible();
+    expect(
+      screen.getByText(
+        'You completed an earlier step of this case that this task checks (Prepare invoice), so another person must complete it.',
+      ),
+    ).toBeVisible();
+    expect(await screen.findByText('Another person must complete this task (four-eyes check).')).toBeVisible();
+    expect(await screen.findByLabelText(/Amount/)).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Complete' })).toBeDisabled();
+    // nothing to complete, so nothing to complete and go on with
+    expect(screen.queryByLabelText('Complete and get next work')).toBeNull();
+  });
+
+  it('names the assignee who did an earlier step', async () => {
+    const server = backend({
+      routes: {
+        [`GET ${ENGINE}/task/t1/four-eyes`]: () =>
+          json({
+            taskId: 't1',
+            enabled: true,
+            guarded: true,
+            earlierSteps: [{ id: 'prepare', name: null }],
+            userId: 'demo',
+            userExcluded: false,
+            userSteps: [],
+            assignee: 'mary',
+            assigneeExcluded: true,
+            assigneeSteps: ['prepare'],
+            blocked: true,
+          }),
+        [`GET ${ENGINE}/user/mary/profile`]: () => json({ id: 'mary', firstName: 'Mary', lastName: 'Anne' }),
+      },
+    });
+    server.state.tasks = [task('t1', 'Approve invoice', 'mary'), task('t2', 'Prepare transfer', 'mary')];
+    renderApp('/tasklist?filter=f1&task=t1');
+
+    expect(
+      await screen.findByText(
+        'Mary Anne completed an earlier step of this case that this task checks (prepare) and cannot complete it. Assign it to another person.',
+      ),
+    ).toBeVisible();
+  });
+
+  it('tells who may not complete a task with a four-eyes rule', async () => {
+    backend({
+      routes: {
+        [`GET ${ENGINE}/task/t1/four-eyes`]: () =>
+          json({
+            taskId: 't1',
+            enabled: true,
+            guarded: true,
+            earlierSteps: [
+              { id: 'prepare', name: 'Prepare invoice' },
+              { id: 'review', name: 'Review invoice' },
+            ],
+            userId: 'demo',
+            userExcluded: false,
+            userSteps: [],
+            assignee: null,
+            assigneeExcluded: false,
+            assigneeSteps: [],
+            blocked: false,
+          }),
+      },
+    });
+    renderApp('/tasklist?filter=f1&task=t1');
+
+    expect(
+      await screen.findByText(
+        'Whoever completed an earlier step of this case that this task checks (Prepare invoice and Review invoice) cannot complete it.',
+      ),
+    ).toBeVisible();
+  });
+
+  it('explains when the four-eyes control refuses a completion', async () => {
+    const user = userEvent.setup();
+    backend({
+      routes: {
+        [`POST ${ENGINE}/task/t1/submit-form`]: () =>
+          json(
+            {
+              type: 'FourEyesViolationException',
+              message: "Four-eyes control: user 'demo' cannot complete task 'Approve invoice' (approve)",
+            },
+            403,
+          ),
+      },
+    });
+    renderApp('/tasklist?filter=f1&task=t1');
+
+    await user.click((await screen.findAllByRole('button', { name: 'Claim' }))[0] as HTMLElement);
+    const amount = await screen.findByLabelText(/Amount/);
+    await waitFor(() => expect(amount).toBeEnabled());
+    await user.type(amount, '5');
+    await user.click(screen.getByRole('button', { name: 'Complete' }));
+
+    expect(await screen.findByText(/You or the assignee completed an earlier step that this task checks/)).toBeVisible();
+    expect(screen.getByText(/Four-eyes control: user 'demo'/)).toBeVisible();
+  });
+
   it('returns to the list after completing a task when the user prefers it', async () => {
     const user = userEvent.setup();
     backend();

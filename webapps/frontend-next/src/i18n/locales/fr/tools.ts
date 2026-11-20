@@ -584,6 +584,20 @@ const messages: Catalog = {
   'absence.task.other': 'Attribuée à {assignee} en remplacement de {name}.',
   'absence.card': 'Pour {name}',
   'absence.card.title': 'En remplacement de {name}, absent',
+  'fourEyes.title': 'Principe des quatre yeux',
+  'fourEyes.badge': 'Quatre yeux',
+  'fourEyes.you': 'Vous avez terminé une étape précédente de ce dossier que cette tâche vérifie ({steps}) : une autre personne doit la terminer.',
+  'fourEyes.assignee': '{name} a terminé une étape précédente de ce dossier que cette tâche vérifie ({steps}) et ne peut pas la terminer. Attribuez-la à une autre personne.',
+  'fourEyes.info': 'Qui a terminé une étape précédente de ce dossier que cette tâche vérifie ({steps}) ne peut pas la terminer.',
+  'fourEyes.formHint': 'Une autre personne doit terminer cette tâche (principe des quatre yeux).',
+  'fourEyes.refused': 'Une autre personne doit terminer cette tâche',
+  'fourEyes.refusedHint': 'Vous ou la personne attributaire avez terminé une étape précédente que cette tâche vérifie. Attribuez-la à quelqu’un d’autre.',
+  'props.fourEyes': 'Principe des quatre yeux',
+  'props.fourEyesHint': 'Qui a terminé une étape cochée ici ne peut pas terminer cette tâche dans le même dossier.',
+  'props.fourEyesSelf': 'Cette tâche elle-même (chaque répétition demande une autre personne)',
+  'props.fourEyesNone': 'Le processus n’a pas encore d’autres user tasks.',
+  'props.fourEyesUnknown': '{id} (pas une user task de ce processus)',
+  'readiness.fourEyesSteps': 'Le principe des quatre yeux (fasti:fourEyes) ne peut nommer que des user tasks du même processus ; sinon le moteur refuse le déploiement.',
 };
 
 export default messages;

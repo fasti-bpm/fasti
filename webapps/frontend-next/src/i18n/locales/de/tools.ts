@@ -584,6 +584,20 @@ const messages: Catalog = {
   'absence.task.other': '{assignee} zugewiesen als Vertretung für {name}.',
   'absence.card': 'Für {name}',
   'absence.card.title': 'In Vertretung für {name}, die oder der abwesend ist',
+  'fourEyes.title': 'Vier-Augen-Prinzip',
+  'fourEyes.badge': 'Vier Augen',
+  'fourEyes.you': 'Sie haben einen früheren Schritt dieses Vorgangs abgeschlossen, den diese Aufgabe prüft ({steps}). Eine andere Person muss sie abschließen.',
+  'fourEyes.assignee': '{name} hat einen früheren Schritt dieses Vorgangs abgeschlossen, den diese Aufgabe prüft ({steps}), und kann sie nicht abschließen. Weisen Sie sie einer anderen Person zu.',
+  'fourEyes.info': 'Wer einen früheren Schritt dieses Vorgangs abgeschlossen hat, den diese Aufgabe prüft ({steps}), kann sie nicht abschließen.',
+  'fourEyes.formHint': 'Eine andere Person muss diese Aufgabe abschließen (Vier-Augen-Prinzip).',
+  'fourEyes.refused': 'Eine andere Person muss diese Aufgabe abschließen',
+  'fourEyes.refusedHint': 'Sie oder die zugewiesene Person haben einen früheren Schritt abgeschlossen, den diese Aufgabe prüft. Weisen Sie sie jemand anderem zu.',
+  'props.fourEyes': 'Vier-Augen-Prinzip',
+  'props.fourEyesHint': 'Wer einen hier angekreuzten Schritt abgeschlossen hat, kann diese Aufgabe im selben Vorgang nicht abschließen.',
+  'props.fourEyesSelf': 'Diese Aufgabe selbst (jede Wiederholung braucht eine andere Person)',
+  'props.fourEyesNone': 'Der Prozess hat noch keine anderen User Tasks.',
+  'props.fourEyesUnknown': '{id} (kein User Task dieses Prozesses)',
+  'readiness.fourEyesSteps': 'Das Vier-Augen-Prinzip (fasti:fourEyes) darf nur User Tasks desselben Prozesses nennen; sonst lehnt die Engine das Deployment ab.',
 };
 
 export default messages;

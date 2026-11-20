@@ -6,12 +6,16 @@ import { describe, expect, it } from 'vitest';
 import {
   listenerEvents,
   readFormFields,
+  readFourEyes,
   readListeners,
   readParameters,
   replace,
+  userTasksOfProcess,
   writeFormFields,
+  writeFourEyes,
   writeListeners,
   writeParameters,
+  type FlowNode,
   type FormField,
   type Generic,
   type Listener,
@@ -113,5 +117,67 @@ describe('replace', () => {
     const list: Generic[] = [{ $type: 'x:a' }, { $type: 'x:b' }, { $type: 'x:c' }];
     expect(replace(list, 'b', [{ $type: 'x:B' }]).map((value) => value.$type)).toEqual(['x:a', 'x:B', 'x:c']);
     expect(replace(list, 'd', [{ $type: 'x:d' }]).map((value) => value.$type)).toEqual(['x:a', 'x:b', 'x:c', 'x:d']);
+  });
+});
+
+describe('four-eyes rule', () => {
+  const withRule: Generic[] = [
+    {
+      $type: 'camunda:properties',
+      $children: [
+        { $type: 'camunda:property', name: 'colour', value: 'red' },
+        { $type: 'camunda:property', name: 'fasti:fourEyes', value: 'draft, review' },
+        { $type: 'camunda:property', name: 'fasti:fourEyes', value: 'review,check' },
+      ],
+    },
+    { $type: 'camunda:executionListener', event: 'start', class: 'a.B' },
+  ];
+
+  it('reads the named steps once each, from every property of that name', () => {
+    expect(readFourEyes(withRule)).toEqual(['draft', 'review', 'check']);
+    expect(readFourEyes(values)).toEqual([]);
+  });
+
+  it('writes one property and keeps the other properties', () => {
+    const written = writeFourEyes(withRule, ['draft', 'approve'], create);
+    expect(written[0]).toEqual({
+      $type: 'camunda:properties',
+      $children: [
+        { $type: 'camunda:property', name: 'colour', value: 'red' },
+        { $type: 'camunda:property', name: 'fasti:fourEyes', value: 'draft,approve' },
+      ],
+    });
+    expect(written[1]).toBe(withRule[1]);
+    expect(readFourEyes(written)).toEqual(['draft', 'approve']);
+  });
+
+  it('removes the property, and the properties once empty', () => {
+    expect(writeFourEyes(withRule, [], create)[0]).toEqual({
+      $type: 'camunda:properties',
+      $children: [{ $type: 'camunda:property', name: 'colour', value: 'red' }],
+    });
+    const only: Generic[] = [{ $type: 'camunda:properties', $children: [{ $type: 'camunda:property', name: 'fasti:fourEyes', value: 'a' }] }];
+    expect(writeFourEyes(only, [], create)).toEqual([]);
+    expect(writeFourEyes([], ['a'], create)).toEqual([
+      { $type: 'camunda:properties', $children: [{ $type: 'camunda:property', name: 'fasti:fourEyes', value: 'a' }] },
+    ]);
+  });
+
+  it('offers the user tasks of the process, also in sub-processes', () => {
+    const process: FlowNode = { $type: 'bpmn:Process', id: 'p', flowElements: [] };
+    const sub: FlowNode = { $type: 'bpmn:SubProcess', id: 'sub', $parent: process, flowElements: [] };
+    const draft: FlowNode = { $type: 'bpmn:UserTask', id: 'draft', name: 'Draft', $parent: process };
+    const pay: FlowNode = { $type: 'bpmn:ServiceTask', id: 'pay', $parent: process };
+    const review: FlowNode = { $type: 'bpmn:UserTask', id: 'review', $parent: sub };
+    const approve: FlowNode = { $type: 'bpmn:UserTask', id: 'approve', name: 'Approve', $parent: process };
+    process.flowElements = [draft, pay, sub, approve];
+    sub.flowElements = [review];
+
+    expect(userTasksOfProcess(review)).toEqual([
+      { id: 'draft', name: 'Draft' },
+      { id: 'review', name: '' },
+      { id: 'approve', name: 'Approve' },
+    ]);
+    expect(userTasksOfProcess({ $type: 'bpmn:UserTask', id: 'lonely' })).toEqual([]);
   });
 });

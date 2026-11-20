@@ -1361,3 +1361,28 @@
     min-height: 40px;
   }
 }
+
+/* four-eyes control: who may not complete the task */
+.four-eyes {
+  margin: 0 var(--s-6) var(--s-3);
+}
+
+.four-eyes--info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.badge--four-eyes {
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+}
+
+@media (max-width: 640px) {
+  .four-eyes {
+    margin-inline: var(--s-4);
+  }
+}

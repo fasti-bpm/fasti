@@ -565,6 +565,20 @@ const messages: Catalog = {
   'absence.task.other': 'Giao cho {assignee} với vai trò người thay thế {name}.',
   'absence.card': 'Thay {name}',
   'absence.card.title': 'Đang giữ thay cho {name}, người đang vắng mặt',
+  'fourEyes.title': 'Kiểm soát bốn mắt',
+  'fourEyes.badge': 'Bốn mắt',
+  'fourEyes.you': 'Bạn đã hoàn thành một bước trước đó của hồ sơ này mà việc này kiểm tra ({steps}), nên một người khác phải hoàn thành việc này.',
+  'fourEyes.assignee': '{name} đã hoàn thành một bước trước đó của hồ sơ này mà việc này kiểm tra ({steps}) nên không thể hoàn thành việc này. Hãy giao cho người khác.',
+  'fourEyes.info': 'Người đã hoàn thành một bước trước đó của hồ sơ này mà việc này kiểm tra ({steps}) không thể hoàn thành việc này.',
+  'fourEyes.formHint': 'Một người khác phải hoàn thành việc này (kiểm soát bốn mắt).',
+  'fourEyes.refused': 'Một người khác phải hoàn thành việc này',
+  'fourEyes.refusedHint': 'Bạn hoặc người được giao đã hoàn thành một bước trước đó mà việc này kiểm tra. Hãy giao cho người khác.',
+  'props.fourEyes': 'Kiểm soát bốn mắt',
+  'props.fourEyesHint': 'Người đã hoàn thành một bước được chọn ở đây không thể hoàn thành tác vụ này trong cùng hồ sơ.',
+  'props.fourEyesSelf': 'Chính tác vụ này (mỗi lần lặp lại cần một người khác)',
+  'props.fourEyesNone': 'Quy trình chưa có tác vụ người dùng nào khác.',
+  'props.fourEyesUnknown': '{id} (không phải tác vụ người dùng của quy trình này)',
+  'readiness.fourEyesSteps': 'Kiểm soát bốn mắt (fasti:fourEyes) chỉ được nêu các tác vụ người dùng của cùng quy trình; nếu không, engine từ chối triển khai.',
 };
 
 export default messages;

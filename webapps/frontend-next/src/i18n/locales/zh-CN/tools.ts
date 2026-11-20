@@ -565,6 +565,20 @@ const messages: Catalog = {
   'absence.task.other': '作为 {name} 的代理人分配给 {assignee}。',
   'absence.card': '代 {name}',
   'absence.card.title': '代缺勤的 {name} 处理',
+  'fourEyes.title': '四眼原则',
+  'fourEyes.badge': '四眼',
+  'fourEyes.you': '您已完成此案卷中本任务所核查的前一步骤（{steps}），因此必须由其他人完成本任务。',
+  'fourEyes.assignee': '{name} 已完成此案卷中本任务所核查的前一步骤（{steps}），不能完成本任务。请分配给其他人。',
+  'fourEyes.info': '完成了此案卷中本任务所核查的前一步骤（{steps}）的人不能完成本任务。',
+  'fourEyes.formHint': '必须由其他人完成本任务（四眼原则）。',
+  'fourEyes.refused': '必须由其他人完成本任务',
+  'fourEyes.refusedHint': '您或受理人已完成本任务所核查的前一步骤。请分配给其他人。',
+  'props.fourEyes': '四眼原则',
+  'props.fourEyesHint': '完成了此处勾选步骤的人不能在同一案卷中完成本任务。',
+  'props.fourEyesSelf': '本任务自身（每次重复都需要不同的人）',
+  'props.fourEyesNone': '该流程还没有其他 User task。',
+  'props.fourEyesUnknown': '{id}（不是此流程的 User task）',
+  'readiness.fourEyesSteps': '四眼原则（fasti:fourEyes）只能指定同一流程的 User task，否则引擎会拒绝部署。',
 };
 
 export default messages;

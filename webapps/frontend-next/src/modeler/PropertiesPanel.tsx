@@ -15,9 +15,9 @@ import {
   type FieldSpec,
   type Implementation,
 } from './properties';
-import { FormFieldsSection, ListenersSection, ParametersSection, type ExtensionAccess } from './ExtensionFields';
+import { FormFieldsSection, FourEyesSection, ListenersSection, ParametersSection, type ExtensionAccess } from './ExtensionFields';
 import { EventFields, type EventAccess, type ModelObject } from './EventFields';
-import type { Generic } from './extensions';
+import { userTasksOfProcess, type FlowNode, type Generic } from './extensions';
 
 export interface BusinessObject {
   id: string;
@@ -288,6 +288,13 @@ export function PropertiesPanel({ services }: { services: EditorServices }) {
         <div className="props-sections">
           {ACTIVITY.test(bo.$type) && <ParametersSection access={access} />}
           {(bo.$type === 'bpmn:UserTask' || bo.$type === 'bpmn:StartEvent') && <FormFieldsSection access={access} />}
+          {bo.$type === 'bpmn:UserTask' && (
+            <FourEyesSection
+              access={access}
+              self={{ id: bo.id, name: readValue(current, 'name') }}
+              candidates={userTasksOfProcess(bo as unknown as FlowNode)}
+            />
+          )}
           {bo.$type === 'bpmn:UserTask' && <ListenersSection access={access} kind="taskListener" elementType={bo.$type} />}
           {bo.$type !== 'bpmn:Collaboration' && <ListenersSection access={access} kind="executionListener" elementType={bo.$type} />}
         </div>

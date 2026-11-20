@@ -584,6 +584,20 @@ const messages: Catalog = {
   'absence.task.other': 'Atribuída a {assignee} como substituto de {name}.',
   'absence.card': 'Por {name}',
   'absence.card.title': 'Em substituição a {name}, que está ausente',
+  'fourEyes.title': 'Princípio dos quatro olhos',
+  'fourEyes.badge': 'Quatro olhos',
+  'fourEyes.you': 'Você concluiu uma etapa anterior deste processo que esta tarefa verifica ({steps}), então outra pessoa precisa concluí-la.',
+  'fourEyes.assignee': '{name} concluiu uma etapa anterior deste processo que esta tarefa verifica ({steps}) e não pode concluí-la. Atribua-a a outra pessoa.',
+  'fourEyes.info': 'Quem concluiu uma etapa anterior deste processo que esta tarefa verifica ({steps}) não pode concluí-la.',
+  'fourEyes.formHint': 'Outra pessoa precisa concluir esta tarefa (princípio dos quatro olhos).',
+  'fourEyes.refused': 'Outra pessoa precisa concluir esta tarefa',
+  'fourEyes.refusedHint': 'Você ou o responsável concluiu uma etapa anterior que esta tarefa verifica. Atribua-a a outra pessoa.',
+  'props.fourEyes': 'Princípio dos quatro olhos',
+  'props.fourEyesHint': 'Quem concluiu uma etapa marcada aqui não pode concluir esta tarefa no mesmo processo.',
+  'props.fourEyesSelf': 'Esta própria tarefa (cada repetição precisa de outra pessoa)',
+  'props.fourEyesNone': 'O processo ainda não tem outras user tasks.',
+  'props.fourEyesUnknown': '{id} (não é uma user task deste processo)',
+  'readiness.fourEyesSteps': 'O princípio dos quatro olhos (fasti:fourEyes) só pode nomear user tasks do mesmo processo; caso contrário, o motor recusa a implantação.',
 };
 
 export default messages;

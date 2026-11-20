@@ -93,6 +93,21 @@ describe('checks before deploying', () => {
     expect(messages('bpmn', '<definitions')).toEqual(['error readiness.invalidXml']);
   });
 
+  it('refuses a four-eyes rule that names anything but user tasks of the process', () => {
+    const rule = (value: string) =>
+      `<extensionElements><camunda:properties><camunda:property name="fasti:fourEyes" value="${value}" /></camunda:properties></extensionElements>`;
+    const model = (value: string) =>
+      process(`<startEvent id="s" /><sequenceFlow id="f1" sourceRef="s" targetRef="draft" />
+        <userTask id="draft" camunda:candidateGroups="sales" /><sequenceFlow id="f2" sourceRef="draft" targetRef="pay" />
+        <serviceTask id="pay" camunda:expression="\${true}" /><sequenceFlow id="f3" sourceRef="pay" targetRef="approve" />
+        <userTask id="approve" name="Approve" camunda:candidateGroups="sales">${rule(value)}</userTask>
+        <sequenceFlow id="f4" sourceRef="approve" targetRef="e" /><endEvent id="e" />`);
+    expect(messages('bpmn', model('draft, approve'))).toEqual([]);
+    expect(messages('bpmn', model('draft,pay'))).toEqual(['error readiness.fourEyesSteps Approve']);
+    expect(messages('bpmn', model('ghost'))).toEqual(['error readiness.fourEyesSteps Approve']);
+    expect(messages('bpmn', model(' , '))).toEqual(['error readiness.fourEyesSteps Approve']);
+  });
+
   it('warns about a gateway that may find no way out', () => {
     expect(
       messages(

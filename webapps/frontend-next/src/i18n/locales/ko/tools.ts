@@ -565,6 +565,20 @@ const messages: Catalog = {
   'absence.task.other': '{name} 님의 대리인으로서 {assignee} 님에게 할당되었습니다.',
   'absence.card': '{name} 님 대리',
   'absence.card.title': '부재 중인 {name} 님을 대신해 맡고 있음',
+  'fourEyes.title': '4안 원칙',
+  'fourEyes.badge': '4안',
+  'fourEyes.you': '이 태스크가 확인하는 이 건의 이전 단계({steps})를 완료하셨으므로 다른 사람이 이 태스크를 완료해야 합니다.',
+  'fourEyes.assignee': '{name} 님이 이 태스크가 확인하는 이 건의 이전 단계({steps})를 완료하여 이 태스크를 완료할 수 없습니다. 다른 사람에게 할당하세요.',
+  'fourEyes.info': '이 태스크가 확인하는 이 건의 이전 단계({steps})를 완료한 사람은 이 태스크를 완료할 수 없습니다.',
+  'fourEyes.formHint': '다른 사람이 이 태스크를 완료해야 합니다(4안 원칙).',
+  'fourEyes.refused': '다른 사람이 이 태스크를 완료해야 합니다',
+  'fourEyes.refusedHint': '본인 또는 담당자가 이 태스크가 확인하는 이전 단계를 완료했습니다. 다른 사람에게 할당하세요.',
+  'props.fourEyes': '4안 원칙',
+  'props.fourEyesHint': '여기에서 선택한 단계를 완료한 사람은 같은 건에서 이 태스크를 완료할 수 없습니다.',
+  'props.fourEyesSelf': '이 태스크 자체(반복할 때마다 다른 사람이 필요)',
+  'props.fourEyesNone': '프로세스에 아직 다른 User task가 없습니다.',
+  'props.fourEyesUnknown': '{id}(이 프로세스의 User task가 아님)',
+  'readiness.fourEyesSteps': '4안 원칙(fasti:fourEyes)에는 같은 프로세스의 User task만 지정할 수 있습니다. 그렇지 않으면 엔진이 배포를 거부합니다.',
 };
 
 export default messages;

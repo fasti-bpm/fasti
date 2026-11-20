@@ -584,6 +584,20 @@ const messages: Catalog = {
   'absence.task.other': 'Asignada a {assignee} como sustituto de {name}.',
   'absence.card': 'Por {name}',
   'absence.card.title': 'En sustitución de {name}, que está ausente',
+  'fourEyes.title': 'Principio de los cuatro ojos',
+  'fourEyes.badge': 'Cuatro ojos',
+  'fourEyes.you': 'Usted completó un paso anterior de este expediente que esta tarea verifica ({steps}), así que otra persona debe completarla.',
+  'fourEyes.assignee': '{name} completó un paso anterior de este expediente que esta tarea verifica ({steps}) y no puede completarla. Asígnela a otra persona.',
+  'fourEyes.info': 'Quien completó un paso anterior de este expediente que esta tarea verifica ({steps}) no puede completarla.',
+  'fourEyes.formHint': 'Otra persona debe completar esta tarea (principio de los cuatro ojos).',
+  'fourEyes.refused': 'Otra persona debe completar esta tarea',
+  'fourEyes.refusedHint': 'Usted o la persona asignada completaron un paso anterior que esta tarea verifica. Asígnela a otra persona.',
+  'props.fourEyes': 'Principio de los cuatro ojos',
+  'props.fourEyesHint': 'Quien completó un paso marcado aquí no puede completar esta tarea en el mismo expediente.',
+  'props.fourEyesSelf': 'Esta misma tarea (cada repetición necesita otra persona)',
+  'props.fourEyesNone': 'El proceso todavía no tiene otras user tasks.',
+  'props.fourEyesUnknown': '{id} (no es una user task de este proceso)',
+  'readiness.fourEyesSteps': 'El principio de los cuatro ojos (fasti:fourEyes) solo puede nombrar user tasks del mismo proceso; si no, el motor rechaza el despliegue.',
 };
 
 export default messages;

@@ -274,7 +274,15 @@ unset FASTI_ADMIN_PASSWORD admin_password 2>/dev/null || true
 if [ "$demo_h2" = true ] && [ -z "${FASTI_ADMIN_USER:-}" ] && ! is_true "${FASTI_INSECURE_DEMO:-}"; then
   log "the H2 demo database starts empty and authentication is on: set FASTI_ADMIN_USER and FASTI_ADMIN_PASSWORD, or FASTI_INITIAL_SETUP=true to create the first admin on the setup page of the web application"
 fi
-[ -n "${FASTI_PORT:-}" ] && add_arg "--server.port=$FASTI_PORT"
+if [ -n "${FASTI_PORT:-}" ]; then
+  case "$FASTI_PORT" in
+    *[!0-9]*)
+      # Kubernetes sets FASTI_PORT=tcp://<ip>:<port> for a Service named "fasti"
+      log "WARNING: ignoring FASTI_PORT=$FASTI_PORT: not a port number; the server listens on 8080"
+      ;;
+    *) add_arg "--server.port=$FASTI_PORT" ;;
+  esac
+fi
 if [ "$production" = true ] && [ "$oauth2" = true ]; then
   # SameSite=Strict would drop the session on the redirect back from the identity provider
   add_arg "--server.servlet.session.cookie.same-site=lax"

@@ -85,7 +85,8 @@ WORKDIR /fasti
 EXPOSE 8080
 
 HEALTHCHECK --interval=15s --timeout=5s --start-period=120s --retries=4 \
-  CMD wget -q -O /dev/null "http://127.0.0.1:${FASTI_PORT:-8080}/actuator/health/readiness" || exit 1
+  CMD p="${FASTI_PORT:-8080}"; case "$p" in *[!0-9]*) p=8080;; esac; \
+      wget -q -O /dev/null "http://127.0.0.1:$p/actuator/health/readiness" || exit 1
 
 STOPSIGNAL SIGTERM
 ENTRYPOINT ["/fasti/docker-entrypoint.sh"]

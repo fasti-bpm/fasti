@@ -24,6 +24,12 @@ entries below describe the differences from that release.
   values schema rejects unknown keys. Guide: `docs/install-kubernetes.md`. CI checks the chart
   and the manifests with `helm lint` and kubeconform against Kubernetes 1.29–1.33.
 
+### Fixed
+
+- The container image ignores a `FASTI_PORT` that is not a port number, with a warning, in the
+  entrypoint and the `HEALTHCHECK`: Kubernetes sets `FASTI_PORT=tcp://<ip>:<port>` for a Service
+  named `fasti`, and the server then failed to start.
+
 ## [1.0.1] - 2026-11-21
 
 ### Security

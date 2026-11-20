@@ -141,7 +141,7 @@ Any Spring Boot property can be set as an environment variable too (for example
 | `FASTI_CONFIG` | | additional YAML files (comma-separated) |
 | `FASTI_EXTRA_LIB` | | directory with additional jars (drivers, plugins) |
 | `FASTI_MARIADB_USE_MYSQL_DRIVER` | `true` | uses MySQL Connector/J when the MariaDB driver is missing |
-| `FASTI_PORT` | 8080 | HTTP port; the image `HEALTHCHECK` follows it |
+| `FASTI_PORT` | 8080 | HTTP port; the image `HEALTHCHECK` follows it. A value that is not a number (Kubernetes sets `FASTI_PORT=tcp://...` for a Service named `fasti`) is ignored with a warning |
 | `FASTI_APPCDS`, `FASTI_APPCDS_FILE` | `false`, `/fasti/data/fasti-appcds.jsa` | class data sharing for faster startup (see Performance tuning) |
 | `FASTI_BASE64_INTRINSICS` | `false` | `false` adds `-XX:-UseBASE64Intrinsics` to mitigate CVE-2026-114938 ("Java4Shell"); `true` keeps the JVM Base64 intrinsic. See [docs/security/CVE-2026-114938.md](../../docs/security/CVE-2026-114938.md) |
 

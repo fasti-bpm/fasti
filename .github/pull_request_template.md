@@ -1,7 +1,6 @@
 ## Description
 
-<!-- What changes and why. Link the issue, if any.
-     Bạn có thể viết bằng tiếng Việt nếu thấy thuận tiện hơn. -->
+<!-- What changes and why. Link the issue, if any. -->
 
 ## Checklist
 

@@ -61,7 +61,7 @@ Run); somente `FASTI_INSECURE_DEMO=true` as desativa, para demonstrações.
   - procedimentos operacionais anexados a incidentes;
   - uma página de integridade do sistema (incidentes, jobs com falha, jobs atrasados, tarefas externas, lotes);
   - layout adaptado a dispositivos móveis;
-  - 13 idiomas, incluindo vietnamita; o modelador BPMN também fala vietnamita.
+  - 13 idiomas.
 - **Autenticação única (OIDC)**: Keycloak, Microsoft Entra ID e outros provedores OpenID Connect;
   declarações mapeadas para grupos e tenants; tokens bearer JWT para a API REST. Disponível para Run,
   Spring Boot, Tomcat e WildFly.
@@ -247,19 +247,50 @@ O Fasti dá continuidade diretamente a partir da tag `7.24.0`; todas as correç�
 
 ## Plano de evolução (planejamento)
 
-> Este é um **plano**, não um compromisso; a ordem pode mudar conforme o feedback dos usuários.
+> Este é um **plano**, não um compromisso com datas. O escopo e a ordem podem mudar.
 
-- **Delegação durante ausências**: um substituto para um intervalo de datas; novas tarefas são reatribuídas e a
-  alteração é auditada ([fórum 2788](https://forum.camunda.io/t/2788),
-  [38199](https://forum.camunda.io/t/38199)).
-- **Aprovação por duas pessoas**: quem aprova uma etapa posterior não pode ser a pessoa que executou uma etapa
-  anterior, com essa regra aplicada pelo motor.
-- **Chart Helm** para Kubernetes.
-- **Métricas e OpenTelemetry**: Micrometer/Prometheus nativos, rastreamento de processos e jobs.
-- **Atualização do MyBatis** para uma versão atual.
-- **Linhas de suporte de longo prazo (LTS)** para usuários que atualizam raramente.
-- **Verificação do DB2**.
-- **Endpoint de agregação da carga de trabalho**, para que a página de carga de trabalho continue rápida com grandes conjuntos de dados.
+### Novembro e dezembro de 2026 (em andamento)
+
+Primeiro, tudo o que os usuários já pediram.
+
+**1.x: Mais fácil de operar**
+
+- Artefatos Maven no Maven Central.
+- Chart Helm e manifestos de exemplo para Kubernetes.
+- Métricas do Prometheus e rastreamento com OpenTelemetry.
+- Logs estruturados em JSON.
+- Atualização do MyBatis, que também atualiza o OGNL.
+- Verificação do DB2 e revisão das traduções por falantes nativos.
+
+**2.0: O que pedem as equipes de setores regulados**
+
+- Um substituto durante ausências, para que o trabalho não fique esperando alguém de licença
+  ([fórum 2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199)).
+- Controle de quatro olhos para aprovações.
+- Uma trilha de auditoria imutável, assinada ou com hash, com relatórios de auditoria.
+- CMMN na nova interface e descontinuação das aplicações AngularJS.
+
+**Novos territórios**
+
+- Linhas de suporte de longo prazo.
+- Um servidor MCP para o motor.
+- Etapas de IA nos processos.
+
+### Metas para 2027
+
+- **1º trimestre de 2027: Rodar em escala**: um operador Kubernetes para atualizações graduais e
+  escalonamento; histórico transmitido para Kafka e OpenSearch, para que o banco de dados de runtime
+  continue pequeno; benchmarks de desempenho publicados, repetidos a cada versão.
+- **2º trimestre de 2027: Um kit de ferramentas para quem desenvolve**: um SDK de conectores, com
+  conectores para REST, Kafka, e-mail e armazenamento de objetos; um kit de testes de processos com
+  testes de cenários e relatórios de cobertura; um construtor de formulários com componentes
+  reutilizáveis.
+- **3º trimestre de 2027: Ver como os processos se saem**: análise de processos (mapas de calor,
+  gargalos e relatórios de duração); metas de nível de serviço com alertas; um assistente que
+  rascunha BPMN a partir de texto e explica incidentes.
+- **4º trimestre de 2027: Confiança em escala corporativa**: administração multi-tenant com cotas
+  para cada tenant; uma auditoria de segurança independente, com o relatório publicado; builds
+  reproduzíveis com proveniência assinada para cada versão.
 
 <a id="commitments-support-and-security-patches"></a>
 

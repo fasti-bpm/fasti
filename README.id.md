@@ -61,7 +61,7 @@ Run); hanya `FASTI_INSECURE_DEMO=true` yang menonaktifkannya, untuk demo.
   - panduan operasional yang dilampirkan pada insiden;
   - halaman kesehatan sistem (insiden, job gagal, job terlambat, tugas eksternal, batch);
   - tata letak yang ramah perangkat seluler;
-  - 13 bahasa termasuk bahasa Vietnam; pemodel BPMN juga mendukung bahasa Vietnam.
+  - 13 bahasa.
 - **Single sign-on (OIDC)**: Keycloak, Microsoft Entra ID, dan penyedia OpenID Connect lainnya;
   klaim dipetakan ke grup dan tenant; token bearer JWT untuk REST API. Tersedia untuk Run,
   Spring Boot, Tomcat, dan WildFly.
@@ -247,19 +247,49 @@ Fasti melanjutkan langsung dari tag `7.24.0`; setiap perbaikan dan perubahan dih
 
 ## Peta jalan (rencana)
 
-> Ini adalah **rencana**, bukan komitmen; urutannya dapat berubah berdasarkan masukan pengguna.
+> Ini adalah **rencana**, bukan komitmen tanggal. Cakupan dan urutannya dapat berubah.
 
-- **Delegasi saat tidak di kantor**: pengganti untuk rentang tanggal tertentu; tugas baru dialihkan dan
-  perubahannya dicatat untuk audit ([forum 2788](https://forum.camunda.io/t/2788),
-  [38199](https://forum.camunda.io/t/38199)).
-- **Persetujuan empat mata**: pemberi persetujuan pada langkah berikutnya tidak boleh merupakan orang yang mengerjakan langkah
-  sebelumnya, dan aturan ini diterapkan di dalam mesin.
-- **Helm chart** untuk Kubernetes.
-- **Metrik dan OpenTelemetry**: Micrometer/Prometheus bawaan, pelacakan untuk proses dan job.
-- **Pembaruan MyBatis** ke rilis terkini.
-- **Lini dukungan jangka panjang (LTS)** untuk pengguna yang jarang melakukan pembaruan.
-- **Verifikasi DB2**.
-- **Endpoint agregat beban kerja**, agar halaman beban kerja tetap cepat dengan kumpulan data besar.
+### November dan Desember 2026 (sedang berjalan)
+
+Pertama, semua yang sudah diminta pengguna.
+
+**1.x: Lebih mudah dijalankan**
+
+- Artefak Maven di Maven Central.
+- Helm chart dan contoh manifest Kubernetes.
+- Metrik Prometheus dan pelacakan OpenTelemetry.
+- Log JSON terstruktur.
+- Pembaruan MyBatis, yang sekaligus memperbarui OGNL.
+- Verifikasi DB2 dan tinjauan terjemahan oleh penutur asli.
+
+**2.0: Yang diminta tim di sektor yang diregulasi**
+
+- Pengganti selama ketidakhadiran, agar pekerjaan tidak menunggu orang yang sedang cuti
+  ([forum 2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199)).
+- Kontrol empat mata untuk persetujuan.
+- Jejak audit yang tidak dapat diubah, ditandatangani atau di-hash, beserta laporan audit.
+- CMMN di antarmuka baru dan penghentian aplikasi AngularJS.
+
+**Ranah baru**
+
+- Lini dukungan jangka panjang.
+- Server MCP untuk mesin.
+- Langkah AI dalam proses.
+
+### Target 2027
+
+- **Kuartal I 2027: Berjalan dalam skala besar**: operator Kubernetes untuk pembaruan bergilir dan
+  penskalaan; riwayat dialirkan ke Kafka dan OpenSearch agar basis data runtime tetap kecil;
+  benchmark kinerja yang dipublikasikan, diulang untuk setiap rilis.
+- **Kuartal II 2027: Perangkat bagi pengembang**: SDK konektor, dengan konektor untuk REST, Kafka,
+  email, dan object storage; kit pengujian proses dengan uji skenario dan laporan cakupan; pembuat
+  formulir dengan komponen yang dapat digunakan ulang.
+- **Kuartal III 2027: Melihat kinerja proses**: analitik proses (heatmap, hambatan, dan laporan
+  durasi); target tingkat layanan dengan peringatan; asisten yang menyusun draf BPMN dari teks dan
+  menjelaskan insiden.
+- **Kuartal IV 2027: Kepercayaan di skala perusahaan**: administrasi multi-tenant dengan kuota untuk
+  setiap tenant; audit keamanan independen, dengan laporan yang dipublikasikan; build yang dapat
+  direproduksi dengan provenans bertanda tangan untuk setiap rilis.
 
 <a id="commitments-support-and-security-patches"></a>
 

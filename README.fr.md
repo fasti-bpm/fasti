@@ -61,7 +61,7 @@ Run) ; seul `FASTI_INSECURE_DEMO=true` les désactive, pour les démonstrations.
   - procédures opérationnelles associées aux incidents ;
   - page d’état du système (incidents, jobs en échec, jobs en retard, tâches externes, traitements par lots) ;
   - mise en page adaptée aux mobiles ;
-  - 13 langues, dont le vietnamien ; le modeleur BPMN est lui aussi disponible en vietnamien.
+  - 13 langues.
 - **Authentification unique (OIDC)** : Keycloak, Microsoft Entra ID et d’autres fournisseurs OpenID Connect ;
   attributs de jeton associés aux groupes et aux tenants ; jetons Bearer JWT pour l’API REST. Disponible pour Run,
   Spring Boot, Tomcat et WildFly.
@@ -247,19 +247,52 @@ Fasti poursuit directement le développement à partir du tag `7.24.0` ; chaque 
 
 ## Feuille de route (prévisions)
 
-> Il s’agit d’un **plan**, et non d’un engagement ; l’ordre peut évoluer selon les retours des utilisateurs.
+> Il s’agit d’un **plan**, et non d’un engagement sur des dates. Le périmètre et l’ordre peuvent
+> évoluer.
 
-- **Délégation en cas d’absence** : un remplaçant pour une période donnée ; les nouvelles tâches sont réaffectées et la
-  modification est consignée dans le journal d’audit ([forum 2788](https://forum.camunda.io/t/2788),
-  [38199](https://forum.camunda.io/t/38199)).
-- **Approbation à quatre yeux** : la personne qui approuve une étape ultérieure ne doit pas être celle qui a réalisé une étape
-  précédente, règle appliquée au sein du moteur.
-- **Chart Helm** pour Kubernetes.
-- **Métriques et OpenTelemetry** : Micrometer/Prometheus natifs, traçage des processus et des jobs.
-- **Mise à niveau de MyBatis** vers une version actuelle.
-- **Branches de support à long terme (LTS)** pour les utilisateurs qui effectuent rarement des mises à niveau.
-- **Vérification de DB2**.
-- **Point de terminaison d’agrégation de la charge de travail**, afin que la page de charge de travail reste rapide avec de grands volumes de données.
+### Novembre et décembre 2026 (en cours)
+
+D’abord, tout ce que les utilisateurs ont déjà demandé.
+
+**1.x : Plus simple à exploiter**
+
+- Artefacts Maven sur Maven Central.
+- Chart Helm et exemples de manifestes Kubernetes.
+- Métriques Prometheus et traçage OpenTelemetry.
+- Journaux structurés au format JSON.
+- Mise à niveau de MyBatis, qui met aussi à jour OGNL.
+- Vérification de DB2 et relecture des traductions par des locuteurs natifs.
+
+**2.0 : Ce que demandent les équipes des secteurs réglementés**
+
+- Un remplaçant pendant les absences, pour que le travail n’attende pas une personne en congé
+  ([forum 2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199)).
+- Contrôle à quatre yeux pour les approbations.
+- Une piste d’audit immuable, signée ou hachée, avec des rapports d’audit.
+- CMMN dans la nouvelle interface et retrait des applications AngularJS.
+
+**Nouveaux territoires**
+
+- Branches de support à long terme.
+- Un serveur MCP pour le moteur.
+- Des étapes d’IA dans les processus.
+
+### Objectifs pour 2027
+
+- **T1 2027 : Fonctionner à grande échelle** : un opérateur Kubernetes pour les mises à niveau
+  progressives et la mise à l’échelle ; un historique diffusé en continu vers Kafka et OpenSearch,
+  pour que la base de données d’exécution reste compacte ; des benchmarks de performance publiés,
+  refaits à chaque version.
+- **T2 2027 : Une boîte à outils pour les développeurs** : un SDK de connecteurs, avec des
+  connecteurs pour REST, Kafka, l’e-mail et le stockage objet ; un kit de test de processus avec des
+  tests de scénarios et des rapports de couverture ; un générateur de formulaires avec des
+  composants réutilisables.
+- **T3 2027 : Voir comment les processus se comportent** : analyse des processus (cartes de chaleur,
+  goulots d’étranglement et rapports de durée) ; objectifs de niveau de service avec alertes ; un
+  assistant qui rédige du BPMN à partir de texte et explique les incidents.
+- **T4 2027 : La confiance à l’échelle de l’entreprise** : administration multi-tenant avec des
+  quotas par tenant ; un audit de sécurité indépendant, dont le rapport est publié ; des builds
+  reproductibles avec une provenance signée pour chaque version.
 
 <a id="commitments-support-and-security-patches"></a>
 

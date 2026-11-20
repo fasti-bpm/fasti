@@ -59,7 +59,7 @@ Run); only `FASTI_INSECURE_DEMO=true` turns them off, for demos.
   - runbooks attached to incidents;
   - a system health page (incidents, failed jobs, late jobs, external tasks, batches);
   - mobile-friendly layout;
-  - 13 languages including Vietnamese; the BPMN modeler speaks Vietnamese too.
+  - 13 languages.
 - **Single sign-on (OIDC)**: Keycloak, Microsoft Entra ID and other OpenID Connect providers;
   claims mapped to groups and tenants; JWT bearer tokens for the REST API. Available for Run,
   Spring Boot, Tomcat and WildFly.
@@ -245,19 +245,49 @@ Fasti continues directly from the `7.24.0` tag; every fix and change is counted 
 
 ## Roadmap (plan)
 
-> This is a **plan**, not a commitment; the order may change with user feedback.
+> This is a **plan**, not a commitment to dates. Scope and order may change.
 
-- **Out-of-office delegation**: a substitute for a date range; new tasks are reassigned and the
-  change is audited ([forum 2788](https://forum.camunda.io/t/2788),
-  [38199](https://forum.camunda.io/t/38199)).
-- **Four-eyes approval**: the approver of a later step must not be the person who did an earlier
-  one, enforced in the engine.
-- **Helm chart** for Kubernetes.
-- **Metrics and OpenTelemetry**: native Micrometer/Prometheus, tracing for processes and jobs.
-- **MyBatis upgrade** to a current release.
-- **Long-term support (LTS) lines** for users who upgrade rarely.
-- **DB2 verification**.
-- **Workload aggregate endpoint**, so that the workload page stays fast with large datasets.
+### November and December 2026 (in progress)
+
+First, everything users have already asked for.
+
+**1.x: Easier to run**
+
+- Maven artifacts on Maven Central.
+- Helm chart and sample Kubernetes manifests.
+- Prometheus metrics and OpenTelemetry tracing.
+- Structured JSON logs.
+- MyBatis upgrade, which also updates OGNL.
+- DB2 verification and native-speaker review of translations.
+
+**2.0: What teams in regulated work ask for**
+
+- A substitute during absence, so work does not wait for someone on leave
+  ([forum 2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199)).
+- Four-eyes control for approvals.
+- An immutable audit trail, signed or hashed, with audit reports.
+- CMMN in the new interface and retirement of the AngularJS apps.
+
+**New ground**
+
+- Long-term support lines.
+- An MCP server for the engine.
+- AI steps in processes.
+
+### Goals for 2027
+
+- **Q1 2027: Run at scale**: a Kubernetes operator for rolling upgrades and scaling; history
+  streamed to Kafka and OpenSearch, so the runtime database stays small; published performance
+  benchmarks, repeated for every release.
+- **Q2 2027: A toolkit for builders**: a connector SDK, with connectors for REST, Kafka, email and
+  object storage; a process test kit with scenario tests and coverage reports; a form builder
+  with reusable components.
+- **Q3 2027: See how processes perform**: process analytics (heatmaps, bottlenecks and duration
+  reports); service-level targets with alerts; an assistant that drafts BPMN from text and
+  explains incidents.
+- **Q4 2027: Trust at enterprise scale**: multi-tenant administration with quotas for each tenant;
+  an independent security audit, with the report published; reproducible builds with signed
+  provenance for every release.
 
 <a id="commitments-support-and-security-patches"></a>
 

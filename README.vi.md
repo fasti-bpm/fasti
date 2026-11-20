@@ -59,7 +59,7 @@ tắt được, để demo.
   - hướng dẫn xử lý (runbook) gắn với sự cố;
   - trang sức khỏe hệ thống (sự cố, job lỗi, job trễ, external task, batch);
   - dùng tốt trên điện thoại;
-  - 13 ngôn ngữ, gồm tiếng Việt; trình soạn BPMN có tiếng Việt.
+  - 13 ngôn ngữ.
 - **Đăng nhập một lần (OIDC)**: Keycloak, Microsoft Entra ID và nhà cung cấp OpenID Connect
   khác; claim sang nhóm và tenant; JWT bearer cho REST API. Có cho Run, Spring Boot, Tomcat và
   WildFly.
@@ -239,18 +239,48 @@ Fasti tiếp nối trực tiếp từ tag `7.24.0`; mọi bản vá và thay đ�
 
 ## Lộ trình (kế hoạch)
 
-> Đây là **kế hoạch**, chưa phải cam kết; thứ tự có thể đổi theo phản hồi của người dùng.
+> Đây là **kế hoạch**, không phải cam kết về ngày. Phạm vi và thứ tự có thể thay đổi.
 
-- **Ủy quyền khi vắng mặt**: người thay thế trong một khoảng ngày, task mới được giao lại và ghi
-  audit ([diễn đàn 2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199)).
-- **Phê duyệt bốn mắt**: người duyệt bước sau không được là người đã làm bước trước, kiểm tra ở
-  engine.
-- **Helm chart** cho Kubernetes.
-- **Metrics và OpenTelemetry**: Micrometer/Prometheus gốc, tracing cho process và job.
-- **Nâng MyBatis** lên bản mới.
-- **Dòng hỗ trợ dài hạn (LTS)** cho người cần nâng cấp thưa.
-- **Kiểm chứng DB2**.
-- **Endpoint tổng hợp khối lượng công việc** để trang khối lượng nhanh hơn với dữ liệu lớn.
+### Tháng 11 và tháng 12 năm 2026 (đang làm)
+
+Trước hết là mọi thứ người dùng đã yêu cầu.
+
+**1.x: Dễ vận hành hơn**
+
+- Artifact Maven trên Maven Central.
+- Helm chart và manifest Kubernetes mẫu.
+- Metrics Prometheus và tracing OpenTelemetry.
+- Log JSON có cấu trúc.
+- Nâng MyBatis, kéo theo nâng OGNL.
+- Kiểm chứng DB2 và người bản ngữ rà soát các bản dịch.
+
+**2.0: Những gì đội ngũ trong ngành được quản lý chặt cần**
+
+- Người thay thế khi vắng mặt, để công việc không phải chờ người đang nghỉ
+  ([diễn đàn 2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199)).
+- Kiểm soát bốn mắt cho phê duyệt.
+- Audit trail bất biến, có chữ ký hoặc hash, kèm báo cáo audit.
+- CMMN trong giao diện mới và ngừng các ứng dụng AngularJS.
+
+**Hướng mới**
+
+- Các dòng hỗ trợ dài hạn.
+- MCP server cho engine.
+- Bước AI trong quy trình.
+
+### Mục tiêu năm 2027
+
+- **Quý 1/2027: Chạy ở quy mô lớn**: Kubernetes operator để nâng cấp cuốn chiếu và mở rộng; đẩy
+  history sang Kafka và OpenSearch để database runtime luôn gọn; công bố benchmark hiệu năng, đo
+  lại ở mỗi bản phát hành.
+- **Quý 2/2027: Bộ công cụ cho người xây dựng**: SDK connector, kèm connector cho REST, Kafka, email
+  và object storage; bộ kiểm thử quy trình với test kịch bản và báo cáo độ phủ; trình dựng form với
+  các thành phần tái sử dụng.
+- **Quý 3/2027: Thấy quy trình chạy thế nào**: phân tích quy trình (heatmap, điểm nghẽn, báo cáo
+  thời gian); mục tiêu mức dịch vụ kèm cảnh báo; trợ lý soạn BPMN từ văn bản và giải thích sự cố.
+- **Quý 4/2027: Tin cậy ở quy mô doanh nghiệp**: quản trị nhiều tenant với hạn mức cho từng tenant;
+  kiểm toán bảo mật độc lập, công bố báo cáo; build tái lập được, có provenance được ký cho mọi bản
+  phát hành.
 
 <a id="commitments-support-and-security-patches"></a>
 

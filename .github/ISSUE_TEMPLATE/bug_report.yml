@@ -6,8 +6,6 @@ body:
     attributes:
       value: |
         Security vulnerabilities: do **not** report them here, see SECURITY.md.
-
-        *Bạn có thể viết bằng tiếng Việt. Lỗ hổng bảo mật: không báo ở đây, xem SECURITY.vi.md.*
   - type: input
     id: version
     attributes:

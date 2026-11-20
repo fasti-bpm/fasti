@@ -61,7 +61,7 @@ Run); nur `FASTI_INSECURE_DEMO=true` deaktiviert diese für Demonstrationszwecke
   - direkt an Incidents hinterlegte Runbooks;
   - eine Seite zum Systemzustand (Incidents, fehlgeschlagene Jobs, verspätete Jobs, externe Aufgaben, Batches);
   - mobilfreundliches Layout;
-  - 13 Sprachen einschließlich Vietnamesisch; auch der BPMN-Modeler unterstützt Vietnamesisch.
+  - 13 Sprachen.
 - **Single Sign-on (OIDC)**: Keycloak, Microsoft Entra ID und andere OpenID Connect-Anbieter;
   Zuordnung von Claims zu Gruppen und Mandanten; JWT-Bearer-Token für die REST-API. Verfügbar für Run,
   Spring Boot, Tomcat und WildFly.
@@ -247,19 +247,49 @@ Fasti setzt direkt beim Tag `7.24.0` an; jede Fehlerbehebung und Änderung wird 
 
 ## Roadmap (Plan)
 
-> Dies ist ein **Plan**, keine Zusage; die Reihenfolge kann sich durch Anwenderfeedback ändern.
+> Dies ist ein **Plan**, keine Zusage zu Terminen. Umfang und Reihenfolge können sich ändern.
 
-- **Abwesenheitsvertretung**: eine Vertretung für einen Datumsbereich; neue Aufgaben werden neu zugewiesen und die
-  Änderung wird protokolliert ([Forum 2788](https://forum.camunda.io/t/2788),
-  [38199](https://forum.camunda.io/t/38199)).
-- **Freigabe nach dem Vier-Augen-Prinzip**: Die freigebende Person eines späteren Schritts darf nicht diejenige sein, die einen früheren
-  Schritt ausgeführt hat; dies wird in der Engine erzwungen.
-- **Helm-Chart** für Kubernetes.
-- **Metriken und OpenTelemetry**: native Unterstützung für Micrometer/Prometheus, Tracing für Prozesse und Jobs.
-- **MyBatis-Upgrade** auf eine aktuelle Version.
-- **Versionslinien mit Langzeitunterstützung (LTS)** für Anwender, die selten aktualisieren.
-- **DB2-Verifizierung**.
-- **Endpunkt für aggregierte Auslastungsdaten**, damit die Auslastungsseite auch bei großen Datenbeständen schnell bleibt.
+### November und Dezember 2026 (in Arbeit)
+
+Zuerst alles, worum Anwender bereits gebeten haben.
+
+**1.x: Einfacher zu betreiben**
+
+- Maven-Artefakte auf Maven Central.
+- Helm-Chart und Beispielmanifeste für Kubernetes.
+- Prometheus-Metriken und Tracing mit OpenTelemetry.
+- Strukturierte Logs im JSON-Format.
+- MyBatis-Upgrade, das auch OGNL aktualisiert.
+- DB2-Verifizierung und Prüfung der Übersetzungen durch Muttersprachler.
+
+**2.0: Was Teams in regulierten Bereichen verlangen**
+
+- Eine Abwesenheitsvertretung, damit Arbeit nicht liegen bleibt, während jemand abwesend ist
+  ([Forum 2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199)).
+- Freigaben nach dem Vier-Augen-Prinzip.
+- Ein unveränderlicher Audit-Trail, signiert oder gehasht, mit Audit-Berichten.
+- CMMN in der neuen Oberfläche und Ablösung der AngularJS-Anwendungen.
+
+**Neuland**
+
+- Versionslinien mit Langzeitunterstützung.
+- Ein MCP-Server für die Engine.
+- KI-Schritte in Prozessen.
+
+### Ziele für 2027
+
+- **Q1 2027: Betrieb im großen Maßstab**: ein Kubernetes-Operator für Rolling Upgrades und
+  Skalierung; Historie wird nach Kafka und OpenSearch gestreamt, damit die Laufzeitdatenbank klein
+  bleibt; veröffentlichte Performance-Benchmarks, für jedes Release wiederholt.
+- **Q2 2027: Ein Werkzeugkasten für Entwickler**: ein Connector-SDK mit Connectoren für REST, Kafka,
+  E-Mail und Object Storage; ein Prozess-Testkit mit Szenariotests und Abdeckungsberichten; ein
+  Formular-Builder mit wiederverwendbaren Komponenten.
+- **Q3 2027: Sehen, wie Prozesse laufen**: Prozessanalysen (Heatmaps, Engpässe und Berichte zur
+  Durchlaufzeit); Service-Level-Ziele mit Alarmierung; ein Assistent, der BPMN aus Text entwirft und
+  Incidents erklärt.
+- **Q4 2027: Vertrauen auf Unternehmensebene**: mandantenfähige Administration mit Kontingenten pro
+  Mandant; ein unabhängiges Sicherheitsaudit mit veröffentlichtem Bericht; reproduzierbare Builds
+  mit signierter Provenienz für jedes Release.
 
 <a id="commitments-support-and-security-patches"></a>
 

@@ -61,7 +61,7 @@ Run); solo `FASTI_INSECURE_DEMO=true` las desactiva, para demostraciones.
   - procedimientos operativos adjuntos a los incidentes;
   - una página de estado del sistema (incidentes, trabajos fallidos, trabajos retrasados, tareas externas, lotes);
   - diseño adaptado a dispositivos móviles;
-  - 13 idiomas, incluido el vietnamita; el modelador BPMN también está disponible en vietnamita.
+  - 13 idiomas.
 - **Inicio de sesión único (OIDC)**: Keycloak, Microsoft Entra ID y otros proveedores de OpenID Connect;
   asignación de atributos de identidad a grupos e inquilinos; tokens de portador JWT para la API REST. Disponible para Run,
   Spring Boot, Tomcat y WildFly.
@@ -247,19 +247,51 @@ Fasti continúa directamente desde la etiqueta `7.24.0`; todas las correcciones 
 
 ## Hoja de ruta (plan)
 
-> Esto es un **plan**, no un compromiso; el orden puede cambiar según los comentarios de los usuarios.
+> Esto es un **plan**, no un compromiso de fechas. El alcance y el orden pueden cambiar.
 
-- **Delegación por ausencia**: un suplente para un intervalo de fechas; las tareas nuevas se reasignan y el
-  cambio queda registrado para auditoría ([foro 2788](https://forum.camunda.io/t/2788),
-  [38199](https://forum.camunda.io/t/38199)).
-- **Aprobación por dos personas**: quien apruebe un paso posterior no debe ser quien haya realizado uno
-  anterior, con una comprobación obligatoria en el motor.
-- **Chart de Helm** para Kubernetes.
-- **Métricas y OpenTelemetry**: Micrometer/Prometheus nativos, trazas para procesos y trabajos.
-- **Actualización de MyBatis** a una versión actual.
-- **Líneas de soporte a largo plazo (LTS)** para usuarios que actualizan con poca frecuencia.
-- **Verificación de DB2**.
-- **Endpoint de agregación de carga de trabajo**, para que la página de carga de trabajo siga siendo rápida con grandes conjuntos de datos.
+### Noviembre y diciembre de 2026 (en curso)
+
+Primero, todo lo que los usuarios ya han pedido.
+
+**1.x: Más fácil de operar**
+
+- Artefactos de Maven en Maven Central.
+- Chart de Helm y manifiestos de ejemplo para Kubernetes.
+- Métricas de Prometheus y trazas con OpenTelemetry.
+- Registros estructurados en JSON.
+- Actualización de MyBatis, que también actualiza OGNL.
+- Verificación de DB2 y revisión de las traducciones por hablantes nativos.
+
+**2.0: Lo que piden los equipos de sectores regulados**
+
+- Un suplente durante las ausencias, para que el trabajo no espere a quien está de permiso
+  ([foro 2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199)).
+- Control de cuatro ojos para las aprobaciones.
+- Un registro de auditoría inmutable, firmado o con hash, con informes de auditoría.
+- CMMN en la nueva interfaz y retirada de las aplicaciones AngularJS.
+
+**Terreno nuevo**
+
+- Líneas de soporte a largo plazo.
+- Un servidor MCP para el motor.
+- Pasos de IA en los procesos.
+
+### Objetivos para 2027
+
+- **1.er trimestre de 2027: Funcionar a gran escala**: un operador de Kubernetes para
+  actualizaciones progresivas y escalado; historial transmitido a Kafka y OpenSearch, para que la
+  base de datos de ejecución siga siendo pequeña; pruebas de rendimiento publicadas, repetidas en
+  cada versión.
+- **2.º trimestre de 2027: Herramientas para desarrolladores**: un SDK de conectores, con conectores
+  para REST, Kafka, correo electrónico y almacenamiento de objetos; un kit de pruebas de procesos
+  con pruebas de escenarios e informes de cobertura; un generador de formularios con componentes
+  reutilizables.
+- **3.er trimestre de 2027: Ver cómo rinden los procesos**: analítica de procesos (mapas de calor,
+  cuellos de botella e informes de duración); objetivos de nivel de servicio con alertas; un
+  asistente que redacta BPMN a partir de texto y explica los incidentes.
+- **4.º trimestre de 2027: Confianza a escala empresarial**: administración multiinquilino con
+  cuotas para cada inquilino; una auditoría de seguridad independiente, con el informe publicado;
+  compilaciones reproducibles con procedencia firmada para cada versión.
 
 <a id="commitments-support-and-security-patches"></a>
 

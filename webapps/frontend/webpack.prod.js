@@ -60,7 +60,7 @@ module.exports = (_env, argv = {}) => {
     module: {
       rules: [
         {
-          test: /\.js$/,
+          test: /\.c?js$/,
           include: /node_modules/,
           use: [path.resolve(__dirname, './scripts/license-header-loader.js')]
         }

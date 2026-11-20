@@ -966,13 +966,18 @@ describe('links', () => {
 });
 
 describe('command palette', () => {
+  // The palette is a modal dialog, but a page below it may still finish loading: the content that
+  // replaces its loading region (a live region, which the modal leaves exposed) is outside the
+  // dialog and may hold a combobox of its own, e.g. the sort choice of a table. Ask the dialog.
+  const paletteInput = async () => within(await screen.findByRole('dialog')).findByRole('combobox');
+
   it('offers the monitoring pages and opens an instance by its id', async () => {
     const user = userEvent.setup();
     backend();
     const router = renderApp('/cockpit');
 
     await user.click(await screen.findByRole('button', { name: 'Find a command' }));
-    const input = await screen.findByRole('combobox');
+    const input = await paletteInput();
     expect(await screen.findByRole('option', { name: 'Cockpit: Incidents' })).toBeVisible();
 
     await user.type(input, 'p1');
@@ -1002,13 +1007,13 @@ describe('command palette', () => {
     const router = renderApp('/cockpit');
 
     await user.click(await screen.findByRole('button', { name: 'Find a command' }));
-    await user.type(await screen.findByRole('combobox'), 'i-42');
+    await user.type(await paletteInput(), 'i-42');
     await user.click(await screen.findByRole('option', { name: 'Connection refused · charge' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/cockpit/processes/instance/p1'));
     expect(router.state.location.search).toBe('?tab=incidents');
 
     await user.click(await screen.findByRole('button', { name: 'Find a command' }));
-    await user.type(await screen.findByRole('combobox'), 'old-1');
+    await user.type(await paletteInput(), 'old-1');
     await user.click(await screen.findByRole('option', { name: 'INV-1 · invoice' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/cockpit/history/instance/old-1'));
 

@@ -85,7 +85,7 @@ WORKDIR /fasti
 EXPOSE 8080
 
 HEALTHCHECK --interval=15s --timeout=5s --start-period=120s --retries=4 \
-  CMD p="${FASTI_PORT:-8080}"; case "$p" in *[!0-9]*) p=8080;; esac; \
+  CMD p="${FASTI_MANAGEMENT_PORT:-${FASTI_PORT:-8080}}"; case "$p" in *[!0-9]*) p=8080;; esac; \
       wget -q -O /dev/null "http://127.0.0.1:$p/actuator/health/readiness" || exit 1
 
 STOPSIGNAL SIGTERM

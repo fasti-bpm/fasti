@@ -142,6 +142,11 @@ Any Spring Boot property can be set as an environment variable too (for example
 | `FASTI_EXTRA_LIB` | | directory with additional jars (drivers, plugins) |
 | `FASTI_MARIADB_USE_MYSQL_DRIVER` | `true` | uses MySQL Connector/J when the MariaDB driver is missing |
 | `FASTI_PORT` | 8080 | HTTP port; the image `HEALTHCHECK` follows it. A value that is not a number (Kubernetes sets `FASTI_PORT=tcp://...` for a Service named `fasti`) is ignored with a warning |
+| `FASTI_LOG_FORMAT` | `text` | `json`: one JSON object per log line (Elastic Common Schema); also `logstash`, `gelf` |
+| `FASTI_METRICS_PROMETHEUS_ENABLED` | `false` | `true`: Prometheus metrics at `/actuator/prometheus` (JVM, HTTP, pool, engine); needs a token or `FASTI_MANAGEMENT_PORT` |
+| `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | | scrape token (`Authorization: Bearer <token>`) for the metrics on the application port |
+| `FASTI_MANAGEMENT_PORT` | | serves the actuator (health and metrics) on a port of its own; the `HEALTHCHECK` follows it (a value that is not a number is ignored with a warning) |
+| `FASTI_TRACING_ENABLED` | `false` | `true`: OpenTelemetry spans for requests, engine commands and jobs, sent to `OTEL_EXPORTER_OTLP_ENDPOINT` (OTLP/HTTP) |
 | `FASTI_APPCDS`, `FASTI_APPCDS_FILE` | `false`, `/fasti/data/fasti-appcds.jsa` | class data sharing for faster startup (see Performance tuning) |
 | `FASTI_BASE64_INTRINSICS` | `false` | `false` adds `-XX:-UseBASE64Intrinsics` to mitigate CVE-2026-114938 ("Java4Shell"); `true` keeps the JVM Base64 intrinsic. See [docs/security/CVE-2026-114938.md](../../docs/security/CVE-2026-114938.md) |
 
@@ -170,6 +175,9 @@ licensed separately and not redistributed: add them in a derived image
 - Health: `/actuator/health`, `/actuator/health/liveness`, `/actuator/health/readiness`
   (readiness includes the database and the engine); nothing else of the actuator is exposed,
   no login needed. The image's `HEALTHCHECK` polls readiness.
+- Metrics, tracing, JSON logs: off by default; see
+  [docs/install-docker.md](../../docs/install-docker.md#13-observability). The native
+  `/actuator/prometheus` endpoint replaces the JMX exporter agent (`JMX_PROMETHEUS`) for most uses.
 - Rate limiting: repeated failed logins lock the account for an increasing time, which an
   attacker can abuse to lock out an administrator briefly. Rate-limit `/engine-rest` and
   `/fasti/api/admin/auth` per IP at the proxy.

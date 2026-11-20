@@ -61,7 +61,12 @@ fasti:
       enabled: false
 
 # health, liveness and readiness below /actuator/health for HEALTHCHECK, Kubernetes probes and
-# load balancers; nothing else of the actuator is exposed
+# load balancers; nothing else of the actuator is exposed. Metrics, tracing and JSON logs are off;
+# their switches (see docs/install-docker.md, "Observability"):
+#   FASTI_METRICS_PROMETHEUS_ENABLED=true  /actuator/prometheus, with FASTI_METRICS_PROMETHEUS_TOKEN
+#                                          (or _FILE) or a separate FASTI_MANAGEMENT_PORT
+#   FASTI_TRACING_ENABLED=true             OpenTelemetry spans, sent to OTEL_EXPORTER_OTLP_ENDPOINT
+#   FASTI_LOG_FORMAT=json                  one JSON object (Elastic Common Schema) per log line
 management:
   endpoints:
     web:

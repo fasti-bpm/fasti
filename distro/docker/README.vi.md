@@ -147,6 +147,11 @@ Spring Boot cũng đặt được bằng biến môi trường (ví dụ `CAMUND
 | `FASTI_EXTRA_LIB` | | thư mục jar thêm (driver, plugin) |
 | `FASTI_MARIADB_USE_MYSQL_DRIVER` | `true` | khi thiếu driver MariaDB, dùng MySQL Connector/J |
 | `FASTI_PORT` | 8080 | cổng HTTP; `HEALTHCHECK` của image dùng cùng cổng này |
+| `FASTI_LOG_FORMAT` | `text` | `json`: mỗi dòng log là một đối tượng JSON (Elastic Common Schema); có thêm `logstash`, `gelf` |
+| `FASTI_METRICS_PROMETHEUS_ENABLED` | `false` | `true`: metrics Prometheus tại `/actuator/prometheus` (JVM, HTTP, pool, engine); cần token hoặc `FASTI_MANAGEMENT_PORT` |
+| `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | | token scrape (`Authorization: Bearer <token>`) cho metrics trên cổng của ứng dụng |
+| `FASTI_MANAGEMENT_PORT` | | actuator (health và metrics) chạy trên cổng riêng; `HEALTHCHECK` theo cổng này |
+| `FASTI_TRACING_ENABLED` | `false` | `true`: span OpenTelemetry cho request, lệnh engine và job, gửi tới `OTEL_EXPORTER_OTLP_ENDPOINT` (OTLP/HTTP) |
 | `FASTI_APPCDS`, `FASTI_APPCDS_FILE` | `false`, `/fasti/data/fasti-appcds.jsa` | class data sharing để khởi động nhanh hơn (xem Tinh chỉnh hiệu năng) |
 | `FASTI_BASE64_INTRINSICS` | `false` | `false` thêm `-XX:-UseBASE64Intrinsics` để giảm thiểu CVE-2026-114938 ("Java4Shell"); `true` giữ intrinsic Base64 của JVM. Xem [docs/security/CVE-2026-114938.vi.md](../../docs/security/CVE-2026-114938.vi.md) |
 
@@ -180,6 +185,9 @@ hoặc gắn thư mục và đặt `FASTI_EXTRA_LIB=/drivers`.
   (readiness gồm kết nối cơ sở dữ liệu và engine). Chỉ endpoint health được mở; không cần
   đăng nhập. Kubernetes: liveness → `/actuator/health/liveness`, readiness →
   `/actuator/health/readiness`. `HEALTHCHECK` của image dùng readiness.
+- **Metrics, tracing, log JSON:** tắt theo mặc định; xem
+  [docs/install-docker.vi.md](../../docs/install-docker.vi.md#13-observability). Endpoint
+  `/actuator/prometheus` có sẵn thay được agent JMX exporter (`JMX_PROMETHEUS`) trong phần lớn trường hợp.
 - **Giới hạn tốc độ:** đăng nhập sai nhiều lần làm tài khoản bị khóa tạm thời (thời gian tăng
   dần); kẻ tấn công có thể lợi dụng để khóa admin trong chốc lát. Đặt giới hạn tốc độ theo IP
   cho `/engine-rest` và `/fasti/api/admin/auth` ở proxy.

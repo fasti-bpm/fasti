@@ -274,14 +274,36 @@ unset FASTI_ADMIN_PASSWORD admin_password 2>/dev/null || true
 if [ "$demo_h2" = true ] && [ -z "${FASTI_ADMIN_USER:-}" ] && ! is_true "${FASTI_INSECURE_DEMO:-}"; then
   log "the H2 demo database starts empty and authentication is on: set FASTI_ADMIN_USER and FASTI_ADMIN_PASSWORD, or FASTI_INITIAL_SETUP=true to create the first admin on the setup page of the web application"
 fi
+# Kubernetes sets <SERVICE>_PORT=tcp://<ip>:<port> for every Service, so FASTI_PORT and
+# FASTI_MANAGEMENT_PORT can hold a URL when a Service is named "fasti" or "fasti-management"
+is_port() { case "$1" in ''|*[!0-9]*) return 1 ;; *) return 0 ;; esac; }
 if [ -n "${FASTI_PORT:-}" ]; then
-  case "$FASTI_PORT" in
-    *[!0-9]*)
-      # Kubernetes sets FASTI_PORT=tcp://<ip>:<port> for a Service named "fasti"
-      log "WARNING: ignoring FASTI_PORT=$FASTI_PORT: not a port number; the server listens on 8080"
-      ;;
-    *) add_arg "--server.port=$FASTI_PORT" ;;
-  esac
+  if is_port "$FASTI_PORT"; then
+    add_arg "--server.port=$FASTI_PORT"
+  else
+    log "WARNING: ignoring FASTI_PORT=$FASTI_PORT: not a port number; the server listens on 8080"
+  fi
+fi
+
+# --- observability ----------------------------------------------------------------------------
+# JSON logs, Prometheus metrics and OpenTelemetry tracing stay off unless switched on. The
+# switches are properties (fasti.logging.format, fasti.metrics.prometheus.enabled,
+# fasti.tracing.enabled), so FASTI_LOGGING_FORMAT, FASTI_METRICS_PROMETHEUS_ENABLED,
+# FASTI_TRACING_ENABLED and the OTEL_* variables of OpenTelemetry work without anything here.
+[ -n "${FASTI_LOG_FORMAT:-}" ] && add_arg "--fasti.logging.format=$FASTI_LOG_FORMAT"
+# the scrape token stays an environment variable: arguments are visible in /proc/<pid>/cmdline
+metrics_token=$(secret FASTI_METRICS_PROMETHEUS_TOKEN)
+if [ -n "$metrics_token" ]; then
+  export FASTI_METRICS_PROMETHEUS_TOKEN="$metrics_token"
+fi
+unset metrics_token FASTI_METRICS_PROMETHEUS_TOKEN_FILE 2>/dev/null || true
+# the actuator (health and metrics) on a port of its own; HEALTHCHECK follows it
+if [ -n "${FASTI_MANAGEMENT_PORT:-}" ]; then
+  if is_port "$FASTI_MANAGEMENT_PORT"; then
+    add_arg "--management.server.port=$FASTI_MANAGEMENT_PORT"
+  else
+    log "WARNING: ignoring FASTI_MANAGEMENT_PORT=$FASTI_MANAGEMENT_PORT: not a port number"
+  fi
 fi
 if [ "$production" = true ] && [ "$oauth2" = true ]; then
   # SameSite=Strict would drop the session on the redirect back from the identity provider

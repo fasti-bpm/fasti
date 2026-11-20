@@ -17,6 +17,22 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
 
 ### Added
 
+- Four-eyes control for approvals ([docs](docs/four-eyes.md)): a BPMN user task with the
+  extension property `fasti:fourEyes` (ids of earlier user tasks of the same process, comma
+  separated; the task itself for "a different person each time") cannot be completed, have its
+  form submitted, or be ended with a BPMN error or escalation by a person who completed one of
+  those steps in the same process instance, as the authenticated user or as assignee. The
+  engine refuses with `FourEyesViolationException` (`403` over REST, type
+  `FourEyesViolationException`); claiming is not refused and there is no administrator
+  override. Who completed a step is recorded in the process instance variable
+  `fasti_completedBy_<step>` and also read from the historic task instances and the operation
+  log, so it works at every history level, counts steps completed on nodes without the plugin,
+  and keeps the Camunda 7.24 schema. Wrong rules fail the deployment. `GET /task/{id}/four-eyes`
+  tells the current user whether they may complete a task; the tasklist says so and disables
+  the form, and the modeler has a four-eyes field on user tasks. On in Run, the container image
+  (`FASTI_FOUR_EYES_ENABLED=false` turns it off) and the Tomcat and WildFly bundles; off in the
+  Spring Boot starter (`fasti.four-eyes.enabled`, plugin
+  `dev.fasti.engine.foureyes.FourEyesPlugin`).
 - Substitutes during absence ([docs](docs/absence.md)): a user records an absence (from, until,
   substitute, note) in the preferences of the new web UI, or an administrator does so on the
   Absence tab of a user. While it is active, BPMN user tasks and CMMN human tasks created for

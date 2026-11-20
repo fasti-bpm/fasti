@@ -58,6 +58,11 @@ public interface UserResource {
   @Consumes(MediaType.APPLICATION_JSON)
   public void updateCredentials(UserCredentialsDto account);
 
+  // absence (Fasti) //////////
+
+  @Path("/absence")
+  UserAbsenceResource getAbsenceResource();
+
   @OPTIONS
   @Produces(MediaType.APPLICATION_JSON)
   ResourceOptionsDto availableOperations(@Context UriInfo context);

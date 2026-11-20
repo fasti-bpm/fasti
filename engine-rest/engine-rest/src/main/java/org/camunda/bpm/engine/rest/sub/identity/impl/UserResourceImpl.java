@@ -25,6 +25,7 @@ import org.camunda.bpm.engine.rest.dto.ResourceOptionsDto;
 import org.camunda.bpm.engine.rest.dto.identity.UserCredentialsDto;
 import org.camunda.bpm.engine.rest.dto.identity.UserProfileDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
+import org.camunda.bpm.engine.rest.sub.identity.UserAbsenceResource;
 import org.camunda.bpm.engine.rest.sub.identity.UserResource;
 
 import javax.ws.rs.HttpMethod;
@@ -93,6 +94,12 @@ public class UserResourceImpl extends AbstractIdentityResource implements UserRe
   public void unlockUser() {
     ensureNotReadOnly();
     identityService.unlockUser(resourceId);
+  }
+
+  @Override
+  public UserAbsenceResource getAbsenceResource() {
+    // absences are user info in the engine database, so also read-only identity providers have them
+    return new UserAbsenceResourceImpl(getProcessEngine(), resourceId);
   }
 
   public void updateCredentials(UserCredentialsDto account) {

@@ -17,6 +17,7 @@
 package org.camunda.bpm.webapp.impl.filter;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -75,10 +76,16 @@ public abstract class AbstractTemplateFilter implements Filter {
   /**
    * Returns true if the given web resource exists.
    *
+   * <p>The name is usually derived from the raw request URI, which is not normalized. A name that
+   * could leave the folder it names (see {@link #isTraversalFree(String)}) is never looked up.</p>
+   *
    * @param name
    * @return
    */
   protected boolean hasWebResource(String name) {
+    if (name == null || name.contains("..") || !isTraversalFree(name)) {
+      return false;
+    }
     try {
       URL resource = filterConfig.getServletContext().getResource(name);
       return resource != null;
@@ -99,11 +106,17 @@ public abstract class AbstractTemplateFilter implements Filter {
    * @throws IOException
    */
   protected String getWebResourceContents(String name) throws IOException {
+    if (name == null || name.contains("..") || !isTraversalFree(name)) {
+      throw new FileNotFoundException("Web resource name is not allowed");
+    }
 
     InputStream is = null;
 
     try {
       is = filterConfig.getServletContext().getResourceAsStream(name);
+      if (is == null) {
+        throw new FileNotFoundException("Web resource not found");
+      }
 
       BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 
@@ -121,5 +134,27 @@ public abstract class AbstractTemplateFilter implements Filter {
         try { is.close(); } catch (IOException e) { }
       }
     }
+  }
+
+  /**
+   * Returns true if the given name of a web resource stays inside the folder it names: it
+   * contains no <code>..</code> segment, no backslash (which some containers treat like a
+   * slash), no percent-encoded characters (which could hide either of the two) and no control
+   * characters.
+   *
+   * @param name the name of the resource, e.g. <code>/app/cockpit/index.html</code>
+   * @return <code>true</code> if the name can be looked up safely
+   */
+  public static boolean isTraversalFree(String name) {
+    if (name == null || name.contains("..")) {
+      return false;
+    }
+    for (int i = 0; i < name.length(); i++) {
+      char c = name.charAt(i);
+      if (c == '\\' || c == '%' || c < ' ' || c == 0x7F) {
+        return false;
+      }
+    }
+    return true;
   }
 }

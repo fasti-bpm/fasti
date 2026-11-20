@@ -21,10 +21,12 @@ import java.util.List;
 import org.apache.ibatis.executor.parameter.ParameterHandler;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.StringTypeHandler;
+import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.apache.ibatis.type.UnknownTypeHandler;
 import org.junit.Test;
 
+@SuppressWarnings("unchecked")
 public class MyBatisConfigurationTest {
 
   @Test
@@ -33,6 +35,19 @@ public class MyBatisConfigurationTest {
 
     assertThat(registry.getTypeHandler(Object.class, (JdbcType) null)).isInstanceOf(UnknownTypeHandler.class);
     assertThat(registry.getTypeHandler(String.class, (JdbcType) null)).isInstanceOf(StringTypeHandler.class);
+  }
+
+  @Test
+  public void shouldResolveObjectParametersWithJdbcTypeByTheirValue() throws SQLException {
+    // e.g. selectCommentsByProcessInstanceId_postgres: #{parameter,jdbcType=BINARY} with a String
+    TypeHandlerRegistry registry = new MyBatisConfiguration().getTypeHandlerRegistry();
+    PreparedStatement statement = mock(PreparedStatement.class);
+
+    TypeHandler<Object> handler = (TypeHandler<Object>) registry.getTypeHandler(Object.class, JdbcType.BINARY);
+    handler.setParameter(statement, 1, "processInstanceId", JdbcType.BINARY);
+
+    assertThat(handler).isInstanceOf(UnknownTypeHandler.class);
+    verify(statement).setString(1, "processInstanceId");
   }
 
   @Test

@@ -17,6 +17,8 @@ import org.apache.ibatis.executor.parameter.ParameterHandler;
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.type.JdbcType;
+import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.apache.ibatis.type.UnknownTypeHandler;
 
 /**
@@ -29,13 +31,15 @@ import org.apache.ibatis.type.UnknownTypeHandler;
  * PostgreSQL this costs an extra round trip to the server for each execution, also for
  * every row of a JDBC batch, and a failed lookup aborts the running transaction. The
  * reported type may also not fit the value (a numeric column compared with an
- * <code>Integer</code> from a parameter map), and drivers without parameter metadata, such
- * as MySQL Connector/J by default, leave a parameter declared as <code>Object</code>
- * (<code>ListQueryParameterObject.parameter</code>, map values) without a type handler,
- * because 3.6 no longer registers one for <code>Object</code>. This configuration therefore
+ * <code>Integer</code> from a parameter map). And 3.6 no longer registers a type handler for
+ * <code>Object</code>: a parameter declared as <code>Object</code>
+ * (<code>ListQueryParameterObject.parameter</code>, map values) gets no type handler with
+ * drivers without parameter metadata, such as MySQL Connector/J by default, and the handler
+ * of its JDBC type when one is given (a <code>String</code> with
+ * <code>jdbcType=BINARY</code> fails in the byte array handler). This configuration therefore
  * hides the parameter metadata from the parameter handlers and registers the
- * {@link UnknownTypeHandler} for <code>Object</code> again, which resolves the type handler
- * from the value when the statement runs.</p>
+ * {@link UnknownTypeHandler} for <code>Object</code> again, for every JDBC type, as MyBatis 3.5
+ * resolved it; that handler picks the type handler from the value when the statement runs.</p>
  *
  * <p>MyBatis plans a setting to turn the metadata lookup off and a fallback to the class of
  * the value; once released, they can replace this class.</p>
@@ -43,7 +47,15 @@ import org.apache.ibatis.type.UnknownTypeHandler;
 public class MyBatisConfiguration extends Configuration {
 
   public MyBatisConfiguration() {
-    getTypeHandlerRegistry().register(Object.class, new UnknownTypeHandler(this));
+    TypeHandlerRegistry registry = getTypeHandlerRegistry();
+    UnknownTypeHandler unknownTypeHandler = new UnknownTypeHandler(this);
+    registry.register(Object.class, null, unknownTypeHandler);
+    for (JdbcType jdbcType : JdbcType.values()) {
+      // MyBatis 3.5 used the array handler for Object and ARRAY; 3.6 still does without an entry
+      if (jdbcType != JdbcType.ARRAY) {
+        registry.register(Object.class, jdbcType, unknownTypeHandler);
+      }
+    }
   }
 
   @Override

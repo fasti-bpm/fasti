@@ -88,8 +88,10 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
 - Statement parameters without a `jdbcType` get their type handler from the class of the value,
   as with MyBatis 3.5. MyBatis 3.6 instead reads the parameter metadata of every statement from
   the JDBC driver (with PostgreSQL an extra round trip per statement, also per row of a JDBC
-  batch, and a failed lookup aborts the transaction) and finds no type handler for parameters
-  declared as `Object` when the driver offers no metadata (MySQL Connector/J by default).
+  batch, and a failed lookup aborts the transaction). For parameters declared as `Object` it
+  finds no type handler when the driver offers no metadata (MySQL Connector/J by default) and
+  uses the handler of a given `jdbcType` regardless of the value, which would break the history
+  cleanup and removal time of comments on PostgreSQL.
 
 ### Fixed
 

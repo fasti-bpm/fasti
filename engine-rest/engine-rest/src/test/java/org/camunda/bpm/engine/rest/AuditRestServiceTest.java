@@ -110,6 +110,7 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
       }
     });
     configuration.setCustomPreCommandInterceptorsTxRequired(interceptors);
+    configuration.setCustomPreCommandInterceptorsTxRequiresNew(new ArrayList<>(interceptors));
     if (withPlugin) {
       AuditTrailPlugin plugin = new AuditTrailPlugin();
       plugin.setNodeId("rest");
@@ -268,6 +269,8 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
     assertThat(org.camunda.bpm.engine.rest.impl.AuditRestServiceImplAccess.cell("=1+1")).isEqualTo("\"'=1+1\"");
     assertThat(org.camunda.bpm.engine.rest.impl.AuditRestServiceImplAccess.cell("a,b")).isEqualTo("\"a,b\"");
     assertThat(org.camunda.bpm.engine.rest.impl.AuditRestServiceImplAccess.cell("plain")).isEqualTo("plain");
+    assertThat(org.camunda.bpm.engine.rest.impl.AuditRestServiceImplAccess.cell("  @SUM(A1)")).isEqualTo("\"'  @SUM(A1)\"");
+    assertThat(org.camunda.bpm.engine.rest.impl.AuditRestServiceImplAccess.cell("\uFF1D1")).isEqualTo("\"'\uFF1D1\"");
   }
 
   @Test
@@ -326,6 +329,9 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
     given().then().expect().statusCode(Status.FORBIDDEN.getStatusCode()).when().get(COUNT_URL);
     given().then().expect().statusCode(Status.FORBIDDEN.getStatusCode()).when().post(VERIFY_URL);
     given().queryParam("format", "csv").then().expect().statusCode(Status.FORBIDDEN.getStatusCode()).when().get(EXPORT_URL);
+    // whether the audit trail runs is told, its settings are not
+    given().then().expect().statusCode(Status.OK.getStatusCode()).body("enabled", equalTo(true)).body("nodeId", nullValue())
+    .when().get(AUDIT_URL);
 
     requestAuthentication = null;
     Authorization read = engine.getAuthorizationService().createNewAuthorization(Authorization.AUTH_TYPE_GRANT);
@@ -337,6 +343,7 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
 
     requestAuthentication = new Authentication("reader", List.of());
     given().then().expect().statusCode(Status.OK.getStatusCode()).when().get(EVENT_URL);
+    given().then().expect().statusCode(Status.OK.getStatusCode()).body("nodeId", equalTo("rest")).when().get(AUDIT_URL);
     given().contentType(ContentType.JSON).body(Map.of("before", "2000-01-01T00:00:00.000+0000", "exported", true))
     .then().expect().statusCode(Status.FORBIDDEN.getStatusCode())
     .when().post(PURGE_URL);

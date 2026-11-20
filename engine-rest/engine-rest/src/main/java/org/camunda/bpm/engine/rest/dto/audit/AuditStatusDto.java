@@ -40,7 +40,9 @@ public class AuditStatusDto {
     AuditStatusDto dto = new AuditStatusDto();
     dto.enabled = service.isEnabled();
     AuditStatus status = service.getStatus();
-    if (status != null) {
+    // whether it runs is no secret (the web UI asks to decide what to show); the settings, with the
+    // host name in the node id, are for those who may read the trail
+    if (status != null && service.isReadAuthorized()) {
       dto.nodeId = status.getNodeId();
       dto.chains = status.getChains();
       dto.types = new ArrayList<>(status.getTypes());

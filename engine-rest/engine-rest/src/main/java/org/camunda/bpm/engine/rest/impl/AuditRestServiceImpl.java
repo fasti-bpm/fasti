@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -59,6 +60,11 @@ public class AuditRestServiceImpl extends AbstractRestProcessEngineAware impleme
   /** Exports beyond this need a narrower filter. */
   static final int LIMIT_EXPORT = 100_000;
   static final String ACTOR_SYSTEM = "system";
+  /**
+   * Starts of text a spreadsheet may run as a formula or a DDE call: also after leading white space,
+   * and in the full-width forms some spreadsheets accept.
+   */
+  static final Pattern FORMULA_START = Pattern.compile("^[\\t\\r\\n]|^[\\s\\u3000]*[=+\\-@;\\uFF1D\\uFF0B\\uFF0D\\uFF20]");
 
   static final String[] CSV_COLUMNS = {"id", "chainId", "sequence", "timestamp", "time", "type", "action", "actor",
       "engineName", "tenantId", "processDefinitionKey", "processDefinitionId", "processInstanceId", "businessKey",
@@ -225,7 +231,7 @@ public class AuditRestServiceImpl extends AbstractRestProcessEngineAware impleme
       return "";
     }
     String text = value;
-    if (!text.isEmpty() && "=+-@\t\r".indexOf(text.charAt(0)) >= 0) {
+    if (FORMULA_START.matcher(text).find()) {
       text = "'" + text;
     }
     if (text.indexOf(',') >= 0 || text.indexOf('"') >= 0 || text.indexOf('\n') >= 0 || text.indexOf('\r') >= 0

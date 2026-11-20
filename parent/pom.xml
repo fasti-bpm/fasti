@@ -75,7 +75,7 @@
     <version.tomcat>10.1.62</version.tomcat>
 
     <version.arquillian>1.1.10.Final</version.arquillian>
-    <version.shrinkwrap.resolvers>2.2.7</version.shrinkwrap.resolvers>
+    <version.shrinkwrap.resolvers>3.3.7</version.shrinkwrap.resolvers>
     <version.selenium>4.10.0</version.selenium>
     <version.freemarker>2.3.35</version.freemarker>
 

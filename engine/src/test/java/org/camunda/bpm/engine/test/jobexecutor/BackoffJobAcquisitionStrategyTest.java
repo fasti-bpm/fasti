@@ -16,6 +16,7 @@
  */
 package org.camunda.bpm.engine.test.jobexecutor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.camunda.bpm.engine.impl.jobexecutor.AcquiredJobs;
@@ -161,13 +162,31 @@ public class BackoffJobAcquisitionStrategyTest {
     Assert.assertEquals(BackoffJobAcquisitionStrategy.DEFAULT_EXECUTION_SATURATION_WAIT_TIME, strategy.getWaitTime());
   }
 
+  @Test
+  public void testBackoffWaitTimeWithJitterOnLockingFailure() {
+    for (int i = 0; i < 100; i++) {
+      // given a job acquisition context in which jobs could not be locked
+      setUp();
+      JobAcquisitionContext context = new JobAcquisitionContext();
+      context.submitAcquiredJobs(ENGINE_NAME, buildAcquiredJobs(NUM_JOBS_TO_ACQUIRE, NUM_JOBS_TO_ACQUIRE, 1));
+
+      // when reconfiguring the strategy
+      strategy.reconfigure(context);
+
+      // then the level 1 backoff time is extended by a jitter of at most a half of it
+      long waitTime = strategy.getWaitTime();
+      Assert.assertTrue("wait time " + waitTime, waitTime >= BASE_BACKOFF_WAIT_TIME);
+      Assert.assertTrue("wait time " + waitTime, waitTime < BASE_BACKOFF_WAIT_TIME + BASE_BACKOFF_WAIT_TIME / 2);
+    }
+  }
+
   /**
    * numJobsToAcquire >= numJobsAcquired >= numJobsFailedToLock must hold
    */
   protected AcquiredJobs buildAcquiredJobs(int numJobsToAcquire, int numJobsAcquired, int numJobsFailedToLock) {
     AcquiredJobs acquiredJobs = new AcquiredJobs(numJobsToAcquire);
     for (int i = 0; i < numJobsAcquired; i++) {
-      acquiredJobs.addJobIdBatch(Arrays.asList(Integer.toString(i)));
+      acquiredJobs.addJobIdBatch(new ArrayList<>(Arrays.asList(Integer.toString(i))));
     }
 
     for (int i = 0; i < numJobsFailedToLock; i++) {

@@ -80,6 +80,10 @@ describe('sorting by a variable', () => {
     await user.type(screen.getByLabelText('Variable name'), 'score');
     await user.tab();
     await waitFor(() => expect(screen.getByText('Stored as Double')).toBeInTheDocument());
+    // dismissed like every other dialog, before the main action
+    const actions = screen.getAllByRole('button').map((button) => button.textContent);
+    expect(actions.indexOf('Back')).toBeGreaterThan(-1);
+    expect(actions.indexOf('Back')).toBeLessThan(actions.indexOf('Sort'));
     await user.click(screen.getByRole('button', { name: 'Sort' }));
     expect(onSort).toHaveBeenCalledWith({
       sortBy: 'processVariable',

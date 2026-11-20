@@ -187,7 +187,6 @@ const messages: Catalog = {
   'views.saveCurrent': 'บันทึกมุมมอง',
   'views.name': 'ชื่อมุมมอง',
   'views.save': 'บันทึก',
-  'views.cancel': 'ยกเลิก',
   'views.remove': 'ลบมุมมอง {name}',
   'incidents.groups.toggle': 'จัดกลุ่มตามสาเหตุ',
   'incidents.groups.title': 'เหตุขัดข้องตามสาเหตุ',

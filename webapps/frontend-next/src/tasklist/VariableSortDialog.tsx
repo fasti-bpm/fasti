@@ -124,7 +124,7 @@ export function VariableSortDialog({
           </p>
         </div>
         <div className="vsort__actions">
-          <Button onClick={() => onOpenChange(false)}>{t('views.cancel')}</Button>
+          <Button onClick={() => onOpenChange(false)}>{t('action.cancel')}</Button>
           <Button type="submit" variant="primary" disabled={!name.trim() || looking}>
             {t('sort.variable.apply')}
           </Button>

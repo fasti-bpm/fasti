@@ -263,7 +263,7 @@ export function VariableFilterBuilder({
                 {t('vfilter.clear')}
               </Button>
             )}
-            <Button onClick={() => setOpen(false)}>{t('views.cancel')}</Button>
+            <Button onClick={() => setOpen(false)}>{t('action.cancel')}</Button>
             <Button type="submit" variant="primary" disabled={incomplete || (complete.length === 0 && active === 0)}>
               {t('vfilter.apply')}
             </Button>

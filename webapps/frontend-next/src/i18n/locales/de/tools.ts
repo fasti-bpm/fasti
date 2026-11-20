@@ -195,7 +195,6 @@ const messages: Catalog = {
   'views.saveCurrent': 'Ansicht speichern',
   'views.name': 'Name der Ansicht',
   'views.save': 'Speichern',
-  'views.cancel': 'Abbrechen',
   'views.remove': 'Ansicht {name} entfernen',
   'incidents.groups.toggle': 'Nach Ursache gruppieren',
   'incidents.groups.title': 'Incidents nach Ursache',

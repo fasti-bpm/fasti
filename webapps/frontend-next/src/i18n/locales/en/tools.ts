@@ -193,7 +193,6 @@ const messages = {
   'views.saveCurrent': 'Save view',
   'views.name': 'Name of the view',
   'views.save': 'Save',
-  'views.cancel': 'Cancel',
   'views.remove': 'Remove the view {name}',
   'incidents.groups.toggle': 'Group by cause',
   'incidents.groups.title': 'Incidents grouped by cause',

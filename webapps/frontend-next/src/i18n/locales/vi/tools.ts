@@ -187,7 +187,6 @@ const messages: Catalog = {
   'views.saveCurrent': 'Lưu chế độ xem',
   'views.name': 'Tên chế độ xem',
   'views.save': 'Lưu',
-  'views.cancel': 'Hủy',
   'views.remove': 'Xóa chế độ xem {name}',
   'incidents.groups.toggle': 'Gộp theo nguyên nhân',
   'incidents.groups.title': 'Sự cố gộp theo nguyên nhân',

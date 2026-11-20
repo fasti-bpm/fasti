@@ -187,7 +187,6 @@ const messages: Catalog = {
   'views.saveCurrent': 'ビューを保存',
   'views.name': 'ビュー名',
   'views.save': '保存',
-  'views.cancel': 'キャンセル',
   'views.remove': 'ビュー {name} を削除',
   'incidents.groups.toggle': '原因でグループ化',
   'incidents.groups.title': '原因別のインシデント',

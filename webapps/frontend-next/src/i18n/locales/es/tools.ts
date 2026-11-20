@@ -195,7 +195,6 @@ const messages: Catalog = {
   'views.saveCurrent': 'Guardar vista',
   'views.name': 'Nombre de la vista',
   'views.save': 'Guardar',
-  'views.cancel': 'Cancelar',
   'views.remove': 'Quitar la vista {name}',
   'incidents.groups.toggle': 'Agrupar por causa',
   'incidents.groups.title': 'Incidentes agrupados por causa',

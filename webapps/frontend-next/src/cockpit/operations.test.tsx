@@ -481,6 +481,9 @@ describe('views of the history', () => {
 
     await user.click(screen.getByRole('button', { name: 'Save view' }));
     await user.type(screen.getByRole('textbox', { name: 'Name of the view' }), 'Finished with errors');
+    // the way back comes first, the main action last, as in the dialogs
+    const back = screen.getByRole('button', { name: 'Back' });
+    expect(back.compareDocumentPosition(screen.getByRole('button', { name: 'Save' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Save' }));
     const saved = await screen.findByRole('button', { name: 'Finished with errors' });
     expect(saved).toHaveAttribute('aria-pressed', 'true');

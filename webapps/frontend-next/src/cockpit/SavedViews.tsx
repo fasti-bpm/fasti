@@ -132,11 +132,11 @@ export function SavedViews({
             onChange={(event) => setName(event.target.value)}
             onKeyDown={(event) => event.key === 'Escape' && setNaming(false)}
           />
+          <Button size="sm" onClick={() => setNaming(false)}>
+            {t('action.cancel')}
+          </Button>
           <Button size="sm" variant="primary" type="submit" disabled={!name.trim()}>
             {t('views.save')}
-          </Button>
-          <Button size="sm" onClick={() => setNaming(false)}>
-            {t('views.cancel')}
           </Button>
         </form>
       ) : (

@@ -187,7 +187,6 @@ const messages: Catalog = {
   'views.saveCurrent': 'Simpan tampilan',
   'views.name': 'Nama tampilan',
   'views.save': 'Simpan',
-  'views.cancel': 'Batal',
   'views.remove': 'Hapus tampilan {name}',
   'incidents.groups.toggle': 'Kelompokkan per penyebab',
   'incidents.groups.title': 'Insiden per penyebab',

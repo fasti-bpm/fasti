@@ -211,7 +211,6 @@ const messages: Catalog = {
   'views.saveCurrent': 'Сохранить представление',
   'views.name': 'Название представления',
   'views.save': 'Сохранить',
-  'views.cancel': 'Отмена',
   'views.remove': 'Удалить представление {name}',
   'incidents.groups.toggle': 'Группировать по причине',
   'incidents.groups.title': 'Инциденты по причинам',

@@ -187,7 +187,6 @@ const messages: Catalog = {
   'views.saveCurrent': '보기 저장',
   'views.name': '보기 이름',
   'views.save': '저장',
-  'views.cancel': '취소',
   'views.remove': '{name} 보기 삭제',
   'incidents.groups.toggle': '원인별 그룹',
   'incidents.groups.title': '원인별 인시던트',

@@ -195,7 +195,6 @@ const messages: Catalog = {
   'views.saveCurrent': 'व्यू सहेजें',
   'views.name': 'व्यू का नाम',
   'views.save': 'सहेजें',
-  'views.cancel': 'रद्द करें',
   'views.remove': 'व्यू {name} हटाएँ',
   'incidents.groups.toggle': 'कारण के अनुसार समूह',
   'incidents.groups.title': 'कारण के अनुसार समूहित इंसिडेंट',

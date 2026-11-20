@@ -51,6 +51,14 @@
       </plugin>
     -->
 
+    <!-- FOUR-EYES CONTROL FOR APPROVALS (docs/four-eyes.md) -->
+    <!-- A user task with the extension property fasti:fourEyes (ids of earlier user tasks) cannot be
+         completed by a person who completed one of those steps in the same process instance. Acts
+         only where a model declares such a rule; keep it on every node of a cluster. -->
+      <plugin>
+        <class>dev.fasti.engine.foureyes.FourEyesPlugin</class>
+      </plugin>
+
     <!-- SINGLE SIGN-ON (OpenID Connect, see conf/fasti-oidc.properties.example) -->
     <!-- Uncomment so that the engine takes the groups and tenants of the signed-in user from the
          claims of the token (e.g. in Admin and in queries for "my groups") -->

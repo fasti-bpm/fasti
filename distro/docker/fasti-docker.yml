@@ -63,6 +63,10 @@ fasti:
   # database with Camunda 7.24 nodes; FASTI_ABSENCE_ENABLED=true turns it on (on every node)
   absence:
     enabled: false
+  # four-eyes control for approvals (docs/four-eyes.md): on, as it only acts on user tasks whose
+  # model declares a rule (fasti:fourEyes); FASTI_FOUR_EYES_ENABLED=false turns it off
+  four-eyes:
+    enabled: true
 
 # health, liveness and readiness below /actuator/health for HEALTHCHECK, Kubernetes probes and
 # load balancers; nothing else of the actuator is exposed. Metrics, tracing and JSON logs are off;

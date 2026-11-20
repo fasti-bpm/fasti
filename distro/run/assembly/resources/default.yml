@@ -47,6 +47,11 @@ fasti.absence:
 #  max-hops: 5                  # absent substitutes followed in a row
 #  substitute-candidates: true  # the substitute of an absent candidate user becomes a candidate too
 
+# Four-eyes control for approvals (docs/four-eyes.md): a user task with the extension property
+# fasti:fourEyes (ids of earlier user tasks) cannot be completed by a person who completed one of
+# those steps in the same process instance. Acts only where a model declares such a rule.
+fasti.four-eyes.enabled: true
+
 # Bearer tokens (JWT access tokens of an OpenID Connect provider) on the REST API. When enabled,
 # every REST request needs a valid token (401 otherwise); the user, groups and tenants of the
 # token become the engine identity. Basic authentication keeps working only together with

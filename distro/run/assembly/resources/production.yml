@@ -109,6 +109,11 @@ logging:
 #  max-hops: 5
 #  substitute-candidates: true
 
+# Four-eyes control for approvals (docs/four-eyes.md), on: it only acts on user tasks whose model
+# declares a rule (fasti:fourEyes), and a declared rule that is not enforced is the worse failure.
+# Run it on every node of a cluster; Camunda 7.24 nodes on the same database do not enforce it.
+fasti.four-eyes.enabled: true
+
 # Bearer tokens (JWT access tokens of an OpenID Connect provider) on the REST API. When enabled,
 # every REST request needs a valid token (401 otherwise); the user, groups and tenants of the
 # token become the engine identity. Basic authentication keeps working only together with

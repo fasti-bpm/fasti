@@ -204,19 +204,36 @@ export function readFourEyes(values: Generic[]): string[] {
   return ids;
 }
 
-/** Writes the four-eyes property; other extension properties stay, an empty list removes it. */
+/**
+ * Writes the four-eyes property into the first `camunda:properties` (created if needed); other
+ * extension properties stay where they are, in every `camunda:properties` of the element. An
+ * empty list removes the property, and a `camunda:properties` that held nothing else.
+ */
 export function writeFourEyes(values: Generic[], ids: string[], create: CreateGeneric): Generic[] {
-  const properties = values.find((value) => isA(value, 'properties'));
-  const others = (properties?.$children ?? []).filter((child) => !isFourEyes(child));
-  const keep: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(properties ?? {})) {
-    if (!key.startsWith('$')) keep[key] = value;
+  const rebuild = (properties: Generic, extra: Generic[]): Generic | null => {
+    const children = [...(properties.$children ?? []).filter((child) => !isFourEyes(child)), ...extra];
+    if (children.length === 0) return null;
+    const keep: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(properties)) {
+      if (!key.startsWith('$')) keep[key] = value;
+    }
+    return create('properties', { ...keep, $children: children });
+  };
+  const rule = ids.length ? [create('property', { name: FOUR_EYES_PROPERTY, value: ids.join(',') })] : [];
+  let placed = false;
+  const next: Generic[] = [];
+  for (const value of values) {
+    if (!isA(value, 'properties')) {
+      next.push(value);
+      continue;
+    }
+    const touched = !placed || (value.$children ?? []).some(isFourEyes);
+    const built = touched ? rebuild(value, placed ? [] : rule) : value;
+    placed = true;
+    if (built) next.push(built);
   }
-  const children = [
-    ...others,
-    ...(ids.length ? [create('property', { name: FOUR_EYES_PROPERTY, value: ids.join(',') })] : []),
-  ];
-  return replace(values, 'properties', children.length ? [create('properties', { ...keep, $children: children })] : []);
+  if (!placed && rule.length) next.push(create('properties', { $children: rule }));
+  return next;
 }
 
 /** An element of the model as far as the four-eyes field needs it. */

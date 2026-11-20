@@ -163,6 +163,37 @@ describe('four-eyes rule', () => {
     ]);
   });
 
+  it('keeps the properties of every container of the element', () => {
+    const two: Generic[] = [
+      { $type: 'camunda:properties', $children: [{ $type: 'camunda:property', name: 'a', value: '1' }] },
+      { $type: 'camunda:inputOutput' },
+      {
+        $type: 'camunda:properties',
+        $children: [
+          { $type: 'camunda:property', name: 'b', value: '2' },
+          { $type: 'camunda:property', name: 'fasti:fourEyes', value: 'old' },
+        ],
+      },
+    ];
+    const written = writeFourEyes(two, ['draft'], create);
+    expect(written).toEqual([
+      {
+        $type: 'camunda:properties',
+        $children: [
+          { $type: 'camunda:property', name: 'a', value: '1' },
+          { $type: 'camunda:property', name: 'fasti:fourEyes', value: 'draft' },
+        ],
+      },
+      { $type: 'camunda:inputOutput' },
+      { $type: 'camunda:properties', $children: [{ $type: 'camunda:property', name: 'b', value: '2' }] },
+    ]);
+    expect(writeFourEyes(written, [], create)).toEqual([
+      { $type: 'camunda:properties', $children: [{ $type: 'camunda:property', name: 'a', value: '1' }] },
+      { $type: 'camunda:inputOutput' },
+      { $type: 'camunda:properties', $children: [{ $type: 'camunda:property', name: 'b', value: '2' }] },
+    ]);
+  });
+
   it('offers the user tasks of the process, also in sub-processes', () => {
     const process: FlowNode = { $type: 'bpmn:Process', id: 'p', flowElements: [] };
     const sub: FlowNode = { $type: 'bpmn:SubProcess', id: 'sub', $parent: process, flowElements: [] };

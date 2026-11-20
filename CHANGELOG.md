@@ -12,7 +12,7 @@ entries below describe the differences from that release.
 
 ## [Unreleased]
 
-## [1.0.1] - 2026-11-20
+## [1.0.1] - 2026-11-21
 
 ### Security
 

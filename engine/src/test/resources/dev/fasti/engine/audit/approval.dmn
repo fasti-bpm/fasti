@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SPDX-License-Identifier: Apache-2.0
+  Copyright Fasti BPM contributors
+-->
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" id="approvalDefinitions" name="Approval" namespace="http://fasti.dev/test">
+  <decision id="approval" name="Approval">
+    <decisionTable id="approvalTable" hitPolicy="FIRST">
+      <input id="amountInput" label="Amount">
+        <inputExpression id="amountExpression" typeRef="integer">
+          <text>amount</text>
+        </inputExpression>
+      </input>
+      <output id="approvedOutput" label="Approved" name="approved" typeRef="boolean" />
+      <rule id="small">
+        <inputEntry id="smallAmount"><text>&lt; 100</text></inputEntry>
+        <outputEntry id="smallApproved"><text>true</text></outputEntry>
+      </rule>
+      <rule id="large">
+        <inputEntry id="largeAmount"><text>&gt;= 100</text></inputEntry>
+        <outputEntry id="largeApproved"><text>false</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>

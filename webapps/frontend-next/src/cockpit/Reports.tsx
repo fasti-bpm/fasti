@@ -9,7 +9,8 @@ import { useI18n } from '../i18n';
 import { toEngineDate } from '../lib/dates';
 import { EmptyState, ErrorState, Loading, Skeleton } from '../ui';
 import { BarList } from './charts';
-import { COCKPIT, Card, EngineWideNote } from './common';
+import { COCKPIT, EngineWideNote } from './common';
+import { Card } from '../ui/page';
 import { formatDuration } from './model';
 
 const DAYS = 14;

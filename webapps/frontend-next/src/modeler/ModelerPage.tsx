@@ -22,7 +22,9 @@ import {
   startProcessInstance,
 } from '../api/cockpit';
 import { getProcessXml } from '../api/engine';
-import { COCKPIT, Card, Checkbox, ConfirmDialog, PageHeader } from '../cockpit/common';
+import { COCKPIT } from '../cockpit/common';
+import { Checkbox, ConfirmDialog } from '../ui/controls';
+import { Card, PageHeader } from '../ui/page';
 import { useI18n, type MessageKey } from '../i18n';
 import { Button, ErrorState, Field, Loading, MessageError, cx } from '../ui';
 import { useToast } from '../ui/toast';

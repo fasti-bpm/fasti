@@ -17,25 +17,12 @@ import {
 import { useI18n, type MessageKey } from '../i18n';
 import { Button, EmptyState, IconButton } from '../ui';
 import { Progress } from './charts';
-import {
-  COCKPIT,
-  Card,
-  Checkbox,
-  ConfirmDialog,
-  DataTable,
-  Id,
-  PAGE_SIZE,
-  PageHeader,
-  Pager,
-  StateBadge,
-  Time,
-  formatNumber,
-  pageOf,
-  useCockpitAction,
-  useRefreshInterval,
-  useUrlState,
-  type Column,
-} from './common';
+import { COCKPIT, StateBadge, useCockpitAction, useRefreshInterval } from './common';
+import { Checkbox, ConfirmDialog } from '../ui/controls';
+import { Id, Time, formatNumber } from '../ui/format';
+import { pageOf, useUrlState } from '../ui/hooks';
+import { Card, PageHeader } from '../ui/page';
+import { DataTable, PAGE_SIZE, Pager, type Column } from '../ui/table';
 import { FailedJobsDialog } from './BatchFailedJobs';
 
 function DeleteBatchDialog({ batch, onClose }: { batch: Batch; onClose: () => void }) {

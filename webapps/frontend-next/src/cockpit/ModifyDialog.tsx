@@ -15,7 +15,8 @@ import {
 } from '../api/operations';
 import { useI18n, type Translate } from '../i18n';
 import { Button, Dialog, Field, IconButton, Notice } from '../ui';
-import { Checkbox, useCockpitAction } from './common';
+import { useCockpitAction } from './common';
+import { Checkbox } from '../ui/controls';
 import type { FlowNode } from './model';
 import { VariableRows, rowsToVariables, type VariableRow } from './VariableRows';
 import { withReceipt } from './receipts';

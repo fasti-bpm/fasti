@@ -15,24 +15,12 @@ import {
 import { useI18n } from '../i18n';
 import { Button, EmptyState, NoMatch } from '../ui';
 import { MessageDialog } from './MessageDialog';
-import {
-  COCKPIT,
-  Card,
-  DataTable,
-  IncidentBadge,
-  PAGE_SIZE,
-  PageHeader,
-  Pager,
-  SearchInput,
-  StateBadge,
-  formatNumber,
-  pageOf,
-  useUrlSearch,
-  useRefreshInterval,
-  useRemembered,
-  useUrlState,
-  type Column,
-} from './common';
+import { COCKPIT, IncidentBadge, StateBadge, useRefreshInterval } from './common';
+import { SearchInput } from '../ui/controls';
+import { formatNumber } from '../ui/format';
+import { pageOf, useUrlSearch, useRemembered, useUrlState } from '../ui/hooks';
+import { Card, PageHeader } from '../ui/page';
+import { DataTable, PAGE_SIZE, Pager, type Column } from '../ui/table';
 
 export function definitionPath(id: string): string {
   return `/cockpit/processes/definition/${encodeURIComponent(id)}`;

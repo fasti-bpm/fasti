@@ -7,19 +7,11 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { getIncidents, type IncidentSortBy, type Sorting } from '../api/cockpit';
 import { useI18n } from '../i18n';
 import { MoreFilters } from './MoreFilters';
-import {
-  COCKPIT,
-  Card,
-  PAGE_SIZE,
-  PageHeader,
-  Pager,
-  SearchInput,
-  pageOf,
-  useUrlSearch,
-  useRefreshInterval,
-  useRemembered,
-  useUrlState,
-} from './common';
+import { COCKPIT, useRefreshInterval } from './common';
+import { SearchInput } from '../ui/controls';
+import { pageOf, useUrlSearch, useRemembered, useUrlState } from '../ui/hooks';
+import { Card, PageHeader } from '../ui/page';
+import { PAGE_SIZE, Pager } from '../ui/table';
 import { AnnotateAllDialog, IncidentTable, RetryAllDialog } from './Incidents';
 import { IncidentGroups } from './IncidentGroups';
 import { Button, cx } from '../ui';

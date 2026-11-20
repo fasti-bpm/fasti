@@ -31,21 +31,10 @@ import type { SortOrder } from '../api/types';
 import { useSession } from '../app/session';
 import { useI18n } from '../i18n';
 import { Button, Dialog, EmptyState, ErrorState, Field, IconButton, Loading, NoMatch, Skeleton } from '../ui';
-import {
-  Card,
-  ConfirmDialog,
-  DataTable,
-  PAGE_SIZE,
-  useClampedPage,
-  PageHeader,
-  Pager,
-  SearchInput,
-  pageOf,
-  useUrlSearch,
-  useRemembered,
-  useUrlState,
-  type Column,
-} from '../cockpit/common';
+import { ConfirmDialog, SearchInput } from '../ui/controls';
+import { pageOf, useUrlSearch, useRemembered, useUrlState } from '../ui/hooks';
+import { Card, PageHeader } from '../ui/page';
+import { DataTable, PAGE_SIZE, useClampedPage, Pager, type Column } from '../ui/table';
 import {
   ADMIN,
   AddMembersButton,

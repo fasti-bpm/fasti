@@ -11,7 +11,8 @@ import { useI18n } from '../i18n';
 import { parseEngineDate } from '../lib/dates';
 import { readPreference, writePreference } from '../lib/storage';
 import { Button, cx } from '../ui';
-import { COCKPIT, type Column } from './common';
+import { COCKPIT } from './common';
+import { type Column } from '../ui/table';
 
 /**
  * Business variables as columns of the instance lists: the user picks names

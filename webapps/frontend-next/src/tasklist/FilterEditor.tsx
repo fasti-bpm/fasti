@@ -21,7 +21,7 @@ import {
 } from '../api/engine';
 import type { FilterVariable } from '../api/types';
 import { useSession } from '../app/session';
-import { ConfirmDialog, Checkbox } from '../cockpit/common';
+import { ConfirmDialog, Checkbox } from '../ui/controls';
 import { useI18n, type MessageKey } from '../i18n';
 import { Button, Dialog, ErrorState, Field, IconButton, Loading, Notice, Skeleton, cx } from '../ui';
 import { useToast } from '../ui/toast';

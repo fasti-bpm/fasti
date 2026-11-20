@@ -18,19 +18,10 @@ import {
 import { useI18n } from '../i18n';
 import { Button, Dialog, EmptyState, ErrorState, Field, IconButton, NoMatch, cx } from '../ui';
 import { IdentityInput } from '../tasklist/IdentityInput';
-import {
-  Card,
-  Checkbox,
-  DataTable,
-  PAGE_SIZE,
-  PageHeader,
-  Pager,
-  SearchInput,
-  pageOf,
-  useUrlSearch,
-  useUrlState,
-  type Column,
-} from '../cockpit/common';
+import { Checkbox, SearchInput } from '../ui/controls';
+import { pageOf, useUrlSearch, useUrlState } from '../ui/hooks';
+import { Card, PageHeader } from '../ui/page';
+import { DataTable, PAGE_SIZE, Pager, type Column } from '../ui/table';
 import { ADMIN, useAccess, useAdminAction } from './common';
 import { RESOURCE_TYPES, permissionSummary, resourceType, type ResourceType } from './resources';
 import { DeleteDialog } from './UsersPage';

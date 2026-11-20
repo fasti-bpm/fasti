@@ -18,24 +18,12 @@ import {
 import { useI18n } from '../i18n';
 import { downloadCsv } from '../lib/csv';
 import { Button, EmptyState, Field } from '../ui';
-import {
-  COCKPIT,
-  Card,
-  Checkbox,
-  ConfirmDialog,
-  DataTable,
-  Id,
-  PAGE_SIZE,
-  PageHeader,
-  Pager,
-  Time,
-  pageOf,
-  useCockpitAction,
-  useRefreshInterval,
-  useRemembered,
-  useUrlState,
-  type Column,
-} from './common';
+import { COCKPIT, useCockpitAction, useRefreshInterval } from './common';
+import { Checkbox, ConfirmDialog } from '../ui/controls';
+import { Id, Time } from '../ui/format';
+import { pageOf, useRemembered, useUrlState } from '../ui/hooks';
+import { Card, PageHeader } from '../ui/page';
+import { DataTable, PAGE_SIZE, Pager, type Column } from '../ui/table';
 import { FailureDetailsDialog, instancePath } from './Incidents';
 import { withReceipt } from './receipts';
 

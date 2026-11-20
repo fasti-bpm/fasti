@@ -20,26 +20,12 @@ import { useI18n } from '../i18n';
 import { downloadCsv } from '../lib/csv';
 import { parseEngineDate } from '../lib/dates';
 import { Button, EmptyState, Field, NoMatch } from '../ui';
-import {
-  COCKPIT,
-  Card,
-  Checkbox,
-  ConfirmDialog,
-  DataTable,
-  Id,
-  PAGE_SIZE,
-  PageHeader,
-  Pager,
-  SearchInput,
-  Time,
-  pageOf,
-  useCockpitAction,
-  useDebounced,
-  useRefreshInterval,
-  useRemembered,
-  useUrlState,
-  type Column,
-} from './common';
+import { COCKPIT, useCockpitAction, useRefreshInterval } from './common';
+import { Checkbox, ConfirmDialog, SearchInput } from '../ui/controls';
+import { Id, Time } from '../ui/format';
+import { pageOf, useDebounced, useRemembered, useUrlState } from '../ui/hooks';
+import { Card, PageHeader } from '../ui/page';
+import { DataTable, PAGE_SIZE, Pager, type Column } from '../ui/table';
 import { FailureDetailsDialog, instancePath } from './Incidents';
 
 const STATES: ExternalTaskState[] = ['all', 'locked', 'notLocked', 'noRetriesLeft', 'withRetriesLeft'];

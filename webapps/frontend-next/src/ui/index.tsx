@@ -211,7 +211,6 @@ export function NoMatch({ title, search = false, onClear }: { title?: string; se
   );
 }
 
-/** Text for an error of any origin; server messages are shown as plain text. */
 /** An error whose text is a message of the catalog, so that it is shown in the chosen language. */
 export class MessageError extends Error {
   readonly key: MessageKey;

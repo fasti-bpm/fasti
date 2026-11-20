@@ -10,7 +10,9 @@ import { Send } from 'lucide-react';
 import { deliverMessage, getAwaitedMessages, type MessageReceiver } from '../api/messages';
 import { useI18n } from '../i18n';
 import { Button, Dialog, Field, Notice, describeError } from '../ui';
-import { COCKPIT, Checkbox, Id } from './common';
+import { COCKPIT } from './common';
+import { Checkbox } from '../ui/controls';
+import { Id } from '../ui/format';
 import { instancePath } from './Incidents';
 import { VariableRows, emptyRow, rowsToVariables, type VariableRow } from './VariableRows';
 

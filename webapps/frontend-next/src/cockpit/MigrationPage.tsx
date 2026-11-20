@@ -21,15 +21,10 @@ import {
 } from '../api/operations';
 import { useI18n } from '../i18n';
 import { Button, EmptyState, ErrorState, Field, Loading, Notice } from '../ui';
-import {
-  COCKPIT,
-  Card,
-  Checkbox,
-  ConfirmDialog,
-  PageHeader,
-  useCockpitAction,
-  useUrlState,
-} from './common';
+import { COCKPIT, useCockpitAction } from './common';
+import { Checkbox, ConfirmDialog } from '../ui/controls';
+import { useUrlState } from '../ui/hooks';
+import { Card, PageHeader } from '../ui/page';
 import { definitionPath } from './DefinitionsPage';
 import { flowNodes, type FlowNode } from './model';
 import { withReceipt } from './receipts';

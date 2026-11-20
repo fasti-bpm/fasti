@@ -27,20 +27,12 @@ import { minuteOf, type QueueView } from '../tasklist/queue';
 import type { Criterion } from '../tasklist/search';
 import { tasklistPath } from '../tasklist/searchLinks';
 import { EmptyState, ErrorState, cx } from '../ui';
-import {
-  COCKPIT,
-  Card,
-  DataTable,
-  PageHeader,
-  Pager,
-  SearchInput,
-  formatNumber,
-  useDebounced,
-  useClampedPage,
-  useRefreshInterval,
-  useRemembered,
-  type Column,
-} from './common';
+import { COCKPIT, useRefreshInterval } from './common';
+import { SearchInput } from '../ui/controls';
+import { formatNumber } from '../ui/format';
+import { useDebounced, useRemembered } from '../ui/hooks';
+import { Card, PageHeader } from '../ui/page';
+import { DataTable, Pager, useClampedPage, type Column } from '../ui/table';
 import { Tile } from './DashboardPage';
 
 /** where a count leads: the task list, narrowed like the count, if the user may open it */

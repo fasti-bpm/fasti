@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { I18nProvider } from '../i18n';
 import { formatUtc } from '../lib/dates';
 import { setTimeDisplay, timeDisplay } from '../lib/userPrefs';
-import { Time } from './common';
+import { Time } from './format';
 
 const VALUE = '2026-03-01T09:30:00.000+0000';
 

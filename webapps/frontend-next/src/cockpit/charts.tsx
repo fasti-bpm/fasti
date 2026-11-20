@@ -5,7 +5,7 @@
 import type { ReactNode } from 'react';
 import { useI18n } from '../i18n';
 import { cx } from '../ui';
-import { formatNumber } from './common';
+import { formatNumber } from '../ui/format';
 
 /*
  * Small charts drawn as SVG. They follow a few rules: one measure per chart,

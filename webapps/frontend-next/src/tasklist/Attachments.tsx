@@ -13,7 +13,7 @@ import {
   getTaskAttachments,
   type TaskAttachment,
 } from '../api/engine';
-import { ConfirmDialog } from '../cockpit/common';
+import { ConfirmDialog } from '../ui/controls';
 import { useI18n } from '../i18n';
 import { parseEngineDate } from '../lib/dates';
 import { Button, EmptyState, ErrorState, Field, IconButton, Loading, cx } from '../ui';

@@ -16,20 +16,11 @@ import {
 } from '../api/maintenance';
 import { useI18n } from '../i18n';
 import { Button, EmptyState, ErrorState, Loading, Notice, Skeleton } from '../ui';
-import {
-  COCKPIT,
-  Card,
-  ConfirmDialog,
-  DataTable,
-  Id,
-  PageHeader,
-  StateBadge,
-  Time,
-  formatNumber,
-  useCockpitAction,
-  useRefreshInterval,
-  type Column,
-} from './common';
+import { COCKPIT, StateBadge, useCockpitAction, useRefreshInterval } from './common';
+import { ConfirmDialog } from '../ui/controls';
+import { Id, Time, formatNumber } from '../ui/format';
+import { Card, PageHeader } from '../ui/page';
+import { DataTable, type Column } from '../ui/table';
 
 /**
  * The history cleanup: when it may run, its jobs, what it may remove per

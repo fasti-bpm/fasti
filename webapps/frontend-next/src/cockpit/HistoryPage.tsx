@@ -38,23 +38,12 @@ import { OperationLogTable } from './AuditPage';
 import { VariableColumnsError, VariableColumnsPicker, useColumnValues, useVariableColumns, variableColumnsOf } from './VariableColumns';
 import { SavedViews, VIEW_PARAM, currentFilters, viewChanges, type BuiltInView } from './SavedViews';
 import { InstanceTimeline } from './Timeline';
-import {
-  COCKPIT,
-  Card,
-  ConfirmDialog,
-  DataTable,
-  Id,
-  PAGE_SIZE,
-  PageHeader,
-  Pager,
-  Time,
-  elementNames,
-  pageOf,
-  useCockpitAction,
-  useRemembered,
-  useUrlState,
-  type Column,
-} from './common';
+import { COCKPIT, elementNames, useCockpitAction } from './common';
+import { ConfirmDialog } from '../ui/controls';
+import { Id, Time } from '../ui/format';
+import { pageOf, useRemembered, useUrlState } from '../ui/hooks';
+import { Card, PageHeader } from '../ui/page';
+import { DataTable, PAGE_SIZE, Pager, type Column } from '../ui/table';
 import { definitionPath } from './DefinitionsPage';
 import { instancePath } from './Incidents';
 import { flowNodes, formatDuration, type FlowNode } from './model';

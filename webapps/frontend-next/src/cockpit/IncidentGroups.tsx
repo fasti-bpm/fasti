@@ -9,7 +9,9 @@ import type { Incident, Page } from '../api/cockpit';
 import { useI18n } from '../i18n';
 import { parseEngineDate } from '../lib/dates';
 import { Button, EmptyState } from '../ui';
-import { COCKPIT, DataTable, Time, useRefreshInterval, type Column, type TableSorting } from './common';
+import { COCKPIT, useRefreshInterval } from './common';
+import { Time } from '../ui/format';
+import { DataTable, type Column, type TableSorting } from '../ui/table';
 import { IncidentTable, RetryAllDialog } from './Incidents';
 
 /** Incidents that share a cause: the same failure at the same activity of the same process. */

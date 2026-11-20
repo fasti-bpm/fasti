@@ -8,7 +8,9 @@ import { RotateCcw } from 'lucide-react';
 import { getJobs, setJobDefinitionRetries, type Batch, type Job } from '../api/cockpit';
 import { useI18n } from '../i18n';
 import { Button, Dialog, EmptyState } from '../ui';
-import { COCKPIT, DataTable, Id, useCockpitAction, useRefreshInterval, type Column } from './common';
+import { COCKPIT, useCockpitAction, useRefreshInterval } from './common';
+import { Id } from '../ui/format';
+import { DataTable, type Column } from '../ui/table';
 import { FailureDetailsDialog, RetryDialog } from './Incidents';
 
 const FAILED_JOBS_SHOWN = 50;

@@ -8,7 +8,7 @@ import { Hand, Undo2, UserPlus, X } from 'lucide-react';
 import { assignTasks, type TaskAssignment } from '../api/operations';
 import type { TaskListItem } from '../api/types';
 import { useSession } from '../app/session';
-import { ConfirmDialog, SampleList } from '../cockpit/common';
+import { ConfirmDialog, SampleList } from '../ui/controls';
 import { useI18n } from '../i18n';
 import { Button, Field, IconButton } from '../ui';
 import { useToast } from '../ui/toast';

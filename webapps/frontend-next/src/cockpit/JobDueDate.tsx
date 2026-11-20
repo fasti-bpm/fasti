@@ -7,7 +7,8 @@ import { recalculateJobDueDate, setJobDueDate } from '../api/maintenance';
 import { useI18n } from '../i18n';
 import { fromDateTimeInput, parseEngineDate, toDateTimeInput, toEngineDate } from '../lib/dates';
 import { Field } from '../ui';
-import { Checkbox, ConfirmDialog, useCockpitAction } from './common';
+import { useCockpitAction } from './common';
+import { Checkbox, ConfirmDialog } from '../ui/controls';
 
 type Mode = 'date' | 'now' | 'fromCreation' | 'fromNow';
 

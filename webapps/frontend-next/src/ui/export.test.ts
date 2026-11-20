@@ -3,7 +3,7 @@
  * Copyright Fasti BPM contributors
  */
 import { describe, expect, it } from 'vitest';
-import { csvFileName, fetchAllRows, tableText } from './common';
+import { csvFileName, fetchAllRows, tableText } from './table';
 
 describe('export of shown rows', () => {
   it('takes the shown text and leaves control columns out', () => {

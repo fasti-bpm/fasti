@@ -26,20 +26,10 @@ import { isApiError } from '../api/http';
 import type { SortOrder } from '../api/types';
 import { useI18n } from '../i18n';
 import { Button, Dialog, EmptyState, ErrorState, Field, IconButton, Loading, NoMatch, Skeleton } from '../ui';
-import {
-  Card,
-  DataTable,
-  PAGE_SIZE,
-  useClampedPage,
-  PageHeader,
-  Pager,
-  SearchInput,
-  pageOf,
-  useUrlSearch,
-  useRemembered,
-  useUrlState,
-  type Column,
-} from '../cockpit/common';
+import { SearchInput } from '../ui/controls';
+import { pageOf, useUrlSearch, useRemembered, useUrlState } from '../ui/hooks';
+import { Card, PageHeader } from '../ui/page';
+import { DataTable, PAGE_SIZE, useClampedPage, Pager, type Column } from '../ui/table';
 import { ADMIN, AddMembersButton, AddMembersDialog, ReadOnlyNotice, useAccess, useAdminAction } from './common';
 import { groupPath } from './GroupsPage';
 import { DeleteDialog, RemoveDialog, displayName, userPath, validId } from './UsersPage';

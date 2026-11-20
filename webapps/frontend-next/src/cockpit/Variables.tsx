@@ -22,22 +22,11 @@ import { convertInput, jsonProblem } from '../forms/variables';
 import { useI18n, type MessageKey, type Translate } from '../i18n';
 import { parseEngineDate, toDateTimeInput } from '../lib/dates';
 import { Button, Dialog, EmptyState, Field, IconButton, NoMatch, Notice } from '../ui';
-import {
-  COCKPIT,
-  ConfirmDialog,
-  DataTable,
-  PAGE_SIZE,
-  Pager,
-  SearchInput,
-  Time,
-  pageOf,
-  useCockpitAction,
-  useDebounced,
-  useRefreshInterval,
-  useRemembered,
-  useUrlState,
-  type Column,
-} from './common';
+import { COCKPIT, useCockpitAction, useRefreshInterval } from './common';
+import { ConfirmDialog, SearchInput } from '../ui/controls';
+import { Time } from '../ui/format';
+import { pageOf, useDebounced, useRemembered, useUrlState } from '../ui/hooks';
+import { DataTable, PAGE_SIZE, Pager, type Column } from '../ui/table';
 
 const INLINE_TYPES = new Set(['String', 'Boolean', 'Integer', 'Long', 'Short', 'Double', 'Date']);
 const TEXT_TYPES = new Set(['Json', 'Xml']);

@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { BookmarkPlus, X } from 'lucide-react';
 import { useI18n } from '../i18n';
 import { Button, cx } from '../ui';
-import { useRemembered } from './common';
+import { useRemembered } from '../ui/hooks';
 
 /** A named set of filters of a list, kept with the preferences of the user. */
 export interface SavedView {

@@ -9,7 +9,7 @@ import { checkPassword, getAccess, type Access, type Page, type PolicyRule } fro
 import { useI18n, type MessageKey, type Translate } from '../i18n';
 import { Button, Dialog, EmptyState, ErrorState, Field, Loading, Notice, Skeleton } from '../ui';
 import { useToast } from '../ui/toast';
-import { useDebounced } from '../cockpit/common';
+import { useDebounced } from '../ui/hooks';
 
 /** Every query of the administration pages starts with this key. */
 export const ADMIN = 'admin';

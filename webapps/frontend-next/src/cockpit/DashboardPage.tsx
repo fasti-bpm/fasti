@@ -32,7 +32,10 @@ import { useI18n } from '../i18n';
 import { Button, EmptyState, ErrorState, Loading, Skeleton, cx } from '../ui';
 import { BarList, PartsBar } from './charts';
 import { HistoryReports } from './Reports';
-import { COCKPIT, Card, IncidentBadge, PageHeader, Time, formatNumber, useRefreshInterval, useRemembered } from './common';
+import { COCKPIT, IncidentBadge, useRefreshInterval } from './common';
+import { Time, formatNumber } from '../ui/format';
+import { useRemembered } from '../ui/hooks';
+import { Card, PageHeader } from '../ui/page';
 import { TREND_RANGES, getAttention, getTrends, trendPeriods, type Trend, type TrendRange } from '../api/cockpit';
 import { toDateTimeInput, toEngineDate } from '../lib/dates';
 

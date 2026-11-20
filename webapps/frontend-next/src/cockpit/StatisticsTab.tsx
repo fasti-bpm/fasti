@@ -19,7 +19,10 @@ import type { ActivityBadge, ActivityMarker } from '../bpmn/BpmnDiagram';
 import { useI18n } from '../i18n';
 import { toEngineDate } from '../lib/dates';
 import { EmptyState, ErrorState, Loading, cx } from '../ui';
-import { COCKPIT, DataTable, formatNumber, useRefreshInterval, useUrlState, type Column } from './common';
+import { COCKPIT, useRefreshInterval } from './common';
+import { formatNumber } from '../ui/format';
+import { useUrlState } from '../ui/hooks';
+import { DataTable, type Column } from '../ui/table';
 import { formatDuration } from './model';
 
 const BpmnDiagram = lazy(() => import('../bpmn/BpmnDiagram'));

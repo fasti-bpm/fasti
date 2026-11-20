@@ -24,25 +24,12 @@ import {
 import { isApiError } from '../api/http';
 import { useI18n } from '../i18n';
 import { Button, Dialog, EmptyState, ErrorState, Field, Loading, NoMatch, Skeleton, cx } from '../ui';
-import {
-  COCKPIT,
-  Card,
-  Checkbox,
-  ConfirmDialog,
-  DataTable,
-  Id,
-  PAGE_SIZE,
-  PageHeader,
-  Pager,
-  SearchInput,
-  Time,
-  pageOf,
-  useCockpitAction,
-  useUrlSearch,
-  useRemembered,
-  useUrlState,
-  type Column,
-} from './common';
+import { COCKPIT, useCockpitAction } from './common';
+import { Checkbox, ConfirmDialog, SearchInput } from '../ui/controls';
+import { Id, Time } from '../ui/format';
+import { pageOf, useUrlSearch, useRemembered, useUrlState } from '../ui/hooks';
+import { Card, PageHeader } from '../ui/page';
+import { DataTable, PAGE_SIZE, Pager, type Column } from '../ui/table';
 import { definitionPath } from './DefinitionsPage';
 
 const BpmnDiagram = lazy(() => import('../bpmn/BpmnDiagram'));

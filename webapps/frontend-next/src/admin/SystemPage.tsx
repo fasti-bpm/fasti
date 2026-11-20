@@ -11,7 +11,8 @@ import { getEngines } from '../api/engine';
 import { env } from '../env';
 import { useI18n, type MessageKey, type Translate } from '../i18n';
 import { Button, ErrorState, Loading, Notice, Skeleton } from '../ui';
-import { Card, PageHeader, Time, formatNumber } from '../cockpit/common';
+import { Time, formatNumber } from '../ui/format';
+import { Card, PageHeader } from '../ui/page';
 import { ADMIN } from './common';
 
 function Fact({ label, children }: { label: string; children: ReactNode }) {

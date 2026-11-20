@@ -27,7 +27,7 @@ import { tenantScope } from '../lib/userPrefs';
 import { useRefreshSession, useSession } from '../app/session';
 import { ADMIN, ReadOnlyNotice, useAccess } from '../admin/common';
 import { PasswordTab, ProfileTab } from '../admin/UsersPage';
-import { Card, PageHeader } from '../cockpit/common';
+import { Card, PageHeader } from '../ui/page';
 import { classicAppUrl, classicWebapps, env, type ClassicApp } from '../env';
 import { useI18n, type MessageKey } from '../i18n';
 import { EmptyState, ErrorState, Loading, Skeleton } from '../ui';

@@ -4,7 +4,7 @@
  */
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { useClampedPage } from './common';
+import { useClampedPage } from './table';
 
 describe('page past the end', () => {
   it('moves to the last page when its rows are gone, and waits for the count', () => {

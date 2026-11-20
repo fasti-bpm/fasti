@@ -18,19 +18,11 @@ import {
 } from '../api/operations';
 import { useI18n } from '../i18n';
 import { EmptyState, ErrorState, Loading, NoMatch, Skeleton } from '../ui';
-import {
-  COCKPIT,
-  Card,
-  DataTable,
-  Id,
-  PAGE_SIZE,
-  PageHeader,
-  Pager,
-  Time,
-  pageOf,
-  useUrlState,
-  type Column,
-} from './common';
+import { COCKPIT } from './common';
+import { Id, Time } from '../ui/format';
+import { pageOf, useUrlState } from '../ui/hooks';
+import { Card, PageHeader } from '../ui/page';
+import { DataTable, PAGE_SIZE, Pager, type Column } from '../ui/table';
 import { decisionInstancePath, historyPath } from './paths';
 
 const DmnViewer = lazy(() => import('../dmn/DmnViewer'));

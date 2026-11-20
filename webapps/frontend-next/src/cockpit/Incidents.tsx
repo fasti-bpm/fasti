@@ -19,16 +19,10 @@ import {
 import { useI18n, type Translate } from '../i18n';
 import { Button, Dialog, EmptyState, ErrorState, Field, IconButton, Loading, Skeleton } from '../ui';
 import { useToast } from '../ui/toast';
-import {
-  COCKPIT,
-  ConfirmDialog,
-  DataTable,
-  Id,
-  Time,
-  useCockpitAction,
-  type Column,
-  type TableSorting,
-} from './common';
+import { COCKPIT, useCockpitAction } from './common';
+import { ConfirmDialog } from '../ui/controls';
+import { Id, Time } from '../ui/format';
+import { DataTable, type Column, type TableSorting } from '../ui/table';
 import { IncidentRunbook } from './Runbook';
 
 export function instancePath(id: string): string {

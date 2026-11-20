@@ -24,7 +24,7 @@
     "@bpmn-io/form-js-editor": "2.2.0",
     "@bpmn-io/form-js-viewer": "2.2.0",
     "@tanstack/react-query": "5.107.1",
-    "bpmn-js": "18.31.1",
+    "bpmn-js": "18.33.0",
     "dmn-js": "18.0.3",
     "lucide-react": "1.73.0",
     "radix-ui": "1.8.1",

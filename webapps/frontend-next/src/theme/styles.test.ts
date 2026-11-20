@@ -33,9 +33,16 @@ function globalSheets(): string[] {
 
 describe('style sheets', () => {
   it('load the shared components with the application', () => {
-    const global = globalSheets().map((path) => readFileSync(path, 'utf8')).join('\n');
-    for (const selector of ['.page-header', '.card__header', '.table th', '.table-pager', '.ctabs__tab', '.confirm__actions', '.option__label', '.muted', '.search-input', '.toolbar', '.area__bar']) {
-      expect(global, selector).toContain(`${selector} `);
+    // the selectors of every rule of the global sheets, one per entry
+    const selectors = new Set(
+      globalSheets()
+        .map((path) => readFileSync(path, 'utf8').replace(/\/\*[\s\S]*?\*\//g, ''))
+        .flatMap((css) => Array.from(css.matchAll(/([^{}]+)\{/g), (match) => match[1] ?? ''))
+        .flatMap((list) => list.split(','))
+        .map((selector) => selector.trim()),
+    );
+    for (const selector of ['.page-header', '.card__header', '.table th', '.table-pager', '.ctabs__tab', '.tabs__tab', '.segmented__item', '.confirm__actions', '.option__label', '.muted', '.search-input', '.toolbar', '.area__bar']) {
+      expect(selectors.has(selector), selector).toBe(true);
     }
   });
 

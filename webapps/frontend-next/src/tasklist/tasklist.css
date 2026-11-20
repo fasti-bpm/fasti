@@ -531,57 +531,15 @@
   min-height: 0;
 }
 
+/* the labels of the tabs line up with the title of the task */
 .tabs__list {
-  display: flex;
-  flex: none;
-  gap: var(--s-1);
-  padding: 0 var(--s-6);
-  border-bottom: 1px solid var(--border);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.tabs__tab {
-  position: relative;
-  height: 40px;
   padding: 0 var(--s-3);
-  border: 0;
-  background: transparent;
-  color: var(--text-muted);
-  font-weight: var(--fw-medium);
-  white-space: nowrap;
-  transition: color var(--duration) var(--ease);
-}
-
-.tabs__tab:hover {
-  color: var(--text);
-}
-
-.tabs__tab:focus-visible {
-  outline-offset: -2px;
-}
-
-.tabs__tab[data-state='active'] {
-  color: var(--text);
-  font-weight: var(--fw-semibold);
-}
-
-.tabs__tab[data-state='active']::after {
-  position: absolute;
-  inset-inline-end: var(--s-3);
-  bottom: -1px;
-  inset-inline-start: var(--s-3);
-  height: 2px;
-  border-radius: var(--r-xs) var(--r-xs) 0 0;
-  background: var(--accent);
-  content: '';
 }
 
 .tabs__panel {
   flex: 1;
   min-height: 0;
   padding: var(--s-5) var(--s-6) var(--s-8);
-  outline: none;
 }
 
 .tabs__panel[data-state='inactive'] {
@@ -1058,7 +1016,7 @@
   }
 
   .tabs__list {
-    padding: 0 var(--s-2);
+    padding: 0 var(--s-1);
   }
 
   .tabs__panel {

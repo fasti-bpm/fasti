@@ -181,50 +181,10 @@
 }
 
 .admin-choice__item input,
-.admin-segment__item input {
-  accent-color: var(--accent);
-}
-
 .admin-identity {
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
-}
-
-.admin-segment {
-  display: inline-flex;
-  align-self: flex-start;
-  margin: 0;
-  padding: 2px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-}
-
-.admin-segment__item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-1);
-  padding: var(--s-1) var(--s-3);
-  border-radius: var(--r-sm);
-  color: var(--text-muted);
-  font-size: var(--fs-sm);
-  cursor: pointer;
-}
-
-.admin-segment__item input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.admin-segment__item.is-on {
-  background: var(--accent-soft);
-  color: var(--accent-soft-text);
-  font-weight: var(--fw-semibold);
-}
-
-.admin-segment__item:has(input:focus-visible) {
-  outline: 2px solid var(--focus);
 }
 
 .admin-permission-picker__tools {

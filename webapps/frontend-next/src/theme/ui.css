@@ -1018,6 +1018,38 @@ textarea.input {
   outline-offset: -2px;
 }
 
+/* the same choice inside a form: a fieldset of radio buttons, each in its label */
+fieldset.segmented {
+  align-self: flex-start;
+  min-inline-size: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.segmented__item:has(input) {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.segmented__item input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segmented__item:has(input:checked) {
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+  font-weight: var(--fw-semibold);
+}
+
+.segmented__item:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
 /* --- touch ----------------------------------------------------------------
  * A finger needs larger targets than a mouse, and inputs under 16px make
  * phones zoom into the page on focus.

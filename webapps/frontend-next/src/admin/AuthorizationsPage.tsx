@@ -161,10 +161,10 @@ function AuthorizationDialog({
         </fieldset>
         {kind !== 0 && (
           <div className="admin-identity">
-            <fieldset className="admin-segment">
+            <fieldset className="segmented">
               <legend className="sr-only">{t('admin.auth.identity')}</legend>
               {(['user', 'group'] as const).map((value) => (
-                <label key={value} className={cx('admin-segment__item', identity === value && 'is-on')}>
+                <label key={value} className="segmented__item">
                   <input type="radio" name="identity" checked={identity === value} onChange={() => setIdentity(value)} />
                   {value === 'user' ? <User aria-hidden size={14} /> : <Users aria-hidden size={14} />}
                   {t(value === 'user' ? 'admin.auth.user' : 'admin.auth.group')}

@@ -436,23 +436,28 @@
 }
 
 /* --- tabs ----------------------------------------------------------------- */
+/* one look for every row of tabs: the pages (ctabs) and the task detail (tabs) */
 
-.ctabs__list {
+.ctabs__list,
+.tabs__list {
   display: flex;
+  flex: none;
   gap: var(--s-1);
-  padding: 0 var(--s-2);
+  /* the label of the first tab lines up with the content of the card */
+  padding: 0 var(--s-1);
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
   scrollbar-width: none;
 }
 
-.ctabs__tab {
+.ctabs__tab,
+.tabs__tab {
   position: relative;
   display: inline-flex;
   flex: none;
   align-items: center;
   gap: var(--s-2);
-  height: 42px;
+  height: var(--tab-height);
   padding: 0 var(--s-3);
   border: 0;
   background: transparent;
@@ -462,20 +467,24 @@
   transition: color var(--duration) var(--ease);
 }
 
-.ctabs__tab:hover {
+.ctabs__tab:hover,
+.tabs__tab:hover {
   color: var(--text);
 }
 
-.ctabs__tab:focus-visible {
+.ctabs__tab:focus-visible,
+.tabs__tab:focus-visible {
   outline-offset: -2px;
 }
 
-.ctabs__tab[data-state='active'] {
+.ctabs__tab[data-state='active'],
+.tabs__tab[data-state='active'] {
   color: var(--text);
   font-weight: var(--fw-semibold);
 }
 
-.ctabs__tab[data-state='active']::after {
+.ctabs__tab[data-state='active']::after,
+.tabs__tab[data-state='active']::after {
   position: absolute;
   inset-inline-end: var(--s-3);
   bottom: 0;
@@ -486,14 +495,16 @@
   content: '';
 }
 
-.ctabs__content {
+.ctabs__content,
+.tabs__panel {
   outline: none;
 }
 
 /* the panel takes the focus after its tab, so keyboard users must see it */
-.ctabs__content:focus-visible {
+.ctabs__content:focus-visible,
+.tabs__panel:focus-visible {
   outline: 2px solid var(--focus);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 
 /* --- dialogs -------------------------------------------------------------- */

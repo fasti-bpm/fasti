@@ -540,6 +540,20 @@
                             <class>org.camunda.connect.plugin.impl.ConnectProcessEnginePlugin</class>
                         </plugin>
 
+                        <!-- SUBSTITUTES DURING ABSENCE (docs/absence.md) -->
+                        <!-- Uncomment so that users can record an absence with a substitute, who then gets
+                             the user tasks created for or assigned to them meanwhile. Turn it on for every
+                             node of a cluster. -->
+                        <!--
+                            <plugin>
+                                <class>dev.fasti.engine.absence.AbsenceSubstitutionPlugin</class>
+                                <properties>
+                                    <property name="maxHops">5</property>
+                                    <property name="substituteCandidates">true</property>
+                                </properties>
+                            </plugin>
+                        -->
+
                         <!-- SINGLE SIGN-ON (OpenID Connect, see configuration/fasti-oidc.properties.example) -->
                         <!-- Uncomment so that the engine takes the groups and tenants of the signed-in user
                              from the claims of the token -->

@@ -102,6 +102,13 @@ logging:
 #  opentelemetry.tracing.export.otlp.endpoint: https://otel-collector.example.com:4318/v1/traces
 #  tracing.sampling.probability: 0.1
 
+# Substitutes during absence (docs/absence.md), off by default. Turn it on for every node of a
+# cluster at once; Camunda 7.24 nodes on the same database do not substitute.
+#fasti.absence:
+#  enabled: true
+#  max-hops: 5
+#  substitute-candidates: true
+
 # Bearer tokens (JWT access tokens of an OpenID Connect provider) on the REST API. When enabled,
 # every REST request needs a valid token (401 otherwise); the user, groups and tenants of the
 # token become the engine identity. Basic authentication keeps working only together with

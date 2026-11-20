@@ -39,6 +39,14 @@ camunda.bpm:
 # pages of the classic applications then redirect to the new web UI:
 #fasti.webapp.classic.enabled: false
 
+# Substitutes during absence (docs/absence.md): users record an absence in the web UI
+# (Preferences), and the user tasks created for or assigned to them meanwhile go to their
+# substitute. Stored as user info, so the database schema stays that of Camunda 7.24.
+fasti.absence:
+  enabled: true
+#  max-hops: 5                  # absent substitutes followed in a row
+#  substitute-candidates: true  # the substitute of an absent candidate user becomes a candidate too
+
 # Bearer tokens (JWT access tokens of an OpenID Connect provider) on the REST API. When enabled,
 # every REST request needs a valid token (401 otherwise); the user, groups and tenants of the
 # token become the engine identity. Basic authentication keeps working only together with

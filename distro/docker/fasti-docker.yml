@@ -59,6 +59,10 @@ fasti:
   webapp:
     classic:
       enabled: false
+  # substitutes during absence (docs/absence.md): off, as an existing installation may share the
+  # database with Camunda 7.24 nodes; FASTI_ABSENCE_ENABLED=true turns it on (on every node)
+  absence:
+    enabled: false
 
 # health, liveness and readiness below /actuator/health for HEALTHCHECK, Kubernetes probes and
 # load balancers; nothing else of the actuator is exposed. Metrics, tracing and JSON logs are off;

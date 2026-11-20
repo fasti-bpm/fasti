@@ -311,7 +311,8 @@ export function AuditPage() {
       className="input"
       aria-label={label}
       placeholder={label}
-      key={params.get(name) ?? ''}
+      // a new value from the address resets the field; the name keeps the fields apart
+      key={`${name}:${params.get(name) ?? ''}`}
       defaultValue={params.get(name) ?? ''}
       onBlur={(event) => change(name, event.target.value)}
       onKeyDown={(event) => event.key === 'Enter' && change(name, event.currentTarget.value)}

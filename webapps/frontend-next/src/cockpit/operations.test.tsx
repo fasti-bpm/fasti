@@ -831,6 +831,25 @@ describe('operation log', () => {
     await waitFor(() => expect(server.find('PUT', `${ENGINE}/history/user-operation/op1/set-annotation`)[0]?.body).toEqual({ annotation: 'ticket 42' }));
   });
 
+  it('keeps its filter fields apart', async () => {
+    const user = userEvent.setup();
+    const errors = vi.spyOn(console, 'error');
+    backend({
+      [`GET ${ENGINE}/history/user-operation/count`]: () => json({ count: 0 }),
+      [`GET ${ENGINE}/history/user-operation`]: () => json([]),
+    });
+    const router = renderApp('/cockpit/audit?user=demo');
+
+    expect(await screen.findByLabelText('User')).toHaveValue('demo');
+    await user.type(screen.getByLabelText('Operation type'), 'Suspend{Enter}');
+    await waitFor(() => expect(new URLSearchParams(router.state.location.search).get('op')).toBe('Suspend'));
+    expect(screen.getByLabelText('User')).toHaveValue('demo');
+    expect(screen.getByLabelText('Operation type')).toHaveValue('Suspend');
+    expect(screen.getByLabelText('Entity type')).toHaveValue('');
+    // fields without a value had the same key, which React reports
+    expect(errors.mock.calls.flat().join(' ')).not.toMatch(/same key/);
+  });
+
   it('tells an empty result of the filters from an empty log and clears the filters', async () => {
     const user = userEvent.setup();
     const server = backend({

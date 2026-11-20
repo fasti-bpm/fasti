@@ -106,11 +106,13 @@ jobs:
       - name: Build the image
         run: docker build -t fasti-bpm:ci --build-arg REVISION=${{ github.sha }} distro/docker/target/docker
       # Authentication stays on (the image default). The H2 demo database gets the
-      # administrator the tests log in with; no secret is involved.
+      # administrator the tests log in with; no secret is involved. Substitutes during
+      # absence (off in the image) are turned on for their tests.
       - name: Start the container
         run: |
           docker run -d --name fasti -p 8080:8080 \
-            -e FASTI_ADMIN_USER=demo -e FASTI_ADMIN_PASSWORD=demo fasti-bpm:ci --webapps --rest --example
+            -e FASTI_ADMIN_USER=demo -e FASTI_ADMIN_PASSWORD=demo -e FASTI_ABSENCE_ENABLED=true \
+            fasti-bpm:ci --webapps --rest --example
           for _ in $(seq 1 90); do
             if curl -fsS http://localhost:8080/actuator/health/readiness; then exit 0; fi
             sleep 2

@@ -258,9 +258,11 @@ Vẫn chưa được? Mở issue trên GitHub kèm log (bỏ mật khẩu). Lỗ
 
 ### 12. Không dùng Docker
 
-Gói Tomcat dựng sẵn sẽ được tải từ fasti.dev:
-<!-- update with the R2 download URL -->
-[tải gói Tomcat](https://fasti.dev/) (liên kết sẽ được cập nhật khi phát hành).
+Gói Tomcat 1.0.0 dựng sẵn (trang tải: https://fasti.dev/download):
+- [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
+- [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
+
+Kiểm tra checksum trước khi giải nén, ví dụ `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
 
 ---
 
@@ -514,6 +516,8 @@ Still stuck? Open a GitHub issue with the log (passwords removed). Security issu
 
 ### 12. Without Docker
 
-A ready-made Tomcat bundle will be available for download from fasti.dev:
-<!-- update with the R2 download URL -->
-[download the Tomcat bundle](https://fasti.dev/) (the link will be updated at release).
+Ready-made Tomcat 1.0.0 bundle (download page: https://fasti.dev/download):
+- [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
+- [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
+
+Verify the checksum before extracting, for example `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.

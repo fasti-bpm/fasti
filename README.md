@@ -124,10 +124,13 @@ Hướng dẫn chi tiết:
 
 ### Không dùng Docker: gói Tomcat (tải từ fasti.dev)
 
-Gói Tomcat dựng sẵn sẽ được tải từ fasti.dev:
-<!-- update with the R2 download URL -->
-[tải gói Tomcat](https://fasti.dev/) (liên kết sẽ được cập nhật khi phát hành). Trong lúc chờ,
-có thể build bản phân phối Tomcat từ mã nguồn (`distro/tomcat`). Đọc `README.txt` trong gói
+Gói Tomcat 1.0.0 dựng sẵn (trang tải: https://fasti.dev/download):
+- [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
+- [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
+
+Kiểm tra checksum trước khi giải nén, ví dụ `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
+
+Cũng có thể build bản phân phối Tomcat từ mã nguồn (`distro/tomcat`). Đọc `README.txt` trong gói
 trước khi chạy: REST API (`/engine-rest`) cần đăng nhập HTTP Basic theo mặc định, không có người
 dùng nào được tạo sẵn (tạo quản trị viên đầu tiên ở trang thiết lập của `/fasti/`), và khi tiếp
 quản cơ sở dữ liệu của Camunda Run phải đặt `jobExecutorDeploymentAware=false` trong
@@ -719,10 +722,13 @@ Detailed guides:
 
 #### Without Docker: Tomcat bundle (download from fasti.dev)
 
-A ready-made Tomcat bundle will be available for download from fasti.dev:
-<!-- update with the R2 download URL -->
-[download the Tomcat bundle](https://fasti.dev/) (the link will be updated at release). Until
-then, the Tomcat distribution can be built from source (`distro/tomcat`). Read `README.txt` in
+Ready-made Tomcat 1.0.0 bundle (download page: https://fasti.dev/download):
+- [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
+- [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
+
+Verify the checksum before extracting, for example `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
+
+The Tomcat distribution can also be built from source (`distro/tomcat`). Read `README.txt` in
 the bundle before starting it: the REST API (`/engine-rest`) requires HTTP Basic authentication
 by default, no user is created (create the first administrator on the setup page of `/fasti/`),
 and when taking over the database of Camunda Run set `jobExecutorDeploymentAware=false` in

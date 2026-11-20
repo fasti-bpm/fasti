@@ -2,7 +2,8 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright Fasti BPM contributors
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router';
 import { useI18n, LOCALE_MANIFESTS, type Locale, type MessageKey } from '../i18n';
 import {
   START_PAGES,
@@ -27,6 +28,8 @@ import { useTheme, type ThemeChoice } from '../theme/theme';
 import { Notice } from '../ui';
 import { useToast } from '../ui/toast';
 import { useSession } from './session';
+import { AbsenceSettings } from '../absence/AbsenceSettings';
+import { scrollBehavior } from '../lib/motion';
 
 const THEMES: { value: ThemeChoice; label: MessageKey }[] = [
   { value: 'system', label: 'prefs.theme.system' },
@@ -90,6 +93,15 @@ export function PreferencesPage() {
   const sample = new Date(Date.now() - 3 * 60 * 60 * 1000);
   const permission = typeof Notification === 'undefined' ? 'unsupported' : Notification.permission;
   const starts = START_PAGES.filter((page) => startPath(page, session.authorizedApps) !== null);
+  // the banner of the tasklist links to the absence
+  const location = useLocation();
+  const absenceRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (location.hash === '#absence') {
+      absenceRef.current?.scrollIntoView({ block: 'start', behavior: scrollBehavior() });
+      absenceRef.current?.focus({ preventScroll: true });
+    }
+  }, [location.hash]);
 
   return (
     <div className="page prefs">
@@ -204,6 +216,9 @@ export function PreferencesPage() {
           <CardFieldsSettings />
         </section>
       )}
+      <div className="prefs__card" id="absence" ref={absenceRef} tabIndex={-1}>
+        <AbsenceSettings userId={session.userId} self />
+      </div>
     </div>
   );
 }

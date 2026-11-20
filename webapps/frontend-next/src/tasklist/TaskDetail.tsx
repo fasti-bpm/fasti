@@ -26,6 +26,7 @@ import { DocumentationText, modelDocumentation } from '../lib/documentation';
 
 import { keyOfDefinitionId } from '../bpmn/diagrams';
 import { OverflowRow } from '../app/OverflowMenu';
+import { SubstituteNotice } from '../absence/SubstituteNotice';
 const BpmnDiagram = lazy(() => import('../bpmn/BpmnDiagram'));
 
 const OPERATIONS: Record<string, MessageKey> = {
@@ -324,6 +325,7 @@ export function TaskDetail({
       </header>
 
       <TaskMeta task={task} actions={actions} />
+      <SubstituteNotice task={task} />
 
       {documentation.step && (
         <details className="step-doc">

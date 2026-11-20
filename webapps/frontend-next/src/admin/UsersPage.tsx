@@ -34,6 +34,7 @@ import { Button, Dialog, EmptyState, ErrorState, Field, IconButton, Loading, NoM
 import { ConfirmDialog, SearchInput } from '../ui/controls';
 import { pageOf, useUrlSearch, useRemembered, useUrlState } from '../ui/hooks';
 import { Card, PageHeader } from '../ui/page';
+import { AbsenceSettings } from '../absence/AbsenceSettings';
 import { DataTable, PAGE_SIZE, useClampedPage, Pager, type Column } from '../ui/table';
 import {
   ADMIN,
@@ -714,7 +715,7 @@ export function DeleteDialog({
   );
 }
 
-const USER_TABS = ['profile', 'password', 'groups', 'tenants'] as const;
+const USER_TABS = ['profile', 'password', 'groups', 'tenants', 'absence'] as const;
 
 /** One user: profile, password and memberships. */
 export function UserPage() {
@@ -797,6 +798,12 @@ export function UserPage() {
           </Tabs.Content>
           <Tabs.Content value="tenants" className="ctabs__content">
             <UserTenantsTab user={current} />
+          </Tabs.Content>
+          <Tabs.Content value="absence" className="ctabs__content">
+            {/* stored in the engine database, so it can be set also with a read-only identity provider */}
+            <div className="absence--tab">
+              <AbsenceSettings userId={current.id} self={self} />
+            </div>
           </Tabs.Content>
         </Tabs.Root>
       </Card>

@@ -38,6 +38,7 @@ import { QUEUE_VIEWS, slaUsed, type QueueView } from './queue';
 import { VariableSortDialog } from './VariableSortDialog';
 import { fieldLabels, processKeyOf, type ProcessCardFields } from '../lib/cardFields';
 import { MenuContent } from '../ui/menu';
+import { SubstituteBadge } from '../absence/SubstituteNotice';
 
 const SORT_OPTIONS: { sortBy: TaskSortBy; label: MessageKey }[] = [
   { sortBy: 'created', label: 'sort.created' },
@@ -635,6 +636,7 @@ function TaskRow({
           <User aria-hidden size={13} />
           {task.assignee ? (task.assigneeName ?? task.assignee) : t('task.unassigned')}
         </span>
+        {task.absentAssignee && <SubstituteBadge absentUserId={task.absentAssignee} />}
         <DueBadge due={task.due} created={task.created} />
         <FollowUpBadge followUp={task.followUp} />
         {task.priority !== 50 && (

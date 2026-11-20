@@ -1,0 +1,125 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ */
+/* the absence of a user with their substitute (preferences, administration, tasklist) */
+.absence {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.absence__title {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+}
+
+.absence__form {
+  display: grid;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.absence__hint {
+  margin: 0;
+}
+
+.absence__dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-3);
+}
+
+.absence__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--s-2);
+}
+
+/* ending the absence stands apart from saving it */
+.absence__actions--live > :first-child {
+  margin-inline-end: auto;
+}
+
+/* in the administration the form sits in a tab */
+.absence--tab {
+  max-width: 640px;
+  padding: var(--s-5);
+}
+
+/* the tasklist says when you are away or stand in for someone */
+.absence-banner {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+  margin: var(--s-2) var(--s-3) 0;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--border);
+  border-inline-start: 3px solid var(--warning);
+  border-radius: var(--r-md);
+  background: var(--warning-soft);
+  color: var(--text);
+  font-size: var(--fs-sm);
+}
+
+.absence-banner--substitute {
+  border-inline-start-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.absence-banner__text {
+  flex: 1 1 16rem;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.absence-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+/* a task held for an absent user: on its card and below its details */
+.absence-task {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0 var(--s-6) var(--s-3);
+  font-size: var(--fs-sm);
+}
+
+.badge--substitute {
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+}
+
+@media (max-width: 640px) {
+  .absence__dates {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .absence__actions {
+    justify-content: stretch;
+  }
+
+  .absence__actions > * {
+    flex: 1 1 100%;
+  }
+
+  .absence__actions--live > :first-child {
+    margin-inline-end: 0;
+  }
+
+  .absence--tab {
+    padding: var(--s-4);
+  }
+
+  .absence-task {
+    margin-inline: var(--s-4);
+  }
+}

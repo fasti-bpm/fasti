@@ -89,6 +89,8 @@ export interface TaskListItem extends Task {
   processDefinitionKey?: string;
   /** the business key of the instance: what the case is called in the business */
   businessKey?: string | null;
+  /** the absent user the task is held for by a substitute */
+  absentAssignee?: string;
 }
 
 export interface TaskPage {

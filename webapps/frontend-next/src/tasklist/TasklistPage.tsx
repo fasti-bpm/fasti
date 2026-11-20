@@ -29,6 +29,9 @@ import { SearchTools } from './SearchTools';
 import { decodeSearch, getCardVariables, searchLink, withCardVariables } from './searchLinks';
 import './tasklist.css';
 import { fieldNames, processCardFields, processKeyOf } from '../lib/cardFields';
+import { getSubstitutionMarks } from '../api/absence';
+import { AbsenceBanner, useAbsenceEnabled } from '../absence/AbsenceBanner';
+import { withSubstitutionMarks } from '../absence/marks';
 
 const REFRESH_INTERVAL = 30_000;
 /** below this width either the list or the open task is shown; see tasklist.css */
@@ -170,12 +173,28 @@ export function TasklistPage() {
     [held, listKey, tasks.data],
   );
   const listed = stable?.tasks ?? tasks.data?.tasks;
+  // tasks that went to a substitute carry the absent user they are held for
+  const absenceEnabled = useAbsenceEnabled();
+  const listedIds = listed?.map((task) => task.id) ?? [];
+  const substitutionMarks = useQuery({
+    queryKey: ['substitution-marks', listedIds],
+    queryFn: ({ signal }) => getSubstitutionMarks(listedIds, signal),
+    enabled: absenceEnabled && listedIds.length > 0,
+    placeholderData: keepPreviousData,
+    refetchInterval: filter?.properties?.refresh === false ? false : REFRESH_INTERVAL,
+  });
   const shownPage = useMemo(
     () =>
       tasks.data && listed
-        ? { ...tasks.data, tasks: cardValues.data ? withCardVariables(listed, cardValues.data) : listed }
+        ? {
+            ...tasks.data,
+            tasks: withSubstitutionMarks(
+              cardValues.data ? withCardVariables(listed, cardValues.data) : listed,
+              substitutionMarks.data,
+            ),
+          }
         : tasks.data,
-    [tasks.data, listed, cardValues.data],
+    [tasks.data, listed, cardValues.data, substitutionMarks.data],
   );
   const taskItems = listed;
   // when the last tasks of the last page are done, show the page that is now the last one
@@ -483,6 +502,7 @@ export function TasklistPage() {
             {t('nav.processes')}
           </Link>
         </header>
+        <AbsenceBanner />
         <div className="get-next">
           <Button
             variant="primary"

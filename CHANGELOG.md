@@ -17,6 +17,22 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
 
 ### Added
 
+- Substitutes during absence ([docs](docs/absence.md)): a user records an absence (from, until,
+  substitute, note) in the preferences of the new web UI, or an administrator does so on the
+  Absence tab of a user. While it is active, BPMN user tasks and CMMN human tasks created for
+  or assigned to the user go to the substitute (following absent substitutes up to
+  `fasti.absence.max-hops`, never in a circle), and the substitute becomes a candidate user next
+  to an absent candidate user. Each substitution leaves a task comment and the local task
+  variables `fasti_absentAssignee` and `fasti_absenceSubstitute`. Open tasks from before the
+  absence are handed over on request ("Hand over my open tasks now"). The tasklist says when
+  you are away or stand in for someone and marks tasks held for an absent user. REST:
+  `GET`/`PUT`/`DELETE /user/{id}/absence`, `POST /user/{id}/absence/handover`,
+  `GET /user/{id}/absence/substituting`; a user manages their own absence, others need `READ`
+  or `UPDATE` on the user. Absences are stored as user info (`ACT_ID_INFO`), so the database
+  schema stays that of Camunda 7.24, also with LDAP. On in the default configuration of Run;
+  off in the Spring Boot starter, the container image (`FASTI_ABSENCE_ENABLED=true`),
+  `production.yml` and the Tomcat and WildFly bundles (`fasti.absence.enabled`, plugin
+  `dev.fasti.engine.absence.AbsenceSubstitutionPlugin`).
 - Helm chart (`distro/kubernetes/helm/fasti-bpm`) and plain Kubernetes manifests with Kustomize
   (`distro/kubernetes/manifests`) for the container image against an external database:
   production mode on by default, credentials only from existing Secrets (mounted as files),

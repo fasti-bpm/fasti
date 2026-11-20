@@ -18,7 +18,7 @@
 | 여러 변수와 OR 조건으로 인스턴스 검색 | 포럼 [39269](https://forum.camunda.io/t/39269), [45695](https://forum.camunda.io/t/45695), [48976](https://forum.camunda.io/t/48976), [64208](https://forum.camunda.io/t/64208), [28855](https://forum.camunda.io/t/28855), [4678](https://forum.camunda.io/t/4678); [camunda-bpm-platform#3236](https://github.com/camunda/camunda-bpm-platform/issues/3236) | 다중 변수 조건 빌더, AND/OR |
 | 케이스의 모든 단계에서 댓글 확인 | 포럼 [30260](https://forum.camunda.io/t/30260), [52109](https://forum.camunda.io/t/52109), [2173](https://forum.camunda.io/t/2173) | 작업 내 케이스 타임라인; 프로세스 인스턴스 자체에 댓글 작성 |
 | 변수 기준 및 오래된 순서로 작업 정렬 | 포럼 [17599](https://forum.camunda.io/t/17599), [42078](https://forum.camunda.io/t/42078), [41193](https://forum.camunda.io/t/41193), [67328](https://forum.camunda.io/t/67328) | 변수, 마감일 및 긴급도 기준 정렬 |
-| 위임, 부재 중 대리 담당자 | 포럼 [2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199), [9331](https://forum.camunda.io/t/9331) | 작업별 위임 지원; 부재 중 대리 담당자는 [로드맵](https://fasti.dev/#timeline)에 포함 |
+| 위임, 부재 중 대리 담당자 | 포럼 [2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199), [9331](https://forum.camunda.io/t/9331) | 작업별 위임, 그리고 인계를 포함한 [부재 중 대리인](absence.md) |
 | 폼 없이 프로세스를 시작할 때 비즈니스 키와 변수 지정 | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | 지원 |
 | 배포된 BPMN XML 다운로드 | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | 지원 |
 | 일관된 레이블, 다국어 지원 | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13개 언어. BPMN, DMN, 폼 편집기 안의 기본 제공 레이블은 영어와 베트남어만 지원 |

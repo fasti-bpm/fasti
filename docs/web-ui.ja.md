@@ -18,7 +18,7 @@
 | 複数の変数と OR 条件でインスタンスを検索したい | フォーラム [39269](https://forum.camunda.io/t/39269)、[45695](https://forum.camunda.io/t/45695)、[48976](https://forum.camunda.io/t/48976)、[64208](https://forum.camunda.io/t/64208)、[28855](https://forum.camunda.io/t/28855)、[4678](https://forum.camunda.io/t/4678)；[camunda-bpm-platform#3236](https://github.com/camunda/camunda-bpm-platform/issues/3236) | 複数変数の条件ビルダー、AND/OR |
 | ケースの各ステップのコメントを確認したい | フォーラム [30260](https://forum.camunda.io/t/30260)、[52109](https://forum.camunda.io/t/52109)、[2173](https://forum.camunda.io/t/2173) | タスク内のケースタイムライン；プロセスインスタンス自体へのコメント |
 | 変数でタスクを並べ替え、古いものから表示したい | フォーラム [17599](https://forum.camunda.io/t/17599)、[42078](https://forum.camunda.io/t/42078)、[41193](https://forum.camunda.io/t/41193)、[67328](https://forum.camunda.io/t/67328) | 変数、期限、緊急度による並べ替え |
-| 委任や不在時の代理担当者を設定したい | フォーラム [2788](https://forum.camunda.io/t/2788)、[38199](https://forum.camunda.io/t/38199)、[9331](https://forum.camunda.io/t/9331) | タスク単位の委任に対応；不在時の代理担当者は [ロードマップ](https://fasti.dev/#timeline) に記載 |
+| 委任や不在時の代理担当者を設定したい | フォーラム [2788](https://forum.camunda.io/t/2788)、[38199](https://forum.camunda.io/t/38199)、[9331](https://forum.camunda.io/t/9331) | タスク単位の委任と、引き継ぎ付きの[不在時の代理人](absence.md) |
 | フォームなしでプロセスを開始するときにビジネスキーと変数を指定したい | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | 対応済み |
 | デプロイ済みの BPMN XML をダウンロードしたい | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | 対応済み |
 | ラベルの一貫性と多言語対応がほしい | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 言語。BPMN、DMN、フォームの各エディター内の組み込みラベルは英語とベトナム語のみ |

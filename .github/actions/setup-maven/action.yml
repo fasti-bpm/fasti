@@ -31,6 +31,27 @@ runs:
       with:
         distribution: temurin
         java-version: ${{ inputs.java-version }}
+    # Maven Central rate-limits shared runner IPs (HTTP 429) even after retries. CI fetches
+    # the Maven distribution and the artifacts of Maven Central through Google's public
+    # mirror of Maven Central instead; local builds keep using Maven Central directly.
+    - name: Use the Google mirror of Maven Central
+      shell: bash
+      run: |
+        mirror=https://maven-central.storage-download.googleapis.com/maven2
+        echo "MVNW_REPOURL=${mirror}" >> "$GITHUB_ENV"
+        mkdir -p ~/.m2
+        cat > ~/.m2/settings.xml <<EOF
+        <settings>
+          <mirrors>
+            <mirror>
+              <id>google-maven-central</id>
+              <name>Google mirror of Maven Central</name>
+              <url>${mirror}</url>
+              <mirrorOf>central</mirrorOf>
+            </mirror>
+          </mirrors>
+        </settings>
+        EOF
     - name: Cache the Maven distribution
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:

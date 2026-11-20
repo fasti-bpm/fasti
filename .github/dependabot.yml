@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Fasti BPM contributors
 
+# Updates are grouped: at most one pull request per ecosystem and week, so that every
+# change set runs the full CI once. Security updates are not grouped and arrive at once.
 version: 2
 updates:
   - package-ecosystem: maven
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     ignore:
       # The engine follows Camunda 7 CE 7.24.0; those artifacts are not upgraded by bot.
       - dependency-name: "org.camunda.*"
@@ -16,19 +18,43 @@ updates:
       # patch releases only.
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+    groups:
+      maven-minor-and-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
   - package-ecosystem: npm
     directory: /webapps/frontend-next
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
-      dev-dependencies:
-        dependency-type: development
+      web-ui:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+  - package-ecosystem: npm
+    directory: /webapps/frontend
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      classic-web-apps:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 2
+    groups:
+      github-actions:
+        applies-to: version-updates
+        patterns: ["*"]
   - package-ecosystem: docker
     directory: /distro/docker
     schedule:

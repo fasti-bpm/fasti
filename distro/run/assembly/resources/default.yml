@@ -52,6 +52,15 @@ fasti.absence:
 # those steps in the same process instance. Acts only where a model declares such a rule.
 fasti.four-eyes.enabled: true
 
+# Immutable audit trail (docs/audit-trail.md), off by default: what happens in the engine (process
+# instances, tasks and who assigned or completed them, variables, deployments, incidents, the
+# operation log) is recorded in hash-chained records of the tables FASTI_AUDIT_EVENT and
+# FASTI_AUDIT_HEAD, which the web UI shows under Cockpit > Audit trail. Uncomment to turn it on:
+#fasti.audit:
+#  enabled: true
+#  variable-values: hash        # hash (default), value or none
+#  hmac-key-file: ./audit.key   # signs checkpoints; or the environment variable FASTI_AUDIT_HMAC_KEY
+
 # Bearer tokens (JWT access tokens of an OpenID Connect provider) on the REST API. When enabled,
 # every REST request needs a valid token (401 otherwise); the user, groups and tenants of the
 # token become the engine identity. Basic authentication keeps working only together with

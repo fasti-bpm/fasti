@@ -114,6 +114,16 @@ logging:
 # Run it on every node of a cluster; Camunda 7.24 nodes on the same database do not enforce it.
 fasti.four-eyes.enabled: true
 
+# Immutable audit trail (docs/audit-trail.md), off by default. Turn it on for every node of a
+# cluster, give each node a stable node-id, keep the signing key outside the database (environment
+# variable FASTI_AUDIT_HMAC_KEY or a file), and revoke UPDATE and DELETE on FASTI_AUDIT_EVENT from
+# the database user of the application.
+#fasti.audit:
+#  enabled: true
+#  node-id: node-1
+#  hmac-key-file: /run/secrets/fasti-audit-key
+#  retention-days: 3650
+
 # Bearer tokens (JWT access tokens of an OpenID Connect provider) on the REST API. When enabled,
 # every REST request needs a valid token (401 otherwise); the user, groups and tenants of the
 # token become the engine identity. Basic authentication keeps working only together with

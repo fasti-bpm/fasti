@@ -67,6 +67,12 @@ fasti:
   # model declares a rule (fasti:fourEyes); FASTI_FOUR_EYES_ENABLED=false turns it off
   four-eyes:
     enabled: true
+  # immutable audit trail (docs/audit-trail.md): off, as it adds the tables FASTI_AUDIT_EVENT and
+  # FASTI_AUDIT_HEAD and a write per command; FASTI_AUDIT_ENABLED=true turns it on (on every node).
+  # With FASTI_DB_SCHEMA_UPDATE left off, create the tables first (sql/create/*_fasti_audit.sql).
+  # The key that signs checkpoints: FASTI_AUDIT_HMAC_KEY or FASTI_AUDIT_HMAC_KEY_FILE (a secret).
+  audit:
+    enabled: false
 
 # health, liveness and readiness below /actuator/health for HEALTHCHECK, Kubernetes probes and
 # load balancers; nothing else of the actuator is exposed. Metrics, tracing and JSON logs are off;

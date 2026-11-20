@@ -59,6 +59,22 @@
         <class>dev.fasti.engine.foureyes.FourEyesPlugin</class>
       </plugin>
 
+    <!-- IMMUTABLE AUDIT TRAIL (docs/audit-trail.md) -->
+    <!-- Uncomment so that what happens in the engine is recorded in hash-chained records of the
+         tables FASTI_AUDIT_EVENT and FASTI_AUDIT_HEAD (created at startup when the engine may create
+         its schema, otherwise run sql/create/<database>_fasti_audit.sql). Turn it on for every node
+         of a cluster; keep the signing key in a file outside the database. -->
+    <!--
+      <plugin>
+        <class>dev.fasti.engine.audit.AuditTrailPlugin</class>
+        <properties>
+          <property name="nodeId">node-1</property>
+          <property name="variableValues">hash</property>
+          <property name="hmacKeyFile">/opt/fasti/conf/fasti-audit.key</property>
+        </properties>
+      </plugin>
+    -->
+
     <!-- SINGLE SIGN-ON (OpenID Connect, see conf/fasti-oidc.properties.example) -->
     <!-- Uncomment so that the engine takes the groups and tenants of the signed-in user from the
          claims of the token (e.g. in Admin and in queries for "my groups") -->

@@ -254,6 +254,16 @@
                   </mapper>
                 </copy>
 
+                <!-- tables of the optional Fasti audit trail (docs/audit-trail.md) -->
+                <copy todir="target/sql/create" flatten="true">
+                  <fileset dir="target/fasti-engine-${project.version}/dev/fasti/engine/audit/db/create" />
+                  <mapper type="regexp" from="^fasti\.([A-Za-z0-9]*)\.create\.audit\.sql$" to="\1_fasti_audit.sql" />
+                </copy>
+                <copy todir="target/sql/drop" flatten="true">
+                  <fileset dir="target/fasti-engine-${project.version}/dev/fasti/engine/audit/db/drop" />
+                  <mapper type="regexp" from="^fasti\.([A-Za-z0-9]*)\.drop\.audit\.sql$" to="\1_fasti_audit.sql" />
+                </copy>
+
                 <!-- upgrade -->
                 <mkdir dir="target/sql/upgrade" />
 

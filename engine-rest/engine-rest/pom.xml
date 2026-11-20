@@ -530,7 +530,7 @@
              Camunda-supported Wildfly/JBoss EAP version.
              Currently, this is JBoss EAP 7.2. -->
         <version.resteasy>3.6.1.SP2</version.resteasy>
-        <version.netty>4.1.140.Final</version.netty>
+        <version.netty>4.2.21.Final</version.netty>
       </properties>
 
       <dependencies>

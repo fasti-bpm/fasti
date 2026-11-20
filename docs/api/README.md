@@ -71,7 +71,7 @@ curl -s -H "Authorization: Bearer $ACCESS_TOKEN" "$BASE/task"
 Signatures are checked against the issuer's JWKS with asymmetric algorithms only (default
 `RS256`); `iss`, `aud`, `exp` and `nbf` are validated. A browser session cookie never
 authenticates `/engine-rest`. Full configuration (Keycloak, Microsoft Entra ID, Tomcat, WildFly):
-the [single sign-on](../../README.md#single-sign-on-openid-connect) section of the README. Bearer
+the [single sign-on guide](../single-sign-on.md). Bearer
 tokens were not part of the test run of this guide (they need an OIDC provider).
 
 ## Example process

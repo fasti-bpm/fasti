@@ -1,0 +1,64 @@
+[English](web-ui.md) | [Tiếng Việt](web-ui.vi.md) | [Deutsch](web-ui.de.md) | [Español](web-ui.es.md) | [Français](web-ui.fr.md) | [हिन्दी](web-ui.hi.md) | [Bahasa Indonesia](web-ui.id.md) | [日本語](web-ui.ja.md) | [한국어](web-ui.ko.md) | [Português (Brasil)](web-ui.pt-BR.md) | Русский | [ไทย](web-ui.th.md) | [简体中文](web-ui.zh-CN.md)
+
+> Этот перевод поддерживается сообществом и может отставать от английской версии; основной является английская версия. Исправления приветствуются.
+
+# Веб-интерфейс Fasti
+
+Почему у нового веб-интерфейса именно такие возможности и по какому пути доступны веб-приложения. Обзор интерфейса: <https://fasti.dev/#features>.
+
+<a id="a-ui-built-from-real-user-complaints"></a>
+
+## Интерфейс, созданный на основе реальных жалоб пользователей
+
+Возможности нового веб-интерфейса выбраны на основе публичных сообщений пользователей Camunda 7
+на форуме Camunda и в GitHub, например:
+
+| Что запрашивали пользователи | Источник | В Fasti |
+|---|---|---|
+| Поиск экземпляров по нескольким переменным с OR | форум [39269](https://forum.camunda.io/t/39269), [45695](https://forum.camunda.io/t/45695), [48976](https://forum.camunda.io/t/48976), [64208](https://forum.camunda.io/t/64208), [28855](https://forum.camunda.io/t/28855), [4678](https://forum.camunda.io/t/4678); [camunda-bpm-platform#3236](https://github.com/camunda/camunda-bpm-platform/issues/3236) | Конструктор условий по нескольким переменным, AND/OR |
+| Просмотр комментариев на каждом этапе дела | форум [30260](https://forum.camunda.io/t/30260), [52109](https://forum.camunda.io/t/52109), [2173](https://forum.camunda.io/t/2173) | Хронология дела в задаче; комментарии к самому экземпляру процесса |
+| Сортировка задач по переменным, начиная с самых старых | форум [17599](https://forum.camunda.io/t/17599), [42078](https://forum.camunda.io/t/42078), [41193](https://forum.camunda.io/t/41193), [67328](https://forum.camunda.io/t/67328) | Сортировка по переменным, срокам выполнения и срочности |
+| Делегирование, замещение на время отсутствия | форум [2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199), [9331](https://forum.camunda.io/t/9331) | Делегирование отдельных задач доступно; замещение на время отсутствия включено в [план развития](https://fasti.dev/#timeline) |
+| Бизнес-ключ и переменные при запуске процесса без формы | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | Да |
+| Загрузка развёрнутого BPMN XML | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Да |
+| Единообразные подписи, несколько языков | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 языков |
+
+<a id="web-application-path-fasti"></a>
+
+## Путь веб-приложения: `/fasti`
+
+Во всех дистрибутивах Cockpit, Tasklist, Admin и новый веб-интерфейс доступны по пути `/fasti` (ранее `/camunda`):
+`http://localhost:8080/fasti/` открывает новый интерфейс
+(`/fasti/app/next/default/`), классические приложения находятся по адресам `/fasti/app/cockpit/...`,
+`/fasti/app/tasklist/...` и `/fasti/app/admin/...`. REST API остаётся по адресу `/engine-rest`.
+
+**Классические приложения объявлены устаревшими.** Классические Cockpit, Tasklist, Admin и Welcome
+построены на AngularJS 1.8.2 и Bootstrap 3, жизненный цикл которых завершён. **Образ контейнера
+по умолчанию не предоставляет к ним доступ** (несовместимое изменение): их страницы и старые закладки перенаправляют в соответствующий раздел нового интерфейса, а запросы их файлов возвращают `404`; `FASTI_CLASSIC_WEBAPPS=true` возвращает
+доступ к ним (с предупреждением), см. [distro/docker/README.md](../distro/docker/README.md). Дистрибутивы
+Tomcat и WildFly также не предоставляют к ним доступ по умолчанию (вернуть его можно с помощью
+`-Dfasti.webapp.classic.enabled=true` или `FASTI_CLASSIC_WEBAPPS=true`). Архив Run и стартер Spring
+Boot продолжают предоставлять к ним доступ, как прежде, чтобы не нарушать работу существующих установок; отключите
+их с помощью `fasti.webapp.classic.enabled: false`. Классические приложения будут удалены в одном из
+последующих выпусков.
+
+Старый путь продолжает работать: каждый запрос к `/camunda/...` перенаправляется на тот же путь
+в `/fasti/...` с сохранением оставшейся части пути и строки запроса. GET и HEAD получают
+`301`; все остальные методы (POST, PUT, DELETE, например старые клиенты, вызывающие `/camunda/api/...`)
+получают `308`, чтобы клиенты повторяли запрос с тем же методом и телом. Перенаправления
+содержат `Cache-Control: no-store`, поэтому возврат к `/camunda` вступает в силу немедленно.
+
+Чтобы восстановить `/camunda`:
+
+- **Spring Boot, Run:** `camunda.bpm.webapp.application-path: /camunda` (в этом случае перенаправления нет).
+  Чтобы отключить только перенаправление: `fasti.webapp.legacy-path-redirect: false`.
+- **Tomcat:** удалите `webapps/camunda` (приложение перенаправления) и переименуйте
+  `webapps/fasti` в `webapps/camunda`.
+- **WildFly:** удалите `standalone/deployments/camunda.war` (и `camunda.war.dodeploy`) и
+  задайте `<context-root>/camunda</context-root>` в `WEB-INF/jboss-web.xml` WAR-файла
+  веб-приложения.
+
+**Обратные прокси:** если прокси пересылает только `/camunda/` (или переписывает пути, задаёт пути
+файлов cookie, CSP либо проверки работоспособности для `/camunda`), добавьте `/fasti/` или полностью перейдите на `/fasti/`.
+Файл cookie `XSRF-TOKEN` (и `JSESSIONID` в Tomcat и WildFly) теперь имеет путь `/fasti`,
+поэтому пользователям нужно войти ещё раз. Закладки и старые ссылки продолжают работать через перенаправление.

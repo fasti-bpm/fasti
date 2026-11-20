@@ -48,12 +48,12 @@ iniciarse con un esquema anterior e indica qué scripts debe ejecutar.
 Starter de Spring Boot / Tomcat / WildFly: sustituya los artefactos `org.camunda.bpm:camunda-*` por
 los correspondientes `dev.fasti.platform:fasti-*` y conserve `camunda.bpm.*`, `bpm-platform.xml` y
 los paquetes `org.camunda.bpm.*`. No mantenga los archivos jar de ambos motores en el classpath; en ese caso, Fasti se niega a iniciarse (para conocer las limitaciones de esta comprobación, consulte «Comprobación de inicio» en el
-[README](../README.es.md#startup-check)).
+[embedding.es.md](embedding.es.md#startup-check)).
 
 > **Starter de Spring Boot:** Fasti funciona con **Spring Boot 4.1** y necesita **Java 17 o posterior**.
 > Las aplicaciones que utilizan el starter de Camunda 7.24 (Spring Boot 3.5) deben migrar a Spring Boot 4.1 y
 > Java 17+ al mismo tiempo que cambian los artefactos. Consulte el
-> [README](../README.es.md#what-is-different-from-camunda-7240-ce) y el
+> [embedding.es.md](embedding.es.md#what-is-different-from-camunda-7240-ce) y el
 > [registro de cambios](../CHANGELOG.md#changed).
 
 <a id="tomcat-and-wildfly-distributions"></a>

@@ -47,11 +47,11 @@ Spring Boot starter / Tomcat / WildFly: thay các artifact `org.camunda.bpm:camu
 `dev.fasti.platform:fasti-*` cùng chức năng, giữ nguyên cấu hình `camunda.bpm.*`, `bpm-platform.xml`
 và package `org.camunda.bpm.*`. Không để jar engine của Camunda và của Fasti cùng nằm trên
 classpath: Fasti dừng khởi động khi thấy cả hai (giới hạn của phép kiểm tra này: xem mục
-"Kiểm tra khi khởi động" trong [README](../README.vi.md#kiểm-tra-khi-khởi-động)).
+"Kiểm tra khi khởi động" trong [embedding.vi.md](embedding.vi.md#startup-check)).
 
 > **Spring Boot starter:** Fasti chạy trên **Spring Boot 4.1** và cần **Java 17 trở lên**. Ứng
 > dụng đang dùng starter của Camunda 7.24 (Spring Boot 3.5) phải nâng lên Spring Boot 4.1 và
-> Java 17+ cùng lúc với việc đổi artifact. Xem [README](../README.vi.md#khác-gì-so-với-camunda-7240-ce)
+> Java 17+ cùng lúc với việc đổi artifact. Xem [embedding.vi.md](embedding.vi.md#what-is-different-from-camunda-7240-ce)
 > và [CHANGELOG](../CHANGELOG.md#changed).
 
 <a id="tomcat-and-wildfly-distributions"></a>

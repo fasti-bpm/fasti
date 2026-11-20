@@ -4,9 +4,9 @@
 
 # Fasti BPM Platform
 
-**Make Camunda 7 Great Again.** Mit 7.24.0 erschien die letzte Version der Camunda 7 Community
-Edition. Fasti BPM setzt sie von dort aus fort: dieselbe Engine auf derselben Datenbank, mit
-weiteren Fehlerbehebungen und Bibliotheksaktualisierungen sowie einer neuen Weboberfläche.
+Fasti BPM ist eine unabhängige Open-Source-Engine auf Basis von Camunda 7 Community Edition 7.24.0.
+Sie läuft auf Ihrer bestehenden Camunda-7-Datenbank, mit aktuellen Bibliotheken,
+Sicherheitskorrekturen und einer neuen Weboberfläche. Website: <https://fasti.dev>
 
 > **Fasti BPM ist nicht mit Camunda Services GmbH verbunden; Camunda ist eine Marke der Camunda Services GmbH.**
 > Fasti BPM ist ein unabhängiges Open-Source-Projekt (Apache-2.0). Es ist weder Teil von Camunda
@@ -35,636 +35,149 @@ curl -i http://localhost:8080/engine-rest/task      # 401: no credentials
 curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 ```
 
-**Erstellen Sie das Image selbst** aus dem Quellcode. Dafür sind Docker, JDK 17+ und Netzwerkzugriff
-auf Maven Central, nodejs.org und die npm-Registry erforderlich (der Build lädt Node/npm für die
-Weboberfläche herunter); der erste Build dauert etwa 10–20 Minuten:
-
-```bash
-./mvnw -pl distro/docker -am package -DskipTests
-docker build -t fasti-bpm:local distro/docker/target/docker
-# then run the docker run command above with fasti-bpm:local instead of fastidev/fasti-bpm:1.0.1
-```
-
-Das Image **erfordert standardmäßig REST-Authentifizierung und erzwingt Berechtigungsprüfungen** (anders als Camunda
-Run); nur `FASTI_INSECURE_DEMO=true` deaktiviert diese für Demonstrationszwecke.
+Vollständige Anleitung, auch mit Ihrer eigenen Datenbank: <https://fasti.dev/install>
 
 <a id="highlights"></a>
 
 ## Highlights
 
-- **Neue Weboberfläche** unter `/fasti/` (React):
-  - Prozessinstanzen anhand mehrerer Variablen gleichzeitig suchen, mit AND/OR verknüpft;
-  - Fallverlauf innerhalb der Aufgabe (Kommentare und Aktionen zu jedem Schritt);
-  - eine Schaltfläche „Nächste Aufgabe abrufen“;
-  - Fälligkeitstermine und Dringlichkeit (SLA), überfällige Aufgaben;
-  - Teamauslastung nach Benutzer und Gruppe;
-  - direkt an Incidents hinterlegte Runbooks;
-  - eine Seite zum Systemzustand (Incidents, fehlgeschlagene Jobs, verspätete Jobs, externe Aufgaben, Batches);
-  - mobilfreundliches Layout;
-  - 13 Sprachen.
-- **Single Sign-on (OIDC)**: Keycloak, Microsoft Entra ID und andere OpenID Connect-Anbieter;
-  Zuordnung von Claims zu Gruppen und Mandanten; JWT-Bearer-Token für die REST-API. Verfügbar für Run,
-  Spring Boot, Tomcat und WildFly.
-- **Sicherheitshärtung**: Positivliste für Ausdrücke in Abfragen und Filtern, Prüfungen von Anhängen und
-  Kommentaren innerhalb der Engine, Ersteinrichtung, Cockpit-Berechtigungen, offene Weiterleitungen,
-  Header der Webanwendungen, Cookies und CSP. Einzelheiten im [Änderungsprotokoll](CHANGELOG.md).
-- **Authentifizierung standardmäßig aktiviert**: Das Image erfordert Zugangsdaten für REST und erzwingt
-  Berechtigungsprüfungen in jedem Modus.
-- **Prüfung der Schemaversion**: Die Engine verweigert den Start bei einem Schema älter als 7.24 und
-  aktualisiert ein Schema niemals selbstständig.
-- **Java4Shell-Abwehr** ([CVE-2026-114938](docs/security/CVE-2026-114938.md)): Das amd64-Image
-  enthält eine korrigierte Temurin JRE und deaktiviert das Base64-Intrinsic; die Engine gibt eine Warnung aus, wenn sie
-  auf einer betroffenen JVM läuft.
-- **Leistung**: Die Datenmenge beim ersten Laden der neuen Weboberfläche sinkt von 960 KB auf 330 KB (gzip standardmäßig
-  aktiviert); der Durchsatz des Job Executors steigt durch Optimierung um etwa das 2,5-Fache (Zahlen und Testaufbau in
-  [distro/docker/README.md](distro/docker/README.md#performance-tuning)).
-- **Aktuelle Plattform**: Java 17 oder höher, Spring Boot 4.1, GraalJS 25, Jackson 2.21.
+- **Verbindung ändern. Das ist die Migration.** Das Camunda-7.24-Schema wird unverändert verwendet;
+  die Pakete `org.camunda.bpm.*` bleiben erhalten ([Migration](https://fasti.dev/install#migrate)).
+- **Ein Container, ein Befehl**, mit denselben `DB_*`-Variablen wie bei Camunda Run ([Installation](https://fasti.dev/install)).
+- **Gebaut für die Menschen, die die Aufgaben abarbeiten**: eine neue Weboberfläche in 13 Sprachen,
+  hell und dunkel, auf dem Smartphone nutzbar ([Funktionen](https://fasti.dev/#features)).
+- **Im Browser modellieren und deployen**: BPMN, DMN und Formulare ([Modeler](https://fasti.dev/#modeler)).
+- **Die Werkzeuge für den Betrieb sind schon dabei**: Historie, Reparatur von Instanzen, gesammeltes
+  erneutes Ausführen von Jobs, Operationsprotokoll ([Betrieb](https://fasti.dev/#operate)).
+- **Standardmäßig geschlossen**: Anmeldung ab dem ersten Start erforderlich, kein Standardbenutzer,
+  bekannte Lücken geschlossen, Java4Shell entschärft ([Sicherheit](https://fasti.dev/security)).
+- **Single Sign-on**: OpenID Connect und JWT-Bearer-Tokens ([Anleitung](docs/single-sign-on.de.md)).
+- **Aktuelle Plattform**: Java 17 oder höher, Spring Boot 4.1, GraalJS 25, Jackson 2.21
+  ([Leistung](https://fasti.dev/#performance)).
 
-<a id="installation"></a>
+<a id="installation"></a><a id="get-fasti"></a>
 
-## Installation
+## Fasti beziehen
 
-<a id="one-command-on-your-existing-camunda-724-database"></a>
+- <a id="one-command-on-your-existing-camunda-724-database"></a>**Docker-Image** (`fastidev/fasti-bpm`, amd64 und arm64): <https://fasti.dev/install>;
+  Schritt für Schritt in [docs/install-docker.de.md](docs/install-docker.de.md), alle Variablen in
+  [distro/docker/README.md](distro/docker/README.md#environment-variables).
+- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Tomcat-Bundle**, ohne Docker: <https://fasti.dev/download>. Fertiges Tomcat 1.0.0-Bundle:
+  - [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
+  - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
-### Ein Befehl für Ihre bestehende Camunda 7.24-Datenbank
+  Prüfen Sie vor dem Entpacken die Prüfsumme, beispielsweise mit
+  `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`, und lesen Sie vor dem Start die `README.txt`
+  im Bundle.
+- **Eingebettet** in Spring Boot oder eine andere Java-Anwendung: neue Maven-Koordinaten
+  (`dev.fasti.platform:fasti-*`), dieselben Pakete `org.camunda.bpm.*`; siehe
+  [docs/embedding.de.md](docs/embedding.de.md).
 
-Das Image akzeptiert die `DB_*`-Variablen des früheren Camunda 7 Run-Images. Sichern Sie die Datenbank,
-und führen Sie dann Folgendes aus:
+<a id="moving-from-camunda-7"></a>
 
-<!-- update with the Docker Hub image name at release -->
-```bash
-docker run -d --name fasti -p 127.0.0.1:8080:8080 \
-  -e DB_DRIVER=org.postgresql.Driver \
-  -e DB_URL=jdbc:postgresql://db.example.com:5432/camunda \
-  -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
-  -v /path/to/db-password:/run/secrets/db-password:ro \
-  -e TZ=Europe/Berlin \
-  fastidev/fasti-bpm:1.0.1
-```
+## Umstieg von Camunda 7
 
-Benutzer, Passwörter, Gruppen, Mandanten, Berechtigungen, Filter, Deployments, laufende Instanzen,
-Historie, Jobs und Incidents bleiben unverändert. Der Port ist nur an diesen Rechner gebunden; verwenden Sie für den
-Fernzugriff einen Reverse Proxy mit HTTPS. Melden Sie sich unter `/fasti/` mit einem bestehenden Konto an.
-Da die Authentifizierung aktiviert ist, muss jeder REST-Client (Worker für externe Aufgaben, Integrationen)
+Wenn Sie Camunda 7.24 betreiben, läuft Fasti auf derselben Datenbank, ohne deren Schema zu ändern.
+Sie können die alten Knoten ersetzen, Fasti parallel dazu betreiben und jederzeit zu Camunda 7.24
+zurückwechseln. Das Fasti-Image wurde bei der Übernahme von Datenbanken getestet, die Camunda Run
+7.24 unter PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022 und Oracle Database 23ai erstellt
+hatte; DB2 ist noch nicht getestet. Jeder REST-Client, External-Task-Worker eingeschlossen, muss nun
 Basic-Zugangsdaten oder ein Bearer-Token senden.
 
-- **Parallelbetrieb** mit Camunda 7.24 CE-Knoten auf derselben Datenbank: dieselbe Historienstufe, derselbe
-  `TZ`-Wert und dieselben Passworteinstellungen. Wenn die alten Knoten Prozessanwendungen mit Java-Klassen sind, die
-  Fasti fehlen, setzen Sie auf Fasti `FASTI_JOB_EXECUTOR_ENABLED=false` (oder konfigurieren Sie jeden Knoten
-  als deployment-aware), und starten Sie diese Prozesse bzw. schließen Sie deren Aufgaben nicht über Fasti ab: Ein
-  synchroner Aufruf führt die Delegates auf dem Knoten aus, der ihn empfängt.
-- **Rollback**: Fasti ändert das Schema nicht. Stoppen Sie daher Fasti und starten Sie die Camunda 7.24-Knoten
-  wieder mit derselben Datenbank. Bereitgestellte Prozesse, die ausschließlich in Fasti verfügbare Funktionen verwenden, laufen nicht auf
-  Camunda 7; siehe [Rollback auf Camunda 7.24](docs/migrate-from-camunda-7.de.md#rollback-to-camunda-724).
-- **Ältere Schemas (7.17–7.23)**: Führen Sie zunächst die im Image enthaltenen `sql/upgrade`-Skripte
-  (`/fasti/configuration/sql/upgrade`) bis 7.24 aus; beispielsweise für 7.23 → 7.24:
-  `postgres_engine_7.23_to_7.24.sql`.
+Eingebettete Spring-Boot-Anwendungen wechseln außerdem auf Spring Boot 4.1 und Java 17; ältere
+Schemas werden zuvor mit den Standardskripten aktualisiert. Plugins und Prozessanwendungen, die für
+Camunda 7 gebaut wurden, müssen gegen die Fasti-Artefakte neu gebaut werden, um in Fasti zu laufen.
+Parallelbetrieb und Rückkehr haben Grenzen (gleiche Konfiguration auf allen Knoten, welcher Knoten
+Jobs ausführt, Prozesse mit Fasti-spezifischen Funktionen): siehe
+[Mischbetrieb](docs/migrate-from-camunda-7.de.md#mixed-operation-with-camunda-7-nodes) und
+[Rückkehr](docs/migrate-from-camunda-7.de.md#rollback-to-camunda-724).
 
-Mit dem Image getestet (Übernahme einer von Camunda Run 7.24.0 erstellten Datenbank, Rollback,
-Parallelbetrieb): **PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022, Oracle
-Database 23** (der Oracle-Treiber ist nicht enthalten; fügen Sie `ojdbc11` selbst hinzu; ein Rollback wurde
-auf MySQL nicht getestet). **DB2 ist nicht
-verifiziert.** H2 dient ausschließlich der Evaluierung. Ergebnisse der einzelnen Tests und Einschränkungen:
-[Migrationsleitfaden](docs/migrate-from-camunda-7.de.md#limits).
+Migrationsschritte und Grenzen: <https://fasti.dev/install#migrate> und der
+[Migrationsleitfaden](docs/migrate-from-camunda-7.de.md) (Rollback, ältere Schemas, Testergebnisse).
 
-Ausführliche Anleitungen:
-
-- [Installation mit Docker](docs/install-docker.de.md): H2, PostgreSQL mit `docker run` und
-  `docker compose`, bestehende Datenbanken, Parallelbetrieb, Zustandsprüfungen, Upgrade, Rollback,
-  Fehlerbehebung.
-- [Umstieg von Camunda 7](docs/migrate-from-camunda-7.de.md): Schritte, Gemeinsamkeiten und
-  Unterschiede, Rollback, Einschränkungen.
-- [Referenz der Umgebungsvariablen für das Image](distro/docker/README.md#environment-variables).
-
-<a id="without-docker-tomcat-bundle-download-from-fastidev"></a>
-
-### Ohne Docker: Tomcat-Bundle (Download von fasti.dev)
-
-Fertiges Tomcat 1.0.0-Bundle (Downloadseite: https://fasti.dev/download):
-- [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
-- [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
-
-Prüfen Sie vor dem Entpacken die Prüfsumme, beispielsweise mit `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
-
-Die Tomcat-Distribution kann auch aus dem Quellcode erstellt werden (`distro/tomcat`). Lesen Sie vor
-dem Start die `README.txt` im Bundle: Die REST-API (`/engine-rest`) erfordert standardmäßig HTTP-Basic-Authentifizierung,
-es wird kein Benutzer angelegt (erstellen Sie den ersten Administrator auf der Einrichtungsseite unter `/fasti/`),
-und setzen Sie bei der Übernahme einer Camunda Run-Datenbank `jobExecutorDeploymentAware=false` in
-`conf/bpm-platform.xml`, da andernfalls Timer und asynchrone Jobs bestehender Deployments nicht ausgeführt werden.
-
-<a id="a-ui-built-from-real-user-complaints"></a>
-
-## Eine Benutzeroberfläche auf Basis tatsächlicher Anwenderkritik
-
-Die Funktionen der neuen Weboberfläche wurden anhand öffentlicher Beiträge von Camunda 7-Anwendern im
-Camunda-Forum und auf GitHub ausgewählt, zum Beispiel:
-
-| Was Anwender gewünscht haben | Quelle | In Fasti |
-|---|---|---|
-| Instanzen anhand mehrerer Variablen mit OR suchen | Forum [39269](https://forum.camunda.io/t/39269), [45695](https://forum.camunda.io/t/45695), [48976](https://forum.camunda.io/t/48976), [64208](https://forum.camunda.io/t/64208), [28855](https://forum.camunda.io/t/28855), [4678](https://forum.camunda.io/t/4678); [camunda-bpm-platform#3236](https://github.com/camunda/camunda-bpm-platform/issues/3236) | Bedingungseditor für mehrere Variablen, AND/OR |
-| Kommentare zu jedem Schritt eines Falls sehen | Forum [30260](https://forum.camunda.io/t/30260), [52109](https://forum.camunda.io/t/52109), [2173](https://forum.camunda.io/t/2173) | Fallverlauf in der Aufgabe; Kommentare direkt an der Prozessinstanz |
-| Aufgaben nach Variablen sortieren, älteste zuerst | Forum [17599](https://forum.camunda.io/t/17599), [42078](https://forum.camunda.io/t/42078), [41193](https://forum.camunda.io/t/41193), [67328](https://forum.camunda.io/t/67328) | Sortierung nach Variablen, Fälligkeitsterminen und Dringlichkeit |
-| Delegation, Vertretungen bei Abwesenheit | Forum [2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199), [9331](https://forum.camunda.io/t/9331) | Delegation einzelner Aufgaben vorhanden; Abwesenheitsvertretungen stehen auf der [Roadmap](#roadmap-plan) |
-| Business Key und Variablen beim Start eines Prozesses ohne Formular | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | Ja |
-| Bereitgestelltes BPMN-XML herunterladen | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Ja |
-| Einheitliche Bezeichnungen, mehrere Sprachen | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 Sprachen |
-
-<a id="comparison"></a>
+<a id="comparison"></a><a id="how-it-compares"></a>
 
 ## Vergleich
 
-Ein kompakter Vergleich auf Grundlage der öffentlichen Dokumentation der jeweiligen Projekte (gelesen im November 2026);
-„nicht verifiziert“ bedeutet, dass wir keine verlässliche Quelle gefunden haben. Jedes Projekt verfolgt eine eigene Ausrichtung und ist
-für unterschiedliche Anforderungen eine sinnvolle Wahl; prüfen Sie vor Ihrer Entscheidung die jeweilige Dokumentation.
+Mehrere gute Projekte führen Camunda 7 weiter. Fasti behält die Pakete `org.camunda.bpm.*` und das
+7.24-Schema bei, sodass der Umstieg ein Wechsel der Verbindung ist und kein Migrationsprojekt, und
+bringt eine neue Oberfläche mit. Auch die anderen Projekte sind eine solide Wahl. Die vollständige
+Tabelle mit Quellen: <https://fasti.dev/compare>.
 
-| | Lizenz | Läuft auf einer bestehenden C7-Datenbank | Migration erforderlich | Sicherheitspatches | Java / Spring Boot | Benutzeroberfläche | SSO | Docker-Image |
-|---|---|---|---|---|---|---|---|---|
-| **Fasti BPM** | Apache-2.0 | Ja, Schema 7.24 unverändert | Image: keine. Eingebettete Anwendungen: neue Maven-Koordinaten, Spring Boot 4.1 und Java 17+; `org.camunda.*`-Packages bleiben erhalten | Ja, siehe die [nachstehende Richtlinie](#commitments-support-and-security-patches) | 17+ / 4.1 | Neu (React) + klassisch (veraltet) | OIDC integriert | Ja, ab 1.0.0 |
-| Camunda 7 CE 7.24 | Quellcode unter Apache-2.0; einige enthaltene Webkomponenten unter MIT ([13]) | (das Original) | — | Keine CE-Releases nach 7.24 ([1]) | 17, 21, 25 ([2]) / 3.5 | Cockpit, Tasklist, Admin (AngularJS) | OAuth2 über den Security-Starter | Früheres Run-Image |
-| Camunda 7 Enterprise | Kommerziell | Ja (dieselbe Produktlinie) | Nein | Bis 04/2030, kostenpflichtige Verlängerung bis 04/2032 ([3]) | nicht verifiziert | Cockpit Enterprise | nicht verifiziert | nicht verifiziert |
-| Camunda 8 | Camunda License 1.0; selbstverwalteter Produktivbetrieb erfordert seit 8.6 eine Lizenz ([4]) | Nein (andere Engine) | Ja (Modelle, Instanzen, Daten) | Ja (Hersteller) | andere Engine, nicht vergleichbar | Operate, Tasklist | nicht verifiziert | nicht verifiziert |
-| Operaton | Apache-2.0 | Dieselbe Tabellenstruktur wie 7.24; 2.2 trägt über ein Upgrade-Skript die Schemaversion 7.25 ein ([5]) | Packages in `org.operaton.*` umbenannt (OpenRewrite-Rezept verfügbar); Skript für die Schemaversion (2.2) | Ja, 2.2.x-Linie ([6]) | 17+ / 4.1 ([5]) | Klassisch + webapps-neo (Vorschau) | nicht verifiziert | Ja ([7]) |
-| CIB seven | Apache-2.0; EE erfordert einen Lizenzschlüssel | Ja (Änderungen aus 7.24 übernommen) | Packages in `org.cibseven.*` umbenannt, Präfix `cibseven.*` | Ja, je Release ([8]) | 17, 21 / 3.5 und 4.0 ([9]) | Vue 3-Webclient | OAuth2/JWT für REST ([8]) | Ja ([8]) |
-| OrqueIO | Apache-2.0 | Laut eigener Dokumentation mit C7-Tabellen kompatibel ([10]) | Maven-Gruppe `io.orqueio`; Umbenennung der Packages nicht angegeben | Ja, laut eigener Dokumentation ([10]) | 21 / 3.5, 4.0, 4.1 | Neuentwicklung mit Angular | OIDC mit mehreren Anbietern | nicht verifiziert |
-| EximeeBPMS | Apache-2.0 (Monitor: MIT) | Laut Projekt bleibt das Schema mit Camunda 7 kompatibel (von Fasti nicht verifiziert) ([14]) | Packages in `org.eximeebpms.*` umbenannt, Model API umbenannt | Ja, die beiden neuesten Minor-Releases ([11]) | 21 / Spring Boot-Version nicht angegeben | Separater Monitor | nicht verifiziert | Ja (Repository `eximeebpms-docker`) |
-| Fluxnova | Apache-2.0 (FINOS) | nicht verifiziert | nicht verifiziert | nicht verifiziert | 21 (Corretto-Image) / nicht verifiziert | Control Center | nicht verifiziert | Ja ([12]) |
+<a id="commitments-support-and-security-patches"></a><a id="security-and-support"></a>
 
-Die eigenen Schwachstellen von Fasti, klar benannt: ein junges Projekt mit einem kleinen Team, bisher kein kommerzieller
-Support, DB2 nicht verifiziert.
+## Sicherheit und Support
 
-Quellen: [1] [Ankündigung des Supportendes der CE](https://forum.camunda.io/t/important-update-camunda-7-community-edition-end-of-life-announced/50921);
-[2] [Unterstützte Umgebungen für 7.24](https://docs.camunda.org/manual/7.24/introduction/supported-environments/);
-[3] [Verlängerung für Enterprise](https://camunda.com/blog/2025/02/camunda-7-enterprise-end-of-life-extension/);
-[4] [Lizenzierung von Camunda 8.6](https://camunda.com/blog/2024/10/camunda-licensing-what-you-need-to-know/);
-[5] [Operaton 2.2](https://docs.operaton.org/docs/documentation/reference/release-notes/2_2/);
-[6] [Operaton SECURITY.md](https://github.com/operaton/operaton/blob/main/SECURITY.md);
-[7] [operaton-docker](https://github.com/operaton/operaton-docker);
-[8] [CIB seven 2.2.0](https://docs.cibseven.org/manual/latest/release-notes/release-notes-2.2.0-ce/);
-[9] [Unterstützte Umgebungen für CIB seven](https://docs.cibseven.org/manual/latest/introduction/supported-environments/);
-[10] [OrqueIO-Dokumentation](https://docs.orqueio.io/);
-[11] [EximeeBPMS SECURITY.md](https://github.com/EximeeBPMS/eximeebpms/blob/main/SECURITY.md);
-[12] [Fluxnova](https://github.com/finos/fluxnova-bpm-platform);
-[13] [Camunda 7-Lizenzen](https://docs.camunda.org/manual/latest/introduction/licenses/);
-[14] [EximeeBPMS](https://github.com/EximeeBPMS/eximeebpms);
-unabhängiger Überblick: [WZ-IT, 2026-10-15](https://wz-it.com/en/blog/camunda-7-end-of-life-operaton-cibseven-fluxnova-compared/).
+Das neueste Minor-Release der Linie `1.x` erhält Bugfixes und Sicherheitspatches als Patch-Releases
+wie `1.0.1`. Bitte melden Sie Sicherheitsprobleme vertraulich, nicht in einem öffentlichen Issue:
+siehe [SECURITY.md](SECURITY.md#security-policy), wo auch die
+[Support-Richtlinie](SECURITY.md#support-policy) steht. Liste der Korrekturen, Java4Shell und die
+Prüfung vor der Veröffentlichung: <https://fasti.dev/security>. Für Hilfe bei Installation, Migration
+oder Betrieb sowie für Support-Bedingungen schreiben Sie an <contact@fasti.dev>.
 
-<a id="timeline"></a>
+<a id="timeline"></a><a id="camunda-7-milestones"></a><a id="fasti-bpm"></a><a id="roadmap-plan"></a>
 
-## Zeitlicher Überblick
+## Roadmap
 
-<a id="camunda-7-milestones"></a>
-
-### Meilensteine von Camunda 7
-
-| Datum | Meilenstein | Quelle |
-|---|---|---|
-| 2024-03-06 | Camunda kündigt das Supportende von Camunda 7 CE für Oktober 2025 an, mit 7.24 als letztem CE-Release | [Camunda-Forum](https://forum.camunda.io/t/important-update-camunda-7-community-edition-end-of-life-announced/50921) |
-| 2025-02-28 | Camunda verlängert den Support für Camunda 7 Enterprise bis 2030-04-09, mit kostenpflichtigem erweitertem Support bis April 2032 | [Camunda-Blog](https://camunda.com/blog/2025/02/camunda-7-enterprise-end-of-life-extension/) |
-| 2025-10-07 | Tag `7.24.0` erstellt und auf Maven Central veröffentlicht: das letzte CE-Release | [Tag 7.24.0](https://github.com/camunda/camunda-bpm-platform/tree/7.24.0), [Maven Central](https://repo1.maven.org/maven2/org/camunda/bpm/camunda-engine/7.24.0/) |
-| 2025-10-14 | Von Camunda geplanter Veröffentlichungstermin für 7.24; nach diesem Datum gibt es keine weiteren CE-Releases, einschließlich Sicherheitspatches. Das CE-Repository wurde inzwischen archiviert | [Ankündigung](https://forum.camunda.io/t/important-update-camunda-7-community-edition-end-of-life-announced/50921), [Supportseite](https://docs.camunda.org/enterprise/announcement) |
-| April 2030 | Ende des Supports für Camunda 7 Enterprise (7.24 LTS: 2030-04-13) | [Supportseite](https://docs.camunda.org/enterprise/announcement) |
-| April 2032 | Ende des kostenpflichtigen erweiterten Supports für Camunda 7 Enterprise | [Supportseite](https://docs.camunda.org/enterprise/announcement) |
-
-<a id="fasti-bpm"></a>
-
-### Fasti BPM
-
-Fasti setzt direkt beim Tag `7.24.0` an; jede Fehlerbehebung und Änderung wird von diesem Punkt aus gezählt
-(`git log 7.24.0..`). Die folgenden Phasen sind nach den durchgeführten Arbeiten geordnet, ohne Datumsangaben:
-
-1. **Grundlage**: Java 17, Spring Boot 4.1, Bibliotheksaktualisierungen; Maven-Koordinaten
-   `dev.fasti.platform`.
-2. **Sicherheit**: Behebungen öffentlich bekannt gewordener Probleme der 7.x-Linie, Positivliste für Ausdrücke,
-   Prüfungen von Anhängen und Kommentaren innerhalb der Engine, Härtung der Webanwendungen.
-3. **Neue Weboberfläche** unter `/fasti/`, die das klassische Cockpit, Tasklist und Admin schrittweise ersetzt.
-4. **Single Sign-on** (OIDC) für Run, Spring Boot, Tomcat und WildFly.
-5. **Direkter Einsatz mit bestehenden Datenbanken**: Das Image akzeptiert die früheren `DB_*`-Variablen und prüft die Schemaversion; auf fünf Datenbanksystemen getestet.
-6. **Sicherheitsprüfung vor der Veröffentlichung** (Code-Review, Penetrationstest des Images, ZAP-Baseline-
-   Scan; die Befunde wurden behoben) und **Java4Shell-Abwehr**.
-7. **1.0.0**: das erste Release (2026-11-20).
-
-<a id="roadmap-plan"></a>
-
-## Roadmap (Plan)
-
-> Dies ist ein **Plan**, keine Zusage zu Terminen. Umfang und Reihenfolge können sich ändern.
-
-### November und Dezember 2026 (in Arbeit)
-
-Zuerst alles, worum Anwender bereits gebeten haben.
-
-**1.x: Einfacher zu betreiben**
-
-- Maven-Artefakte auf Maven Central.
-- Helm-Chart und Beispielmanifeste für Kubernetes.
-- Prometheus-Metriken und Tracing mit OpenTelemetry.
-- Strukturierte Logs im JSON-Format.
-- MyBatis-Upgrade, das auch OGNL aktualisiert.
-- DB2-Verifizierung und Prüfung der Übersetzungen durch Muttersprachler.
-
-**2.0: Was Teams in regulierten Bereichen verlangen**
-
-- Eine Abwesenheitsvertretung, damit Arbeit nicht liegen bleibt, während jemand abwesend ist
-  ([Forum 2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199)).
-- Freigaben nach dem Vier-Augen-Prinzip.
-- Ein unveränderlicher Audit-Trail, signiert oder gehasht, mit Audit-Berichten.
-- CMMN in der neuen Oberfläche und Ablösung der AngularJS-Anwendungen.
-
-**Neuland**
-
-- Versionslinien mit Langzeitunterstützung.
-- Ein MCP-Server für die Engine.
-- KI-Schritte in Prozessen.
-
-### Ziele für 2027
-
-- **Q1 2027: Betrieb im großen Maßstab**: ein Kubernetes-Operator für Rolling Upgrades und
-  Skalierung; Historie wird nach Kafka und OpenSearch gestreamt, damit die Laufzeitdatenbank klein
-  bleibt; veröffentlichte Performance-Benchmarks, für jedes Release wiederholt.
-- **Q2 2027: Ein Werkzeugkasten für Entwickler**: ein Connector-SDK mit Connectoren für REST, Kafka,
-  E-Mail und Object Storage; ein Prozess-Testkit mit Szenariotests und Abdeckungsberichten; ein
-  Formular-Builder mit wiederverwendbaren Komponenten.
-- **Q3 2027: Sehen, wie Prozesse laufen**: Prozessanalysen (Heatmaps, Engpässe und Berichte zur
-  Durchlaufzeit); Service-Level-Ziele mit Alarmierung; ein Assistent, der BPMN aus Text entwirft und
-  Incidents erklärt.
-- **Q4 2027: Vertrauen auf Unternehmensebene**: mandantenfähige Administration mit Kontingenten pro
-  Mandant; ein unabhängiges Sicherheitsaudit mit veröffentlichtem Bericht; reproduzierbare Builds
-  mit signierter Provenienz für jedes Release.
-
-<a id="commitments-support-and-security-patches"></a>
-
-## Zusagen: Support und Sicherheitspatches
-
-> Diese Richtlinie wird vom Fasti BPM-Projektteam gepflegt und kann aktualisiert werden; maßgeblich ist die Version in diesem
-> Repository.
-
-- **Unterstützte Versionslinie:** Das neueste Minor-Release der `1.x`-Linie erhält Fehlerbehebungen und Sicherheits-
-  patches (als Patch-Releases, beispielsweise `1.0.1`).
-- **Sicherheitspatches:** Schwachstellen in Fasti und den mitgelieferten Bibliotheken haben Vorrang vor
-  anderen Arbeiten; das Image wird neu erstellt, wenn das Basis-Image oder die JRE eine Korrektur erhält. Das Projekt verfolgt
-  öffentliche Sicherheitshinweise zu Camunda 7 und dessen Forks und prüft, ob Fasti betroffen ist.
-- **Kompatibilität:** Die `1.x`-Linie behält das Datenbankschema von 7.24 und die `org.camunda.bpm.*`-
-  Packages bei. Inkompatible Änderungen werden im [Änderungsprotokoll](CHANGELOG.md) mit **BREAKING** gekennzeichnet.
-- **Supportumfang:** Dies ist ein Community-Projekt; Support erfolgt nach bestem Bemühen, **ohne SLA**,
-  und es gibt bisher keinen kommerziellen Support.
-- **Meldung von Schwachstellen:** Bitte eröffnen Sie **kein** öffentliches Issue; siehe
-  [SECURITY.md](SECURITY.md#security-policy) (private Meldung über GitHub).
-- **Behobene Fehler:** Die Abschnitte *Behoben* und *Sicherheit* des [Änderungsprotokolls](CHANGELOG.md) führen auf,
-  was gegenüber Camunda 7 CE 7.24.0 behoben wurde; Sicherheitshinweise sind in
-  [SECURITY.md](SECURITY.md#advisories) aufgeführt.
+Dies ist ein Plan, keine Terminzusage. Als Nächstes in `1.x`: Maven-Artefakte auf Maven Central, ein
+Helm-Chart, Prometheus-Metriken und OpenTelemetry-Tracing, strukturierte JSON-Logs. Für `2.0`: eine
+Vertretung bei Abwesenheit, das Vier-Augen-Prinzip für Freigaben, ein unveränderlicher Audit-Trail
+und CMMN in der neuen Oberfläche. Die Zeitleiste, vom Ende von Camunda 7 CE bis zu den Zielen für
+2027: <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>
 
 ## Dokumentation
 
+Auf [fasti.dev](https://fasti.dev): [Installation mit Docker](https://fasti.dev/install) ·
+[Tomcat-Download](https://fasti.dev/download) · [Leitfaden zur API-Integration](https://fasti.dev/docs) ·
+[Sicherheit und Support](https://fasti.dev/security) · [Vergleich](https://fasti.dev/compare) ·
+[Blog](https://fasti.dev/blog)
+
+<a id="what-this-is"></a><a id="what-is-different-from-camunda-7240-ce"></a><a id="versioning"></a><a id="maven-coordinates"></a><a id="third-party-libraries-that-still-pull-in-the-original-engine"></a><a id="startup-check"></a><a id="web-application-path-fasti"></a><a id="single-sign-on-openid-connect"></a><a id="a-ui-built-from-real-user-complaints"></a>
+
 | Dokument | Inhalt |
 |---|---|
-| [docs/install-docker.md](docs/install-docker.de.md) | Installation mit Docker, Schritt für Schritt |
+| [docs/install-docker.de.md](docs/install-docker.de.md) | Installation mit Docker, Schritt für Schritt |
+| [docs/migrate-from-camunda-7.de.md](docs/migrate-from-camunda-7.de.md) | Umstieg von Camunda 7, Rollback, Einschränkungen |
+| [docs/embedding.de.md](docs/embedding.de.md) | Kompatibilität, Unterschiede zu 7.24.0, Versionierung, Maven-Koordinaten, Prüfung beim Start |
+| [docs/web-ui.de.md](docs/web-ui.de.md) | Die Weboberfläche: von Anwendern gewünschte Funktionen, der Pfad `/fasti`, die klassischen Anwendungen |
+| [docs/single-sign-on.de.md](docs/single-sign-on.de.md) | Single Sign-on (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.md](docs/api/README.md) | REST-API-Integration, Java- und JavaScript-Clients für externe Aufgaben |
-| [docs/migrate-from-camunda-7.md](docs/migrate-from-camunda-7.de.md) | Umstieg von Camunda 7, Rollback, Einschränkungen |
 | [distro/docker/README.md](distro/docker/README.md) | Image: Umgebungsvariablen, Treiber, Betrieb, Optimierung |
 | [webapps/frontend-next/README.md](webapps/frontend-next/README.md#new-web-ui-frontend-next) | Die neue Weboberfläche |
 | [docs/security/CVE-2026-114938.md](docs/security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell und Fasti |
-| [CHANGELOG.md](CHANGELOG.md), [SECURITY.md](SECURITY.md#security-policy), [CONTRIBUTING.md](CONTRIBUTING.md#how-to-contribute) | Änderungen, Sicherheit, Mitwirkung |
-
-<a id="what-this-is"></a>
-
-## Was dieses Projekt umfasst
-
-Dieses Repository enthält die BPMN 2.0 / DMN-Prozess-Engine, die REST-API, die Web-
-anwendungen (Cockpit, Tasklist, Admin) und die Distributionen (Run, Tomcat, WildFly). Es
-baut auf dem Tag `7.24.0` von Camunda 7 CE auf und führt die Entwicklung mit Fehlerbehebungen und Bibliotheks-
-aktualisierungen fort.
-
-Ziel ist die **Abwärtskompatibilität** mit Anwendungen, die auf Camunda 7 laufen:
-
-- Die `org.camunda.bpm.*`-Packages, der BPMN-Namensraum
-  `http://camunda.org/schema/1.0/bpmn` und das Konfigurationspräfix `camunda.bpm.*` bleiben erhalten;
-- das Datenbankschema von 7.24 bleibt erhalten;
-- alle Deployment-Varianten bleiben erhalten: Spring Boot, Run, Tomcat, WildFly; `javax` und `jakarta`.
-
-<a id="what-is-different-from-camunda-7240-ce"></a>
-
-## Unterschiede zu Camunda 7.24.0 CE
-
-- **Sicherheit:** Behebungen öffentlich bekannt gewordener Probleme der 7.x-Linie (Ausdrücke in
-  Abfragen, Ersteinrichtung, Zugriff auf Anhänge und Kommentare, Cockpit-Berechtigungen, offene
-  Weiterleitungen) sowie zusätzliche Schutzmaßnahmen: eine Positivliste für Ausdrücke in Abfragen und
-  Filtern, Prüfungen von Anhängen und Kommentaren innerhalb der Engine, gehärtete Sicherheitsfilter,
-  Header und Cookies in den Webanwendungen.
-- **Stabilität:** Kein Speicherleck mehr bei der Auswertung von Skripten und DMN-Ausdrücken mit
-  JavaScript (GraalJS) sowie eine Reihe weiterer Fehlerbehebungen in der Engine.
-- **Plattform:** Java 17 oder höher, Spring Boot 4.1, GraalJS 25, Jackson 2.21 und viele weitere
-  Bibliotheken auf Versionen mit Sicherheitskorrekturen aktualisiert.
-
-Einige Korrekturen ändern die Standardwerte zugunsten eines sichereren Verhaltens; lesen Sie vor dem Upgrade den Abschnitt „Unterschiede“ im
-[Migrationsleitfaden](docs/migrate-from-camunda-7.de.md#what-differs).
-
-<a id="versioning"></a>
-
-## Versionierung
-
-Fasti BPM Platform folgt der [semantischen Versionierung](https://semver.org/), beginnend mit `1.0.0`.
-Die `1.x`-Linie ist mit Anwendungen kompatibel, die für Camunda 7.24 geschrieben wurden.
-
-<a id="maven-coordinates"></a>
-
-## Maven-Koordinaten
-
-Die Artefakte von Fasti BPM Platform haben eigene Maven-Koordinaten. **Die Java-Packages
-bleiben `org.camunda.bpm.*`**, sodass der Anwendungscode seine Imports behält; das Konfigurationspräfix `camunda.bpm.*`,
-die BPMN/DMN-Namensräume, das Datenbankschema und die Modulnamen auf
-WildFly bleiben ebenfalls unverändert. Aus Maven-Sicht ändern sich nur die Abhängigkeitsdeklarationen
-(der Pfad der Webanwendung ändert sich unabhängig davon, siehe
-[Pfad der Webanwendung](#web-application-path-fasti)):
-
-- **groupId:** `org.camunda.bpm` → `dev.fasti.platform`, `org.camunda.bpm.<x>` →
-  `dev.fasti.platform.<x>`; die Gruppen `org.camunda.commons`, `org.camunda.connect`,
-  `org.camunda.spin` und `org.camunda.template-engines` → `dev.fasti.platform.<group name>`.
-- **artifactId:** Das Präfix `camunda-` wird zu `fasti-`, der Rest bleibt erhalten.
-- **version:** die Version von Fasti BPM Platform (siehe [Versionierung](#versioning)) anstelle von
-  `7.24.0`.
-
-Bisher wurde noch kein Release dieser Artefakte auf Maven Central veröffentlicht. Erstellen Sie sie bis dahin
-aus dem Quellcode und stellen Sie die Artefakte im Maven-Repository bereit, das Ihr Projekt verwendet.
-
-Verwalten Sie die Versionen mit der BOM:
-
-```xml
-<dependencyManagement>
-  <dependencies>
-    <dependency>
-      <groupId>dev.fasti.platform</groupId>
-      <artifactId>fasti-bom</artifactId>
-      <version>${fasti.version}</version>
-      <type>pom</type>
-      <scope>import</scope>
-    </dependency>
-  </dependencies>
-</dependencyManagement>
-```
-
-Häufig verwendete Artefakte:
-
-| Camunda 7 | Fasti BPM Platform |
-|---|---|
-| `org.camunda.bpm:camunda-bom` | `dev.fasti.platform:fasti-bom` |
-| `org.camunda.bpm:camunda-engine` | `dev.fasti.platform:fasti-engine` |
-| `org.camunda.bpm:camunda-engine-spring` | `dev.fasti.platform:fasti-engine-spring` |
-| `org.camunda.bpm:camunda-engine-spring-6` | `dev.fasti.platform:fasti-engine-spring-6` |
-| `org.camunda.bpm:camunda-engine-cdi-jakarta` | `dev.fasti.platform:fasti-engine-cdi-jakarta` |
-| `org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter` | `dev.fasti.platform.springboot:fasti-bpm-spring-boot-starter` |
-| `org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter-rest` | `dev.fasti.platform.springboot:fasti-bpm-spring-boot-starter-rest` |
-| `org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter-webapp` | `dev.fasti.platform.springboot:fasti-bpm-spring-boot-starter-webapp` |
-| `org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter-security` | `dev.fasti.platform.springboot:fasti-bpm-spring-boot-starter-security` |
-| `org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter-external-task-client` | `dev.fasti.platform.springboot:fasti-bpm-spring-boot-starter-external-task-client` |
-| `org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter-test` | `dev.fasti.platform.springboot:fasti-bpm-spring-boot-starter-test` |
-| `org.camunda.bpm:camunda-engine-rest-core` | `dev.fasti.platform:fasti-engine-rest-core` |
-| `org.camunda.bpm:camunda-engine-rest-core-jakarta` | `dev.fasti.platform:fasti-engine-rest-core-jakarta` |
-| `org.camunda.bpm.webapp:camunda-webapp` | `dev.fasti.platform.webapp:fasti-webapp` |
-| `org.camunda.bpm.webapp:camunda-webapp-jakarta` | `dev.fasti.platform.webapp:fasti-webapp-jakarta` |
-| `org.camunda.bpm.webapp:camunda-webapp-webjar` | `dev.fasti.platform.webapp:fasti-webapp-webjar` |
-| `org.camunda.bpm:camunda-external-task-client` | `dev.fasti.platform:fasti-external-task-client` |
-| `org.camunda.bpm:camunda-engine-plugin-spin` | `dev.fasti.platform:fasti-engine-plugin-spin` |
-| `org.camunda.bpm:camunda-engine-plugin-connect` | `dev.fasti.platform:fasti-engine-plugin-connect` |
-| `org.camunda.spin:camunda-spin-dataformat-all` | `dev.fasti.platform.spin:fasti-spin-dataformat-all` |
-| `org.camunda.connect:camunda-connect-connectors-all` | `dev.fasti.platform.connect:fasti-connect-connectors-all` |
-| `org.camunda.bpm.dmn:camunda-engine-dmn` | `dev.fasti.platform.dmn:fasti-engine-dmn` |
-| `org.camunda.bpm.model:camunda-bpmn-model` | `dev.fasti.platform.model:fasti-bpmn-model` |
-| `org.camunda.bpm:camunda-bpm-assert` | `dev.fasti.platform:fasti-bpm-assert` |
-| `org.camunda.bpm:camunda-bpm-junit5` | `dev.fasti.platform:fasti-bpm-junit5` |
-
-Die FEEL-Bibliothek `org.camunda.feel:feel-engine` ist eine externe Bibliothek, die nicht Teil
-dieses Repositorys ist; ihre Koordinaten bleiben unverändert.
-
-<a id="third-party-libraries-that-still-pull-in-the-original-engine"></a>
-
-### Drittanbieterbibliotheken, die weiterhin die ursprüngliche Engine einbinden
-
-Da die Packages unverändert sind, enthalten die ursprüngliche Engine (`org.camunda.bpm:camunda-engine`)
-und `fasti-engine` Klassen mit denselben Namen. Maven behandelt sie als zwei voneinander unabhängige
-Bibliotheken und entfernt keine von beiden. Wenn eine Drittanbieterbibliothek (beispielsweise eine Community-Erweiterung)
-von den ursprünglichen Artefakten abhängt, schließen Sie diese aus und deklarieren Sie stattdessen die entsprechenden
-Fasti-Artefakte:
-
-```xml
-<dependency>
-  <groupId>com.example</groupId>
-  <artifactId>some-camunda-extension</artifactId>
-  <version>1.2.3</version>
-  <exclusions>
-    <exclusion>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>*</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>org.camunda.bpm.model</groupId>
-      <artifactId>*</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>org.camunda.bpm.dmn</groupId>
-      <artifactId>*</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>*</artifactId>
-    </exclusion>
-  </exclusions>
-</dependency>
-```
-
-`mvn dependency:tree -Dincludes="org.camunda*"` listet ursprüngliche Artefakte auf, die noch
-vorhanden sind (`org.camunda.feel:feel-engine` ist zulässig, schließen Sie es nicht aus).
-
-<a id="startup-check"></a>
-
-### Prüfung beim Start
-
-Bei ihrer Erstellung untersucht die Engine den Klassenpfad und **verweigert den Start**, wenn sie
-die Klassen der Prozess-Engine in mehr als einer Bibliothek findet; der Fehler `ENGINE-12021` nennt
-den Speicherort jeder dieser Bibliotheken. Der Spring Boot-Starter führt dieselbe Prüfung durch, sobald die
-Anwendung startet. Eine Bibliothek, die nur über den übergeordneten Classloader sichtbar ist (beispielsweise eine gemeinsam
-genutzte Engine des Servers neben einer in eine Webanwendung eingebetteten Engine), wird nicht
-mitgezählt. Wenn Ihre Konfiguration beabsichtigt ist, lässt sich die Prüfung über eine Systemeigenschaft deaktivieren:
-
-```
--Dfasti.engine.duplicate-library-check.enabled=false
-```
-
-Einschränkung: Wenn die ursprüngliche Engine-Bibliothek im Klassenpfad vor `fasti-engine` steht, wird die
-Engine mit den Klassen der ursprünglichen Bibliothek erstellt, die diese Prüfung nicht enthalten.
-In diesem Fall werden nur Anwendungen gestoppt, die den Fasti Spring Boot-Starter verwenden; prüfen Sie bei
-anderen Integrationen die Abhängigkeiten wie oben beschrieben.
-
-<a id="web-application-path-fasti"></a>
-
-## Pfad der Webanwendung: `/fasti`
-
-Cockpit, Tasklist, Admin und die neue Weboberfläche werden in jeder Distribution unter `/fasti` (früher `/camunda`)
-bereitgestellt: `http://localhost:8080/fasti/` öffnet die neue Oberfläche
-(`/fasti/app/next/default/`), die klassischen Anwendungen befinden sich unter `/fasti/app/cockpit/...`,
-`/fasti/app/tasklist/...` und `/fasti/app/admin/...`. Die REST-API bleibt unter `/engine-rest`.
-
-**Die klassischen Anwendungen sind veraltet.** Das klassische Cockpit, Tasklist, Admin und Welcome
-basieren auf AngularJS 1.8.2 und Bootstrap 3, deren Lebenszyklus jeweils beendet ist. **Das Container-Image stellt sie
-standardmäßig nicht bereit** (inkompatible Änderung): Ihre Seiten und alte Lesezeichen werden zum entsprechenden Bereich der neuen Oberfläche weitergeleitet, und Anfragen nach ihren Dateien liefern `404`; `FASTI_CLASSIC_WEBAPPS=true` aktiviert sie
-wieder (mit einer Warnung), siehe [distro/docker/README.md](distro/docker/README.md). Auch die
-Tomcat- und WildFly-Bundles stellen sie standardmäßig nicht bereit (reaktivieren Sie sie mit
-`-Dfasti.webapp.classic.enabled=true` oder `FASTI_CLASSIC_WEBAPPS=true`). Das Run-Zip und der Spring
-Boot-Starter stellen sie weiterhin wie bisher bereit, damit laufende Installationen funktionsfähig bleiben; deaktivieren Sie sie
-mit `fasti.webapp.classic.enabled: false`. Die klassischen Anwendungen werden in einem
-späteren Release entfernt.
-
-Der alte Pfad funktioniert weiterhin: Jede Anfrage an `/camunda/...` wird zum selben Pfad
-unter `/fasti/...` weitergeleitet, wobei der restliche Pfad und die Abfragezeichenfolge erhalten bleiben. GET und HEAD erhalten
-`301`; alle anderen Methoden (POST, PUT, DELETE, z. B. alte Clients mit Aufrufen an `/camunda/api/...`)
-erhalten `308`, damit Clients die Anfrage mit derselben Methode und demselben Inhalt wiederholen. Die Weiterleitungen
-enthalten `Cache-Control: no-store`, sodass ein Wechsel zurück zu `/camunda` sofort wirksam wird.
-
-So stellen Sie `/camunda` wieder her:
-
-- **Spring Boot, Run:** `camunda.bpm.webapp.application-path: /camunda` (dann ohne Weiterleitung).
-  Um nur die Weiterleitung zu deaktivieren: `fasti.webapp.legacy-path-redirect: false`.
-- **Tomcat:** Löschen Sie `webapps/camunda` (die Weiterleitungsanwendung) und benennen Sie
-  `webapps/fasti` in `webapps/camunda` um.
-- **WildFly:** Löschen Sie `standalone/deployments/camunda.war` (und `camunda.war.dodeploy`) und
-  setzen Sie `<context-root>/camunda</context-root>` in `WEB-INF/jboss-web.xml` der Web-
-  anwendungs-WAR.
-
-**Reverse Proxys:** Wenn ein Proxy nur `/camunda/` weiterleitet (oder Pfade umschreibt, Cookie-
-Pfade, CSP oder Zustandsprüfungen für `/camunda` festlegt), ergänzen Sie `/fasti/` oder stellen Sie vollständig auf `/fasti/` um.
-Das Cookie `XSRF-TOKEN` (und `JSESSIONID` auf Tomcat und WildFly) hat jetzt den Pfad `/fasti`,
-sodass sich Benutzer erneut anmelden müssen. Lesezeichen und alte Links funktionieren über die Weiterleitung weiterhin.
-
-<a id="single-sign-on-openid-connect"></a>
-
-## Single Sign-on (OpenID Connect)
-
-Unterstützt auf **Run** (`./start.sh --oauth2`, Modul `internal/oauth2`) und in **Spring Boot**-
-Anwendungen mit `fasti-bpm-spring-boot-starter-security`. Die Aktivierung erfolgt durch Deklaration einer
-Spring Security-Clientregistrierung (`spring.security.oauth2.client.*`). Hinweise zu **Tomcat** und
-**WildFly** finden Sie am Ende dieses Abschnitts.
-
-- **Anmeldung:** Die Anmeldeseite der neuen Webanwendung zeigt „Mit &lt;provider&gt; anmelden“
-  anstelle des Passwortformulars (Beschriftung: `fasti.security.oidc.login-label`, standardmäßig der
-  `client-name`; wählen Sie bei mehreren Registrierungen eine mit
-  `fasti.security.oidc.registration-id` aus). Der Authorization-Code-Flow verwendet `state`, `nonce`
-  und PKCE (S256, auch für vertrauliche Clients); die Sitzungs-ID wird bei der Anmeldung ersetzt. Benutzer
-  kehren zu der Seite der neuen Webanwendung zurück, von der aus sie gestartet sind (nur Pfade unter
-  `/fasti/app/next/` werden akzeptiert, sodass keine offene Weiterleitung möglich ist).
-- **Abmeldung:** `POST /logout` (nur Anfragen derselben Herkunft) beendet die Sitzung; mit
-  `camunda.bpm.oauth2.sso-logout.enabled=true` wird der Benutzer zum End-
-  Session-Endpunkt des Anbieters weitergeleitet (RP-initiierte Abmeldung, `post-logout-redirect-uri`). Die
-  Back-Channel-Abmeldung von Spring Security bleibt aktiviert. `GET /logout` meldet den Benutzer nicht mehr ab.
-- **Sitzungsablauf:** Wenn das Zugriffstoken nicht erneuert werden kann oder die Sitzung abläuft,
-  liefern Anfragen an `/fasti/api/**` den Status `401` (ohne Weiterleitung), und die neue Webanwendung zeigt ihre Anmeldeseite.
-- **CSRF:** `/fasti/api` und `/fasti/app` behalten den eigenen CSRF-Filter der Webanwendungen
-  (`X-XSRF-TOKEN`); der CSRF-Schutz von Spring Security bleibt wie im Ursprungsprojekt deaktiviert.
-- **Gruppen, Administratoren, Mandanten:** Der Gruppen-Claim wird über
-  `camunda.bpm.oauth2.identity-provider.group-name-attribute` festgelegt (Eigenschaftsname aus dem Ursprungsprojekt; verschachtelte
-  Claims wie `realm_access.roles` funktionieren). `fasti.security.oidc.groups.admin` führt die
-  Claim-Werte auf, die `camunda-admin` gewähren; `groups.mapping` ordnet Claim-Werte Gruppen-
-  IDs der Engine zu; `groups.include-unmapped=false` verwirft nicht zugeordnete Werte. **Änderung gegenüber dem Ursprungsprojekt:** Ein
-  Claim-Wert `camunda-admin` gewährt für sich allein keine Administratorrechte mehr, und
-  Berechtigungen wie `SCOPE_openid` oder `OIDC_USER` werden nicht mehr zu Gruppen.
-  `fasti.security.oidc.tenants.claim` ordnet Mandanten zu. Name und E-Mail:
-  `fasti.security.oidc.user.{first-name,last-name,email}-claim`.
-- **Identitätsanbieter:** Standardmäßig liest die Engine Benutzer, Gruppen und Mandanten aus dem
-  Token der aktuellen Sitzung (schreibgeschützt). Setzen Sie
-  `camunda.bpm.oauth2.identity-provider.enabled=false`, um stattdessen die Datenbank zu verwenden (Gruppen
-  stammen dann aus den Mitgliedschaftstabellen). Automatische Provisionierung ist nicht implementiert.
-  Solange Benutzer aus dem Token stammen (Standard), ist die Seite zur Ersteinrichtung (erster Administrator)
-  deaktiviert, da Administratoren aus den Claims (`groups.admin`) hervorgehen; zuvor wurden Benutzer außerhalb der Administratorengruppe zur Einrichtungsseite weitergeleitet.
-- **REST-API mit Bearer-Token:** `fasti.security.oidc.rest.bearer-enabled=true` akzeptiert
-  `Authorization: Bearer <JWT>` auf `/engine-rest` zusätzlich zur Basic-Authentifizierung.
-  `rest.issuer-uri` und `rest.audiences` sind erforderlich; Signaturen werden anhand des
-  JWKS des Ausstellers ausschließlich mit asymmetrischen Algorithmen geprüft (`rest.jws-algorithms`, standardmäßig `RS256`), und
-  `iss`, `aud`, `exp`, `nbf` werden validiert. Run benötigt außerdem `camunda.bpm.run.auth.enabled=true`.
-  Ein Browser-Sitzungscookie authentifiziert niemals Anfragen an `/engine-rest`.
-
-Keycloak-Beispiel (`configuration/default.yml` von Run):
-
-```yaml
-spring.security.oauth2.client:
-  registration.keycloak:
-    client-id: fasti
-    client-secret: ${KEYCLOAK_CLIENT_SECRET}
-    client-name: Keycloak
-    scope: openid, profile, email
-  provider.keycloak:
-    issuer-uri: https://sso.example.com/realms/fasti
-    user-name-attribute: preferred_username
-camunda.bpm:
-  oauth2:
-    # the client's "Group Membership" mapper, with "Full group path" off
-    identity-provider.group-name-attribute: groups
-    sso-logout:
-      enabled: true
-      post-logout-redirect-uri: "{baseUrl}/fasti/app/next/default/"
-  run.auth.enabled: true
-fasti.security.oidc:
-  groups.admin: [fasti-admins]
-  rest:
-    bearer-enabled: true
-    issuer-uri: https://sso.example.com/realms/fasti
-    audiences: [fasti-api]          # "Audience" mapper in Keycloak
-    user-id-claim: preferred_username
-```
-
-Microsoft Entra ID-Beispiel:
-
-```yaml
-spring.security.oauth2.client:
-  registration.entra:
-    client-id: <application-id>
-    client-secret: ${ENTRA_CLIENT_SECRET}
-    client-name: Microsoft
-    scope: openid, profile, email
-  provider.entra:
-    issuer-uri: https://login.microsoftonline.com/<tenant-id>/v2.0
-    user-name-attribute: preferred_username
-camunda.bpm.oauth2:
-  # app registration manifest: "groupMembershipClaims": "SecurityGroup"
-  identity-provider.group-name-attribute: groups
-  sso-logout.enabled: true
-fasti.security.oidc:
-  groups:
-    admin: ["<object id of the administrators group>"]
-    mapping:
-      "<object id of the accounting group>": accounting
-    include-unmapped: false          # Entra sends object ids, not group names
-  rest:
-    bearer-enabled: true
-    issuer-uri: https://login.microsoftonline.com/<tenant-id>/v2.0
-    audiences: ["api://<application-id>"]   # v2 access tokens: accessTokenAcceptedVersion = 2
-    user-id-claim: preferred_username
-```
-
-**Tomcat, WildFly (WAR):** Dieselben Funktionen, konfiguriert in `fasti-oidc.properties` (Tomcat:
-`conf/`, WildFly: `standalone/configuration/`; eine kommentierte `fasti-oidc.properties.example`
-liegt daneben). Ohne diese Datei ändert sich nichts. Die Schlüssel entsprechen den `fasti.security.oidc.*`-Eigenschaften von Run, ergänzt um `issuer-uri`, `client-id`, `client-secret`, `user-name-claim`, `groups-claim`. Der
-Anbieter muss die Weiterleitungs-URI `<base>/fasti/sso/callback` zulassen; die URL für die Back-Channel-Abmeldung lautet
-`<base>/fasti/sso/backchannel-logout`. Bearer-Token auf `/engine-rest` werden mit
-`fasti.security.oidc.rest.bearer-enabled=true` aktiviert (Basic-Authentifizierung funktioniert weiterhin, sofern nicht
-`rest.basic-enabled=false` gesetzt ist; auch die Engine-Liste `/engine` erfordert Zugangsdaten). Benutzer müssen nicht
-in der Datenbank vorhanden sein. Damit die Engine Abfragen zu Gruppen und Mandanten des
-angemeldeten Benutzers anhand der Claims beantworten kann, aktivieren Sie das `OidcIdentityProviderPlugin` (auskommentiert in
-`bpm-platform.xml` / `standalone.xml`). Einschränkungen: Die für die Back-Channel-Abmeldung erfassten Sitzungen werden
-je Server im Arbeitsspeicher gehalten (nicht zwischen Cluster-Knoten geteilt); die klassischen Anwendungen leiten nur zum Anbieter weiter; eine vollständige Abmeldung erfordert die neue Weboberfläche.
+| [CHANGELOG.md](CHANGELOG.md), [SECURITY.md](SECURITY.md#security-policy) | Änderungen, Sicherheit, Support-Richtlinie |
 
 <a id="build"></a>
 
-## Build
+## Build aus dem Quellcode
 
-Erfordert JDK 17 oder höher (21 empfohlen).
+Erfordert JDK 17 oder höher (21 empfohlen) und Netzwerkzugriff auf Maven Central, nodejs.org und die
+npm-Registry (der Build lädt Node/npm für die Weboberfläche herunter).
 
 ```bash
 ./mvnw clean verify
 ```
 
-Ein vollständiger Build führt alle Java-Tests und die Unit-Tests der Weboberfläche aus (knapp eine Stunde; die Playwright-
-End-to-End-Tests werden separat ausgeführt, siehe [webapps/frontend-next](webapps/frontend-next/README.md#end-to-end-tests-playwright)) und benötigt Netzwerkzugriff auf Maven Central,
-nodejs.org und die npm-Registry. Siehe [TESTING.md](TESTING.md).
+Ein vollständiger Build führt alle Java-Tests und die Unit-Tests der Weboberfläche aus (knapp eine
+Stunde; die Playwright-End-to-End-Tests werden separat ausgeführt, siehe [webapps/frontend-next](webapps/frontend-next/README.md#end-to-end-tests-playwright)).
+Siehe [TESTING.md](TESTING.md). So erstellen Sie das Container-Image (der erste Build dauert etwa
+10–20 Minuten):
+
+```bash
+./mvnw -pl distro/docker -am package -DskipTests
+docker build -t fasti-bpm:local distro/docker/target/docker
+```
+
+<a id="contributing"></a>
+
+## Mitwirken
+
+Fragen, Fehlerberichte und Pull Requests sind auf GitHub willkommen; siehe
+[CONTRIBUTING.md](CONTRIBUTING.md#how-to-contribute) und den
+[Verhaltenskodex](CODE_OF_CONDUCT.md). Besonders willkommen sind Durchsichten der Übersetzungen
+durch Muttersprachler.
 
 <a id="acknowledgements"></a>
 

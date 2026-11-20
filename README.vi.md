@@ -2,9 +2,9 @@
 
 # Fasti BPM Platform
 
-**Make Camunda 7 Great Again.** Camunda 7 Community Edition đã dừng ở bản 7.24.0, bản CE cuối
-cùng. Fasti BPM nhận tiếp từ đó: cùng engine, cùng cơ sở dữ liệu, tiếp tục vá lỗi và nâng thư
-viện, kèm giao diện web mới.
+Fasti BPM là một engine mã nguồn mở, độc lập, xây dựng trên Camunda 7 Community Edition 7.24.0.
+Nó chạy trên chính cơ sở dữ liệu Camunda 7 bạn đang có, với thư viện được cập nhật, các bản vá
+bảo mật và giao diện web mới. Website: <https://fasti.dev>
 
 > **Không liên kết với Camunda Services GmbH; Camunda là nhãn hiệu của Camunda Services GmbH.**
 > Fasti BPM là dự án độc lập mã nguồn mở (Apache-2.0), không thuộc, không được bảo trợ hay chứng
@@ -33,625 +33,145 @@ curl -i http://localhost:8080/engine-rest/task      # 401: thiếu thông tin đ
 curl -u admin:'đổi-mật-khẩu-này' http://localhost:8080/engine-rest/task
 ```
 
-**Tự build image** từ mã nguồn. Cần Docker, JDK 17+ và mạng tới Maven
-Central, nodejs.org và npm registry (build tải Node/npm cho web UI); lần đầu mất khoảng 10–20
-phút:
-
-```bash
-./mvnw -pl distro/docker -am package -DskipTests
-docker build -t fasti-bpm:local distro/docker/target/docker
-# rồi chạy lệnh docker run ở trên với fasti-bpm:local thay cho fastidev/fasti-bpm:1.0.1
-```
-
-Image **bật sẵn xác thực REST và phân quyền** (khác Camunda Run); chỉ `FASTI_INSECURE_DEMO=true`
-tắt được, để demo.
+Hướng dẫn đầy đủ, kể cả dùng cơ sở dữ liệu của bạn: <https://fasti.dev/install>
 
 <a id="highlights"></a>
 
 ## Tính năng nổi bật
 
-- **Giao diện web mới** ở `/fasti/` (React):
-  - tìm lượt chạy theo nhiều biến cùng lúc, kết hợp AND/OR;
-  - dòng thời gian của cả hồ sơ ngay trong công việc (bình luận và thao tác của mọi bước);
-  - nút "Nhận việc tiếp theo";
-  - hạn xử lý và mức khẩn (SLA), việc quá hạn;
-  - khối lượng công việc theo người và nhóm;
-  - hướng dẫn xử lý (runbook) gắn với sự cố;
-  - trang sức khỏe hệ thống (sự cố, job lỗi, job trễ, external task, batch);
-  - dùng tốt trên điện thoại;
-  - 13 ngôn ngữ.
-- **Đăng nhập một lần (OIDC)**: Keycloak, Microsoft Entra ID và nhà cung cấp OpenID Connect
-  khác; claim sang nhóm và tenant; JWT bearer cho REST API. Có cho Run, Spring Boot, Tomcat và
-  WildFly.
-- **Gia cố bảo mật**: allow-list expression trong query và filter, kiểm quyền attachment và
-  comment ở tầng engine, setup lần đầu, quyền trong Cockpit, open redirect, header, cookie và
-  CSP của webapp. Chi tiết trong [CHANGELOG](CHANGELOG.md).
-- **Xác thực bật sẵn**: image yêu cầu đăng nhập cho REST và bật phân quyền ở mọi chế độ.
-- **Bảo vệ phiên bản schema**: engine từ chối chạy trên schema cũ hơn 7.24 và không bao giờ tự
-  nâng schema.
-- **Giảm thiểu Java4Shell** ([CVE-2026-114938](docs/security/CVE-2026-114938.vi.md)): image amd64
-  dùng JRE Temurin đã vá và tắt intrinsic Base64; engine cảnh báo khi chạy trên JVM có lỗi.
-- **Hiệu năng**: tải lần đầu của web UI mới giảm từ 960 KB xuống 330 KB (gzip bật sẵn); thông
-  lượng job executor tăng khoảng 2,5 lần khi tinh chỉnh (số đo và điều kiện đo trong
-  [distro/docker/README.vi.md](distro/docker/README.vi.md#tinh-chỉnh-hiệu-năng)).
-- **Nền mới**: Java 17 trở lên, Spring Boot 4.1, GraalJS 25, Jackson 2.21.
+- **Đổi kết nối. Việc chuyển đổi chỉ có vậy.** Fasti dùng nguyên schema của Camunda 7.24; các
+  package `org.camunda.bpm.*` giữ nguyên ([chuyển đổi](https://fasti.dev/install#migrate)).
+- **Một container. Một lệnh.** Dùng cùng các biến `DB_*` như Camunda Run ([cài đặt](https://fasti.dev/install)).
+- **Dành cho những người xử lý hàng đợi công việc**: giao diện web mới, 13 ngôn ngữ, sáng và tối,
+  dùng tốt trên điện thoại ([tính năng](https://fasti.dev/#features)).
+- **Mô hình hóa và triển khai ngay trên trình duyệt**: BPMN, DMN và biểu mẫu ([modeler](https://fasti.dev/#modeler)).
+- **Công cụ vận hành đã có sẵn**: lịch sử có thể tìm kiếm, sửa instance đang chạy, chạy lại job
+  lỗi hàng loạt, nhật ký thao tác ([vận hành](https://fasti.dev/#operate)).
+- **Mặc định là đóng**: phải đăng nhập ngay từ lần chạy đầu, không có người dùng mặc định, đã vá
+  các lỗ hổng đã biết, đã giảm thiểu Java4Shell ([bảo mật](https://fasti.dev/security)).
+- **Đăng nhập một lần (SSO)**: OpenID Connect và JWT bearer token ([hướng dẫn](docs/single-sign-on.vi.md)).
+- **Nền tảng:** Java 17 trở lên, Spring Boot 4.1, GraalJS 25, Jackson 2.21
+  ([hiệu năng](https://fasti.dev/#performance)).
 
-<a id="installation"></a>
+<a id="installation"></a><a id="get-fasti"></a>
 
-## Cài đặt
+## Tải Fasti
 
-<a id="one-command-on-your-existing-camunda-724-database"></a>
+- <a id="one-command-on-your-existing-camunda-724-database"></a>**Image Docker** (`fastidev/fasti-bpm`, amd64 và arm64): <https://fasti.dev/install>;
+  từng bước trong [docs/install-docker.vi.md](docs/install-docker.vi.md), toàn bộ biến trong
+  [distro/docker/README.vi.md](distro/docker/README.vi.md).
+- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Gói Tomcat**, không dùng Docker: <https://fasti.dev/download>. Gói Tomcat 1.0.0 dựng sẵn:
+  - [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
+  - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
-### Một lệnh, trên cơ sở dữ liệu Camunda 7.24 đang có
+  Kiểm tra checksum trước khi giải nén, ví dụ `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`,
+  và đọc `README.txt` trong gói trước khi chạy.
+- **Nhúng** vào Spring Boot hoặc một ứng dụng Java khác: tọa độ Maven mới
+  (`dev.fasti.platform:fasti-*`), vẫn các package `org.camunda.bpm.*`; xem
+  [docs/embedding.vi.md](docs/embedding.vi.md).
 
-Image nhận đúng các biến `DB_*` của image Camunda 7 Run trước đây. Sao lưu cơ sở dữ liệu, rồi:
+<a id="moving-from-camunda-7"></a>
 
-<!-- update with the Docker Hub image name at release -->
-```bash
-docker run -d --name fasti -p 127.0.0.1:8080:8080 \
-  -e DB_DRIVER=org.postgresql.Driver \
-  -e DB_URL=jdbc:postgresql://db.example.com:5432/camunda \
-  -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
-  -v /đường/dẫn/db-password:/run/secrets/db-password:ro \
-  -e TZ=Asia/Ho_Chi_Minh \
-  fastidev/fasti-bpm:1.0.1
-```
+## Chuyển từ Camunda 7
 
-Người dùng, mật khẩu, nhóm, tenant, phân quyền, filter, deployment, instance đang chạy, lịch
-sử, job và incident giữ nguyên. Cổng chỉ mở trên máy này; truy cập từ xa hãy đi qua reverse proxy
-có HTTPS. Đăng nhập `/fasti/` bằng tài khoản đã có. Vì xác thực bật sẵn,
-mọi client REST (external task worker, tích hợp) phải gửi Basic auth hoặc bearer token.
+Nếu bạn đang chạy Camunda 7.24, Fasti chạy trên chính cơ sở dữ liệu đó mà không thay đổi schema. Bạn
+có thể thay các nút cũ, chạy Fasti bên cạnh chúng, và quay lại Camunda 7.24 bất cứ lúc nào. Image
+Fasti đã được kiểm thử khi tiếp quản cơ sở dữ liệu do Camunda Run 7.24 tạo ra trên PostgreSQL 16,
+MariaDB 11.8, MySQL 8.4, SQL Server 2022 và Oracle Database 23ai; DB2 chưa được kiểm thử. Mọi REST
+client, kể cả external task worker, từ nay phải gửi thông tin đăng nhập Basic hoặc bearer token.
 
-- **Chạy song song** với các node Camunda 7.24 CE trên cùng cơ sở dữ liệu: cùng mức lịch sử,
-  cùng `TZ`, cùng cấu hình mật khẩu. Nếu node cũ là process application có lớp Java mà Fasti
-  không có, đặt `FASTI_JOB_EXECUTOR_ENABLED=false` trên Fasti (hoặc bật deployment-aware trên
-  mọi node), và đừng gọi các process đó (bắt đầu, hoàn thành task) qua Fasti: lời gọi đồng bộ
-  chạy delegate ngay trên node nhận yêu cầu.
-- **Quay lại**: Fasti không đổi schema, nên chỉ cần dừng Fasti và khởi động lại node Camunda
-  7.24 trên cùng cơ sở dữ liệu. Process đã deploy có dùng tính năng chỉ Fasti có thì không chạy
-  được trên Camunda 7; xem [Quay lại Camunda 7.24](docs/migrate-from-camunda-7.vi.md#quay-lại-camunda-724).
-- **Schema cũ hơn (7.17–7.23)**: chạy các script `sql/upgrade` có trong image
-  (`/fasti/configuration/sql/upgrade`) cho tới 7.24 trước; ví dụ 7.23 → 7.24:
-  `postgres_engine_7.23_to_7.24.sql`.
+Ứng dụng Spring Boot nhúng engine cũng chuyển lên Spring Boot 4.1 và Java 17; schema cũ hơn cần được
+nâng cấp bằng các script chuẩn trước. Plugin và process application viết cho Camunda 7 phải được
+build lại với các artifact của Fasti thì mới chạy được bên trong Fasti. Chạy song song và quay lại
+đều có giới hạn (cùng cấu hình trên mọi nút, nút nào chạy job, process dùng tính năng chỉ Fasti có):
+xem [chạy song song](docs/migrate-from-camunda-7.vi.md#mixed-operation-with-camunda-7-nodes) và
+[quay lại](docs/migrate-from-camunda-7.vi.md#rollback-to-camunda-724).
 
-Đã thử thật với image (tiếp quản cơ sở dữ liệu do Camunda Run 7.24.0 tạo, quay lại, chạy song
-song): **PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022, Oracle Database 23** (driver
-Oracle không kèm sẵn, tự thêm `ojdbc11`; với MySQL chưa thử bước quay lại). **DB2 chưa được kiểm chứng.** H2 chỉ để thử. Kết quả
-từng phép thử và giới hạn: [hướng dẫn chuyển đổi](docs/migrate-from-camunda-7.vi.md#giới-hạn).
+Các bước chuyển đổi và giới hạn: <https://fasti.dev/install#migrate> và
+[hướng dẫn chuyển đổi](docs/migrate-from-camunda-7.vi.md) (quay lại, schema cũ hơn, kết quả kiểm
+thử).
 
-Hướng dẫn chi tiết:
-
-- [Cài đặt bằng Docker](docs/install-docker.vi.md): H2, PostgreSQL với `docker run` và
-  `docker compose`, cơ sở dữ liệu có sẵn, chạy song song, health check, nâng cấp, quay lại, xử
-  lý sự cố.
-- [Chuyển từ Camunda 7](docs/migrate-from-camunda-7.vi.md): các bước, cái gì giống và khác, quay lại,
-  giới hạn.
-- [Tham chiếu biến môi trường của image](distro/docker/README.vi.md#biến-môi-trường).
-
-<a id="without-docker-tomcat-bundle-download-from-fastidev"></a>
-
-### Không dùng Docker: gói Tomcat (tải từ fasti.dev)
-
-Gói Tomcat 1.0.0 dựng sẵn (trang tải: https://fasti.dev/download):
-- [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
-- [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
-
-Kiểm tra checksum trước khi giải nén, ví dụ `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
-
-Cũng có thể build bản phân phối Tomcat từ mã nguồn (`distro/tomcat`). Đọc `README.txt` trong gói
-trước khi chạy: REST API (`/engine-rest`) cần đăng nhập HTTP Basic theo mặc định, không có người
-dùng nào được tạo sẵn (tạo quản trị viên đầu tiên ở trang thiết lập của `/fasti/`), và khi tiếp
-quản cơ sở dữ liệu của Camunda Run phải đặt `jobExecutorDeploymentAware=false` trong
-`conf/bpm-platform.xml`, nếu không timer và job async của các deployment cũ không chạy.
-
-<a id="a-ui-built-from-real-user-complaints"></a>
-
-## Giao diện xây từ những phàn nàn có thật
-
-Các tính năng của giao diện mới được chọn từ những gì người dùng Camunda 7 đã viết công khai
-trên diễn đàn Camunda và GitHub, ví dụ:
-
-| Mong muốn của người dùng | Nguồn | Trong Fasti |
-|---|---|---|
-| Tìm lượt chạy theo nhiều biến, có OR | diễn đàn [39269](https://forum.camunda.io/t/39269), [45695](https://forum.camunda.io/t/45695), [48976](https://forum.camunda.io/t/48976), [64208](https://forum.camunda.io/t/64208), [28855](https://forum.camunda.io/t/28855), [4678](https://forum.camunda.io/t/4678); [camunda-bpm-platform#3236](https://github.com/camunda/camunda-bpm-platform/issues/3236) | Bộ dựng điều kiện nhiều biến, AND/OR |
-| Thấy bình luận của mọi bước trong hồ sơ | diễn đàn [30260](https://forum.camunda.io/t/30260), [52109](https://forum.camunda.io/t/52109), [2173](https://forum.camunda.io/t/2173) | Dòng thời gian hồ sơ trong công việc; bình luận cho cả process instance |
-| Sắp việc theo biến, việc cũ nhất trước | diễn đàn [17599](https://forum.camunda.io/t/17599), [42078](https://forum.camunda.io/t/42078), [41193](https://forum.camunda.io/t/41193), [67328](https://forum.camunda.io/t/67328) | Sắp theo biến, hạn xử lý và mức khẩn |
-| Ủy quyền, người thay thế khi vắng | diễn đàn [2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199), [9331](https://forum.camunda.io/t/9331) | Ủy quyền từng việc đã có; người thay thế khi vắng nằm trong [lộ trình](#lộ-trình-kế-hoạch) |
-| Bắt đầu quy trình không có form vẫn nhập business key và biến | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | Có |
-| Tải XML BPMN đã triển khai | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Có |
-| Nhãn nhất quán, nhiều ngôn ngữ | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 ngôn ngữ |
-
-<a id="comparison"></a>
+<a id="comparison"></a><a id="how-it-compares"></a>
 
 ## So sánh
 
-So sánh ngắn gọn, theo tài liệu công khai của từng dự án (đọc tháng 11/2026); "chưa kiểm chứng"
-nghĩa là chúng tôi chưa tìm được nguồn đáng tin. Mỗi dự án có hướng đi riêng và đều là lựa
-chọn hợp lý cho những nhu cầu khác nhau; hãy đối chiếu với tài liệu của họ trước khi quyết định.
+Có nhiều dự án tốt đang tiếp nối Camunda 7. Fasti giữ nguyên các package `org.camunda.bpm.*` và
+schema 7.24, nên việc chuyển sang chỉ là đổi kết nối chứ không phải một dự án migration, và có
+thêm giao diện mới. Các dự án khác cũng là lựa chọn tốt. Bảng đầy đủ, có dẫn nguồn:
+<https://fasti.dev/compare>.
 
-| | Giấy phép | Chạy thẳng trên DB C7 có sẵn | Phải chuyển đổi | Bản vá bảo mật | Java / Spring Boot | Giao diện | SSO | Image Docker |
-|---|---|---|---|---|---|---|---|---|
-| **Fasti BPM** | Apache-2.0 | Có, schema 7.24 không đổi | Image: không. Ứng dụng nhúng: đổi tọa độ Maven, lên Spring Boot 4.1 và Java 17+; package `org.camunda.*` giữ nguyên | Có, theo [chính sách bên dưới](#cam-kết-hỗ-trợ-và-bản-vá-bảo-mật) | 17+ / 4.1 | Mới (React) + cổ điển (lỗi thời) | OIDC có sẵn | Có, từ 1.0.0 |
-| Camunda 7 CE 7.24 | Mã nguồn Apache-2.0; một số thành phần web đi kèm theo MIT ([13]) | (bản gốc) | — | Không còn bản CE sau 7.24 ([1]) | 17, 21, 25 ([2]) / 3.5 | Cockpit, Tasklist, Admin (AngularJS) | OAuth2 qua starter security | Image Run cũ |
-| Camunda 7 Enterprise | Thương mại | Có (cùng dòng sản phẩm) | Không | Tới 04/2030, gia hạn trả phí tới 04/2032 ([3]) | chưa kiểm chứng | Cockpit Enterprise | chưa kiểm chứng | chưa kiểm chứng |
-| Camunda 8 | Camunda License 1.0; production self-managed cần license từ 8.6 ([4]) | Không (engine khác) | Có (mô hình, instance, dữ liệu) | Có (nhà cung cấp) | engine khác, không so được | Operate, Tasklist | chưa kiểm chứng | chưa kiểm chứng |
-| Operaton | Apache-2.0 | Cấu trúc bảng như 7.24; bản 2.2 ghi phiên bản schema 7.25 bằng script nâng cấp ([5]) | Đổi package `org.operaton.*` (có OpenRewrite recipe); chạy script phiên bản schema (2.2) | Có, dòng 2.2.x ([6]) | 17+ / 4.1 ([5]) | Cổ điển + webapps-neo (preview) | chưa kiểm chứng | Có ([7]) |
-| CIB seven | Apache-2.0; bản EE cần khóa license | Có (đã gộp thay đổi 7.24) | Đổi package `org.cibseven.*`, tiền tố `cibseven.*` | Có, theo bản phát hành ([8]) | 17, 21 / 3.5 và 4.0 ([9]) | Webclient Vue 3 | OAuth2/JWT cho REST ([8]) | Có ([8]) |
-| OrqueIO | Apache-2.0 | Tương thích bảng C7 theo tài liệu của họ ([10]) | Maven group `io.orqueio`; việc đổi package chưa được nêu rõ | Có, theo tài liệu của họ ([10]) | 21 / 3.5, 4.0, 4.1 | Viết lại bằng Angular | OIDC đa nhà cung cấp | chưa kiểm chứng |
-| EximeeBPMS | Apache-2.0 (Monitor: MIT) | Dự án cho biết schema vẫn tương thích Camunda 7 (Fasti chưa kiểm chứng) ([14]) | Đổi package `org.eximeebpms.*`, đổi tên Model API | Có, hai minor gần nhất ([11]) | 21 / phiên bản Spring Boot chưa được nêu | Monitor riêng | chưa kiểm chứng | Có (repo `eximeebpms-docker`) |
-| Fluxnova | Apache-2.0 (FINOS) | chưa kiểm chứng | chưa kiểm chứng | chưa kiểm chứng | 21 (image Corretto) / chưa kiểm chứng | Control Center | chưa kiểm chứng | Có ([12]) |
+<a id="commitments-support-and-security-patches"></a><a id="security-and-support"></a>
 
-Điểm yếu của Fasti cũng cần nói rõ: dự án mới, nhóm nhỏ, chưa có hỗ trợ thương mại, DB2 chưa
-được kiểm chứng.
+## Bảo mật và hỗ trợ
 
-Nguồn: [1] [thông báo CE hết vòng đời](https://forum.camunda.io/t/important-update-camunda-7-community-edition-end-of-life-announced/50921);
-[2] [môi trường hỗ trợ 7.24](https://docs.camunda.org/manual/7.24/introduction/supported-environments/);
-[3] [gia hạn Enterprise](https://camunda.com/blog/2025/02/camunda-7-enterprise-end-of-life-extension/);
-[4] [giấy phép Camunda 8.6](https://camunda.com/blog/2024/10/camunda-licensing-what-you-need-to-know/);
-[5] [Operaton 2.2](https://docs.operaton.org/docs/documentation/reference/release-notes/2_2/);
-[6] [Operaton SECURITY.md](https://github.com/operaton/operaton/blob/main/SECURITY.md);
-[7] [operaton-docker](https://github.com/operaton/operaton-docker);
-[8] [CIB seven 2.2.0](https://docs.cibseven.org/manual/latest/release-notes/release-notes-2.2.0-ce/);
-[9] [CIB seven: môi trường hỗ trợ](https://docs.cibseven.org/manual/latest/introduction/supported-environments/);
-[10] [tài liệu OrqueIO](https://docs.orqueio.io/);
-[11] [EximeeBPMS SECURITY.md](https://github.com/EximeeBPMS/eximeebpms/blob/main/SECURITY.md);
-[12] [Fluxnova](https://github.com/finos/fluxnova-bpm-platform);
-[13] [Camunda 7 licenses](https://docs.camunda.org/manual/latest/introduction/licenses/);
-[14] [EximeeBPMS](https://github.com/EximeeBPMS/eximeebpms);
-tổng quan độc lập: [WZ-IT, 15/10/2026](https://wz-it.com/en/blog/camunda-7-end-of-life-operaton-cibseven-fluxnova-compared/).
+Bản minor mới nhất của dòng `1.x` được sửa lỗi và vá bảo mật, phát hành dưới dạng bản patch như
+`1.0.1`. Vui lòng báo cáo vấn đề bảo mật một cách riêng tư, không qua issue công khai: xem
+[SECURITY.vi.md](SECURITY.vi.md), nơi có cả [chính sách hỗ trợ](SECURITY.vi.md#support-policy).
+Danh sách bản vá, Java4Shell và đợt rà soát trước phát hành: <https://fasti.dev/security>. Cần hỗ
+trợ cài đặt, chuyển đổi hoặc vận hành production, hay thống nhất điều khoản hỗ trợ, hãy gửi mail
+đến <contact@fasti.dev>.
 
-<a id="timeline"></a>
+<a id="timeline"></a><a id="camunda-7-milestones"></a><a id="fasti-bpm"></a><a id="roadmap-plan"></a>
 
-## Dòng thời gian
+## Lộ trình
 
-<a id="camunda-7-milestones"></a>
-
-### Các mốc của Camunda 7
-
-| Ngày | Mốc | Nguồn |
-|---|---|---|
-| 06/03/2024 | Camunda thông báo Camunda 7 CE hết vòng đời vào tháng 10/2025, với 7.24 là bản CE cuối | [diễn đàn Camunda](https://forum.camunda.io/t/important-update-camunda-7-community-edition-end-of-life-announced/50921) |
-| 28/02/2025 | Camunda gia hạn hỗ trợ Camunda 7 Enterprise tới 09/04/2030; hỗ trợ mở rộng trả phí tới 04/2032 | [blog Camunda](https://camunda.com/blog/2025/02/camunda-7-enterprise-end-of-life-extension/) |
-| 07/10/2025 | Tag `7.24.0` được tạo và phát hành lên Maven Central: bản CE cuối cùng | [tag 7.24.0](https://github.com/camunda/camunda-bpm-platform/tree/7.24.0), [Maven Central](https://repo1.maven.org/maven2/org/camunda/bpm/camunda-engine/7.24.0/) |
-| 14/10/2025 | Ngày phát hành 7.24 theo lịch Camunda công bố; sau ngày này không còn bản CE nào, kể cả bản vá bảo mật. Kho mã CE nay đã được lưu trữ (archived) | [thông báo](https://forum.camunda.io/t/important-update-camunda-7-community-edition-end-of-life-announced/50921), [trang hỗ trợ](https://docs.camunda.org/enterprise/announcement) |
-| 04/2030 | Kết thúc hỗ trợ Camunda 7 Enterprise (7.24 LTS: 13/04/2030) | [trang hỗ trợ](https://docs.camunda.org/enterprise/announcement) |
-| 04/2032 | Kết thúc hỗ trợ mở rộng trả phí của Camunda 7 Enterprise | [trang hỗ trợ](https://docs.camunda.org/enterprise/announcement) |
-
-<a id="fasti-bpm"></a>
-
-### Fasti BPM
-
-Fasti tiếp nối trực tiếp từ tag `7.24.0`; mọi bản vá và thay đổi được tính từ đó (`git log
-7.24.0..`). Các giai đoạn dưới đây xếp theo công việc đã làm, không gắn ngày:
-
-1. **Nền móng**: Java 17, Spring Boot 4.1, nâng thư viện; tọa độ Maven `dev.fasti.platform`.
-2. **Bảo mật**: vá các lỗi đã công bố của dòng 7.x, allow-list expression, kiểm quyền
-   attachment/comment ở engine, gia cố webapp.
-3. **Giao diện web mới** ở `/fasti/`, thay dần Cockpit, Tasklist và Admin cổ điển.
-4. **Đăng nhập một lần** (OIDC) cho Run, Spring Boot, Tomcat và WildFly.
-5. **Chạy thẳng trên cơ sở dữ liệu có sẵn**: image nhận biến `DB_*` cũ, kiểm tra phiên bản
-   schema, thử thật trên năm hệ quản trị cơ sở dữ liệu.
-6. **Rà soát bảo mật trước khi công khai** (review mã, kiểm thử xâm nhập image, quét ZAP
-   baseline; đã sửa các lỗi tìm được) và **giảm thiểu Java4Shell**.
-7. **1.0.0**: bản phát hành đầu tiên (20/11/2026).
-
-<a id="roadmap-plan"></a>
-
-## Lộ trình (kế hoạch)
-
-> Đây là **kế hoạch**, không phải cam kết về ngày. Phạm vi và thứ tự có thể thay đổi.
-
-### Tháng 11 và tháng 12 năm 2026 (đang làm)
-
-Trước hết là mọi thứ người dùng đã yêu cầu.
-
-**1.x: Dễ vận hành hơn**
-
-- Artifact Maven trên Maven Central.
-- Helm chart và manifest Kubernetes mẫu.
-- Metrics Prometheus và tracing OpenTelemetry.
-- Log JSON có cấu trúc.
-- Nâng MyBatis, kéo theo nâng OGNL.
-- Kiểm chứng DB2 và người bản ngữ rà soát các bản dịch.
-
-**2.0: Những gì đội ngũ trong ngành được quản lý chặt cần**
-
-- Người thay thế khi vắng mặt, để công việc không phải chờ người đang nghỉ
-  ([diễn đàn 2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199)).
-- Kiểm soát bốn mắt cho phê duyệt.
-- Audit trail bất biến, có chữ ký hoặc hash, kèm báo cáo audit.
-- CMMN trong giao diện mới và ngừng các ứng dụng AngularJS.
-
-**Hướng mới**
-
-- Các dòng hỗ trợ dài hạn.
-- MCP server cho engine.
-- Bước AI trong quy trình.
-
-### Mục tiêu năm 2027
-
-- **Quý 1/2027: Chạy ở quy mô lớn**: Kubernetes operator để nâng cấp cuốn chiếu và mở rộng; đẩy
-  history sang Kafka và OpenSearch để database runtime luôn gọn; công bố benchmark hiệu năng, đo
-  lại ở mỗi bản phát hành.
-- **Quý 2/2027: Bộ công cụ cho người xây dựng**: SDK connector, kèm connector cho REST, Kafka, email
-  và object storage; bộ kiểm thử quy trình với test kịch bản và báo cáo độ phủ; trình dựng form với
-  các thành phần tái sử dụng.
-- **Quý 3/2027: Thấy quy trình chạy thế nào**: phân tích quy trình (heatmap, điểm nghẽn, báo cáo
-  thời gian); mục tiêu mức dịch vụ kèm cảnh báo; trợ lý soạn BPMN từ văn bản và giải thích sự cố.
-- **Quý 4/2027: Tin cậy ở quy mô doanh nghiệp**: quản trị nhiều tenant với hạn mức cho từng tenant;
-  kiểm toán bảo mật độc lập, công bố báo cáo; build tái lập được, có provenance được ký cho mọi bản
-  phát hành.
-
-<a id="commitments-support-and-security-patches"></a>
-
-## Cam kết: hỗ trợ và bản vá bảo mật
-
-> Chính sách này do nhóm dự án Fasti BPM duy trì và có thể được cập nhật; bản trong kho mã là
-> bản có hiệu lực.
-
-- **Dòng được hỗ trợ:** bản minor mới nhất của dòng `1.x` nhận bản sửa lỗi và bản vá bảo mật
-  (phát hành dạng patch, ví dụ `1.0.1`).
-- **Bản vá bảo mật:** lỗ hổng của Fasti và của thư viện đi kèm được ưu tiên trước các việc khác;
-  image được build lại khi image nền hoặc JRE có bản vá. Dự án theo dõi thông báo bảo mật công
-  khai về Camunda 7 và các fork của nó, và kiểm tra Fasti có bị ảnh hưởng không.
-- **Tương thích:** dòng `1.x` giữ schema cơ sở dữ liệu 7.24 và package `org.camunda.bpm.*`. Thay
-  đổi phá vỡ tương thích được ghi **BREAKING** trong [CHANGELOG](CHANGELOG.md).
-- **Mức hỗ trợ:** đây là dự án cộng đồng; hỗ trợ trong khả năng của nhóm, **không có SLA** và
-  chưa có hỗ trợ thương mại.
-- **Báo lỗ hổng:** xin **đừng** mở issue công khai; xem [SECURITY.vi.md](SECURITY.vi.md) (báo cáo riêng
-  qua GitHub).
-- **Danh sách lỗi đã vá:** mục *Fixed* và *Security* của [CHANGELOG](CHANGELOG.md) liệt kê các lỗi
-  đã sửa so với Camunda 7 CE 7.24.0; thông báo bảo mật nằm trong [SECURITY.vi.md](SECURITY.vi.md#thông-báo-bảo-mật).
+Đây là kế hoạch, không phải cam kết về ngày. Tiếp theo trong `1.x`: artifact Maven trên Maven
+Central, Helm chart, metrics cho Prometheus và tracing bằng OpenTelemetry, log có cấu trúc dạng
+JSON. Cho `2.0`: người thay thế khi vắng mặt, nguyên tắc bốn mắt khi phê duyệt, nhật ký kiểm toán
+không thể sửa đổi, và CMMN trong giao diện mới. Dòng thời gian, từ khi Camunda 7 CE kết thúc tới
+các mục tiêu năm 2027: <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>
 
 ## Tài liệu
 
+Trên [fasti.dev](https://fasti.dev): [Cài đặt bằng Docker](https://fasti.dev/install) ·
+[Tải bản Tomcat](https://fasti.dev/download) · [Hướng dẫn tích hợp API](https://fasti.dev/docs) ·
+[Bảo mật và hỗ trợ](https://fasti.dev/security) · [So sánh](https://fasti.dev/compare) ·
+[Blog](https://fasti.dev/blog)
+
+<a id="what-this-is"></a><a id="what-is-different-from-camunda-7240-ce"></a><a id="versioning"></a><a id="maven-coordinates"></a><a id="third-party-libraries-that-still-pull-in-the-original-engine"></a><a id="startup-check"></a><a id="web-application-path-fasti"></a><a id="single-sign-on-openid-connect"></a><a id="a-ui-built-from-real-user-complaints"></a>
+
 | Tài liệu | Nội dung |
 |---|---|
 | [docs/install-docker.vi.md](docs/install-docker.vi.md) | Cài đặt bằng Docker từng bước |
-| [docs/api/README.vi.md](docs/api/README.vi.md) | Tích hợp qua REST API, client external task Java và JavaScript |
 | [docs/migrate-from-camunda-7.vi.md](docs/migrate-from-camunda-7.vi.md) | Chuyển từ Camunda 7, quay lại, giới hạn |
+| [docs/embedding.vi.md](docs/embedding.vi.md) | Tương thích, khác gì so với 7.24.0, phiên bản, tọa độ Maven, kiểm tra khi khởi động |
+| [docs/web-ui.vi.md](docs/web-ui.vi.md) | Giao diện web: tính năng người dùng yêu cầu, đường dẫn `/fasti`, các ứng dụng cổ điển |
+| [docs/single-sign-on.vi.md](docs/single-sign-on.vi.md) | Đăng nhập một lần (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
+| [docs/api/README.vi.md](docs/api/README.vi.md) | Tích hợp qua REST API, client external task Java và JavaScript |
 | [distro/docker/README.vi.md](distro/docker/README.vi.md) | Image: biến môi trường, driver, vận hành, tinh chỉnh |
 | [webapps/frontend-next/README.vi.md](webapps/frontend-next/README.vi.md) | Giao diện web mới |
 | [docs/security/CVE-2026-114938.vi.md](docs/security/CVE-2026-114938.vi.md) | Java4Shell và Fasti |
-| [CHANGELOG.md](CHANGELOG.md), [SECURITY.vi.md](SECURITY.vi.md), [CONTRIBUTING.vi.md](CONTRIBUTING.vi.md) | Thay đổi, bảo mật, đóng góp |
-
-<a id="what-this-is"></a>
-
-## Đây là gì
-
-Kho mã này chứa process engine BPMN 2.0 / DMN, REST API, các webapp (Cockpit, Tasklist,
-Admin) và các bản phân phối (Run, Tomcat, WildFly) — xuất phát từ tag `7.24.0` của Camunda 7
-CE và được vá lỗi, nâng thư viện tiếp từ đó.
-
-Mục tiêu là **tương thích ngược** với ứng dụng đang chạy trên Camunda 7:
-
-- giữ nguyên package `org.camunda.bpm.*`, namespace BPMN `http://camunda.org/schema/1.0/bpmn`
-  và tiền tố cấu hình `camunda.bpm.*`;
-- giữ nguyên schema cơ sở dữ liệu của 7.24;
-- giữ đủ các kiểu triển khai: Spring Boot, Run, Tomcat, WildFly; cả `javax` lẫn `jakarta`.
-
-<a id="what-is-different-from-camunda-7240-ce"></a>
-
-## Khác gì so với Camunda 7.24.0 CE
-
-- **Bảo mật:** vá các lỗi đã được công bố của dòng 7.x (expression trong query,
-  setup lần đầu, quyền trên attachment/comment, quyền trong Cockpit, open redirect) và thêm
-  các lớp bảo vệ riêng: allow-list cho expression trong query và filter, kiểm quyền
-  attachment/comment ở tầng engine, gia cố bộ lọc bảo mật, header và cookie của webapp.
-- **Ổn định:** hết rò rỉ bộ nhớ khi chạy script và biểu thức DMN bằng JavaScript (GraalJS),
-  cùng nhiều lỗi engine khác.
-- **Nền tảng:** Java 17 trở lên, Spring Boot 4.1, GraalJS 25, Jackson 2.21 và nhiều thư viện
-  khác được nâng lên bản đã vá lỗi bảo mật.
-
-Một số bản vá làm thay đổi hành vi mặc định theo hướng an toàn hơn; hãy đọc mục "Cái gì khác"
-của [hướng dẫn chuyển đổi](docs/migrate-from-camunda-7.vi.md) trước khi nâng cấp.
-
-<a id="versioning"></a>
-
-## Phiên bản
-
-Fasti BPM Platform đánh số theo [Semantic Versioning](https://semver.org/lang/vi/), bắt đầu
-từ `1.0.0`. Dòng `1.x` tương thích với ứng dụng viết cho Camunda 7.24.
-
-<a id="maven-coordinates"></a>
-
-## Tọa độ Maven
-
-Các artifact của Fasti BPM Platform có tọa độ Maven riêng. **Package Java vẫn là
-`org.camunda.bpm.*`**, nên mã nguồn của ứng dụng không phải sửa `import`; tiền tố cấu hình
-`camunda.bpm.*`, namespace BPMN/DMN, schema cơ sở dữ liệu và tên module trên WildFly cũng giữ
-nguyên. Về mặt Maven, chỉ phần khai báo dependency thay đổi (đường dẫn web app đổi riêng, xem
-[Đường dẫn web app](#đường-dẫn-web-app-fasti)):
-
-- **groupId:** `org.camunda.bpm` → `dev.fasti.platform`, `org.camunda.bpm.<x>` →
-  `dev.fasti.platform.<x>`; các nhóm `org.camunda.commons`, `org.camunda.connect`,
-  `org.camunda.spin` và `org.camunda.template-engines` → `dev.fasti.platform.<tên nhóm>`.
-- **artifactId:** tiền tố `camunda-` đổi thành `fasti-`, phần còn lại giữ nguyên.
-- **version:** phiên bản của Fasti BPM Platform (xem [Phiên bản](#phiên-bản)), không còn là
-  `7.24.0`.
-
-Chưa có bản phát hành nào của các artifact này trên Maven Central. Cho tới khi có, hãy build
-từ mã nguồn và đưa artifact vào kho Maven mà dự án của bạn sử dụng.
-
-Nên quản lý phiên bản bằng BOM:
-
-```xml
-<dependencyManagement>
-  <dependencies>
-    <dependency>
-      <groupId>dev.fasti.platform</groupId>
-      <artifactId>fasti-bom</artifactId>
-      <version>${fasti.version}</version>
-      <type>pom</type>
-      <scope>import</scope>
-    </dependency>
-  </dependencies>
-</dependencyManagement>
-```
-
-Các artifact hay dùng:
-
-| Camunda 7 | Fasti BPM Platform |
-|---|---|
-| `org.camunda.bpm:camunda-bom` | `dev.fasti.platform:fasti-bom` |
-| `org.camunda.bpm:camunda-engine` | `dev.fasti.platform:fasti-engine` |
-| `org.camunda.bpm:camunda-engine-spring` | `dev.fasti.platform:fasti-engine-spring` |
-| `org.camunda.bpm:camunda-engine-spring-6` | `dev.fasti.platform:fasti-engine-spring-6` |
-| `org.camunda.bpm:camunda-engine-cdi-jakarta` | `dev.fasti.platform:fasti-engine-cdi-jakarta` |
-| `org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter` | `dev.fasti.platform.springboot:fasti-bpm-spring-boot-starter` |
-| `org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter-rest` | `dev.fasti.platform.springboot:fasti-bpm-spring-boot-starter-rest` |
-| `org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter-webapp` | `dev.fasti.platform.springboot:fasti-bpm-spring-boot-starter-webapp` |
-| `org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter-security` | `dev.fasti.platform.springboot:fasti-bpm-spring-boot-starter-security` |
-| `org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter-external-task-client` | `dev.fasti.platform.springboot:fasti-bpm-spring-boot-starter-external-task-client` |
-| `org.camunda.bpm.springboot:camunda-bpm-spring-boot-starter-test` | `dev.fasti.platform.springboot:fasti-bpm-spring-boot-starter-test` |
-| `org.camunda.bpm:camunda-engine-rest-core` | `dev.fasti.platform:fasti-engine-rest-core` |
-| `org.camunda.bpm:camunda-engine-rest-core-jakarta` | `dev.fasti.platform:fasti-engine-rest-core-jakarta` |
-| `org.camunda.bpm.webapp:camunda-webapp` | `dev.fasti.platform.webapp:fasti-webapp` |
-| `org.camunda.bpm.webapp:camunda-webapp-jakarta` | `dev.fasti.platform.webapp:fasti-webapp-jakarta` |
-| `org.camunda.bpm.webapp:camunda-webapp-webjar` | `dev.fasti.platform.webapp:fasti-webapp-webjar` |
-| `org.camunda.bpm:camunda-external-task-client` | `dev.fasti.platform:fasti-external-task-client` |
-| `org.camunda.bpm:camunda-engine-plugin-spin` | `dev.fasti.platform:fasti-engine-plugin-spin` |
-| `org.camunda.bpm:camunda-engine-plugin-connect` | `dev.fasti.platform:fasti-engine-plugin-connect` |
-| `org.camunda.spin:camunda-spin-dataformat-all` | `dev.fasti.platform.spin:fasti-spin-dataformat-all` |
-| `org.camunda.connect:camunda-connect-connectors-all` | `dev.fasti.platform.connect:fasti-connect-connectors-all` |
-| `org.camunda.bpm.dmn:camunda-engine-dmn` | `dev.fasti.platform.dmn:fasti-engine-dmn` |
-| `org.camunda.bpm.model:camunda-bpmn-model` | `dev.fasti.platform.model:fasti-bpmn-model` |
-| `org.camunda.bpm:camunda-bpm-assert` | `dev.fasti.platform:fasti-bpm-assert` |
-| `org.camunda.bpm:camunda-bpm-junit5` | `dev.fasti.platform:fasti-bpm-junit5` |
-
-Thư viện FEEL `org.camunda.feel:feel-engine` là thư viện bên ngoài, không thuộc kho mã này
-và giữ nguyên tọa độ.
-
-<a id="third-party-libraries-that-still-pull-in-the-original-engine"></a>
-
-### Thư viện bên thứ ba vẫn kéo theo engine gốc
-
-Vì package không đổi, engine gốc (`org.camunda.bpm:camunda-engine`) và `fasti-engine` chứa
-các class trùng tên. Maven coi đó là hai thư viện không liên quan và không tự loại bớt bên
-nào. Nếu một thư viện bên thứ ba (ví dụ một community extension) phụ thuộc vào các artifact
-gốc, hãy loại chúng ra và khai báo artifact tương ứng của Fasti:
-
-```xml
-<dependency>
-  <groupId>com.example</groupId>
-  <artifactId>some-camunda-extension</artifactId>
-  <version>1.2.3</version>
-  <exclusions>
-    <exclusion>
-      <groupId>org.camunda.bpm</groupId>
-      <artifactId>*</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>org.camunda.bpm.model</groupId>
-      <artifactId>*</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>org.camunda.bpm.dmn</groupId>
-      <artifactId>*</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>org.camunda.commons</groupId>
-      <artifactId>*</artifactId>
-    </exclusion>
-  </exclusions>
-</dependency>
-```
-
-Lệnh `mvn dependency:tree -Dincludes="org.camunda*"` liệt kê những artifact gốc còn sót lại
-(`org.camunda.feel:feel-engine` là hợp lệ, đừng loại nó).
-
-<a id="startup-check"></a>
-
-### Kiểm tra khi khởi động
-
-Khi được khởi tạo, engine kiểm tra class path và **từ chối chạy** nếu tìm thấy các class của
-process engine ở nhiều hơn một thư viện; lỗi `ENGINE-12021` liệt kê vị trí của từng thư viện.
-Spring Boot starter thực hiện cùng phép kiểm tra đó ngay khi ứng dụng khởi động. Thư viện chỉ
-nhìn thấy được qua class loader cha (ví dụ engine dùng chung của máy chủ bên cạnh engine
-nhúng trong một ứng dụng web) không bị tính. Nếu cấu hình của bạn là có chủ ý, có thể tắt
-kiểm tra bằng system property:
-
-```
--Dfasti.engine.duplicate-library-check.enabled=false
-```
-
-Giới hạn: nếu thư viện engine gốc đứng trước `fasti-engine` trên class path thì engine được
-dựng bằng các class của thư viện gốc, vốn không có bước kiểm tra này. Khi đó chỉ ứng dụng
-dùng Spring Boot starter của Fasti mới được chặn lại; với các cách tích hợp khác hãy tự rà
-soát dependency như mô tả ở trên.
-
-<a id="web-application-path-fasti"></a>
-
-## Đường dẫn web app: `/fasti`
-
-Cockpit, Tasklist, Admin và giao diện web mới nằm dưới `/fasti` (trước đây `/camunda`) trên
-mọi bản phân phối: `http://localhost:8080/fasti/` mở giao diện mới
-(`/fasti/app/next/default/`), các ứng dụng cổ điển ở `/fasti/app/cockpit/...`,
-`/fasti/app/tasklist/...`, `/fasti/app/admin/...`. REST API vẫn ở `/engine-rest`.
-
-**Ứng dụng cổ điển đã lỗi thời (deprecated).** Cockpit, Tasklist, Admin và Welcome cổ điển dựng
-trên AngularJS 1.8.2 và Bootstrap 3, cả hai đã hết vòng đời. **Image container không phục vụ
-chúng theo mặc định** (thay đổi phá vỡ tương thích): trang và bookmark cũ chuyển tới mục tương
-ứng của giao diện mới, file của chúng trả `404`; `FASTI_CLASSIC_WEBAPPS=true` bật lại (có cảnh
-báo), xem [distro/docker/README.vi.md](distro/docker/README.vi.md). Gói Tomcat và WildFly cũng không
-phục vụ chúng theo mặc định (bật lại: `-Dfasti.webapp.classic.enabled=true` hoặc
-`FASTI_CLASSIC_WEBAPPS=true`). Run zip và Spring Boot starter vẫn phục vụ chúng như trước để không
-làm hỏng cài đặt đang chạy; tắt bằng `fasti.webapp.classic.enabled: false`. Các ứng dụng cổ điển
-sẽ bị gỡ trong một bản phát hành sau.
-
-Đường dẫn cũ vẫn dùng được: mọi yêu cầu tới `/camunda/...` được chuyển hướng tới cùng
-đường dẫn dưới `/fasti/...`, giữ nguyên phần còn lại của đường dẫn và query. GET/HEAD nhận
-`301`; các phương thức khác (POST, PUT, DELETE, ví dụ client cũ gọi `/camunda/api/...`) nhận
-`308`, nên client gửi lại đúng phương thức và nội dung. Phản hồi chuyển hướng có
-`Cache-Control: no-store`, để có thể quay lại `/camunda` bất cứ lúc nào.
-
-Quay lại `/camunda`:
-
-- **Spring Boot, Run:** `camunda.bpm.webapp.application-path: /camunda` (khi đó không còn
-  chuyển hướng). Chỉ tắt chuyển hướng: `fasti.webapp.legacy-path-redirect: false`.
-- **Tomcat:** xóa `webapps/camunda` (ứng dụng chuyển hướng) rồi đổi tên `webapps/fasti`
-  thành `webapps/camunda`.
-- **WildFly:** xóa `standalone/deployments/camunda.war` (và `camunda.war.dodeploy`), rồi
-  đặt `<context-root>/camunda</context-root>` trong `WEB-INF/jboss-web.xml` của WAR web app.
-
-**Reverse proxy:** nếu proxy chỉ chuyển tiếp `/camunda/` (hoặc viết lại đường dẫn, đặt
-cookie path, CSP, health check theo `/camunda`), hãy thêm `/fasti/` — hoặc chuyển hẳn sang
-`/fasti/`. Cookie `XSRF-TOKEN` (và `JSESSIONID` trên Tomcat, WildFly) giờ có path `/fasti`,
-nên người dùng phải đăng nhập lại một lần. Bookmark và liên kết cũ vẫn chạy nhờ chuyển hướng.
-
-<a id="single-sign-on-openid-connect"></a>
-
-## Đăng nhập một lần (SSO, OpenID Connect)
-
-Hỗ trợ trên **Run** (`./start.sh --oauth2`, module `internal/oauth2`) và ứng dụng **Spring
-Boot** dùng `fasti-bpm-spring-boot-starter-security`. Bật bằng cách khai báo một client
-registration của Spring Security (`spring.security.oauth2.client.*`). Trên **Tomcat** và
-**WildFly** xem đoạn cuối mục này.
-
-- **Đăng nhập:** trang đăng nhập của giao diện mới hiện nút "Đăng nhập bằng &lt;nhà cung
-  cấp&gt;" thay cho ô mật khẩu (nhãn: `fasti.security.oidc.login-label`, mặc định là
-  `client-name`; có nhiều registration thì chọn bằng `fasti.security.oidc.registration-id`).
-  Luồng authorization code có `state`, `nonce` và PKCE (S256, cả với confidential client);
-  session id được thay mới khi đăng nhập. Người dùng quay lại đúng trang của giao diện mới
-  (chỉ nhận đường dẫn dưới `/fasti/app/next/`, nên không có open redirect).
-- **Đăng xuất:** `POST /logout` (chỉ chấp nhận yêu cầu cùng origin) xóa session; khi
-  `camunda.bpm.oauth2.sso-logout.enabled=true` người dùng được chuyển tới endpoint đăng xuất
-  của nhà cung cấp (RP-initiated logout, `post-logout-redirect-uri`). Back-channel logout
-  của Spring Security vẫn bật. `GET /logout` không còn đăng xuất.
-- **Hết phiên:** khi access token không làm mới được hoặc session hết hạn, `/fasti/api/**`
-  trả `401` (không chuyển hướng) và giao diện mới quay về trang đăng nhập.
-- **CSRF:** `/fasti/api` và `/fasti/app` vẫn được bảo vệ bởi bộ lọc CSRF của web app
-  (`X-XSRF-TOKEN`); CSRF của Spring Security tắt như bản gốc.
-- **Nhóm, quyền quản trị, tenant:** claim nhóm đặt bằng
-  `camunda.bpm.oauth2.identity-provider.group-name-attribute` (giữ tên thuộc tính gốc; hỗ
-  trợ claim lồng nhau như `realm_access.roles`). `fasti.security.oidc.groups.admin` liệt kê
-  các giá trị claim được vào nhóm `camunda-admin`; `groups.mapping` đổi giá trị claim sang id
-  nhóm của engine; `groups.include-unmapped=false` bỏ các giá trị chưa ánh xạ.
-  **Khác bản gốc:** giá trị `camunda-admin` trong claim không còn tự cấp quyền quản trị, và
-  các authority như `SCOPE_openid`, `OIDC_USER` không còn thành nhóm.
-  `fasti.security.oidc.tenants.claim` lấy tenant từ claim. Tên, email:
-  `fasti.security.oidc.user.{first-name,last-name,email}-claim`.
-- **Identity provider:** mặc định engine đọc người dùng, nhóm, tenant từ token của phiên
-  hiện tại (chỉ đọc). Đặt `camunda.bpm.oauth2.identity-provider.enabled=false` để dùng cơ sở
-  dữ liệu (khi đó nhóm lấy từ bảng membership). Chưa có tự động tạo người dùng
-  (auto-provisioning).
-  Khi thông tin người dùng được lấy từ token (mặc định), trang thiết lập ban đầu (tạo quản trị
-  viên đầu tiên) tắt hẳn, vì quản trị viên đến từ claim (`groups.admin`); trước đây người dùng không thuộc
-  nhóm quản trị bị đưa tới trang thiết lập.
-- **REST API bằng bearer token:** `fasti.security.oidc.rest.bearer-enabled=true` cho phép
-  `Authorization: Bearer <JWT>` trên `/engine-rest`, song song với basic auth. Bắt buộc
-  `rest.issuer-uri` và `rest.audiences`; chữ ký được kiểm tra bằng JWKS của issuer, chỉ nhận
-  thuật toán bất đối xứng (`rest.jws-algorithms`, mặc định `RS256`); kiểm tra `iss`, `aud`,
-  `exp`, `nbf`. Trên Run cần thêm `camunda.bpm.run.auth.enabled=true`. Cookie phiên của
-  trình duyệt không bao giờ xác thực được `/engine-rest`.
-
-Ví dụ Keycloak (`configuration/default.yml` của Run):
-
-```yaml
-spring.security.oauth2.client:
-  registration.keycloak:
-    client-id: fasti
-    client-secret: ${KEYCLOAK_CLIENT_SECRET}
-    client-name: Keycloak
-    scope: openid, profile, email
-  provider.keycloak:
-    issuer-uri: https://sso.example.com/realms/fasti
-    user-name-attribute: preferred_username
-camunda.bpm:
-  oauth2:
-    # mapper "Group Membership" của client, tắt "Full group path"
-    identity-provider.group-name-attribute: groups
-    sso-logout:
-      enabled: true
-      post-logout-redirect-uri: "{baseUrl}/fasti/app/next/default/"
-  run.auth.enabled: true
-fasti.security.oidc:
-  groups.admin: [fasti-admins]
-  rest:
-    bearer-enabled: true
-    issuer-uri: https://sso.example.com/realms/fasti
-    audiences: [fasti-api]          # mapper "Audience" trong Keycloak
-    user-id-claim: preferred_username
-```
-
-Ví dụ Microsoft Entra ID:
-
-```yaml
-spring.security.oauth2.client:
-  registration.entra:
-    client-id: <application-id>
-    client-secret: ${ENTRA_CLIENT_SECRET}
-    client-name: Microsoft
-    scope: openid, profile, email
-  provider.entra:
-    issuer-uri: https://login.microsoftonline.com/<tenant-id>/v2.0
-    user-name-attribute: preferred_username
-camunda.bpm.oauth2:
-  # manifest của app registration: "groupMembershipClaims": "SecurityGroup"
-  identity-provider.group-name-attribute: groups
-  sso-logout.enabled: true
-fasti.security.oidc:
-  groups:
-    admin: ["<object-id nhóm quản trị>"]
-    mapping:
-      "<object-id nhóm kế toán>": accounting
-    include-unmapped: false          # Entra gửi object id, không phải tên nhóm
-  rest:
-    bearer-enabled: true
-    issuer-uri: https://login.microsoftonline.com/<tenant-id>/v2.0
-    audiences: ["api://<application-id>"]   # access token v2: accessTokenAcceptedVersion = 2
-    user-id-claim: preferred_username
-```
-
-**Tomcat, WildFly (WAR):** cùng tính năng, cấu hình bằng tệp `fasti-oidc.properties` (Tomcat:
-`conf/`, WildFly: `standalone/configuration/`; mẫu có chú thích là
-`fasti-oidc.properties.example` ở cùng chỗ). Không có tệp thì không có gì thay đổi. Khóa giống
-`fasti.security.oidc.*` của Run; thêm `issuer-uri`, `client-id`, `client-secret`,
-`user-name-claim`, `groups-claim`. Nhà cung cấp phải cho phép redirect URI
-`<gốc>/fasti/sso/callback`; URL back-channel logout là `<gốc>/fasti/sso/backchannel-logout`.
-Bearer token trên `/engine-rest` bật bằng `fasti.security.oidc.rest.bearer-enabled=true` (basic
-auth vẫn dùng được trừ khi `rest.basic-enabled=false`; danh sách engine `/engine` cũng cần xác
-thực). Người dùng không cần có trong cơ sở dữ liệu. Để engine trả lời truy vấn về nhóm/tenant
-của người đang đăng nhập theo claim, bật `OidcIdentityProviderPlugin` (có sẵn dạng chú thích
-trong `bpm-platform.xml` / `standalone.xml`). Giới hạn: danh sách phiên cho back-channel logout
-nằm trong bộ nhớ của từng server (không chia sẻ giữa các node của cụm); ứng dụng cổ điển chỉ
-được chuyển tới nhà cung cấp, đăng xuất đầy đủ dùng giao diện mới.
+| [CHANGELOG.md](CHANGELOG.md), [SECURITY.vi.md](SECURITY.vi.md) | Thay đổi, bảo mật, chính sách hỗ trợ |
 
 <a id="build"></a>
 
-## Build
+## Build từ mã nguồn
 
-Yêu cầu: JDK 17 trở lên (khuyến nghị 21).
+Yêu cầu: JDK 17 trở lên (khuyến nghị 21) và mạng tới Maven Central, nodejs.org và npm registry
+(build tải Node/npm cho web UI).
 
 ```bash
 ./mvnw clean verify
 ```
 
 Build đầy đủ chạy toàn bộ test Java và test đơn vị của web UI (có thể mất gần một giờ; test
-đầu-cuối Playwright chạy riêng, xem [webapps/frontend-next](webapps/frontend-next/README.vi.md)) và cần mạng tới Maven Central,
-nodejs.org và npm registry. Xem thêm [TESTING.md](TESTING.md).
+đầu-cuối Playwright chạy riêng, xem [webapps/frontend-next](webapps/frontend-next/README.vi.md)).
+Xem thêm [TESTING.md](TESTING.md). Để build image container (lần đầu mất khoảng 10–20 phút):
+
+```bash
+./mvnw -pl distro/docker -am package -DskipTests
+docker build -t fasti-bpm:local distro/docker/target/docker
+```
+
+<a id="contributing"></a>
+
+## Đóng góp
+
+Câu hỏi, báo lỗi và pull request đều được chào đón trên GitHub; xem
+[CONTRIBUTING.vi.md](CONTRIBUTING.vi.md) và [Quy tắc ứng xử](CODE_OF_CONDUCT.vi.md). Rất mong
+người bản ngữ giúp rà soát các bản dịch.
 
 <a id="acknowledgements"></a>
 

@@ -48,12 +48,12 @@ Camunda 7.23 이하의 데이터베이스는 먼저 SQL 스크립트로 7.24로 
 Spring Boot 스타터 / Tomcat / WildFly: `org.camunda.bpm:camunda-*` 아티팩트를
 해당하는 `dev.fasti.platform:fasti-*` 아티팩트로 교체하고 `camunda.bpm.*`, `bpm-platform.xml` 및
 `org.camunda.bpm.*` 패키지는 유지합니다. 클래스패스에 두 엔진의 jar를 함께 두지 마십시오. 이 경우 Fasti는 시작을 거부합니다(이 검사의 한계는
-[README](../README.ko.md#startup-check)의 "시작 시 검사" 참조).
+[embedding.ko.md](embedding.ko.md#startup-check)의 "시작 시 검사" 참조).
 
 > **Spring Boot 스타터:** Fasti는 **Spring Boot 4.1**에서 실행되며 **Java 17 이상**이 필요합니다.
 > Camunda 7.24 스타터(Spring Boot 3.5)를 사용하는 애플리케이션은 아티팩트를 교체할 때
 > Spring Boot 4.1 및 Java 17+로도 함께 이전해야 합니다.
-> [README](../README.ko.md#what-is-different-from-camunda-7240-ce) 및
+> [embedding.ko.md](embedding.ko.md#what-is-different-from-camunda-7240-ce) 및
 > [변경 이력](../CHANGELOG.md#changed)을 참조하십시오.
 
 <a id="tomcat-and-wildfly-distributions"></a>

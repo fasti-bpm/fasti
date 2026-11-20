@@ -26,6 +26,27 @@ we coordinate disclosure with the maintainers of those projects where possible.
 This project is not affiliated with Camunda Services GmbH. Do not report issues of this
 fork to Camunda.
 
+<a id="support-policy"></a>
+
+## Support policy
+
+> This policy is maintained by the Fasti BPM project team and may be updated; the version in this
+> repository is the one in force. It is also published on <https://fasti.dev/security#policy>.
+
+- **Supported line:** the latest minor release of the `1.x` line receives bug fixes and security
+  patches (as patch releases, for example `1.0.1`).
+- **Security patches:** vulnerabilities in Fasti and in the libraries it ships take priority over
+  other work; the image is rebuilt when the base image or the JRE gets a fix. The project follows
+  public security advisories about Camunda 7 and its forks and checks whether Fasti is affected.
+- **Compatibility:** the `1.x` line keeps the 7.24 database schema and the `org.camunda.bpm.*`
+  packages. Breaking changes are marked **BREAKING** in the [CHANGELOG](CHANGELOG.md).
+- **Support:** questions and bugs are welcome on GitHub; support there is best effort, without an
+  SLA. For help with installation, migration or production, and for support terms, write to
+  <contact@fasti.dev>.
+- **Fixed defects:** the *Fixed* and *Security* sections of the [CHANGELOG](CHANGELOG.md) list
+  what was fixed compared with Camunda 7 CE 7.24.0, with what was wrong and what changed,
+  including problems in Fasti's own code; advisories are listed below.
+
 ## Advisories
 
 - [CVE-2026-114938 ("Java4Shell")](docs/security/CVE-2026-114938.md): a flaw in the Java runtime; what Fasti changed and what you should do.

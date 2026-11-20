@@ -48,12 +48,12 @@ WildFly) Fasti สามารถทำงานบน **ฐานข้อม�
 Spring Boot starter / Tomcat / WildFly: แทนที่อาร์ติแฟกต์ `org.camunda.bpm:camunda-*` ด้วย
 `dev.fasti.platform:fasti-*` ที่ตรงกัน และคง `camunda.bpm.*`, `bpm-platform.xml` และ
 แพ็กเกจ `org.camunda.bpm.*` ไว้ อย่าเก็บไฟล์ jar ของเอนจินทั้งสองไว้บน classpath เพราะ Fasti จะปฏิเสธการเริ่มทำงาน (สำหรับข้อจำกัดของการตรวจสอบนี้ ดู “การตรวจสอบเมื่อเริ่มทำงาน” ใน
-[README](../README.th.md#startup-check))
+[embedding.th.md](embedding.th.md#startup-check))
 
 > **Spring Boot starter:** Fasti ทำงานบน **Spring Boot 4.1** และต้องใช้ **Java 17 หรือใหม่กว่า**
 > แอปพลิเคชันที่ใช้ Camunda 7.24 starter (Spring Boot 3.5) ต้องย้ายไปใช้ Spring Boot 4.1 และ
 > Java 17+ พร้อมกับการเปลี่ยนอาร์ติแฟกต์ ดู
-> [README](../README.th.md#what-is-different-from-camunda-7240-ce) และ
+> [embedding.th.md](embedding.th.md#what-is-different-from-camunda-7240-ce) และ
 > [บันทึกการเปลี่ยนแปลง](../CHANGELOG.md#changed)
 
 <a id="tomcat-and-wildfly-distributions"></a>

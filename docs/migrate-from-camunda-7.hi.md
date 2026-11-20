@@ -48,12 +48,12 @@ Camunda 7.23 और उससे पुराने संस्करणों 
 Spring Boot स्टार्टर / Tomcat / WildFly: `org.camunda.bpm:camunda-*` आर्टिफ़ैक्ट को
 उनके संबंधित `dev.fasti.platform:fasti-*` आर्टिफ़ैक्ट से बदलें और `camunda.bpm.*`, `bpm-platform.xml` तथा
 `org.camunda.bpm.*` पैकेज बनाए रखें। क्लासपाथ पर दोनों इंजन jar न रखें; ऐसी स्थिति में Fasti शुरू होने से इनकार करता है (इस जाँच की सीमाओं के लिए
-[README](../README.hi.md#startup-check) में "स्टार्टअप जाँच" देखें)।
+[embedding.hi.md](embedding.hi.md#startup-check) में "स्टार्टअप जाँच" देखें)।
 
 > **Spring Boot स्टार्टर:** Fasti **Spring Boot 4.1** पर चलता है और इसके लिए **Java 17 या बाद का संस्करण** आवश्यक है।
 > Camunda 7.24 स्टार्टर (Spring Boot 3.5) पर चल रहे एप्लिकेशन को आर्टिफ़ैक्ट बदलते समय ही Spring Boot 4.1 और
 > Java 17+ पर भी जाना होगा। देखें
-> [README](../README.hi.md#what-is-different-from-camunda-7240-ce) और
+> [embedding.hi.md](embedding.hi.md#what-is-different-from-camunda-7240-ce) और
 > [परिवर्तन विवरण](../CHANGELOG.md#changed)।
 
 <a id="tomcat-and-wildfly-distributions"></a>

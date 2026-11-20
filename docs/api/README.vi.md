@@ -68,8 +68,8 @@ curl -s -H "Authorization: Bearer $ACCESS_TOKEN" "$BASE/task"
 
 Chữ ký được kiểm tra bằng JWKS của issuer, chỉ nhận thuật toán bất đối xứng (mặc định `RS256`);
 `iss`, `aud`, `exp`, `nbf` đều được kiểm tra. Cookie phiên của trình duyệt không bao giờ xác thực
-được `/engine-rest`. Cấu hình đầy đủ (Keycloak, Microsoft Entra ID, Tomcat, WildFly): mục
-[Đăng nhập một lần](../../README.vi.md#đăng-nhập-một-lần-sso-openid-connect) của README. Phần bearer
+được `/engine-rest`. Cấu hình đầy đủ (Keycloak, Microsoft Entra ID, Tomcat, WildFly): hướng dẫn
+[Đăng nhập một lần](../single-sign-on.vi.md). Phần bearer
 token không nằm trong lượt chạy thử của hướng dẫn này (cần một nhà cung cấp OIDC).
 
 ## Quy trình mẫu

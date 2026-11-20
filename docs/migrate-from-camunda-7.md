@@ -45,13 +45,13 @@ start on an older schema and names the scripts to run.
 
 Spring Boot starter / Tomcat / WildFly: replace the `org.camunda.bpm:camunda-*` artifacts with
 the matching `dev.fasti.platform:fasti-*` ones and keep `camunda.bpm.*`, `bpm-platform.xml` and
-the `org.camunda.bpm.*` packages. Do not keep both engine jars on the classpath; Fasti then refuses to start (for the limits of this check see "Startup check" in the
-[README](../README.md#startup-check)).
+the `org.camunda.bpm.*` packages. Do not keep both engine jars on the classpath; Fasti then refuses to start (for the limits of this check see "Startup check" in
+[embedding.md](embedding.md#startup-check)).
 
 > **Spring Boot starter:** Fasti runs on **Spring Boot 4.1** and needs **Java 17 or later**.
 > Applications on the Camunda 7.24 starter (Spring Boot 3.5) must move to Spring Boot 4.1 and
-> Java 17+ at the same time as they switch artifacts. See the
-> [README](../README.md#what-is-different-from-camunda-7240-ce) and the
+> Java 17+ at the same time as they switch artifacts. See
+> [embedding.md](embedding.md#what-is-different-from-camunda-7240-ce) and the
 > [CHANGELOG](../CHANGELOG.md#changed).
 
 <a id="tomcat-and-wildfly-distributions"></a>

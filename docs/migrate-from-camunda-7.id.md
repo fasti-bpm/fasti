@@ -48,12 +48,12 @@ memulai pada skema lama dan menyebutkan skrip yang perlu dijalankan.
 Spring Boot starter / Tomcat / WildFly: ganti artefak `org.camunda.bpm:camunda-*` dengan
 artefak `dev.fasti.platform:fasti-*` yang sesuai dan pertahankan `camunda.bpm.*`, `bpm-platform.xml` serta
 paket `org.camunda.bpm.*`. Jangan menyimpan kedua JAR engine di classpath; jika demikian, Fasti menolak memulai (untuk batasan pemeriksaan ini, lihat "Pemeriksaan saat memulai" dalam
-[README](../README.id.md#startup-check)).
+[embedding.id.md](embedding.id.md#startup-check)).
 
 > **Spring Boot starter:** Fasti berjalan pada **Spring Boot 4.1** dan memerlukan **Java 17 atau yang lebih baru**.
 > Aplikasi yang menggunakan starter Camunda 7.24 (Spring Boot 3.5) harus beralih ke Spring Boot 4.1 dan
 > Java 17+ bersamaan dengan penggantian artefak. Lihat
-> [README](../README.id.md#what-is-different-from-camunda-7240-ce) dan
+> [embedding.id.md](embedding.id.md#what-is-different-from-camunda-7240-ce) dan
 > [CHANGELOG](../CHANGELOG.md#changed).
 
 <a id="tomcat-and-wildfly-distributions"></a>

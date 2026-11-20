@@ -36,8 +36,10 @@ fork to Camunda.
 - **Supported line:** the latest minor release of the `1.x` line receives bug fixes and security
   patches (as patch releases, for example `1.0.1`).
 - **Security patches:** vulnerabilities in Fasti and in the libraries it ships take priority over
-  other work; the image is rebuilt when the base image or the JRE gets a fix. The project follows
-  public security advisories about Camunda 7 and its forks and checks whether Fasti is affected.
+  other work. When a security fix of the base image or the JRE affects Fasti, a patch release
+  with the updated base image or JRE is published; images that are already published are not
+  rebuilt. The project follows public security advisories about Camunda 7 and its forks and
+  checks whether Fasti is affected.
 - **Compatibility:** the `1.x` line keeps the 7.24 database schema and the `org.camunda.bpm.*`
   packages. Breaking changes are marked **BREAKING** in the [CHANGELOG](CHANGELOG.md).
 - **Support:** questions and bugs are welcome on GitHub; support there is best effort, without an

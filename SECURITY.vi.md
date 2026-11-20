@@ -33,9 +33,10 @@ Dự án này không liên kết với Camunda Services GmbH. Đừng báo lỗi
 
 - **Dòng được hỗ trợ:** bản minor mới nhất của dòng `1.x` nhận bản sửa lỗi và bản vá bảo mật
   (phát hành dạng patch, ví dụ `1.0.1`).
-- **Bản vá bảo mật:** lỗ hổng của Fasti và của thư viện đi kèm được ưu tiên trước các việc khác;
-  image được build lại khi image nền hoặc JRE có bản vá. Dự án theo dõi thông báo bảo mật công
-  khai về Camunda 7 và các fork của nó, và kiểm tra Fasti có bị ảnh hưởng không.
+- **Bản vá bảo mật:** lỗ hổng của Fasti và của thư viện đi kèm được ưu tiên trước các việc khác.
+  Khi image nền hoặc JRE có bản vá bảo mật ảnh hưởng tới Fasti, một bản patch dùng image nền hoặc
+  JRE đã cập nhật sẽ được phát hành; image đã công bố không được build lại. Dự án theo dõi thông
+  báo bảo mật công khai về Camunda 7 và các fork của nó, và kiểm tra Fasti có bị ảnh hưởng không.
 - **Tương thích:** dòng `1.x` giữ schema cơ sở dữ liệu 7.24 và package `org.camunda.bpm.*`. Thay
   đổi phá vỡ tương thích được ghi **BREAKING** trong [CHANGELOG](CHANGELOG.md).
 - **Hỗ trợ:** câu hỏi và lỗi xin gửi lên GitHub; hỗ trợ ở đó trong khả năng của nhóm, không có

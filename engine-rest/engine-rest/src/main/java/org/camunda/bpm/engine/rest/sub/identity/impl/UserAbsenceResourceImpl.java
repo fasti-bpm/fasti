@@ -25,6 +25,7 @@ import javax.ws.rs.core.Response.Status;
 import dev.fasti.engine.absence.Absence;
 import dev.fasti.engine.absence.AbsenceService;
 import dev.fasti.engine.absence.Absences;
+import org.camunda.bpm.engine.AuthorizationException;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.impl.util.ClockUtil;
 import org.camunda.bpm.engine.rest.dto.identity.AbsenceDto;
@@ -67,8 +68,20 @@ public class UserAbsenceResourceImpl implements UserAbsenceResource {
     if (absence == null) {
       throw new InvalidRequestException(Status.BAD_REQUEST, "An absence (until, substituteId) is required.");
     }
-    absences.setAbsence(userId, absence.getFrom(), absence.getUntil(), absence.getSubstituteId(), absence.getNote());
-    return getAbsence();
+    Absence stored = absences.setAbsence(userId, absence.getFrom(), absence.getUntil(), absence.getSubstituteId(),
+        absence.getNote());
+    // answered from what was stored: changing an absence needs UPDATE, reading it again READ
+    Date now = ClockUtil.getCurrentTime();
+    AbsenceDto dto = AbsenceDto.fromAbsence(userId, stored, now);
+    dto.setEnabled(true);
+    if (stored.isActiveAt(now)) {
+      try {
+        dto.setEffectiveSubstituteId(absences.resolveSubstitute(userId));
+      } catch (AuthorizationException e) {
+        dto.setEffectiveSubstituteId(null);
+      }
+    }
+    return dto;
   }
 
   @Override

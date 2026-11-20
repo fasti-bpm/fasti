@@ -364,6 +364,25 @@ public class AbsenceSubstitutionTest {
   }
 
   @Test
+  public void shouldSeeItsOwnChangesWithinOneCommand() {
+    Absence inner = configuration.getCommandExecutorTxRequired().execute(commandContext -> {
+      // nested service calls share the command context with its entity cache
+      setAbsence("alice", "bob");
+      Absence read = absences.getAbsence("alice");
+      assertThat(absences.getAbsencesSubstitutedBy("bob")).extracting(Absence::getUserId).containsExactly("alice");
+      absences.setAbsence("alice", null, at(Duration.ofDays(2)), "carol", null);
+      assertThat(absences.getAbsence("alice").getSubstituteId()).isEqualTo("carol");
+      absences.clearAbsence("alice");
+      assertThat(absences.getAbsence("alice")).isNull();
+      return read;
+    });
+
+    assertThat(inner.getSubstituteId()).isEqualTo("bob");
+    assertThat(absences.getAbsence("alice")).isNull();
+    assertThat(identityService.getUserInfoKeys("alice")).isEmpty();
+  }
+
+  @Test
   public void shouldKeepOtherUserInfo() {
     identityService.setUserInfo("alice", "phone", "123");
     setAbsence("alice", "bob");

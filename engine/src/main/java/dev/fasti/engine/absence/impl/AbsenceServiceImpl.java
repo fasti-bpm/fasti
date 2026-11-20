@@ -50,7 +50,7 @@ public class AbsenceServiceImpl implements AbsenceService {
 
   @Override
   public Absence getAbsence(String userId) {
-    return commandExecutor.execute(new AbsenceCommands.GetAbsenceCmd(userId));
+    return commandExecutor.execute(new AbsenceCommands.GetAbsenceCmd(settings, userId));
   }
 
   @Override
@@ -60,7 +60,7 @@ public class AbsenceServiceImpl implements AbsenceService {
 
   @Override
   public void clearAbsence(String userId) {
-    commandExecutor.execute(new AbsenceCommands.ClearAbsenceCmd(userId));
+    commandExecutor.execute(new AbsenceCommands.ClearAbsenceCmd(settings, userId));
   }
 
   @Override

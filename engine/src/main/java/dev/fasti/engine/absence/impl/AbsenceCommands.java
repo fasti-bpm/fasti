@@ -73,9 +73,11 @@ public final class AbsenceCommands {
 
   /** Reads the absence of a user. */
   public static class GetAbsenceCmd implements Command<Absence> {
+    protected final AbsenceSettings settings;
     protected final String userId;
 
-    public GetAbsenceCmd(String userId) {
+    public GetAbsenceCmd(AbsenceSettings settings, String userId) {
+      this.settings = settings;
       this.userId = userId;
     }
 
@@ -83,8 +85,16 @@ public final class AbsenceCommands {
     public Absence execute(CommandContext commandContext) {
       requireUserId(userId);
       checkPermission(commandContext, Permissions.READ, userId);
-      return AbsenceStore.find(commandContext, userId);
+      return storageReadable(commandContext, settings) ? AbsenceStore.find(commandContext, userId) : null;
     }
+  }
+
+  /**
+   * Whether ACT_ID_INFO can be read: not when the plugin found it missing; without the plugin (an
+   * absence set by another node can still be seen) when the engine uses the identity tables.
+   */
+  static boolean storageReadable(CommandContext commandContext, AbsenceSettings settings) {
+    return settings != null ? settings.isAvailable() : commandContext.getProcessEngineConfiguration().isDbIdentityUsed();
   }
 
   /** Validates and stores the absence of a user. */
@@ -173,9 +183,11 @@ public final class AbsenceCommands {
 
   /** Removes the absence of a user. */
   public static class ClearAbsenceCmd implements Command<Void> {
+    protected final AbsenceSettings settings;
     protected final String userId;
 
-    public ClearAbsenceCmd(String userId) {
+    public ClearAbsenceCmd(AbsenceSettings settings, String userId) {
+      this.settings = settings;
       this.userId = userId;
     }
 
@@ -183,7 +195,9 @@ public final class AbsenceCommands {
     public Void execute(CommandContext commandContext) {
       requireUserId(userId);
       checkPermission(commandContext, Permissions.UPDATE, userId);
-      AbsenceStore.delete(commandContext, userId);
+      if (storageReadable(commandContext, settings)) {
+        AbsenceStore.delete(commandContext, userId);
+      }
       return null;
     }
   }

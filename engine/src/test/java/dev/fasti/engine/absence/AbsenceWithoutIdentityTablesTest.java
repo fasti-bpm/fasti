@@ -62,6 +62,11 @@ public class AbsenceWithoutIdentityTablesTest {
     Date until = Date.from(Instant.now().plus(Duration.ofDays(1)));
     assertThatThrownBy(() -> absences.setAbsence("alice", null, until, "bob", null))
         .isInstanceOf(BadUserRequestException.class).hasMessageContaining("ACT_ID_INFO");
+    // reading and clearing do not touch the missing table
+    assertThat(absences.getAbsence("alice")).isNull();
+    absences.clearAbsence("alice");
+    assertThat(absences.getAbsencesSubstitutedBy("bob")).isEmpty();
+    assertThat(absences.resolveSubstitute("alice")).isNull();
   }
 
   @Test

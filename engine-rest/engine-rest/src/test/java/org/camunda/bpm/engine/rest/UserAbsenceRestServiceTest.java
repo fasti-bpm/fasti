@@ -80,11 +80,13 @@ public class UserAbsenceRestServiceTest extends AbstractRestServiceTest {
   protected static volatile Authentication requestAuthentication;
   protected static ProcessEngine engine;
   protected static ProcessEngine engineWithoutPlugin;
+  protected static ProcessEngine engineWithoutIdentityTables;
 
   @BeforeClass
   public static void buildEngines() {
     engine = buildEngine("absenceRestEngine", true);
     engineWithoutPlugin = buildEngine("absenceRestEngineWithoutPlugin", false);
+    engineWithoutIdentityTables = buildEngine("absenceRestEngineWithoutIdentityTables", true);
   }
 
   protected static ProcessEngine buildEngine(String name, boolean withPlugin) {
@@ -107,6 +109,10 @@ public class UserAbsenceRestServiceTest extends AbstractRestServiceTest {
       }
     });
     configuration.setCustomPreCommandInterceptorsTxRequired(interceptors);
+    if (name.endsWith("WithoutIdentityTables")) {
+      configuration.setDbIdentityUsed(false);
+      configuration.setDatabaseSchemaUpdate("create-drop");
+    }
     if (withPlugin) {
       configuration.getProcessEnginePlugins().add(new AbsenceSubstitutionPlugin());
     }
@@ -117,6 +123,7 @@ public class UserAbsenceRestServiceTest extends AbstractRestServiceTest {
   public static void closeEngines() {
     engine.close();
     engineWithoutPlugin.close();
+    engineWithoutIdentityTables.close();
   }
 
   @Before
@@ -382,5 +389,46 @@ public class UserAbsenceRestServiceTest extends AbstractRestServiceTest {
         .statusCode(Status.BAD_REQUEST.getStatusCode())
         .body("message", containsString("fasti.absence.enabled"))
     .when().put(ABSENCE_URL);
+  }
+
+  @Test
+  public void shouldReportWhyAbsencesAreUnavailableWithoutIdentityTables() {
+    use(engineWithoutIdentityTables);
+
+    given().pathParam("id", "alice")
+    .then().expect()
+        .statusCode(Status.OK.getStatusCode())
+        .body("enabled", equalTo(false))
+        .body("unavailableReason", containsString("ACT_ID_INFO"))
+        .body("status", equalTo("none"))
+    .when().get(ABSENCE_URL);
+
+    given().pathParam("id", "alice")
+    .then().expect().statusCode(Status.OK.getStatusCode()).body("$", hasSize(0))
+    .when().get(SUBSTITUTING_URL);
+  }
+
+  @Test
+  public void shouldAnswerASetWithUpdatePermissionOnly() {
+    Authorization grant = engine.getAuthorizationService().createNewAuthorization(Authorization.AUTH_TYPE_GRANT);
+    grant.setUserId("carol");
+    grant.setResource(Resources.USER);
+    grant.setResourceId("alice");
+    grant.addPermission(Permissions.UPDATE);
+    engine.getAuthorizationService().saveAuthorization(grant);
+    configuration(engine).setAuthorizationEnabled(true);
+    requestAuthentication = new Authentication("carol", Collections.emptyList());
+
+    given().pathParam("id", "alice").contentType(ContentType.JSON).body(absence(NEXT_WEEK, "bob", null))
+    .then().expect()
+        .statusCode(Status.OK.getStatusCode())
+        .body("status", equalTo("active"))
+        .body("substituteId", equalTo("bob"))
+        .body("effectiveSubstituteId", nullValue())
+    .when().put(ABSENCE_URL);
+
+    given().pathParam("id", "alice")
+    .then().expect().statusCode(Status.FORBIDDEN.getStatusCode())
+    .when().get(ABSENCE_URL);
   }
 }

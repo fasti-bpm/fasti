@@ -63,6 +63,7 @@ public class AuditSettings implements AuditStatus {
   protected volatile String engineName;
   protected volatile String historyLevel;
   protected volatile String tablePrefix = "";
+  protected volatile boolean nationalCharacterColumns;
 
   public AuditSettings(String nodeId, int chains, String types, String variableValues, String maskedVariables,
       byte[] hmacKey, int checkpointInterval, int retentionDays) {
@@ -234,6 +235,15 @@ public class AuditSettings implements AuditStatus {
 
   public String getTablePrefix() {
     return tablePrefix;
+  }
+
+  /** Whether text columns hold national characters (NVARCHAR2 and NCLOB on Oracle). */
+  public boolean isNationalCharacterColumns() {
+    return nationalCharacterColumns;
+  }
+
+  public void setNationalCharacterColumns(boolean nationalCharacterColumns) {
+    this.nationalCharacterColumns = nationalCharacterColumns;
   }
 
   public void setTablePrefix(String tablePrefix) {

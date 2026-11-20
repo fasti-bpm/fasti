@@ -28,6 +28,7 @@ import dev.fasti.engine.audit.AuditPurgeResult;
 import dev.fasti.engine.audit.AuditService;
 import dev.fasti.engine.audit.AuditStatus;
 import dev.fasti.engine.audit.AuditVerification;
+import org.camunda.bpm.engine.AuthorizationException;
 import org.camunda.bpm.engine.BadUserRequestException;
 import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
@@ -44,10 +45,12 @@ public class AuditServiceImpl implements AuditService {
 
   protected final AuditSettings settings;
   protected final CommandExecutor commandExecutor;
+  protected final CommandExecutor requiresNew;
 
   public AuditServiceImpl(ProcessEngineConfigurationImpl configuration) {
     this.settings = settingsOf(configuration);
     this.commandExecutor = configuration.getCommandExecutorTxRequired();
+    this.requiresNew = configuration.getCommandExecutorTxRequiresNew();
   }
 
   /** The settings of the plugin registered with the engine, or {@code null}. */
@@ -65,6 +68,21 @@ public class AuditServiceImpl implements AuditService {
   @Override
   public AuditStatus getStatus() {
     return settings;
+  }
+
+  @Override
+  public boolean isReadAuthorized() {
+    if (settings == null) {
+      return false;
+    }
+    return commandExecutor.execute(commandContext -> {
+      try {
+        AuditAuthorization.checkRead(commandContext);
+        return true;
+      } catch (AuthorizationException e) {
+        return false;
+      }
+    });
   }
 
   protected AuditSettings requireEnabled() {
@@ -163,7 +181,13 @@ public class AuditServiceImpl implements AuditService {
       throw new BadUserRequestException("Records younger than " + settings.getRetentionDays()
           + " days are kept (fasti.audit.retention-days); choose a date before " + new Date(cutoff).toInstant() + ".");
     }
-    return commandExecutor.execute(commandContext -> purge(commandContext, settings, before));
+    if (AuditSession.holdsChain()) {
+      // it locks the heads of all chains in order; inside a transaction that already holds one, two
+      // purges could wait for each other
+      throw new BadUserRequestException("Purge the audit trail in a transaction of its own, not inside one that has "
+          + "written audit records.");
+    }
+    return requiresNew.execute(commandContext -> purge(commandContext, settings, before));
   }
 
   protected AuditPurgeResult purge(CommandContext commandContext, AuditSettings settings, Date before) {

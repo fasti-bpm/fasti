@@ -226,6 +226,55 @@ public class AuditTamperTest {
   }
 
   @Test
+  public void shouldFindACheckpointWhoseSignatureWasRemoved() {
+    start(5, KEY);
+    AuditEvent checkpoint = chain().stream().filter(e -> AuditService.ACTION_CHECKPOINT.equals(e.getAction())).findFirst()
+        .orElseThrow();
+    // the intruder strips the signature and fixes the hash of the checkpoint and of every later record
+    AuditRecord stripped = copy(checkpoint);
+    stripped.setDetails(checkpoint.getDetails().replaceAll(",?\"hmac\":\"[0-9a-f]+\"", ""));
+    rewriteFrom(stripped);
+    Break found = firstBreak();
+    assertThat(found.getReason()).isEqualTo(Break.CHECKPOINT_MISMATCH);
+    assertThat(found.getSequence()).isEqualTo(checkpoint.getSequence());
+  }
+
+  @Test
+  public void shouldReportCheckpointsOfAnotherKeyAsUnverified() {
+    start(5, KEY);
+    // the last checkpoint: a rewrite before a later one would break that one's signature
+    AuditEvent checkpoint = chain().stream().filter(e -> AuditService.ACTION_CHECKPOINT.equals(e.getAction()))
+        .reduce((first, second) -> second).orElseThrow();
+    AuditRecord other = copy(checkpoint);
+    other.setDetails(checkpoint.getDetails().replaceAll("\"keyId\":\"[0-9a-f]+\"", "\"keyId\":\"000000000000\""));
+    rewriteFrom(other);
+    AuditVerification verification = audit.verify();
+    // the hashes are consistent; the checkpoint cannot be checked, which the counts show
+    assertThat(verification.isIntact()).isTrue();
+    AuditVerification.Chain chain = verification.getChains().get(0);
+    assertThat(chain.getCheckpointsVerified()).isLessThan(chain.getCheckpoints());
+  }
+
+  /** Writes the record as given and fixes the hashes of it and of every record after it, and the head. */
+  void rewriteFrom(AuditRecord changed) {
+    String previous = null;
+    for (AuditEvent event : chain()) {
+      if (event.getSequence() < changed.getSequence()) {
+        continue;
+      }
+      AuditRecord record = event.getSequence() == changed.getSequence() ? changed : copy(event);
+      if (previous != null) {
+        record.setPreviousHash(previous);
+      }
+      record.setHash(AuditChain.hash(record));
+      sql(engine, "update FASTI_AUDIT_EVENT set DETAILS_ = ?, PREV_HASH_ = ?, HASH_ = ? where ID_ = ?", record.getDetails(),
+          record.getPreviousHash(), record.getHash(), record.getId());
+      previous = record.getHash();
+    }
+    sql(engine, "update FASTI_AUDIT_HEAD set HASH_ = ?", previous);
+  }
+
+  @Test
   public void shouldNotDetectAConsistentRewriteWithoutKey() {
     // documented limit: without a signing key (and without an anchor kept elsewhere) a complete
     // rewrite of the chain and its head cannot be told apart

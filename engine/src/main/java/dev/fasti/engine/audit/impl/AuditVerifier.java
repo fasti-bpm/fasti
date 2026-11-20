@@ -43,6 +43,10 @@ public class AuditVerifier {
   }
 
   public AuditVerification.Chain verifyChain(String chainId) {
+    return verifyChain(chainId, 0);
+  }
+
+  protected AuditVerification.Chain verifyChain(String chainId, int attempt) {
     long records = 0;
     long checkpoints = 0;
     long checkpointsVerified = 0;
@@ -92,10 +96,13 @@ public class AuditVerifier {
           checkpoints++;
           String hmac = text(record.getDetails(), "hmac");
           String keyId = text(record.getDetails(), "keyId");
-          if (hmac != null && settings.isSigned() && settings.getKeyId().equals(keyId)) {
+          // a checkpoint of the current key must carry its signature; one without signature or of
+          // another key cannot be checked and is reported as unverified (written before the key was
+          // set, with an earlier key, or with its signature removed)
+          if (settings.isSigned() && settings.getKeyId().equals(keyId)) {
             String expectedHmac = AuditChain.hmacHex(settings.getHmacKey(),
                 AuditChain.checkpointText(chainId, record.getSequence() - 1, record.getPreviousHash()));
-            if (!AuditChain.same(expectedHmac, hmac)) {
+            if (hmac == null || !AuditChain.same(expectedHmac, hmac)) {
               found = new Break(chainId, record.getSequence(), record.getId(), Break.CHECKPOINT_MISMATCH, "The signature of "
                   + "checkpoint " + record.getSequence() + " does not match: the chain before it was rewritten.");
               break;
@@ -130,7 +137,7 @@ public class AuditVerifier {
         if (!more.isEmpty()) {
           if (records == 0 && firstSequence == 0) {
             // the chain was empty when it was first read
-            return verifyChain(chainId);
+            return verifyChain(chainId, attempt);
           }
           page = more;
           continue;
@@ -143,8 +150,25 @@ public class AuditVerifier {
       }
       break;
     }
+    if (found != null && attempt < 2 && (Break.SEQUENCE_GAP.equals(found.getReason())
+        || Break.MISSING_START.equals(found.getReason())) && purgedSince(chainId, purgedThrough)) {
+      // a purge removed records while the chain was read: verify what is left
+      return verifyChain(chainId, attempt + 1);
+    }
     return new AuditVerification.Chain(chainId, records, firstSequence, last, lastHash, checkpoints, checkpointsVerified,
         purgedThrough, found);
+  }
+
+  /** Whether a purge record now names more removed records than the verification started from. */
+  protected boolean purgedSince(String chainId, long purgedThrough) {
+    List<AuditRecord> purges = commandExecutor.execute(commandContext -> AuditStore.purges(commandContext, settings, chainId));
+    for (AuditRecord purge : purges) {
+      Long through = number(purge.getDetails(), "purgedThroughSeq");
+      if (through != null && through > purgedThrough) {
+        return true;
+      }
+    }
+    return false;
   }
 
   protected List<AuditRecord> read(String chainId, long after) {

@@ -42,7 +42,7 @@ create table FASTI_AUDIT_EVENT (
     PREV_HASH_ varchar(64) not null,
     HASH_ varchar(64) not null,
     primary key (ID_)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_bin;
 
 create unique index FASTI_IDX_AUDIT_CHAIN on FASTI_AUDIT_EVENT(CHAIN_ID_, SEQ_);
 create index FASTI_IDX_AUDIT_TIME on FASTI_AUDIT_EVENT(TIME_);
@@ -58,4 +58,4 @@ create table FASTI_AUDIT_HEAD (
     HASH_ varchar(64) not null,
     TIME_ bigint not null,
     primary key (CHAIN_ID_)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_bin;

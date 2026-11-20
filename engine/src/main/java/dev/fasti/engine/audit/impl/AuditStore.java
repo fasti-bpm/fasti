@@ -16,6 +16,7 @@
  */
 package dev.fasti.engine.audit.impl;
 
+import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -236,6 +237,7 @@ public final class AuditStore {
   }
 
   static void insert(Connection connection, AuditSettings settings, List<AuditRecord> records) throws SQLException {
+    boolean national = settings.isNationalCharacterColumns();
     try (PreparedStatement insert = connection.prepareStatement(
         "insert into " + events(settings) + " (" + COLUMNS + ") values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
       for (AuditRecord record : records) {
@@ -245,19 +247,21 @@ public final class AuditStore {
         insert.setLong(i++, record.getSequence());
         insert.setLong(i++, record.getTime());
         insert.setString(i++, record.getType());
-        text(insert, i++, record.getAction());
-        text(insert, i++, record.getActor());
-        text(insert, i++, record.getEngineName());
-        text(insert, i++, record.getTenantId());
-        text(insert, i++, record.getProcessDefinitionKey());
-        text(insert, i++, record.getProcessDefinitionId());
-        text(insert, i++, record.getProcessInstanceId());
-        text(insert, i++, record.getBusinessKey());
-        text(insert, i++, record.getEntityType());
-        text(insert, i++, record.getEntityId());
-        text(insert, i++, record.getEntityName());
+        text(insert, i++, record.getAction(), national);
+        text(insert, i++, record.getActor(), national);
+        text(insert, i++, record.getEngineName(), national);
+        text(insert, i++, record.getTenantId(), national);
+        text(insert, i++, record.getProcessDefinitionKey(), national);
+        text(insert, i++, record.getProcessDefinitionId(), national);
+        text(insert, i++, record.getProcessInstanceId(), national);
+        text(insert, i++, record.getBusinessKey(), national);
+        text(insert, i++, record.getEntityType(), national);
+        text(insert, i++, record.getEntityId(), national);
+        text(insert, i++, record.getEntityName(), national);
         if (record.getDetails() == null) {
-          insert.setNull(i++, Types.CLOB);
+          insert.setNull(i++, national ? Types.NCLOB : Types.CLOB);
+        } else if (national) {
+          insert.setNCharacterStream(i++, new StringReader(record.getDetails()), record.getDetails().length());
         } else {
           insert.setString(i++, record.getDetails());
         }
@@ -275,9 +279,15 @@ public final class AuditStore {
     }
   }
 
-  static void text(PreparedStatement statement, int index, String value) throws SQLException {
+  /**
+   * Binds text; for the NVARCHAR2 columns of Oracle as national characters, so that text the
+   * database character set cannot hold is not changed after it was hashed.
+   */
+  static void text(PreparedStatement statement, int index, String value, boolean national) throws SQLException {
     if (value == null) {
-      statement.setNull(index, Types.VARCHAR);
+      statement.setNull(index, national ? Types.NVARCHAR : Types.VARCHAR);
+    } else if (national) {
+      statement.setNString(index, value);
     } else {
       statement.setString(index, value);
     }

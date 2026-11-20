@@ -51,6 +51,9 @@ public interface AuditService {
   /** The settings of the plugin, or {@code null} if it does not run. */
   AuditStatus getStatus();
 
+  /** Whether the authenticated user may read the audit trail ({@code false} if it does not run). */
+  boolean isReadAuthorized();
+
   AuditEventQuery createQuery();
 
   /** Verifies every chain and records the result as an audit record. */

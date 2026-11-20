@@ -18,6 +18,7 @@ package dev.fasti.engine.audit;
 
 import static dev.fasti.engine.audit.AuditTestSupport.userTaskProcess;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -178,6 +179,42 @@ public class AuditConcurrencyTest {
       return null;
     });
     assertComplete0(engine, 2);
+  }
+
+  @Test
+  public void shouldTakeAnExtraChainForANestedTransactionWhenAllAreHeld() {
+    ProcessEngine engine = AuditTestSupport.engine("nested1", plugin -> plugin.setChains(1));
+    engines.add(engine);
+    engine.getRepositoryService().createDeployment().addModelInstance("p.bpmn", userTaskProcess("parallel")).deploy();
+    ProcessEngineConfigurationImpl configuration = (ProcessEngineConfigurationImpl) engine.getProcessEngineConfiguration();
+    configuration.getCommandExecutorTxRequired().execute(commandContext -> {
+      engine.getRuntimeService().startProcessInstanceByKey("parallel");
+      AuditHistoryEventHandler.session(commandContext).flush();
+      configuration.getCommandExecutorTxRequiresNew().execute(nested -> {
+        engine.getRuntimeService().startProcessInstanceByKey("parallel");
+        return null;
+      });
+      return null;
+    });
+    assertComplete0(engine, 2);
+    assertThat(AuditTrail.of(engine).verify().getChains()).extracting(AuditVerification.Chain::getChainId)
+        .contains("node-nested1/0", "node-nested1/1");
+  }
+
+  @Test
+  public void shouldRefuseToPurgeInsideATransactionThatHoldsAChain() {
+    ProcessEngine engine = AuditTestSupport.engine("nestedpurge", plugin -> plugin.setRetentionDays(0));
+    engines.add(engine);
+    engine.getRepositoryService().createDeployment().addModelInstance("p.bpmn", userTaskProcess("parallel")).deploy();
+    ProcessEngineConfigurationImpl configuration = (ProcessEngineConfigurationImpl) engine.getProcessEngineConfiguration();
+    configuration.getCommandExecutorTxRequired().execute(commandContext -> {
+      engine.getRuntimeService().startProcessInstanceByKey("parallel");
+      AuditHistoryEventHandler.session(commandContext).flush();
+      assertThatThrownBy(() -> AuditTrail.of(engine).purge(new java.util.Date(0)))
+          .isInstanceOf(org.camunda.bpm.engine.BadUserRequestException.class).hasMessageContaining("transaction of its own");
+      return null;
+    });
+    assertThat(AuditTrail.of(engine).purge(new java.util.Date(0)).getRemoved()).isZero();
   }
 
   static void assertComplete0(ProcessEngine engine, int starts) {

@@ -132,6 +132,7 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
   @Override
   public void postProcessEngineBuild(ProcessEngine processEngine) {
     ProcessEngineConfigurationImpl configuration = (ProcessEngineConfigurationImpl) processEngine.getProcessEngineConfiguration();
+    settings.setNationalCharacterColumns("oracle".equals(configuration.getDatabaseType()));
     try {
       prepareTables(configuration);
     } catch (RuntimeException e) {

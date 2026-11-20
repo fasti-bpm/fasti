@@ -115,6 +115,16 @@ public class AuditSession implements Session {
     }
   }
 
+  /** Whether a transaction of this thread holds a chain (has written records not yet committed). */
+  public static boolean holdsChain() {
+    List<Held> held = HELD.get();
+    boolean holds = !held.isEmpty();
+    if (!holds) {
+      HELD.remove();
+    }
+    return holds;
+  }
+
   /** The chain of the transaction of the command context, taken on its first use. */
   protected String chainFor(CommandContext commandContext) {
     Object connection = physical(AuditStore.connection(commandContext));
@@ -126,8 +136,11 @@ public class AuditSession implements Session {
     }
     int preferred = Math.floorMod(Long.hashCode(Thread.currentThread().getId()), settings.getChains());
     String chainId = null;
-    for (int i = 0; i < settings.getChains() && chainId == null; i++) {
-      String candidate = settings.chainId((preferred + i) % settings.getChains());
+    for (int i = 0; chainId == null; i++) {
+      // the slots of the node first, from the one of the thread; with more nested transactions on
+      // this thread than slots, extra slots (created on first use), as sharing one with a suspended
+      // outer transaction would wait for it forever
+      String candidate = settings.chainId(i < settings.getChains() ? (preferred + i) % settings.getChains() : i);
       boolean taken = false;
       for (Held entry : held) {
         taken |= entry.chainId.equals(candidate);
@@ -135,10 +148,6 @@ public class AuditSession implements Session {
       if (!taken) {
         chainId = candidate;
       }
-    }
-    if (chainId == null) {
-      // more nested transactions on this thread than chains: share the preferred one
-      chainId = settings.chainId(preferred);
     }
     Held entry = new Held(connection, chainId);
     held.add(entry);

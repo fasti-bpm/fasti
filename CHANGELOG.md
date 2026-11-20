@@ -46,6 +46,20 @@ entries below describe the differences from that release.
     `management.opentelemetry.tracing.export.otlp.endpoint` or `OTEL_EXPORTER_OTLP_ENDPOINT`.
     Nothing is sent while no endpoint is set.
 
+### Changed
+
+- New web UI: one consistent look across the Tasklist, monitoring, modeler, administration,
+  preferences and welcome pages. Page headers, cards, tables, tabs, confirmations and options
+  are styled with the application instead of with the monitoring section, so a page no longer
+  looks different depending on the page opened before it (the preferences showed bare radio
+  buttons when opened directly). Every size, weight, layer and shadow comes from the design
+  tokens; the subtle text colour of the light theme and the frames of text fields now meet
+  WCAG 2.2 AA contrast (4.5:1 and 3:1). The tabs of a task and of the other pages, and the
+  segmented choices, share one style with a visible focus. Every dialog is left with the same
+  action, placed before the main one; pages that failed to load offer to try again; the
+  operation log keeps its filter fields apart and formats times like the rest; scrolling
+  started by the application honours reduced motion.
+
 ### Fixed
 
 - The container image ignores a `FASTI_PORT` that is not a port number, with a warning, in the

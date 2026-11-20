@@ -1,0 +1,120 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ */
+package org.camunda.bpm.engine.impl.db.sql;
+
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+
+import org.apache.ibatis.executor.parameter.ParameterHandler;
+import org.apache.ibatis.mapping.BoundSql;
+import org.apache.ibatis.mapping.MappedStatement;
+import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.type.UnknownTypeHandler;
+
+/**
+ * <p>The MyBatis configuration of the process engine. It keeps the way MyBatis 3.5 chose
+ * the type handler of a statement parameter without an explicit <code>jdbcType</code>:
+ * by the class of the value, the same on every database.</p>
+ *
+ * <p>MyBatis 3.6 asks the JDBC driver for the parameter metadata of every statement that
+ * has such a parameter and picks the type handler from the reported JDBC type. With
+ * PostgreSQL this costs an extra round trip to the server for each execution, also for
+ * every row of a JDBC batch, and a failed lookup aborts the running transaction. The
+ * reported type may also not fit the value (a numeric column compared with an
+ * <code>Integer</code> from a parameter map), and drivers without parameter metadata, such
+ * as MySQL Connector/J by default, leave a parameter declared as <code>Object</code>
+ * (<code>ListQueryParameterObject.parameter</code>, map values) without a type handler,
+ * because 3.6 no longer registers one for <code>Object</code>. This configuration therefore
+ * hides the parameter metadata from the parameter handlers and registers the
+ * {@link UnknownTypeHandler} for <code>Object</code> again, which resolves the type handler
+ * from the value when the statement runs.</p>
+ *
+ * <p>MyBatis plans a setting to turn the metadata lookup off and a fallback to the class of
+ * the value; once released, they can replace this class.</p>
+ */
+public class MyBatisConfiguration extends Configuration {
+
+  public MyBatisConfiguration() {
+    getTypeHandlerRegistry().register(Object.class, new UnknownTypeHandler(this));
+  }
+
+  @Override
+  public ParameterHandler newParameterHandler(MappedStatement mappedStatement, Object parameterObject,
+      BoundSql boundSql) {
+    ParameterHandler parameterHandler = mappedStatement.getLang()
+        .createParameterHandler(mappedStatement, parameterObject, boundSql);
+    return (ParameterHandler) interceptorChain.pluginAll(new WithoutParameterMetadata(parameterHandler));
+  }
+
+  /**
+   * Passes the statement to the wrapped handler with
+   * {@link PreparedStatement#getParameterMetaData()} reporting that the metadata is not
+   * available; all other calls reach the statement unchanged.
+   */
+  protected static class WithoutParameterMetadata implements ParameterHandler {
+
+    protected final ParameterHandler delegate;
+
+    public WithoutParameterMetadata(ParameterHandler delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public Object getParameterObject() {
+      return delegate.getParameterObject();
+    }
+
+    @Override
+    public void setParameters(PreparedStatement statement) throws SQLException {
+      delegate.setParameters(hideParameterMetadata(statement));
+    }
+
+    protected static PreparedStatement hideParameterMetadata(PreparedStatement statement) {
+      Class<?> type = statement instanceof CallableStatement ? CallableStatement.class : PreparedStatement.class;
+      return (PreparedStatement) Proxy.newProxyInstance(MyBatisConfiguration.class.getClassLoader(),
+          new Class<?>[] { type }, new StatementHandler(statement));
+    }
+  }
+
+  protected static class StatementHandler implements InvocationHandler {
+
+    protected final PreparedStatement statement;
+
+    protected StatementHandler(PreparedStatement statement) {
+      this.statement = statement;
+    }
+
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+      if ("getParameterMetaData".equals(method.getName()) && method.getParameterCount() == 0) {
+        throw new SQLFeatureNotSupportedException("Parameter metadata is not used by the process engine");
+      }
+      if (method.getDeclaringClass() == Object.class) {
+        switch (method.getName()) {
+        case "equals":
+          return proxy == args[0];
+        case "hashCode":
+          return System.identityHashCode(proxy);
+        case "toString":
+          return statement.toString();
+        default:
+          break;
+        }
+      }
+      try {
+        return method.invoke(statement, args);
+      } catch (InvocationTargetException e) {
+        throw e.getCause();
+      }
+    }
+  }
+
+}

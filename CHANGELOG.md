@@ -78,12 +78,32 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   action, placed before the main one; pages that failed to load offer to try again; the
   operation log keeps its filter fields apart and formats times like the rest; scrolling
   started by the application honours reduced motion.
+- MyBatis 3.5.19 → 3.6.0. Since 3.6 a `<bind>` inside `<foreach>`, `<where>`, `<trim>` or
+  `<set>` is visible only inside that element (and inside one iteration of a `<foreach>`), and
+  a property path through `null` (`a.b` with `a == null`) fails again, as before 3.5.15. The
+  engine mappings that built the sort order, the join flags of `or` queries and the names of
+  the variable joins of the historic process instance query over several iterations now compute
+  them in one expression. Plugins with their own MyBatis mappings (for example Cockpit plugins)
+  must check for both patterns.
+- Statement parameters without a `jdbcType` get their type handler from the class of the value,
+  as with MyBatis 3.5. MyBatis 3.6 instead reads the parameter metadata of every statement from
+  the JDBC driver (with PostgreSQL an extra round trip per statement, also per row of a JDBC
+  batch, and a failed lookup aborts the transaction) and finds no type handler for parameters
+  declared as `Object` when the driver offers no metadata (MySQL Connector/J by default).
 
 ### Fixed
 
 - The container image ignores a `FASTI_PORT` that is not a port number, with a warning, in the
   entrypoint and the `HEALTHCHECK`: Kubernetes sets `FASTI_PORT=tcp://<ip>:<port>` for a Service
   named `fasti`, and the server then failed to start.
+
+### Security
+
+- MyBatis 3.6.0 embeds OGNL 3.4.16 instead of 3.4.4, which closes CVE-2026-113730
+  (GHSA-crwc-vw2r-qr6m, a bypass of the OGNL stricter-invocation block list) reported by
+  scanners for every MyBatis 3.5 jar. The engine was not exposed in practice: MyBatis evaluates
+  only the expressions of the mapping files, never user input, so the block list is no security
+  boundary there.
 
 ## [1.0.1] - 2026-11-21
 

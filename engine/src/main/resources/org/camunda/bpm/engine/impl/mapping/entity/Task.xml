@@ -238,45 +238,18 @@
   <sql id="selectTaskByQueryCriteriaSql">
 
     from ${prefix}ACT_RU_TASK RES
-    <bind name="I_JOIN" value="false" />
-    <bind name="D_JOIN" value="false" />
-    <bind name="E_JOIN" value="false" />
-    <bind name="CD_JOIN" value="false" />
-    <bind name="CE_JOIN" value="false" />
-    <bind name="E1_JOIN" value="false" />
-    <bind name="JOIN_TYPE" value="'inner join'" />
-
-    <foreach collection="queries" item="query">
-      <if test="query.isOrQueryActive">
-        <bind name="JOIN_TYPE" value="'left join'" />
-      </if>
-      <if test="query != null &amp;&amp; (query.candidateUser != null || query.candidateGroups != null  || query.candidateGroupLike != null || query.involvedUser != null || query.withCandidateGroups || query.withCandidateUsers)">
-        <bind name="I_JOIN" value="true" />
-      </if>
-      <!-- the process definition table is joined if
+    <!-- A bind inside a foreach is local to its iteration since MyBatis 3.6, so every join
+      flag is one expression over all queries ({? } selects the queries that need the join) -->
+    <bind name="JOIN_TYPE" value="queries.{? #this.isOrQueryActive }.size() &gt; 0 ? 'left join' : 'inner join'" />
+    <bind name="I_JOIN" value="queries.{? #this != null &amp;&amp; (#this.candidateUser != null || #this.candidateGroups != null  || #this.candidateGroupLike != null || #this.involvedUser != null || #this.withCandidateGroups || #this.withCandidateUsers) }.size() &gt; 0" />
+    <!-- the process definition table is joined if
       1. a process-definition-related filter is used
       2. authorization check is enabled (as permissions are defined per process definition) -->
-      <if test="query != null &amp;&amp; 
-        (query.processDefinitionKey != null || query.processDefinitionName != null || 
-        query.processDefinitionNameLike != null ||              
-        (query.processDefinitionKeys != null &amp;&amp; query.processDefinitionKeys.length > 0)) ||
-        authCheck.shouldPerformAuthorizatioCheck &amp;&amp; authCheck.authUserId != null">
-        <bind name="D_JOIN" value="true" />
-      </if>
-      <if test="query != null &amp;&amp; (query.processInstanceBusinessKey != null || query.processInstanceBusinessKeyLike != null ||
-              (query.processInstanceBusinessKeys != null &amp;&amp; query.processInstanceBusinessKeys.length > 0))">
-        <bind name="E_JOIN" value="true" />
-      </if>
-      <if test="query != null &amp;&amp; (query.caseDefinitionKey != null || query.caseDefinitionName != null || query.caseDefinitionNameLike != null)">
-        <bind name="CD_JOIN" value="true" />
-      </if>
-      <if test="query != null &amp;&amp; (query.caseInstanceBusinessKey != null || query.caseInstanceBusinessKeyLike != null)">
-        <bind name="CE_JOIN" value="true" />
-      </if>
-      <if test="query != null &amp;&amp; (query.activityInstanceIdIn != null &amp;&amp; query.activityInstanceIdIn.length > 0)">
-        <bind name="E1_JOIN" value="true" />
-      </if>
-    </foreach>
+    <bind name="D_JOIN" value="queries.{? #this != null &amp;&amp; (#this.processDefinitionKey != null || #this.processDefinitionName != null || #this.processDefinitionNameLike != null || (#this.processDefinitionKeys != null &amp;&amp; #this.processDefinitionKeys.length > 0)) }.size() &gt; 0 || (authCheck.shouldPerformAuthorizatioCheck &amp;&amp; authCheck.authUserId != null)" />
+    <bind name="E_JOIN" value="queries.{? #this != null &amp;&amp; (#this.processInstanceBusinessKey != null || #this.processInstanceBusinessKeyLike != null || (#this.processInstanceBusinessKeys != null &amp;&amp; #this.processInstanceBusinessKeys.length > 0)) }.size() &gt; 0" />
+    <bind name="CD_JOIN" value="queries.{? #this != null &amp;&amp; (#this.caseDefinitionKey != null || #this.caseDefinitionName != null || #this.caseDefinitionNameLike != null) }.size() &gt; 0" />
+    <bind name="CE_JOIN" value="queries.{? #this != null &amp;&amp; (#this.caseInstanceBusinessKey != null || #this.caseInstanceBusinessKeyLike != null) }.size() &gt; 0" />
+    <bind name="E1_JOIN" value="queries.{? #this != null &amp;&amp; (#this.activityInstanceIdIn != null &amp;&amp; #this.activityInstanceIdIn.length > 0) }.size() &gt; 0" />
 
     <if test="I_JOIN">
       <!-- Identity links are always left-joined, because the involvedUser criterion

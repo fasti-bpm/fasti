@@ -347,6 +347,37 @@ public class HistoricProcessInstanceQueryOrTest {
 
   @Test
   @Deployment(resources={"org/camunda/bpm/engine/test/api/oneTaskProcess.bpmn20.xml"})
+  public void shouldQueryByVariablesOfMainAndOrQuery() {
+    // GIVEN
+    String processInstanceIdOne = runtimeService.startProcessInstanceByKey("oneTaskProcess",
+        Variables.putValue("foo", "bar").putValue("baz", "one")).getProcessInstanceId();
+    String processInstanceIdTwo = runtimeService.startProcessInstanceByKey("oneTaskProcess",
+        Variables.putValue("foo", "bar").putValue("qux", "two")).getProcessInstanceId();
+    // does not match the main query
+    runtimeService.startProcessInstanceByKey("oneTaskProcess",
+        Variables.putValue("foo", "other").putValue("baz", "one"));
+    // does not match the 'or' query
+    runtimeService.startProcessInstanceByKey("oneTaskProcess",
+        Variables.putValue("foo", "bar").putValue("qux", "one"));
+
+    // WHEN
+    // every variable condition joins the variable table under its own name
+    List<HistoricProcessInstance> processInstances = historyService.createHistoricProcessInstanceQuery()
+        .variableValueEquals("foo", "bar")
+        .or()
+          .variableValueEquals("baz", "one")
+          .variableValueEquals("qux", "two")
+        .endOr()
+        .list();
+
+    // THEN
+    assertThat(processInstances)
+        .extracting("processInstanceId")
+        .containsExactlyInAnyOrder(processInstanceIdOne, processInstanceIdTwo);
+  }
+
+  @Test
+  @Deployment(resources={"org/camunda/bpm/engine/test/api/oneTaskProcess.bpmn20.xml"})
   public void shouldQueryByVariableValue_5() {
     // GIVEN
     String processInstanceIdOne = runtimeService.startProcessInstanceByKey("oneTaskProcess",

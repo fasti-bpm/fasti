@@ -236,21 +236,11 @@
   <sql id="selectProcessInstanceByQueryCriteriaSql">
 
     from ${prefix}ACT_RU_EXECUTION RES
-    <bind name="INC_JOIN" value="false" />
-    <bind name="EXE_JOIN" value="false" />
-    <bind name="JOIN_TYPE" value="'inner join'" />
-
-    <foreach collection="queries" item="query">
-      <if test="query.isOrQueryActive">
-        <bind name="JOIN_TYPE" value="'left join'" />
-      </if>
-      <if test="query != null &amp;&amp; (query.withIncident || query.incidentType != null || query.incidentId != null || query.incidentMessage != null || query.incidentMessageLike != null)">
-        <bind name="INC_JOIN" value="true" />
-      </if>
-      <if test="query != null &amp;&amp; (query.activityIds != null &amp;&amp; query.activityIds.length > 0)">
-        <bind name="EXE_JOIN" value="true" />
-      </if>
-    </foreach>
+    <!-- A bind inside a foreach is local to its iteration since MyBatis 3.6, so every join
+      flag is one expression over all queries ({? } selects the queries that need the join) -->
+    <bind name="JOIN_TYPE" value="queries.{? #this.isOrQueryActive }.size() &gt; 0 ? 'left join' : 'inner join'" />
+    <bind name="INC_JOIN" value="queries.{? #this != null &amp;&amp; (#this.withIncident || #this.incidentType != null || #this.incidentId != null || #this.incidentMessage != null || #this.incidentMessageLike != null) }.size() &gt; 0" />
+    <bind name="EXE_JOIN" value="queries.{? #this != null &amp;&amp; (#this.activityIds != null &amp;&amp; #this.activityIds.length > 0) }.size() &gt; 0" />
 
     <if test="INC_JOIN">
       ${JOIN_TYPE} ${prefix}ACT_RU_INCIDENT INC on RES.ID_ = INC.PROC_INST_ID_

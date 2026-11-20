@@ -389,26 +389,12 @@
       )
     </if>
 
-    <bind name="HPI_JOIN" value="false" />
-    <bind name="D_JOIN" value="false" />
-    <bind name="CD_JOIN" value="false" />
-    <bind name="JOIN_TYPE" value="'inner join'" />
-
-    <foreach collection="queries" item="query">
-      <if test="query.isOrQueryActive">
-        <bind name="JOIN_TYPE" value="'left join'" />
-      </if>
-      <if test="query != null &amp;&amp; (query.processFinished || query.processUnfinished || query.processInstanceBusinessKey != null || query.processInstanceBusinessKeyLike != null ||
-              (query.processInstanceBusinessKeys != null &amp;&amp; query.processInstanceBusinessKeys.length > 0))">
-        <bind name="HPI_JOIN" value="true" />
-      </if>
-      <if test="query != null &amp;&amp; (query.processDefinitionKey != null || query.processDefinitionName != null)">
-        <bind name="D_JOIN" value="true" />
-      </if>
-      <if test="query != null &amp;&amp; (query.caseDefinitionKey != null || query.caseDefinitionName != null)">
-        <bind name="CD_JOIN" value="true" />
-      </if>
-    </foreach>
+    <!-- A bind inside a foreach is local to its iteration since MyBatis 3.6, so every join
+      flag is one expression over all queries ({? } selects the queries that need the join) -->
+    <bind name="JOIN_TYPE" value="queries.{? #this.isOrQueryActive }.size() &gt; 0 ? 'left join' : 'inner join'" />
+    <bind name="HPI_JOIN" value="queries.{? #this != null &amp;&amp; (#this.processFinished || #this.processUnfinished || #this.processInstanceBusinessKey != null || #this.processInstanceBusinessKeyLike != null || (#this.processInstanceBusinessKeys != null &amp;&amp; #this.processInstanceBusinessKeys.length > 0)) }.size() &gt; 0" />
+    <bind name="D_JOIN" value="queries.{? #this != null &amp;&amp; (#this.processDefinitionKey != null || #this.processDefinitionName != null) }.size() &gt; 0" />
+    <bind name="CD_JOIN" value="queries.{? #this != null &amp;&amp; (#this.caseDefinitionKey != null || #this.caseDefinitionName != null) }.size() &gt; 0" />
 
     <if test="HPI_JOIN">
       ${JOIN_TYPE} ${prefix}ACT_HI_PROCINST HPI ON RES.PROC_INST_ID_ = HPI.ID_

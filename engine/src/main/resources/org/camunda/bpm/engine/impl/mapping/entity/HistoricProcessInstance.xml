@@ -400,28 +400,12 @@
         )
     </if>
 
-    <bind name="INC_JOIN" value="false" />
-    <bind name="HAI_JOIN" value="false" />
-    <bind name="RU_EXE_JOIN" value="false" />
-    <bind name="JOIN_TYPE" value="'inner join'" />
-
-    <foreach collection="queries" item="query">
-
-      <if test="query != null &amp;&amp; (query.withIncidents || query.withRootIncidents || query.incidentStatus != null || query.incidentMessage != null || query.incidentMessageLike != null || query.incidentType != null || (query.incidentIds != null &amp;&amp; query.incidentIds.length > 0))">
-        <bind name="INC_JOIN" value="true" />
-        <if test="query.isOrQueryActive">
-          <bind name="JOIN_TYPE" value="'left join'" />
-        </if>
-      </if>
-
-      <if test="query != null &amp;&amp; (query.executedActivityIds != null and query.executedActivityIds.length > 0) || (query.activeActivityIds != null and query.activeActivityIds.length > 0)">
-        <bind name="HAI_JOIN" value="true" />
-      </if>
-
-      <if test="query != null &amp;&amp; (query.activityIds != null and query.activityIds.length > 0)">
-        <bind name="RU_EXE_JOIN" value="true" />
-      </if>
-    </foreach>
+    <!-- A bind inside a foreach is local to its iteration since MyBatis 3.6, so every join
+      flag is one expression over all queries ({? } selects the queries that need the join) -->
+    <bind name="INC_JOIN" value="queries.{? #this != null &amp;&amp; (#this.withIncidents || #this.withRootIncidents || #this.incidentStatus != null || #this.incidentMessage != null || #this.incidentMessageLike != null || #this.incidentType != null || (#this.incidentIds != null &amp;&amp; #this.incidentIds.length > 0)) }.size() &gt; 0" />
+    <bind name="JOIN_TYPE" value="queries.{? (#this != null &amp;&amp; (#this.withIncidents || #this.withRootIncidents || #this.incidentStatus != null || #this.incidentMessage != null || #this.incidentMessageLike != null || #this.incidentType != null || (#this.incidentIds != null &amp;&amp; #this.incidentIds.length > 0))) &amp;&amp; #this.isOrQueryActive }.size() &gt; 0 ? 'left join' : 'inner join'" />
+    <bind name="HAI_JOIN" value="queries.{? #this != null &amp;&amp; (#this.executedActivityIds != null and #this.executedActivityIds.length > 0) || (#this.activeActivityIds != null and #this.activeActivityIds.length > 0) }.size() &gt; 0" />
+    <bind name="RU_EXE_JOIN" value="queries.{? #this != null &amp;&amp; (#this.activityIds != null and #this.activityIds.length > 0) }.size() &gt; 0" />
 
     <if test="INC_JOIN">
       ${JOIN_TYPE} ${prefix}ACT_HI_INCIDENT INC on SELF.PROC_INST_ID_ = INC.PROC_INST_ID_
@@ -437,17 +421,18 @@
     <!-- actual value conditions are checked in the WHERE part;
        however here we must join once for every variable condition.
        It is important that in the WHERE part we use the same table
-       names for the respective conditions (i.e. VI0, VI1, VI2, ...) -->
-    <bind name="variableConditionCounter" value="0" />
-    <foreach collection="queries" item="query">
-      <foreach collection="query.queryVariableNameToValuesMap">
-        LEFT JOIN ${prefix}ACT_HI_VARINST VI${variableConditionCounter}
-        ON SELF.PROC_INST_ID_ = VI${variableConditionCounter}.PROC_INST_ID_
-        <bind name="variableConditionCounter" value="variableConditionCounter + 1" />
+       names for the respective conditions (i.e. VI0_0, VI0_1, VI1_0, ...:
+       index of the query, then index of the variable name in that query).
+       The names are built from the foreach indexes rather than a counter that is
+       incremented with bind: a bind inside a foreach is local to its iteration
+       since MyBatis 3.6 -->
+    <foreach collection="queries" item="query" index="queryIndex">
+      <foreach collection="query.queryVariableNameToValuesMap.values()" index="variableIndex">
+        LEFT JOIN ${prefix}ACT_HI_VARINST VI${queryIndex}_${variableIndex}
+        ON SELF.PROC_INST_ID_ = VI${queryIndex}_${variableIndex}.PROC_INST_ID_
       </foreach>
     </foreach>
 
-    <bind name="variableConditionCounter" value="0" />
     <where>
       <foreach collection="queries" item="query" index="i">
         <choose>
@@ -632,8 +617,8 @@
               ${queryType} SELF.PROC_INST_ID_ = (select SUPER_PROCESS_INSTANCE_ID_ from ${prefix}ACT_HI_CASEINST where
               CASE_INST_ID_ = #{query.subCaseInstanceId})
             </if>
-            <foreach collection="query.queryVariableNameToValuesMap" item="queryVariableValues">
-              <bind name="varPrefix" value="'VI' + variableConditionCounter + '.'"/>
+            <foreach collection="query.queryVariableNameToValuesMap.values()" item="queryVariableValues" index="variableIndex">
+              <bind name="varPrefix" value="'VI' + i + '_' + variableIndex + '.'"/>
               <foreach collection="queryVariableValues" item="queryVariableValue">
                 ${queryType} (${varPrefix}ID_ IS NOT NULL
                 AND
@@ -646,7 +631,6 @@
                 </if>
                 )
               </foreach>
-              <bind name="variableConditionCounter" value="variableConditionCounter + 1" />
             </foreach>
 
             <if test="query.executedActivityAfter != null || query.executedActivityBefore != null">

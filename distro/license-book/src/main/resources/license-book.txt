@@ -6009,7 +6009,7 @@ https://github.com/jspecify/jspecify/
 Licensed under Apache 2.0
 
 ===========================================================================================
-org.mybatis:mybatis:jar:3.5.19
+org.mybatis:mybatis:jar:3.6.0
 https://github.com/mybatis/mybatis-3
 Copyright various authors: https://mybatis.org/mybatis-3/team.html
    Copyright 2010 The Apache Software Foundation

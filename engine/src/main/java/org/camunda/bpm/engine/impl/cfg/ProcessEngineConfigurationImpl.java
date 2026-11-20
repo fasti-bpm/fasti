@@ -143,6 +143,7 @@ import org.camunda.bpm.engine.impl.db.entitymanager.DbEntityManagerFactory;
 import org.camunda.bpm.engine.impl.db.entitymanager.cache.DbEntityCacheKeyMapping;
 import org.camunda.bpm.engine.impl.db.sql.DbSqlPersistenceProviderFactory;
 import org.camunda.bpm.engine.impl.db.sql.DbSqlSessionFactory;
+import org.camunda.bpm.engine.impl.db.sql.MyBatisConfiguration;
 import org.camunda.bpm.engine.impl.delegate.DefaultDelegateInterceptor;
 import org.camunda.bpm.engine.impl.diagnostics.DiagnosticsCollector;
 import org.camunda.bpm.engine.impl.diagnostics.DiagnosticsRegistry;
@@ -1894,7 +1895,7 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
 
           initSqlSessionFactoryProperties(properties, databaseTablePrefix, databaseType);
 
-          XMLConfigBuilder parser = new XMLConfigBuilder(reader, "", properties);
+          XMLConfigBuilder parser = new XMLConfigBuilder(MyBatisConfiguration.class, reader, "", properties);
           Configuration configuration = parser.getConfiguration();
           configuration.setEnvironment(environment);
           configuration = parser.parse();

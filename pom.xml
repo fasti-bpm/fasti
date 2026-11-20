@@ -33,7 +33,7 @@
     <license.includeTransitiveDependencies>false</license.includeTransitiveDependencies>
 
     <!-- These properties are used in both the BOM as well as fasti-parent and subprojects -->
-    <version.mybatis>3.5.19</version.mybatis>
+    <version.mybatis>3.6.0</version.mybatis>
     <version.joda-time>2.15.1</version.joda-time>
     <version.uuid-generator>5.2.0</version.uuid-generator>
     <version.feel-scala>1.19.6</version.feel-scala>

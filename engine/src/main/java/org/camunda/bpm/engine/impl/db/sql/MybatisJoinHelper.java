@@ -17,6 +17,7 @@
 package org.camunda.bpm.engine.impl.db.sql;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.camunda.bpm.engine.impl.ProcessEngineLogger;
@@ -100,6 +101,28 @@ public class MybatisJoinHelper {
 
     return sb.toString();
 
+  }
+
+  /**
+   * Returns the complete ORDER BY list for the given ordering properties, or the default
+   * order if there are none. The mappings compute it in one expression instead of
+   * accumulating it over the iterations of a {@code <foreach>}: since MyBatis 3.6 a
+   * {@code <bind>} inside a {@code <foreach>} is only visible within its iteration.
+   */
+  public static String orderBy(List<QueryOrderingProperty> orderingProperties) {
+    if (orderingProperties == null || orderingProperties.isEmpty()) {
+      return DEFAULT_ORDER;
+    }
+
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < orderingProperties.size(); i++) {
+      if (i > 0) {
+        sb.append(", ");
+      }
+      sb.append(orderBy(orderingProperties.get(i), i));
+    }
+
+    return sb.toString();
   }
 
   protected static MyBatisTableMapping getTableMapping(String relation) {

@@ -3,7 +3,7 @@
 
 # Fasti BPM with PostgreSQL 16, for a new installation.
 #
-# Guide: docs/cai-dat-docker.md. Before the first start, create the two secret files next to
+# Guide: docs/install-docker.md. Before the first start, create the two secret files next to
 # this file (they must be readable by the container users, uid 999 for PostgreSQL and uid 1000
 # for Fasti):
 #

@@ -84,13 +84,7 @@ Contents:
 
 ==================
 
-!!! QUAN TRONG / IMPORTANT: tiep quan co so du lieu cua Camunda Run /
-!!! taking over the database of Camunda Run
-
-  Engine giu jobExecutorDeploymentAware=true: job (timer, async, retry) cua
-  deployment tao boi Camunda Run hoac qua REST API KHONG CHAY va khong bao
-  loi. Truoc khi khoi dong tren co so du lieu do, dat property nay thanh
-  false cho engine trong standalone/configuration/standalone.xml.
+!!! IMPORTANT: taking over the database of Camunda Run
 
   The engine keeps jobExecutorDeploymentAware=true: jobs (timers, async
   continuations, retries) of deployments made by Camunda Run or through the
@@ -100,15 +94,7 @@ Contents:
 
 ==================
 
-Bao mat / Security:
-
-  REST API (/engine-rest) YEU CAU DANG NHAP (HTTP Basic) theo mac dinh: moi
-  client phai gui ten va mat khau cua mot nguoi dung cua engine
-  (curl -u nguoidung:matkhau ...); khong co thi tra 401. Chi danh sach engine
-  (/engine) la mo. Khac voi Camunda 7.24 (REST mo): client REST cu phai gui
-  thong tin dang nhap. Tat xac thuc (KHONG khuyen nghi): trong
-  WEB-INF/web.xml cua standalone/deployments/fasti-engine-rest-*.war xoa bo loc
-  "camunda-auth" va filter-mapping cua no.
+Security:
 
   The REST API (/engine-rest) REQUIRES AUTHENTICATION (HTTP Basic) by
   default: every client must send the user name and the password of a user
@@ -122,17 +108,40 @@ Bao mat / Security:
 
 ==================
 
-Dang nhap mot lan (OpenID Connect) / Single sign-on (OpenID Connect):
-
-  Sao chep server/wildfly-${version.wildfly}/standalone/configuration/fasti-oidc.properties.example
-  thanh fasti-oidc.properties, dien nha cung cap va client, roi khoi dong lai.
-  Khong co tep nay thi nguoi dung dang nhap bang mat khau nhu truoc.
+Single sign-on (OpenID Connect):
 
   Copy server/wildfly-${version.wildfly}/standalone/configuration/fasti-oidc.properties.example
   to fasti-oidc.properties, fill in the provider and the client, and restart.
   Without that file users sign in with a password as before. The same file
   enables bearer tokens on /engine-rest (fasti.security.oidc.rest.*); HTTP
   Basic keeps working unless fasti.security.oidc.rest.basic-enabled=false.
+
+==================
+
+Tieng Viet (Vietnamese):
+
+!!! QUAN TRONG: tiep quan co so du lieu cua Camunda Run
+
+  Engine giu jobExecutorDeploymentAware=true: job (timer, async, retry) cua
+  deployment tao boi Camunda Run hoac qua REST API KHONG CHAY va khong bao
+  loi. Truoc khi khoi dong tren co so du lieu do, dat property nay thanh
+  false cho engine trong standalone/configuration/standalone.xml.
+
+Bao mat:
+
+  REST API (/engine-rest) YEU CAU DANG NHAP (HTTP Basic) theo mac dinh: moi
+  client phai gui ten va mat khau cua mot nguoi dung cua engine
+  (curl -u nguoidung:matkhau ...); khong co thi tra 401. Chi danh sach engine
+  (/engine) la mo. Khac voi Camunda 7.24 (REST mo): client REST cu phai gui
+  thong tin dang nhap. Tat xac thuc (KHONG khuyen nghi): trong
+  WEB-INF/web.xml cua standalone/deployments/fasti-engine-rest-*.war xoa bo loc
+  "camunda-auth" va filter-mapping cua no.
+
+Dang nhap mot lan (OpenID Connect):
+
+  Sao chep server/wildfly-${version.wildfly}/standalone/configuration/fasti-oidc.properties.example
+  thanh fasti-oidc.properties, dien nha cung cap va client, roi khoi dong lai.
+  Khong co tep nay thi nguoi dung dang nhap bang mat khau nhu truoc.
 
 ==================
 

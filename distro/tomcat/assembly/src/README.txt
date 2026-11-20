@@ -22,21 +22,8 @@ the Apache License v2.0 license.
 
 ==================
 
-!!! QUAN TRONG khi tiep quan co so du lieu cua Camunda Run (hoac cua mot
-!!! may chu ma process duoc deploy qua REST API)
 !!! IMPORTANT when taking over the database of Camunda Run (or of a server
 !!! whose processes were deployed through the REST API)
-
-  Ban Tomcat nay giu jobExecutorDeploymentAware=true (mac dinh cua Tomcat
-  trong Camunda 7, can cho process application): job executor chi chay job
-  (timer, async, retry) cua deployment da dang ky tren may chu nay. Job cua
-  deployment tao boi Camunda Run hoac qua REST API se KHONG CHAY va khong bao
-  loi. Truoc khi khoi dong tren co so du lieu do, trong
-  server/apache-tomcat-${version.tomcat}/conf/bpm-platform.xml dat
-      <property name="jobExecutorDeploymentAware">false</property>
-  Khong doi neu cac node khac (Camunda 7) dung process application co lop
-  Java rieng: xem huong dan chuyen doi (docs/chuyen-tu-camunda-7.md trong
-  kho ma nguon), muc "Chay lan voi node Camunda 7".
 
   This Tomcat bundle keeps jobExecutorDeploymentAware=true (the Tomcat
   default of Camunda 7, needed for process applications): the job executor
@@ -47,7 +34,7 @@ the Apache License v2.0 license.
   server/apache-tomcat-${version.tomcat}/conf/bpm-platform.xml
       <property name="jobExecutorDeploymentAware">false</property>
   Keep it if other (Camunda 7) nodes run process applications with Java
-  classes of their own: see the migration guide (docs/chuyen-tu-camunda-7.md
+  classes of their own: see the migration guide (docs/migrate-from-camunda-7.md
   in the source repository), "Mixed operation with Camunda 7 nodes".
 
 ==================
@@ -76,8 +63,8 @@ Contents:
         http://localhost:8080/engine-rest
 
         No user exists after the first start: open http://localhost:8080/fasti/
-        and create the first administrator on the setup page (see "Nguoi
-        quan tri dau tien / First administrator" below).
+        and create the first administrator on the setup page (see "First
+        administrator" below).
 
         The classic Cockpit, Tasklist, Admin and Welcome applications
         (/fasti/app/cockpit/, ...) are NOT served by default: they are
@@ -117,15 +104,7 @@ Contents:
 
 ==================
 
-Nguoi quan tri dau tien / First administrator:
-
-  Ban phan phoi khong tao san nguoi dung nao. Lan dau mo
-  http://localhost:8080/fasti/ khi engine chua co quan tri vien, giao dien
-  web hien trang thiet lap: nhap ten dang nhap va mat khau cua quan tri vien
-  dau tien (nhom camunda-admin). Trang nay tu dong khi da co quan tri vien.
-  Sau do dang nhap bang tai khoan nay, tao them nguoi dung trong Quan tri.
-  Tiep quan co so du lieu cua Camunda 7 thi dang nhap bang tai khoan co san.
-  REST API khong tao duoc quan tri vien dau tien (no can dang nhap).
+First administrator:
 
   The distribution creates no users. When you first open
   http://localhost:8080/fasti/ and the engine has no administrator yet,
@@ -138,26 +117,7 @@ Nguoi quan tri dau tien / First administrator:
 
 ==================
 
-Co so du lieu / Database:
-
-  Mac dinh dung H2 (thu muc camunda-h2-dbs, tinh tu thu muc hien hanh
-  khi khoi dong), chi de thu. Chi co driver H2 di kem. Doi sang PostgreSQL (tuong tu cho
-  MySQL, MariaDB, Oracle, SQL Server, DB2):
-  1. Chep jar driver JDBC (vd. postgresql-42.7.x.jar) vao
-     server/apache-tomcat-${version.tomcat}/lib/.
-  2. Trong server/apache-tomcat-${version.tomcat}/conf/server.xml, sua
-     <Resource name="jdbc/ProcessEngine" ...>: driverClassName, url,
-     username, password.
-  3. Khoi dong lai. Co so du lieu trong: bang duoc tao tu dong
-     (databaseSchemaUpdate trong conf/bpm-platform.xml) hoac chay truoc
-     sql/create/<db>_engine_*.sql va <db>_identity_*.sql. Co so du lieu cua
-     Camunda 7.24 dung duoc ngay, khong doi schema.
-  Khi tiep quan co so du lieu cua Camunda Run (hoac deploy qua REST), dat
-  jobExecutorDeploymentAware thanh false trong conf/bpm-platform.xml, neu
-  khong timer va job async cua cac deployment do se khong chay (xem muc
-  QUAN TRONG o dau tep).
-  Neu PostgreSQL bao invalid value for parameter "TimeZone": "Asia/Saigon"
-  (Windows), dat bien moi truong CATALINA_OPTS=-Duser.timezone=Asia/Ho_Chi_Minh.
+Database:
 
   H2 is used by default (directory camunda-h2-dbs, relative to the working
   directory at startup), for trying things out only. Only the H2 driver is bundled. To use
@@ -183,19 +143,7 @@ Co so du lieu / Database:
 
 ==================
 
-Bao mat / Security:
-
-  REST API (/engine-rest) YEU CAU DANG NHAP (HTTP Basic) theo mac dinh: moi
-  client phai gui ten va mat khau cua mot nguoi dung cua engine, vd.
-      curl -u nguoidung:matkhau http://localhost:8080/engine-rest/engine/default/process-definition
-  Khong co thong tin dang nhap thi tra 401. Chi danh sach engine (/engine)
-  la mo. Khac voi Camunda 7.24 (REST mo): client REST cu phai gui thong tin
-  dang nhap sau khi chuyen sang Fasti.
-  Tat xac thuc (KHONG khuyen nghi; ai goi duoc may chu deu co toan quyen):
-  trong server/apache-tomcat-${version.tomcat}/webapps/engine-rest/WEB-INF/web.xml
-  xoa (hoac dat vao chu thich) bo loc "camunda-auth" va filter-mapping cua no.
-  Bearer token OpenID Connect: xem phan duoi; khi bat, request co token hop le
-  di qua bo loc "camunda-auth" ma khong can mat khau.
+Security:
 
   The REST API (/engine-rest) REQUIRES AUTHENTICATION (HTTP Basic) by
   default: every client must send the user name and the password of a user
@@ -220,17 +168,82 @@ Bao mat / Security:
 
 ==================
 
-Dang nhap mot lan (OpenID Connect) / Single sign-on (OpenID Connect):
-
-  Sao chep server/apache-tomcat-${version.tomcat}/conf/fasti-oidc.properties.example
-  thanh fasti-oidc.properties, dien nha cung cap va client, roi khoi dong lai.
-  Khong co tep nay thi nguoi dung dang nhap bang mat khau nhu truoc.
+Single sign-on (OpenID Connect):
 
   Copy server/apache-tomcat-${version.tomcat}/conf/fasti-oidc.properties.example
   to fasti-oidc.properties, fill in the provider and the client, and restart.
   Without that file users sign in with a password as before. The same file
   enables bearer tokens on /engine-rest (fasti.security.oidc.rest.*); HTTP
   Basic keeps working unless fasti.security.oidc.rest.basic-enabled=false.
+
+==================
+
+Tieng Viet (Vietnamese):
+
+!!! QUAN TRONG khi tiep quan co so du lieu cua Camunda Run (hoac cua mot
+!!! may chu ma process duoc deploy qua REST API)
+
+  Ban Tomcat nay giu jobExecutorDeploymentAware=true (mac dinh cua Tomcat
+  trong Camunda 7, can cho process application): job executor chi chay job
+  (timer, async, retry) cua deployment da dang ky tren may chu nay. Job cua
+  deployment tao boi Camunda Run hoac qua REST API se KHONG CHAY va khong bao
+  loi. Truoc khi khoi dong tren co so du lieu do, trong
+  server/apache-tomcat-${version.tomcat}/conf/bpm-platform.xml dat
+      <property name="jobExecutorDeploymentAware">false</property>
+  Khong doi neu cac node khac (Camunda 7) dung process application co lop
+  Java rieng: xem huong dan chuyen doi (docs/migrate-from-camunda-7.vi.md trong
+  kho ma nguon), muc "Chay lan voi node Camunda 7".
+
+Nguoi quan tri dau tien:
+
+  Ban phan phoi khong tao san nguoi dung nao. Lan dau mo
+  http://localhost:8080/fasti/ khi engine chua co quan tri vien, giao dien
+  web hien trang thiet lap: nhap ten dang nhap va mat khau cua quan tri vien
+  dau tien (nhom camunda-admin). Trang nay tu dong khi da co quan tri vien.
+  Sau do dang nhap bang tai khoan nay, tao them nguoi dung trong Quan tri.
+  Tiep quan co so du lieu cua Camunda 7 thi dang nhap bang tai khoan co san.
+  REST API khong tao duoc quan tri vien dau tien (no can dang nhap).
+
+Co so du lieu:
+
+  Mac dinh dung H2 (thu muc camunda-h2-dbs, tinh tu thu muc hien hanh
+  khi khoi dong), chi de thu. Chi co driver H2 di kem. Doi sang PostgreSQL (tuong tu cho
+  MySQL, MariaDB, Oracle, SQL Server, DB2):
+  1. Chep jar driver JDBC (vd. postgresql-42.7.x.jar) vao
+     server/apache-tomcat-${version.tomcat}/lib/.
+  2. Trong server/apache-tomcat-${version.tomcat}/conf/server.xml, sua
+     <Resource name="jdbc/ProcessEngine" ...>: driverClassName, url,
+     username, password.
+  3. Khoi dong lai. Co so du lieu trong: bang duoc tao tu dong
+     (databaseSchemaUpdate trong conf/bpm-platform.xml) hoac chay truoc
+     sql/create/<db>_engine_*.sql va <db>_identity_*.sql. Co so du lieu cua
+     Camunda 7.24 dung duoc ngay, khong doi schema.
+  Khi tiep quan co so du lieu cua Camunda Run (hoac deploy qua REST), dat
+  jobExecutorDeploymentAware thanh false trong conf/bpm-platform.xml, neu
+  khong timer va job async cua cac deployment do se khong chay (xem muc
+  QUAN TRONG o dau tep).
+  Neu PostgreSQL bao invalid value for parameter "TimeZone": "Asia/Saigon"
+  (Windows), dat bien moi truong CATALINA_OPTS=-Duser.timezone=Asia/Ho_Chi_Minh.
+
+Bao mat:
+
+  REST API (/engine-rest) YEU CAU DANG NHAP (HTTP Basic) theo mac dinh: moi
+  client phai gui ten va mat khau cua mot nguoi dung cua engine, vd.
+      curl -u nguoidung:matkhau http://localhost:8080/engine-rest/engine/default/process-definition
+  Khong co thong tin dang nhap thi tra 401. Chi danh sach engine (/engine)
+  la mo. Khac voi Camunda 7.24 (REST mo): client REST cu phai gui thong tin
+  dang nhap sau khi chuyen sang Fasti.
+  Tat xac thuc (KHONG khuyen nghi; ai goi duoc may chu deu co toan quyen):
+  trong server/apache-tomcat-${version.tomcat}/webapps/engine-rest/WEB-INF/web.xml
+  xoa (hoac dat vao chu thich) bo loc "camunda-auth" va filter-mapping cua no.
+  Bearer token OpenID Connect: xem phan duoi; khi bat, request co token hop le
+  di qua bo loc "camunda-auth" ma khong can mat khau.
+
+Dang nhap mot lan (OpenID Connect):
+
+  Sao chep server/apache-tomcat-${version.tomcat}/conf/fasti-oidc.properties.example
+  thanh fasti-oidc.properties, dien nha cung cap va client, roi khoi dong lai.
+  Khong co tep nay thi nguoi dung dang nhap bang mat khau nhu truoc.
 
 ==================
 

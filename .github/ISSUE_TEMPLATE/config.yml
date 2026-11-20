@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Lỗ hổng bảo mật / Security vulnerability
+  - name: Security vulnerability
     url: https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability
-    about: Báo riêng qua tab Security của repository (xem SECURITY.md) / Report privately through the repository's Security tab (see SECURITY.md)
+    about: Report privately through the repository's Security tab (see SECURITY.md). Báo riêng qua tab Security (xem SECURITY.vi.md).

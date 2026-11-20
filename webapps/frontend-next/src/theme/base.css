@@ -95,12 +95,12 @@ a {
   position: absolute;
   top: var(--s-2);
   inset-inline-start: var(--s-2);
-  z-index: 100;
+  z-index: var(--z-skip-link);
   padding: var(--s-2) var(--s-3);
   border-radius: var(--r-md);
   background: var(--accent);
   color: var(--text-on-accent);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   text-decoration: none;
   transform: translateY(-200%);
 }

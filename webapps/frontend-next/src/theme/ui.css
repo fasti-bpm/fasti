@@ -73,7 +73,7 @@
 
 .btn--danger {
   background: var(--danger);
-  color: var(--surface);
+  color: var(--text-on-danger);
   box-shadow: var(--shadow-xs);
 }
 
@@ -202,7 +202,7 @@
   border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--accent-soft-text);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .link {
@@ -213,7 +213,7 @@
   border: 0;
   background: none;
   color: var(--accent-soft-text);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -226,7 +226,7 @@
 .link--subtle {
   color: var(--text-subtle);
   font-size: var(--fs-sm);
-  font-weight: 400;
+  font-weight: var(--fw-regular);
 }
 
 /* --- inputs ------------------------------------------------------------- */
@@ -235,7 +235,7 @@
   width: 100%;
   min-height: var(--control-md);
   padding: var(--s-1) var(--s-3);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-control);
   border-radius: var(--r-md);
   background: var(--input-bg);
   box-shadow: var(--shadow-xs);
@@ -264,7 +264,7 @@ textarea.input {
 .input:is([type='date'], [type='datetime-local'], [type='time']):focus {
   outline: none;
   border-color: var(--focus);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 28%, transparent);
+  box-shadow: var(--focus-ring);
 }
 
 .input:disabled,
@@ -279,7 +279,7 @@ textarea.input {
 
 .input[aria-invalid='true']:focus-visible {
   border-color: var(--danger);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 24%, transparent);
+  box-shadow: var(--focus-ring-danger);
 }
 
 .field {
@@ -292,7 +292,7 @@ textarea.input {
 .field__label {
   color: var(--text-muted);
   font-size: var(--fs-sm);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .field__required {
@@ -307,7 +307,7 @@ textarea.input {
 .field__error {
   color: var(--danger);
   font-size: var(--fs-xs);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .checkbox {
@@ -315,7 +315,7 @@ textarea.input {
   align-items: center;
   gap: var(--s-2);
   min-height: 36px;
-  font-weight: 500;
+  font-weight: var(--fw-medium);
 }
 
 .checkbox input {
@@ -338,8 +338,8 @@ textarea.input {
   background: var(--surface);
   color: var(--text-muted);
   font-family: var(--font);
-  font-size: 0.6875rem;
-  font-weight: 600;
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
   justify-content: center;
   white-space: nowrap;
 }
@@ -359,7 +359,7 @@ textarea.input {
   background: var(--surface-subtle);
   color: var(--text-muted);
   font-size: var(--fs-xs);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   font-variant-numeric: tabular-nums;
   text-align: center;
 }
@@ -373,7 +373,7 @@ textarea.input {
   background: var(--surface-subtle);
   color: var(--text-muted);
   font-size: var(--fs-xs);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   white-space: nowrap;
 }
 
@@ -441,7 +441,7 @@ textarea.input {
   background: var(--accent-soft);
   color: var(--accent-soft-text);
   font-size: var(--fs-xs);
-  font-weight: 700;
+  font-weight: var(--fw-bold);
 }
 
 /* --- states ------------------------------------------------------------- */
@@ -536,7 +536,7 @@ textarea.input {
 .state__title {
   color: var(--text);
   font-size: var(--fs-lg);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   line-height: var(--lh-tight);
 }
 
@@ -584,7 +584,7 @@ textarea.input {
 
 .notice__title {
   margin-bottom: var(--s-1);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .notice__body {
@@ -612,7 +612,7 @@ textarea.input {
 /* --- floating layers ---------------------------------------------------- */
 
 .tooltip {
-  z-index: 60;
+  z-index: var(--z-tooltip);
   display: inline-flex;
   align-items: center;
   max-width: 280px;
@@ -621,13 +621,13 @@ textarea.input {
   background: var(--text);
   color: var(--surface);
   font-size: var(--fs-xs);
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   animation: fade var(--duration) var(--ease);
 }
 
 .menu,
 .popover {
-  z-index: 50;
+  z-index: var(--z-popover);
   min-width: 200px;
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
@@ -652,11 +652,11 @@ textarea.input {
   padding: var(--s-2) var(--s-3) var(--s-1);
   color: var(--text-subtle);
   font-size: var(--fs-xs);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .menu__sublabel {
-  font-weight: 400;
+  font-weight: var(--fw-regular);
 }
 
 .menu__item {
@@ -728,7 +728,7 @@ textarea.input {
 .dialog__overlay {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: var(--z-overlay);
   background: var(--overlay);
   animation: fade var(--duration) var(--ease);
 }
@@ -737,7 +737,7 @@ textarea.input {
   position: fixed;
   top: 50%;
   inset-inline-start: 50%;
-  z-index: 41;
+  z-index: var(--z-dialog);
   display: flex;
   flex-direction: column;
   width: min(480px, calc(100vw - 2 * var(--s-4)));
@@ -765,7 +765,7 @@ textarea.input {
 
 .dialog__title {
   font-size: var(--fs-lg);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .dialog__description {
@@ -782,7 +782,7 @@ textarea.input {
   position: fixed;
   top: 0;
   inset-inline-start: 50%;
-  z-index: 70;
+  z-index: var(--z-toast);
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
@@ -826,7 +826,7 @@ textarea.input {
 }
 
 .toast__title {
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .toast__detail {
@@ -841,7 +841,7 @@ textarea.input {
   position: fixed;
   top: min(18vh, 140px);
   inset-inline-start: 50%;
-  z-index: 41;
+  z-index: var(--z-dialog);
   display: flex;
   flex-direction: column;
   width: min(560px, calc(100vw - 2 * var(--s-4)));
@@ -882,7 +882,7 @@ textarea.input {
   padding: var(--s-2) var(--s-3) var(--s-1);
   color: var(--text-subtle);
   font-size: var(--fs-xs);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .palette__item {
@@ -938,7 +938,7 @@ textarea.input {
   margin: 0 0 var(--s-1);
   color: var(--text-subtle);
   font-size: var(--fs-xs);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
@@ -1010,7 +1010,7 @@ textarea.input {
 .segmented__item[aria-pressed='true'] {
   background: var(--accent-soft);
   color: var(--accent-soft-text);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .segmented__item:focus-visible {

@@ -91,12 +91,12 @@
   padding-inline-end: var(--s-5);
   color: var(--text-muted);
   font-size: var(--fs-sm);
-  font-weight: 500;
+  font-weight: var(--fw-medium);
 }
 
 .tile__value {
-  font-size: 1.875rem;
-  font-weight: 650;
+  font-size: var(--fs-3xl);
+  font-weight: var(--fw-bold);
   font-variant-numeric: tabular-nums;
   line-height: 1.25;
   letter-spacing: -0.02em;
@@ -114,7 +114,7 @@
 .tile__note {
   color: var(--text-subtle);
   font-size: var(--fs-xs);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .tile__go {
@@ -202,7 +202,7 @@
 
 .bar-list__link {
   color: var(--text);
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   text-decoration: none;
 }
 
@@ -216,7 +216,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   font-variant-numeric: tabular-nums;
 }
 
@@ -225,7 +225,7 @@
 .progress {
   display: block;
   width: 100%;
-  border-radius: 4px;
+  border-radius: var(--r-sm);
   overflow: hidden;
 }
 
@@ -255,7 +255,7 @@
   flex: none;
   width: 10px;
   height: 10px;
-  border-radius: 2px;
+  border-radius: var(--r-xs);
 }
 
 .parts__label {
@@ -265,7 +265,7 @@
 }
 
 .parts__value {
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   font-variant-numeric: tabular-nums;
 }
 
@@ -455,7 +455,7 @@
 .tree__node.is-selected {
   background: var(--accent-soft);
   color: var(--accent-soft-text);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .tree__name {
@@ -466,7 +466,7 @@
 .tree__hint {
   color: var(--text-subtle);
   font-size: var(--fs-xs);
-  font-weight: 400;
+  font-weight: var(--fw-regular);
   white-space: nowrap;
 }
 
@@ -597,7 +597,7 @@
 .variable-name {
   display: inline-block;
   min-width: 12ch;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   overflow-wrap: anywhere;
 }
 
@@ -693,7 +693,7 @@
   flex: 1;
   min-width: 0;
   font-size: var(--fs-md);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   overflow-wrap: anywhere;
 }
 
@@ -761,7 +761,7 @@
   }
 
   .tile__value {
-    font-size: 1.5rem;
+    font-size: var(--fs-2xl);
   }
 
   .search-input,
@@ -869,7 +869,7 @@
   border-radius: var(--r-full);
   background: var(--accent);
   color: var(--text-on-accent);
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   line-height: 24px;
   text-align: center;
 }
@@ -1083,7 +1083,7 @@
 .timeline-chart__track {
   position: relative;
   height: 14px;
-  border-radius: 4px;
+  border-radius: var(--r-sm);
   background: var(--surface-subtle);
 }
 
@@ -1092,7 +1092,7 @@
   top: 2px;
   bottom: 2px;
   min-width: 3px;
-  border-radius: 3px;
+  border-radius: var(--r-xs);
   background: var(--accent);
 }
 
@@ -1132,7 +1132,7 @@
 .views__label {
   color: var(--text-muted);
   font-size: var(--fs-sm);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .views__saved {
@@ -1203,7 +1203,7 @@
   margin: 0;
   padding: var(--s-3) var(--s-4) 0;
   font-size: var(--fs-md);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 /* the monitoring pages in groups: monitor, history, build and maintain */
@@ -1223,8 +1223,8 @@
 .cockpit__group-label {
   margin-inline-end: var(--s-1);
   color: var(--text-subtle);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1264,7 +1264,7 @@
   gap: var(--s-2);
   margin: 0;
   font-size: var(--fs-md);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .attention__list {
@@ -1381,7 +1381,7 @@
 
 .receipt__title {
   margin: 0;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   overflow-wrap: anywhere;
 }
 
@@ -1437,7 +1437,7 @@ a.trend:hover {
 
 .trend__value {
   font-size: var(--fs-2xl);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1484,7 +1484,7 @@ a.trend:hover {
   width: 18px;
   height: 12px;
   border: 2px solid var(--accent);
-  border-radius: 3px;
+  border-radius: var(--r-xs);
 }
 
 .migration-diff__swatch--unmapped {

@@ -10,14 +10,14 @@
   gap: var(--s-2);
   color: var(--text);
   font-size: 1.0625rem;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
 
 .wordmark__suffix {
   color: var(--text-subtle);
-  font-weight: 500;
+  font-weight: var(--fw-medium);
 }
 
 /* --- application shell -------------------------------------------------- */
@@ -74,7 +74,7 @@
   gap: var(--s-1);
   padding: 0 var(--s-3);
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   white-space: nowrap;
   text-decoration: none;
   transition: color var(--duration) var(--ease);
@@ -90,7 +90,7 @@
 
 .nav-link.active {
   color: var(--text);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .nav-link.active::after {
@@ -99,7 +99,7 @@
   bottom: 0;
   inset-inline-start: var(--s-3);
   height: 2px;
-  border-radius: 2px 2px 0 0;
+  border-radius: var(--r-xs) var(--r-xs) 0 0;
   background: var(--accent);
   content: '';
 }
@@ -205,7 +205,7 @@
 .user-btn__name {
   max-width: 160px;
   overflow: hidden;
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -305,7 +305,7 @@
 .login__title {
   margin-top: var(--s-2);
   font-size: var(--fs-xl);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   line-height: var(--lh-tight);
 }
 
@@ -376,7 +376,7 @@ a.login__submit {
   color: var(--text-muted);
   font: inherit;
   font-size: var(--fs-sm);
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   cursor: pointer;
 }
 
@@ -398,7 +398,7 @@ a.login__submit {
 
 .menu__item.is-active {
   color: var(--accent-soft-text);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 /* tab rows keep one line under all tabs and the menu */

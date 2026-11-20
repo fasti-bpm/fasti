@@ -23,12 +23,15 @@
   /* lines */
   --border: #dfe3e9;
   --border-strong: #c3cad4;
+  /* the frame of a field: at least 3:1 against the page and the cards (WCAG 1.4.11) */
+  --border-control: #858f9d;
 
   /* text */
   --text: #17202b;
   --text-muted: #4b5767;
-  --text-subtle: #667283;
+  --text-subtle: #5c6879;
   --text-on-accent: #ffffff;
+  --text-on-danger: #ffffff;
 
   /* the accent */
   --accent: #0b6b62;
@@ -69,6 +72,7 @@
   --s-10: 40px;
 
   /* shape */
+  --r-xs: 2px;
   --r-sm: 4px;
   --r-md: 6px;
   --r-lg: 10px;
@@ -80,23 +84,27 @@
     'Noto Sans', 'Liberation Sans', Arial, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Mono', 'Cascadia Code', 'SF Mono', 'JetBrains Mono', 'Roboto Mono', Menlo, Consolas,
     monospace;
+  --fs-2xs: 0.6875rem;
   --fs-xs: 0.75rem;
   --fs-sm: 0.8125rem;
   --fs-md: 0.875rem;
   --fs-lg: 1rem;
   --fs-xl: 1.25rem;
   --fs-2xl: 1.5rem;
+  --fs-3xl: 1.875rem;
   --lh-tight: 1.3;
   --lh: 1.5;
 
-  /* weights: 400 text, 500 interactive text, 600 headings and emphasis */
+  /* weights: 400 text, 500 interactive text, 600 headings and emphasis, 700 the brand and big numbers */
   --fw-regular: 400;
   --fw-medium: 500;
   --fw-semibold: 600;
+  --fw-bold: 700;
 
   /* controls: one height per size, larger where the pointer is a finger */
   --control-sm: 30px;
   --control-md: 36px;
+  --tab-height: 40px;
 
   /* disabled controls: a quiet surface instead of a faded colour */
   --disabled-bg: #eceff3;
@@ -106,11 +114,27 @@
   --shadow-xs: 0 1px 2px rgb(16 22 30 / 0.05);
   --shadow-card: 0 1px 2px rgb(16 22 30 / 0.04), 0 1px 1px rgb(16 22 30 / 0.03);
   --shadow-pop: 0 10px 30px rgb(16 22 30 / 0.14), 0 1px 3px rgb(16 22 30 / 0.1);
+  /* a bar that stays at the bottom while the content scrolls below it */
+  --shadow-sticky: 0 -6px 12px -10px rgb(16 22 30 / 0.25);
+  /* the edge of content that scrolls sideways */
+  --shadow-edge: rgb(0 0 0 / 0.22);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--focus) 28%, transparent);
+  --focus-ring-danger: 0 0 0 3px color-mix(in srgb, var(--danger) 24%, transparent);
   --duration: 140ms;
   --duration-slow: 220ms;
   --ease: cubic-bezier(0.2, 0, 0, 1);
 
   --header-height: 52px;
+
+  /* layers, from the content up */
+  --z-sticky: 1;
+  --z-dropdown: 20;
+  --z-overlay: 40;
+  --z-dialog: 41;
+  --z-popover: 50;
+  --z-tooltip: 60;
+  --z-toast: 70;
+  --z-skip-link: 100;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -126,10 +150,12 @@
     --overlay: rgb(0 0 0 / 0.6);
     --border: #28313c;
     --border-strong: #3a4553;
+    --border-control: #66717f;
     --text: #e7ebf0;
     --text-muted: #b1bac6;
     --text-subtle: #8c98a8;
     --text-on-accent: #04211d;
+    --text-on-danger: #14181e;
     --accent: #4cc7b6;
     --accent-hover: #6ad6c7;
     --accent-soft: #11302c;
@@ -153,6 +179,8 @@
     --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.3);
     --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.015), 0 1px 2px rgb(0 0 0 / 0.35);
     --shadow-pop: 0 12px 34px rgb(0 0 0 / 0.55), 0 0 0 1px rgb(255 255 255 / 0.06);
+    --shadow-sticky: 0 -6px 12px -10px rgb(0 0 0 / 0.6);
+    --shadow-edge: rgb(0 0 0 / 0.5);
     --disabled-bg: #20262e;
     --disabled-text: #6b7683;
   }
@@ -170,10 +198,12 @@
   --overlay: rgb(0 0 0 / 0.6);
   --border: #28313c;
   --border-strong: #3a4553;
+  --border-control: #66717f;
   --text: #e7ebf0;
   --text-muted: #b1bac6;
   --text-subtle: #8c98a8;
   --text-on-accent: #04211d;
+  --text-on-danger: #14181e;
   --accent: #4cc7b6;
   --accent-hover: #6ad6c7;
   --accent-soft: #11302c;
@@ -197,6 +227,8 @@
   --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.3);
   --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.015), 0 1px 2px rgb(0 0 0 / 0.35);
   --shadow-pop: 0 12px 34px rgb(0 0 0 / 0.55), 0 0 0 1px rgb(255 255 255 / 0.06);
+  --shadow-sticky: 0 -6px 12px -10px rgb(0 0 0 / 0.6);
+  --shadow-edge: rgb(0 0 0 / 0.5);
   --disabled-bg: #20262e;
   --disabled-text: #6b7683;
 }

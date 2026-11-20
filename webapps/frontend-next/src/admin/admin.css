@@ -50,7 +50,7 @@
 .admin-fact dt {
   color: var(--text-subtle);
   font-size: var(--fs-xs);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .admin-fact dd {
@@ -157,7 +157,7 @@
 
 .admin-choice legend .option__hint {
   display: block;
-  font-weight: 400;
+  font-weight: var(--fw-regular);
 }
 
 .admin-choice:disabled .admin-choice__item {
@@ -220,7 +220,7 @@
 .admin-segment__item.is-on {
   background: var(--accent-soft);
   color: var(--accent-soft-text);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .admin-segment__item:has(input:focus-visible) {
@@ -308,7 +308,7 @@
   align-items: center;
   gap: var(--s-2);
   margin: 0 0 var(--s-2);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .access-result__rules {
@@ -357,7 +357,7 @@
 }
 
 .health-item__label {
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .health-item__hint {
@@ -366,7 +366,7 @@
 
 .health-item__value {
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 /* the icon carries the colour; the text keeps the contrast of the theme */

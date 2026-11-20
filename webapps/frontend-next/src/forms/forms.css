@@ -15,7 +15,7 @@
   --bio-text-subtlest: var(--text-subtle);
   --bio-text-on-primary: var(--text-on-accent);
   --bio-border: var(--border-strong);
-  --bio-border-input: var(--border-strong);
+  --bio-border-input: var(--border-control);
   --bio-border-subtle: var(--border);
   --bio-border-disabled: var(--border);
   --bio-primary: var(--accent);
@@ -56,7 +56,7 @@
 
 .camunda-form .fjs-container .fjs-form-field-label {
   color: var(--text-muted);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .camunda-form .fjs-container .fjs-input,

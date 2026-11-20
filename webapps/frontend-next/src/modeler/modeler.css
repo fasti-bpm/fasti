@@ -73,7 +73,7 @@
   position: absolute;
   inset-block: 0;
   inset-inline-start: -4px;
-  z-index: 1;
+  z-index: var(--z-sticky);
   width: 8px;
   cursor: col-resize;
   touch-action: none;
@@ -93,7 +93,7 @@
 .props-panel__type {
   color: var(--text-subtle);
   font-size: var(--fs-xs);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -101,7 +101,7 @@
 .props-panel__title {
   margin: 2px 0 0;
   font-size: var(--fs-md);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   overflow-wrap: anywhere;
 }
 
@@ -127,7 +127,7 @@
 
 .props-field__label {
   font-size: var(--fs-sm);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .props-field__hint {
@@ -153,7 +153,7 @@
   gap: var(--s-2);
   min-height: var(--control-sm);
   font-size: var(--fs-sm);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .props-check input {
@@ -242,7 +242,7 @@
 
 .modeler-status__file {
   color: var(--text);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .modeler-status__dirty {
@@ -271,7 +271,7 @@
   background: none;
   color: var(--success);
   font: inherit;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   cursor: pointer;
 }
 
@@ -319,7 +319,7 @@
   --bio-text-on-primary: var(--text-on-accent);
   --bio-text-on-inverted: var(--surface);
   --bio-border: var(--border-strong);
-  --bio-border-input: var(--border-strong);
+  --bio-border-input: var(--border-control);
   --bio-border-subtle: var(--border);
   --bio-border-disabled: var(--border);
   --bio-primary: var(--accent);
@@ -352,7 +352,7 @@
   gap: var(--s-2);
   margin: 0;
   color: var(--success);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .readiness__summary--warning {
@@ -395,7 +395,7 @@
 }
 
 .readiness__element {
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 /* groups of the properties panel: trigger, mappings, listeners, form fields */
@@ -416,7 +416,7 @@
   gap: var(--s-2);
   padding: var(--s-1) 0;
   font-size: var(--fs-sm);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   cursor: pointer;
 }
 

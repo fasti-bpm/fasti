@@ -88,7 +88,7 @@
     <dependency>
       <groupId>dev.fasti.platform.commons</groupId>
       <artifactId>fasti-commons-testing</artifactId>
-      <version>${version}</version>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

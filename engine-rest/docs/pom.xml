@@ -16,6 +16,8 @@
   </description>
 
   <properties>
+    <!-- built for the Maven Central release, but not published -->
+    <skip.central.release>true</skip.central.release>
     <skip-third-party-bom>true</skip-third-party-bom>
   </properties>
 

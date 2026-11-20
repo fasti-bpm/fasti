@@ -13,6 +13,11 @@
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
 
+  <properties>
+    <!-- built for the Maven Central release, but not published -->
+    <skip.central.release>true</skip.central.release>
+  </properties>
+
   <parent>
     <groupId>dev.fasti.platform</groupId>
     <artifactId>fasti-external-task-client-root</artifactId>

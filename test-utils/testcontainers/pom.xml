@@ -17,6 +17,8 @@
   </description>
 
   <properties>
+    <!-- built for the Maven Central release, but not published -->
+    <skip.central.release>true</skip.central.release>
     <version.slf4j>1.7.36</version.slf4j>
   </properties>
 

@@ -109,6 +109,43 @@
         <skip.frontend.build>true</skip.frontend.build>
       </properties>
     </profile>
+    <profile>
+      <!-- Maven Central release (profile "central" of the root POM): this module has no Java
+           sources, so Central's required sources and javadoc jars are placeholders with a README. -->
+      <id>central</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>placeholder-sources</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+                <configuration>
+                  <classifier>sources</classifier>
+                  <classesDirectory>${maven.multiModuleProjectDirectory}/build-config/central-placeholder</classesDirectory>
+                </configuration>
+              </execution>
+              <execution>
+                <id>placeholder-javadoc</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+                <configuration>
+                  <classifier>javadoc</classifier>
+                  <classesDirectory>${maven.multiModuleProjectDirectory}/build-config/central-placeholder</classesDirectory>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
 </project>

@@ -16,6 +16,8 @@
   </parent>
 
   <properties>
+    <!-- built for the Maven Central release, but not published -->
+    <skip.central.release>true</skip.central.release>
     <version.json-schema-validator>1.0.76</version.json-schema-validator>
   </properties>
 

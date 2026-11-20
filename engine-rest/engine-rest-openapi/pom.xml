@@ -240,6 +240,36 @@
         </plugins>
       </build>
     </profile>
+    <profile>
+      <!-- Maven Central release (profile "central" of the root POM): the module has no Java
+           sources of its own (the generated client is a test source), so the javadoc jar that
+           Central requires is a placeholder with a README. -->
+      <id>central</id>
+      <properties>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>placeholder-javadoc</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+                <configuration>
+                  <classifier>javadoc</classifier>
+                  <classesDirectory>${maven.multiModuleProjectDirectory}/build-config/central-placeholder</classesDirectory>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
 </project>

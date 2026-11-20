@@ -122,18 +122,19 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- used by the tests directly; also part of the Tomcat distribution (profile tomcat-runtime) -->
     <dependency>
-      <groupId>dev.fasti.platform.tomcat</groupId>
-      <artifactId>fasti-tomcat-assembly</artifactId>
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine</artifactId>
       <version>${project.version}</version>
-      <type>tar.gz</type>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>slf4j-api</artifactId>
-          <groupId>org.slf4j</groupId>
-        </exclusion>
-      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>dev.fasti.platform.spin</groupId>
+      <artifactId>fasti-spin-core</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -372,5 +373,35 @@
     </testResources>
 
   </build>
+
+  <profiles>
+    <profile>
+      <!-- The integration tests run against the Tomcat distribution. Builds that skip the
+           tests (such as the Maven Central release, which does not build the distributions)
+           do not need it. -->
+      <id>tomcat-runtime</id>
+      <activation>
+        <property>
+          <name>skipTests</name>
+          <value>!true</value>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>dev.fasti.platform.tomcat</groupId>
+          <artifactId>fasti-tomcat-assembly</artifactId>
+          <version>${project.version}</version>
+          <type>tar.gz</type>
+          <scope>test</scope>
+          <exclusions>
+            <exclusion>
+              <artifactId>slf4j-api</artifactId>
+              <groupId>org.slf4j</groupId>
+            </exclusion>
+          </exclusions>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 
 </project>

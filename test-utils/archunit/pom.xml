@@ -7,6 +7,11 @@
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
 
+  <properties>
+    <!-- built for the Maven Central release, but not published -->
+    <skip.central.release>true</skip.central.release>
+  </properties>
+
     <name>Fasti BPM Platform - ArchUnit</name>
 
     <parent>

@@ -12,24 +12,11 @@
   <artifactId>fasti-only-bom</artifactId>
   <packaging>pom</packaging>
   <name>Fasti BPM Platform Only - Bom</name>
-  <url>http://camunda.org</url>
 
   <description>
     Camunda Platform Only bill of material.
     Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
   </description>
-
-  <licenses>
-    <license>
-      <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-    </license>
-  </licenses>
-
-  <organization>
-    <name>camunda services GmbH</name>
-    <url>http://www.camunda.com</url>
-  </organization>
 
   <dependencyManagement>
     <dependencies>

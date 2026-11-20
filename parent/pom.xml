@@ -351,26 +351,13 @@
   </profiles>
 
   <repositories>
+    <!-- Some test and provided dependencies are only available there (for example
+         org.apache.taglibs:taglibs-standard-*:1.2.6-RC1 of engine-cdi). -->
     <repository>
       <id>JBoss public</id>
       <name>jboss</name>
       <url>https://repository.jboss.org/nexus/content/groups/public/</url>
     </repository>
   </repositories>
-
-  <licenses>
-    <license>
-      <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-    </license>
-  </licenses>
-
-  <organization>
-    <name>camunda services GmbH</name>
-    <url>http://www.camunda.com</url>
-  </organization>
-
-  <url>http://www.camunda.org</url>
 </project>
-
 

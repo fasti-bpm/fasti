@@ -36,12 +36,4 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-
-  <scm>
-    <url>http://github.com/camunda/camunda-external-task-client-java</url>
-    <connection>scm:git:git@github.com:camunda/camunda-external-task-client-java.git</connection>
-    <developerConnection>scm:git:git@github.com:camunda/camunda-external-task-client-java.git</developerConnection>
-    <tag>7.24.0</tag>
-  </scm>
-
 </project>

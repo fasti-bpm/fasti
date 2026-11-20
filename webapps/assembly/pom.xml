@@ -196,7 +196,7 @@
 
   <profiles>
     <profile>
-      <id>central-sonatype-publish</id>
+      <id>central</id>
       <properties>
         <!-- skip building the frontend-sources zip artifact
         when releasing the community edition (alpha/minor releases) -->

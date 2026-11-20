@@ -584,8 +584,9 @@
             <artifactId>maven-source-plugin</artifactId>
             <executions>
               <execution>
+                <!-- before the shade plugin (package), which replaces the sources jar -->
                 <id>attach-sources</id>
-                <phase>package</phase>
+                <phase>prepare-package</phase>
                 <goals>
                   <goal>jar-no-fork</goal>
                 </goals>

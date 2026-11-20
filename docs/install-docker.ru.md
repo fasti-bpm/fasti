@@ -28,16 +28,16 @@
 Образ опубликован для amd64 и arm64 в двух реестрах:
 
 ```bash
-docker pull fastidev/fasti-bpm:1.0.0              # Docker Hub
-docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.0     # GitHub Container Registry
+docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
+docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-Теги: `1.0.0` (именно этот выпуск) и `1.0` (последний корректирующий выпуск ветки 1.0). Образ подписан с помощью
+Теги: `1.0.1` (именно этот выпуск) и `1.0` (последний корректирующий выпуск ветки 1.0). Образ подписан с помощью
 cosign (без ключа, GitHub OIDC) и содержит SBOM и аттестацию происхождения.
 
 Также можно собрать образ из исходного кода (требуются JDK 17+ и сетевой доступ к Maven
 Central, nodejs.org и реестру npm) и использовать имя `fasti-bpm:local` вместо
-`fastidev/fasti-bpm:1.0.0` во всех приведённых ниже командах:
+`fastidev/fasti-bpm:1.0.1` во всех приведённых ниже командах:
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
@@ -52,7 +52,7 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
   -v fasti-data:/fasti/data \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 - Откройте <http://localhost:8080/fasti/> и войдите под именем `admin`.
@@ -100,7 +100,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
   -e TZ=Europe/Berlin \
   --memory 2g --stop-timeout 60 \
-  fastidev/fasti-bpm:1.0.0 --production
+  fastidev/fasti-bpm:1.0.1 --production
 ```
 
 - `FASTI_DB_SCHEMA_UPDATE=true` только создаёт отсутствующие таблицы в новой базе данных; Fasti никогда
@@ -129,7 +129,7 @@ docker compose -f docker-compose.postgres.yml up -d
 docker compose -f docker-compose.postgres.yml ps      # both services "healthy"
 ```
 
-Переменные, которые можно задать при запуске: `FASTI_IMAGE` (по умолчанию `fastidev/fasti-bpm:1.0.0`,
+Переменные, которые можно задать при запуске: `FASTI_IMAGE` (по умолчанию `fastidev/fasti-bpm:1.0.1`,
 например `FASTI_IMAGE=fasti-bpm:local`), `FASTI_HOST_PORT` (по умолчанию `8080`), `TZ` (по умолчанию `UTC`).
 
 <a id="6-connecting-to-an-existing-camunda-7-database"></a>
@@ -157,7 +157,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=Europe/Berlin \
-  fastidev/fasti-bpm:1.0.0 --production
+  fastidev/fasti-bpm:1.0.1 --production
 ```
 
 - Порт доступен только на этой машине; для удалённого доступа используйте обратный прокси с HTTPS.

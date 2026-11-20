@@ -9,7 +9,7 @@
   <parent>
     <groupId>dev.fasti.platform.run</groupId>
     <artifactId>fasti-bpm-run-modules</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
   </parent>
 
   <artifactId>fasti-bpm-run-modules-example-invoice</artifactId>

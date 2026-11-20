@@ -24,7 +24,7 @@ Container Registry（`ghcr.io/fasti-bpm/fasti-bpm`）で公開しています。
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 <http://localhost:8080/fasti/> を開いてサインインしてください。`DB_URL` を指定しない場合、イメージは
@@ -42,7 +42,7 @@ nodejs.org、npm レジストリへのネットワークアクセスが必要で
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
 docker build -t fasti-bpm:local distro/docker/target/docker
-# then run the docker run command above with fasti-bpm:local instead of fastidev/fasti-bpm:1.0.0
+# then run the docker run command above with fasti-bpm:local instead of fastidev/fasti-bpm:1.0.1
 ```
 
 このイメージは、Camunda Run とは異なり、**デフォルトで REST 認証を必須とし、認可を強制します**。
@@ -99,7 +99,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e TZ=Europe/Berlin \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 ユーザー、パスワード、グループ、テナント、認可、フィルター、デプロイメント、実行中のインスタンス、

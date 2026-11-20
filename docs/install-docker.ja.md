@@ -28,16 +28,16 @@ H2 での簡単な試用、PostgreSQL を使用した本番運用（`docker run`
 amd64 および arm64 向けのイメージを、次の 2 か所で公開しています。
 
 ```bash
-docker pull fastidev/fasti-bpm:1.0.0              # Docker Hub
-docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.0     # GitHub Container Registry
+docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
+docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-タグ：`1.0.0`（そのリリースを厳密に指定）および `1.0`（1.0 の最新パッチリリース）。イメージは
+タグ：`1.0.1`（そのリリースを厳密に指定）および `1.0`（1.0 の最新パッチリリース）。イメージは
 cosign（キーレス、GitHub OIDC）で署名されており、SBOM と来歴証明が付属しています。
 
 ソースからイメージをビルドすることもできます（JDK 17+ と、Maven
 Central、nodejs.org、npm レジストリへのネットワークアクセスが必要です）。その場合、以降のすべてのコマンドで
-`fastidev/fasti-bpm:1.0.0` の代わりに `fasti-bpm:local` を使用してください。
+`fastidev/fasti-bpm:1.0.1` の代わりに `fasti-bpm:local` を使用してください。
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
@@ -52,7 +52,7 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
   -v fasti-data:/fasti/data \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 - <http://localhost:8080/fasti/> を開き、`admin` としてサインインします。
@@ -100,7 +100,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
   -e TZ=Europe/Berlin \
   --memory 2g --stop-timeout 60 \
-  fastidev/fasti-bpm:1.0.0 --production
+  fastidev/fasti-bpm:1.0.1 --production
 ```
 
 - `FASTI_DB_SCHEMA_UPDATE=true` は、新しいデータベースに不足しているテーブルを作成するだけです。Fasti が
@@ -129,7 +129,7 @@ docker compose -f docker-compose.postgres.yml up -d
 docker compose -f docker-compose.postgres.yml ps      # both services "healthy"
 ```
 
-起動時に設定できる変数：`FASTI_IMAGE`（既定値は `fastidev/fasti-bpm:1.0.0`。設定例：
+起動時に設定できる変数：`FASTI_IMAGE`（既定値は `fastidev/fasti-bpm:1.0.1`。設定例：
 `FASTI_IMAGE=fasti-bpm:local`）、`FASTI_HOST_PORT`（既定値は `8080`）、`TZ`（既定値は `UTC`）。
 
 <a id="6-connecting-to-an-existing-camunda-7-database"></a>
@@ -157,7 +157,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=Europe/Berlin \
-  fastidev/fasti-bpm:1.0.0 --production
+  fastidev/fasti-bpm:1.0.1 --production
 ```
 
 - ポートはこのマシンにのみバインドされます。リモートアクセスには、HTTPS 対応のリバースプロキシを経由してください。

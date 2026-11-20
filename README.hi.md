@@ -24,7 +24,7 @@ Container Registry (`ghcr.io/fasti-bpm/fasti-bpm`) पर amd64 और arm64 क
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 <http://localhost:8080/fasti/> खोलें और साइन इन करें। `DB_URL` के बिना इमेज कंटेनर के भीतर H2 डेटाबेस
@@ -42,7 +42,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
 docker build -t fasti-bpm:local distro/docker/target/docker
-# then run the docker run command above with fasti-bpm:local instead of fastidev/fasti-bpm:1.0.0
+# then run the docker run command above with fasti-bpm:local instead of fastidev/fasti-bpm:1.0.1
 ```
 
 इमेज **डिफ़ॉल्ट रूप से REST प्रमाणीकरण अनिवार्य करती है और प्राधिकरण लागू करती है** (Camunda
@@ -99,7 +99,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e TZ=Europe/Berlin \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 उपयोगकर्ता, पासवर्ड, समूह, टेनेंट, प्राधिकरण, फ़िल्टर, डिप्लॉयमेंट, चल रहे इंस्टेंस,

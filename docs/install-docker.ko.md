@@ -28,16 +28,16 @@
 이미지는 amd64 및 arm64용으로 다음 두 곳에 게시됩니다.
 
 ```bash
-docker pull fastidev/fasti-bpm:1.0.0              # Docker Hub
-docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.0     # GitHub Container Registry
+docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
+docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-태그: `1.0.0`(해당 릴리스 지정) 및 `1.0`(1.0의 최신 패치 릴리스). 이미지는
+태그: `1.0.1`(해당 릴리스 지정) 및 `1.0`(1.0의 최신 패치 릴리스). 이미지는
 cosign으로 서명되며(키리스, GitHub OIDC), SBOM과 출처 증명을 포함합니다.
 
 소스에서 이미지를 빌드할 수도 있습니다(JDK 17+ 및 Maven
 Central, nodejs.org, npm 레지스트리에 대한 네트워크 접근 필요). 이 경우 아래의 모든 명령에서
-`fastidev/fasti-bpm:1.0.0` 대신 `fasti-bpm:local`을 사용하세요.
+`fastidev/fasti-bpm:1.0.1` 대신 `fasti-bpm:local`을 사용하세요.
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
@@ -52,7 +52,7 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
   -v fasti-data:/fasti/data \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 - <http://localhost:8080/fasti/>에 접속하여 `admin`으로 로그인하세요.
@@ -100,7 +100,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
   -e TZ=Europe/Berlin \
   --memory 2g --stop-timeout 60 \
-  fastidev/fasti-bpm:1.0.0 --production
+  fastidev/fasti-bpm:1.0.1 --production
 ```
 
 - `FASTI_DB_SCHEMA_UPDATE=true`는 새 데이터베이스에 누락된 테이블만 생성합니다. Fasti는
@@ -129,7 +129,7 @@ docker compose -f docker-compose.postgres.yml up -d
 docker compose -f docker-compose.postgres.yml ps      # both services "healthy"
 ```
 
-시작 시 설정할 수 있는 변수: `FASTI_IMAGE`(기본값 `fastidev/fasti-bpm:1.0.0`,
+시작 시 설정할 수 있는 변수: `FASTI_IMAGE`(기본값 `fastidev/fasti-bpm:1.0.1`,
 예: `FASTI_IMAGE=fasti-bpm:local`), `FASTI_HOST_PORT`(기본값 `8080`), `TZ`(기본값 `UTC`).
 
 <a id="6-connecting-to-an-existing-camunda-7-database"></a>
@@ -157,7 +157,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=Europe/Berlin \
-  fastidev/fasti-bpm:1.0.0 --production
+  fastidev/fasti-bpm:1.0.1 --production
 ```
 
 - 포트는 이 컴퓨터에만 바인딩됩니다. 원격으로 접근하려면 HTTPS를 사용하는 리버스 프록시를 거치세요.

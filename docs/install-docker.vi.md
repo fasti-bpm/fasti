@@ -25,15 +25,15 @@ Services GmbH.
 Image cho amd64 và arm64, có ở hai nơi:
 
 ```bash
-docker pull fastidev/fasti-bpm:1.0.0              # Docker Hub
-docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.0     # GitHub Container Registry
+docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
+docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-Tag: `1.0.0` (đúng một bản) và `1.0` (bản vá mới nhất của 1.0). Image được ký bằng cosign
+Tag: `1.0.1` (đúng một bản) và `1.0` (bản vá mới nhất của 1.0). Image được ký bằng cosign
 (keyless, GitHub OIDC) và kèm SBOM và provenance.
 
 Cũng có thể build image từ mã nguồn (cần JDK 17+ và mạng tới Maven Central,
-nodejs.org, npm registry) rồi dùng tên `fasti-bpm:local` thay cho `fastidev/fasti-bpm:1.0.0` ở mọi
+nodejs.org, npm registry) rồi dùng tên `fasti-bpm:local` thay cho `fastidev/fasti-bpm:1.0.1` ở mọi
 lệnh bên dưới:
 
 ```bash
@@ -49,7 +49,7 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='đổi-mật-khẩu-này' \
   -v fasti-data:/fasti/data \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 - Mở <http://localhost:8080/fasti/> và đăng nhập bằng `admin`.
@@ -96,7 +96,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
   -e TZ=Asia/Ho_Chi_Minh \
   --memory 2g --stop-timeout 60 \
-  fastidev/fasti-bpm:1.0.0 --production
+  fastidev/fasti-bpm:1.0.1 --production
 ```
 
 - `FASTI_DB_SCHEMA_UPDATE=true` chỉ tạo các bảng còn thiếu của một cơ sở dữ liệu mới; Fasti không
@@ -124,7 +124,7 @@ docker compose -f docker-compose.postgres.yml up -d
 docker compose -f docker-compose.postgres.yml ps      # cả hai dịch vụ "healthy"
 ```
 
-Biến có thể đặt khi chạy: `FASTI_IMAGE` (mặc định `fastidev/fasti-bpm:1.0.0`, ví dụ
+Biến có thể đặt khi chạy: `FASTI_IMAGE` (mặc định `fastidev/fasti-bpm:1.0.1`, ví dụ
 `FASTI_IMAGE=fasti-bpm:local`), `FASTI_HOST_PORT` (mặc định `8080`), `TZ` (mặc định `UTC`).
 
 <a id="6-connecting-to-an-existing-camunda-7-database"></a>
@@ -150,7 +150,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -v /đường/dẫn/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=Asia/Ho_Chi_Minh \
-  fastidev/fasti-bpm:1.0.0 --production
+  fastidev/fasti-bpm:1.0.1 --production
 ```
 
 - Cổng chỉ mở trên máy này; truy cập từ xa hãy đi qua reverse proxy có HTTPS.

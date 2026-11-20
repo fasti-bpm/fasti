@@ -24,7 +24,7 @@ Container Registry（`ghcr.io/fasti-bpm/fasti-bpm`）上提供，支持 amd64 �
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 打开 <http://localhost:8080/fasti/> 并登录。未设置 `DB_URL` 时，镜像使用容器内的 H2 数据库，
@@ -42,7 +42,7 @@ Web UI 下载 Node/npm）；首次构建大约需要 10–20 分钟：
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
 docker build -t fasti-bpm:local distro/docker/target/docker
-# then run the docker run command above with fasti-bpm:local instead of fastidev/fasti-bpm:1.0.0
+# then run the docker run command above with fasti-bpm:local instead of fastidev/fasti-bpm:1.0.1
 ```
 
 镜像**默认要求 REST 身份验证并强制执行授权检查**（与 Camunda
@@ -99,7 +99,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e TZ=Europe/Berlin \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 用户、密码、组、租户、授权、筛选器、部署、运行中的实例、

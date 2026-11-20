@@ -24,7 +24,7 @@ Container Registry (`ghcr.io/fasti-bpm/fasti-bpm`) สำหรับ amd64 แ�
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 เปิด <http://localhost:8080/fasti/> แล้วเข้าสู่ระบบ หากไม่ได้กำหนด `DB_URL` อิมเมจจะใช้ฐานข้อมูล H2
@@ -42,7 +42,7 @@ Maven Central, nodejs.org และ npm registry ผ่านเครือข�
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
 docker build -t fasti-bpm:local distro/docker/target/docker
-# then run the docker run command above with fasti-bpm:local instead of fastidev/fasti-bpm:1.0.0
+# then run the docker run command above with fasti-bpm:local instead of fastidev/fasti-bpm:1.0.1
 ```
 
 อิมเมจนี้**กำหนดให้ REST ต้องยืนยันตัวตนและบังคับใช้การตรวจสอบสิทธิ์โดยค่าเริ่มต้น** (ต่างจาก Camunda
@@ -99,7 +99,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e TZ=Europe/Berlin \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 ผู้ใช้ รหัสผ่าน กลุ่ม เทแนนต์ สิทธิ์ ตัวกรอง การปรับใช้ อินสแตนซ์ที่กำลังทำงาน

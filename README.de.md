@@ -24,7 +24,7 @@ Container Registry (`ghcr.io/fasti-bpm/fasti-bpm`) für amd64 und arm64 verfügb
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 Öffnen Sie <http://localhost:8080/fasti/> und melden Sie sich an. Ohne `DB_URL` verwendet das Image eine H2-Datenbank
@@ -42,7 +42,7 @@ Weboberfläche herunter); der erste Build dauert etwa 10–20 Minuten:
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
 docker build -t fasti-bpm:local distro/docker/target/docker
-# then run the docker run command above with fasti-bpm:local instead of fastidev/fasti-bpm:1.0.0
+# then run the docker run command above with fasti-bpm:local instead of fastidev/fasti-bpm:1.0.1
 ```
 
 Das Image **erfordert standardmäßig REST-Authentifizierung und erzwingt Berechtigungsprüfungen** (anders als Camunda
@@ -99,7 +99,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e TZ=Europe/Berlin \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 Benutzer, Passwörter, Gruppen, Mandanten, Berechtigungen, Filter, Deployments, laufende Instanzen,

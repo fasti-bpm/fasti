@@ -16,8 +16,8 @@ Full migration guide (steps, rollback, mixed operation, limits):
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
-docker build -t fasti-bpm:1.0.0 \
-  --build-arg VERSION=1.0.0 --build-arg REVISION=$(git rev-parse --short HEAD) \
+docker build -t fasti-bpm:1.0.1 \
+  --build-arg VERSION=1.0.1 --build-arg REVISION=$(git rev-parse --short HEAD) \
   distro/docker/target/docker
 ```
 
@@ -92,7 +92,7 @@ docker run -d --name fasti -p 8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=Asia/Ho_Chi_Minh \
-  fasti-bpm:1.0.0
+  fasti-bpm:1.0.1
 ```
 
 `DB_PASSWORD_FILE` must name a file inside the container (a Docker/Kubernetes secret, or

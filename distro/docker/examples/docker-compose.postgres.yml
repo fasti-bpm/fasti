@@ -45,7 +45,7 @@ services:
 
   fasti:
     # update with the published image tag at release
-    image: ${FASTI_IMAGE:-fastidev/fasti-bpm:1.0.0}
+    image: ${FASTI_IMAGE:-fastidev/fasti-bpm:1.0.1}
     depends_on:
       postgres:
         condition: service_healthy

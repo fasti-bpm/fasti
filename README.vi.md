@@ -22,7 +22,7 @@ Image có trên Docker Hub (`fastidev/fasti-bpm`) và GitHub Container Registry
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='đổi-mật-khẩu-này' \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 Mở <http://localhost:8080/fasti/> và đăng nhập. Không đặt `DB_URL` thì image dùng H2 bên trong
@@ -40,7 +40,7 @@ phút:
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
 docker build -t fasti-bpm:local distro/docker/target/docker
-# rồi chạy lệnh docker run ở trên với fasti-bpm:local thay cho fastidev/fasti-bpm:1.0.0
+# rồi chạy lệnh docker run ở trên với fasti-bpm:local thay cho fastidev/fasti-bpm:1.0.1
 ```
 
 Image **bật sẵn xác thực REST và phân quyền** (khác Camunda Run); chỉ `FASTI_INSECURE_DEMO=true`
@@ -94,7 +94,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /đường/dẫn/db-password:/run/secrets/db-password:ro \
   -e TZ=Asia/Ho_Chi_Minh \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 Người dùng, mật khẩu, nhóm, tenant, phân quyền, filter, deployment, instance đang chạy, lịch

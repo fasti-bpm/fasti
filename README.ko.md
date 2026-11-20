@@ -24,7 +24,7 @@ Container Registry(`ghcr.io/fasti-bpm/fasti-bpm`)에서 제공됩니다.
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 <http://localhost:8080/fasti/>에 접속하여 로그인하세요. `DB_URL`이 없으면 이미지는 컨테이너 내부의 H2 데이터베이스를
@@ -42,7 +42,7 @@ Node/npm을 다운로드합니다). 첫 빌드에는 약 10–20분이 걸립니
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
 docker build -t fasti-bpm:local distro/docker/target/docker
-# then run the docker run command above with fasti-bpm:local instead of fastidev/fasti-bpm:1.0.0
+# then run the docker run command above with fasti-bpm:local instead of fastidev/fasti-bpm:1.0.1
 ```
 
 이 이미지는 Camunda Run과 달리 **기본적으로 REST 인증을 요구하고 권한 검사를 적용합니다**.
@@ -99,7 +99,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e TZ=Europe/Berlin \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 사용자, 비밀번호, 그룹, 테넌트, 권한, 필터, 배포, 실행 중인 인스턴스,

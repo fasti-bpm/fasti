@@ -28,16 +28,16 @@ Upgrade, Rollback und Fehlerbehebung. Vollständige Image-Referenz:
 Das Image wird für amd64 und arm64 an zwei Stellen veröffentlicht:
 
 ```bash
-docker pull fastidev/fasti-bpm:1.0.0              # Docker Hub
-docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.0     # GitHub Container Registry
+docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
+docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-Tags: `1.0.0` (genau diese Version) und `1.0` (neueste Patch-Version von 1.0). Das Image ist mit
+Tags: `1.0.1` (genau diese Version) und `1.0` (neueste Patch-Version von 1.0). Das Image ist mit
 cosign signiert (schlüssellos, GitHub OIDC) und enthält eine SBOM sowie einen Herkunftsnachweis.
 
 Sie können das Image auch aus dem Quellcode erstellen (erfordert JDK 17+ und Netzwerkzugriff auf Maven
 Central, nodejs.org und die npm-Registry) und in allen folgenden Befehlen den Namen `fasti-bpm:local` anstelle von
-`fastidev/fasti-bpm:1.0.0` verwenden:
+`fastidev/fasti-bpm:1.0.1` verwenden:
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
@@ -52,7 +52,7 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
   -v fasti-data:/fasti/data \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 - Öffnen Sie <http://localhost:8080/fasti/> und melden Sie sich als `admin` an.
@@ -100,7 +100,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
   -e TZ=Europe/Berlin \
   --memory 2g --stop-timeout 60 \
-  fastidev/fasti-bpm:1.0.0 --production
+  fastidev/fasti-bpm:1.0.1 --production
 ```
 
 - `FASTI_DB_SCHEMA_UPDATE=true` erstellt nur fehlende Tabellen in einer neuen Datenbank; Fasti aktualisiert niemals
@@ -129,7 +129,7 @@ docker compose -f docker-compose.postgres.yml up -d
 docker compose -f docker-compose.postgres.yml ps      # both services "healthy"
 ```
 
-Beim Start können Sie folgende Variablen setzen: `FASTI_IMAGE` (Standard: `fastidev/fasti-bpm:1.0.0`, zum
+Beim Start können Sie folgende Variablen setzen: `FASTI_IMAGE` (Standard: `fastidev/fasti-bpm:1.0.1`, zum
 Beispiel `FASTI_IMAGE=fasti-bpm:local`), `FASTI_HOST_PORT` (Standard: `8080`), `TZ` (Standard: `UTC`).
 
 <a id="6-connecting-to-an-existing-camunda-7-database"></a>
@@ -157,7 +157,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=Europe/Berlin \
-  fastidev/fasti-bpm:1.0.0 --production
+  fastidev/fasti-bpm:1.0.1 --production
 ```
 
 - Der Port ist nur an diesen Rechner gebunden; verwenden Sie für den Fernzugriff einen Reverse-Proxy mit HTTPS.

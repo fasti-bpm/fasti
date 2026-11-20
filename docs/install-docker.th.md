@@ -28,16 +28,16 @@
 อิมเมจเผยแพร่สำหรับ amd64 และ arm64 ในสองแหล่ง:
 
 ```bash
-docker pull fastidev/fasti-bpm:1.0.0              # Docker Hub
-docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.0     # GitHub Container Registry
+docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
+docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-แท็ก: `1.0.0` (รุ่นนั้นโดยเฉพาะ) และ `1.0` (รุ่นแพตช์ล่าสุดของ 1.0) อิมเมจลงลายเซ็นด้วย
+แท็ก: `1.0.1` (รุ่นนั้นโดยเฉพาะ) และ `1.0` (รุ่นแพตช์ล่าสุดของ 1.0) อิมเมจลงลายเซ็นด้วย
 cosign (แบบไม่ใช้คีย์, GitHub OIDC) และมาพร้อม SBOM และเอกสารรับรองแหล่งที่มา
 
 คุณยังสามารถสร้างอิมเมจจากซอร์สโค้ดได้ (ต้องใช้ JDK 17+ และเชื่อมต่อเครือข่ายไปยัง Maven
 Central, nodejs.org และ npm registry ได้) โดยใช้ชื่อ `fasti-bpm:local` แทน
-`fastidev/fasti-bpm:1.0.0` ในทุกคำสั่งด้านล่าง:
+`fastidev/fasti-bpm:1.0.1` ในทุกคำสั่งด้านล่าง:
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
@@ -52,7 +52,7 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
   -v fasti-data:/fasti/data \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 - เปิด <http://localhost:8080/fasti/> แล้วลงชื่อเข้าใช้เป็น `admin`
@@ -100,7 +100,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
   -e TZ=Europe/Berlin \
   --memory 2g --stop-timeout 60 \
-  fastidev/fasti-bpm:1.0.0 --production
+  fastidev/fasti-bpm:1.0.1 --production
 ```
 
 - `FASTI_DB_SCHEMA_UPDATE=true` จะสร้างเฉพาะตารางที่ยังไม่มีในฐานข้อมูลใหม่เท่านั้น Fasti จะไม่
@@ -129,7 +129,7 @@ docker compose -f docker-compose.postgres.yml up -d
 docker compose -f docker-compose.postgres.yml ps      # both services "healthy"
 ```
 
-ตัวแปรที่ตั้งค่าได้เมื่อเริ่มทำงาน: `FASTI_IMAGE` (ค่าเริ่มต้น `fastidev/fasti-bpm:1.0.0` เช่น
+ตัวแปรที่ตั้งค่าได้เมื่อเริ่มทำงาน: `FASTI_IMAGE` (ค่าเริ่มต้น `fastidev/fasti-bpm:1.0.1` เช่น
 `FASTI_IMAGE=fasti-bpm:local`), `FASTI_HOST_PORT` (ค่าเริ่มต้น `8080`), `TZ` (ค่าเริ่มต้น `UTC`)
 
 <a id="6-connecting-to-an-existing-camunda-7-database"></a>
@@ -157,7 +157,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=Europe/Berlin \
-  fastidev/fasti-bpm:1.0.0 --production
+  fastidev/fasti-bpm:1.0.1 --production
 ```
 
 - พอร์ตผูกกับเครื่องนี้เท่านั้น หากต้องการเข้าถึงจากระยะไกล ให้ผ่าน reverse proxy ที่ใช้ HTTPS

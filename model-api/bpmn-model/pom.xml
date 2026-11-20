@@ -5,7 +5,7 @@
     <groupId>dev.fasti.platform.model</groupId>
     <artifactId>fasti-model-apis</artifactId>
     <relativePath>../</relativePath>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
   </parent>
 
   <artifactId>fasti-bpmn-model</artifactId>

@@ -13,7 +13,7 @@
     <groupId>dev.fasti.platform</groupId>
     <artifactId>fasti-database-settings</artifactId>
     <relativePath>../database</relativePath>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
   </parent>
 
   <dependencyManagement>

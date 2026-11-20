@@ -16,7 +16,7 @@
   <parent>
     <groupId>dev.fasti.platform</groupId>
     <artifactId>fasti-external-task-client-root</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
   </parent>
 
   <modules>

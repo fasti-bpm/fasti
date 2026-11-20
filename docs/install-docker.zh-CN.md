@@ -28,16 +28,16 @@
 镜像支持 amd64 和 arm64，在以下两个位置发布：
 
 ```bash
-docker pull fastidev/fasti-bpm:1.0.0              # Docker Hub
-docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.0     # GitHub Container Registry
+docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
+docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-标签：`1.0.0`（指定的确切发行版本）和 `1.0`（1.0 的最新补丁版本）。镜像使用
+标签：`1.0.1`（指定的确切发行版本）和 `1.0`（1.0 的最新补丁版本）。镜像使用
 cosign 签名（无密钥，GitHub OIDC），并附带 SBOM 和来源证明。
 
 也可以从源代码构建镜像（需要 JDK 17+，并能够通过网络访问 Maven
 Central、nodejs.org 和 npm registry），然后在下方所有命令中使用 `fasti-bpm:local` 替换
-`fastidev/fasti-bpm:1.0.0`：
+`fastidev/fasti-bpm:1.0.1`：
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
@@ -52,7 +52,7 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
   -v fasti-data:/fasti/data \
-  fastidev/fasti-bpm:1.0.0
+  fastidev/fasti-bpm:1.0.1
 ```
 
 - 打开 <http://localhost:8080/fasti/>，以 `admin` 身份登录。
@@ -100,7 +100,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
   -e TZ=Europe/Berlin \
   --memory 2g --stop-timeout 60 \
-  fastidev/fasti-bpm:1.0.0 --production
+  fastidev/fasti-bpm:1.0.1 --production
 ```
 
 - `FASTI_DB_SCHEMA_UPDATE=true` 只会在新数据库中创建缺失的表；Fasti 绝不会
@@ -129,7 +129,7 @@ docker compose -f docker-compose.postgres.yml up -d
 docker compose -f docker-compose.postgres.yml ps      # both services "healthy"
 ```
 
-启动时可设置的变量：`FASTI_IMAGE`（默认值为 `fastidev/fasti-bpm:1.0.0`，例如
+启动时可设置的变量：`FASTI_IMAGE`（默认值为 `fastidev/fasti-bpm:1.0.1`，例如
 `FASTI_IMAGE=fasti-bpm:local`）、`FASTI_HOST_PORT`（默认值为 `8080`）、`TZ`（默认值为 `UTC`）。
 
 <a id="6-connecting-to-an-existing-camunda-7-database"></a>
@@ -157,7 +157,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=Europe/Berlin \
-  fastidev/fasti-bpm:1.0.0 --production
+  fastidev/fasti-bpm:1.0.1 --production
 ```
 
 - 端口仅绑定到本机；如需远程访问，请通过启用 HTTPS 的反向代理。

@@ -8,7 +8,7 @@
   <parent>
     <groupId>dev.fasti.platform.spin</groupId>
     <artifactId>fasti-spin-root</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
   </parent>
 
   <artifactId>fasti-spin-dataformat-json-jackson</artifactId>

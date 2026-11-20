@@ -12,6 +12,42 @@ entries below describe the differences from that release.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-20
+
+### Security
+
+- The template filter of the web applications no longer looks up resources outside their
+  folder: a request such as `/app/cockpit/default/../../WEB-INF/x.html` could be forwarded to a
+  file below `WEB-INF`. Names with `..`, backslashes, percent-encoded or control characters are
+  refused, also in the Spring Boot starter.
+- LDAP identity provider: `acceptUntrustedCertificates=true` replaced the default `SSLContext`
+  of the JVM, so other TLS connections that use that default (for example to the OpenID
+  Connect provider, connectors or mail) could also accept untrusted certificates. The setting
+  now applies only to the connections to the LDAP server.
+- Dependency updates that close the open security advisories of the classic web applications
+  (among them qs, express, ws, node-forge, shell-quote, serialize-javascript and
+  fast-xml-parser 5), of the REST API documentation build (postcss, fast-xml-parser) and of
+  test libraries (AssertJ, OkHttp, OpenAPI Generator). The development server of the classic
+  web applications moves to webpack-dev-server 5.2.7. The remaining advisories concern
+  AngularJS 1.8 and Bootstrap 3 of the deprecated classic web applications, for which no fixed
+  release exists; those applications stay off by default.
+- The container image of each release is signed with cosign 3 in the Sigstore bundle format.
+  Verify it with cosign 3, or with cosign 2.6 and `--new-bundle-format`.
+
+### Changed
+
+- Minor and patch updates of the Java libraries and Maven plugins (among them Logback 1.6.7,
+  GraalJS 25.0.5.1, Joda-Time 2.15.1, Unirest 2.4.03) and of the web UI (bpmn-js 18.33,
+  TanStack Query 5.108).
+- The build supports Maven 3.9 and later; the Maven wrapper uses Maven 3.10.1.
+- Documentation is English-first with translations into 12 more languages, and the roadmap
+  follows the plan published on fasti.dev.
+
+### Fixed
+
+- The check of a `bpm-platform.xml` location accepted characters other than a drive letter
+  before `:` and `|` as a path separator.
+
 ## [1.0.0] - 2026-11-20
 
 ### Added

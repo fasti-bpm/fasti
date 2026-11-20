@@ -32,6 +32,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
 
+import dev.fasti.engine.foureyes.FourEyes;
 import org.camunda.bpm.engine.AuthorizationException;
 import org.camunda.bpm.engine.BadUserRequestException;
 import org.camunda.bpm.engine.FormService;
@@ -225,6 +226,15 @@ public class TaskResourceImpl implements TaskResource {
     }
 
     return HalTask.generate(task, engine);
+  }
+
+  @Override
+  public FourEyesStatusDto getFourEyesStatus() {
+    try {
+      return FourEyesStatusDto.fromStatus(FourEyes.of(engine).getStatus(taskId));
+    } catch (NotFoundException e) {
+      throw new InvalidRequestException(Status.NOT_FOUND, e, "No matching task with id " + taskId);
+    }
   }
 
   @Override

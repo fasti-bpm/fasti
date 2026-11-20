@@ -37,6 +37,7 @@ import javax.ws.rs.core.Response;
 import org.camunda.bpm.engine.rest.dto.VariableValueDto;
 import org.camunda.bpm.engine.rest.dto.task.CompleteTaskDto;
 import org.camunda.bpm.engine.rest.dto.task.FormDto;
+import org.camunda.bpm.engine.rest.dto.task.FourEyesStatusDto;
 import org.camunda.bpm.engine.rest.dto.task.IdentityLinkDto;
 import org.camunda.bpm.engine.rest.dto.task.TaskBpmnErrorDto;
 import org.camunda.bpm.engine.rest.dto.task.TaskEscalationDto;
@@ -55,6 +56,14 @@ public interface TaskResource {
   @Path("/form")
   @Produces(MediaType.APPLICATION_JSON)
   FormDto getForm();
+
+  // four-eyes control (Fasti) //////////
+
+  /** Whether the user of the request may complete the task under its four-eyes rule. */
+  @GET
+  @Path("/four-eyes")
+  @Produces(MediaType.APPLICATION_JSON)
+  FourEyesStatusDto getFourEyesStatus();
 
   @POST
   @Path("/submit-form")

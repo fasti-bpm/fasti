@@ -18,6 +18,7 @@ package org.camunda.bpm.engine.rest.dto;
 
 import java.util.List;
 
+import dev.fasti.engine.foureyes.FourEyesViolationException;
 import org.camunda.bpm.engine.AuthorizationException;
 
 /**
@@ -44,7 +45,10 @@ public class AuthorizationExceptionDto extends ExceptionDto {
     AuthorizationExceptionDto dto = new AuthorizationExceptionDto();
     
     dto.setMessage(e.getMessage());
-    dto.setType(AuthorizationException.class.getSimpleName());
+    // Fasti: the four-eyes control refuses with a type of its own, so that clients can tell it apart
+    dto.setType(e instanceof FourEyesViolationException
+        ? FourEyesViolationException.class.getSimpleName()
+        : AuthorizationException.class.getSimpleName());
     
     dto.setUserId(e.getUserId());
     dto.setMissingAuthorizations(MissingAuthorizationDto.fromInfo(e.getMissingAuthorizations()));

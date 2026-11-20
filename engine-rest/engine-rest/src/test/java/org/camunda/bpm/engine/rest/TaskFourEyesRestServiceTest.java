@@ -1,0 +1,341 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.camunda.bpm.engine.rest;
+
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import javax.ws.rs.core.Response.Status;
+
+import dev.fasti.engine.foureyes.FourEyesPlugin;
+import dev.fasti.engine.foureyes.FourEyesService;
+import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.ProcessEngineConfiguration;
+import org.camunda.bpm.engine.authorization.Authorization;
+import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
+import org.camunda.bpm.engine.impl.identity.Authentication;
+import org.camunda.bpm.engine.impl.interceptor.Command;
+import org.camunda.bpm.engine.impl.interceptor.CommandInterceptor;
+import org.camunda.bpm.engine.rest.util.container.TestContainerRule;
+import org.camunda.bpm.engine.task.Task;
+import org.camunda.bpm.model.bpmn.Bpmn;
+import org.camunda.bpm.model.bpmn.BpmnModelInstance;
+import org.camunda.bpm.model.bpmn.instance.ExtensionElements;
+import org.camunda.bpm.model.bpmn.instance.UserTask;
+import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperties;
+import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Test;
+
+import io.restassured.http.ContentType;
+
+/**
+ * The four-eyes control over REST, against real in-memory engines (with and without the plugin);
+ * the user of a request is set on the engine by a command interceptor, as the authentication
+ * filter would.
+ */
+public class TaskFourEyesRestServiceTest extends AbstractRestServiceTest {
+
+  @ClassRule
+  public static TestContainerRule rule = new TestContainerRule();
+
+  protected static final String TASK_URL = TEST_RESOURCE_ROOT_PATH + "/task/{id}";
+  protected static final String FOUR_EYES_URL = TASK_URL + "/four-eyes";
+
+  protected static volatile Authentication requestAuthentication;
+  protected static ProcessEngine engine;
+  protected static ProcessEngine engineWithoutPlugin;
+
+  @BeforeClass
+  public static void buildEngines() {
+    engine = buildEngine("fourEyesRestEngine", true);
+    engineWithoutPlugin = buildEngine("fourEyesRestEngineWithoutPlugin", false);
+  }
+
+  protected static ProcessEngine buildEngine(String name, boolean withPlugin) {
+    ProcessEngineConfigurationImpl configuration = (ProcessEngineConfigurationImpl) ProcessEngineConfiguration
+        .createStandaloneInMemProcessEngineConfiguration()
+        .setProcessEngineName(name)
+        .setJdbcUrl("jdbc:h2:mem:" + name)
+        .setJobExecutorActivate(false);
+    List<CommandInterceptor> interceptors = new ArrayList<>();
+    interceptors.add(new CommandInterceptor() {
+      @Override
+      public <T> T execute(Command<T> command) {
+        Authentication authentication = requestAuthentication;
+        if (authentication != null) {
+          configuration.getIdentityService().setAuthentication(authentication);
+        } else {
+          configuration.getIdentityService().clearAuthentication();
+        }
+        return next.execute(command);
+      }
+    });
+    configuration.setCustomPreCommandInterceptorsTxRequired(interceptors);
+    if (withPlugin) {
+      configuration.getProcessEnginePlugins().add(new FourEyesPlugin());
+    }
+    return configuration.buildProcessEngine();
+  }
+
+  @AfterClass
+  public static void closeEngines() {
+    engine.close();
+    engineWithoutPlugin.close();
+  }
+
+  @Before
+  public void setUpEngine() {
+    use(engine);
+  }
+
+  @After
+  public void tearDown() {
+    requestAuthentication = null;
+    for (ProcessEngine target : List.of(engine, engineWithoutPlugin)) {
+      ((ProcessEngineConfigurationImpl) target.getProcessEngineConfiguration()).setAuthorizationEnabled(false);
+      for (Authorization authorization : target.getAuthorizationService().createAuthorizationQuery().list()) {
+        target.getAuthorizationService().deleteAuthorization(authorization.getId());
+      }
+      target.getRepositoryService().createDeploymentQuery().list()
+          .forEach(deployment -> target.getRepositoryService().deleteDeployment(deployment.getId(), true));
+    }
+  }
+
+  protected void use(ProcessEngine target) {
+    when(processEngine.getProcessEngineConfiguration()).thenReturn(target.getProcessEngineConfiguration());
+    when(processEngine.getTaskService()).thenReturn(target.getTaskService());
+    when(processEngine.getFormService()).thenReturn(target.getFormService());
+    when(processEngine.getIdentityService()).thenReturn(target.getIdentityService());
+  }
+
+  protected static void as(String userId) {
+    requestAuthentication = userId == null ? null : new Authentication(userId, Collections.emptyList());
+  }
+
+  static BpmnModelInstance model() {
+    BpmnModelInstance model = Bpmn.createExecutableProcess("fourEyes").camundaHistoryTimeToLive(180)
+        .startEvent()
+        .userTask("draft").name("Draft contract").camundaCandidateUsers("alice,bob")
+        .userTask("approve").name("Approve contract").camundaCandidateUsers("alice,bob")
+          .boundaryEvent("rejected").error("REJECT").endEvent("rejectedEnd")
+        .moveToActivity("approve")
+        .endEvent().done();
+    UserTask approve = model.getModelElementById("approve");
+    ExtensionElements extensionElements = model.newInstance(ExtensionElements.class);
+    approve.setExtensionElements(extensionElements);
+    CamundaProperty property = model.newInstance(CamundaProperty.class);
+    property.setCamundaName(FourEyesService.PROPERTY_NAME);
+    property.setCamundaValue("draft");
+    extensionElements.addExtensionElement(CamundaProperties.class).getCamundaProperties().add(property);
+    return model;
+  }
+
+  /** Starts the process on the engine and lets alice complete the draft; returns the approval task. */
+  protected Task draftedByAlice(ProcessEngine target) {
+    target.getRepositoryService().createDeployment().addModelInstance("fourEyes.bpmn", model()).deploy();
+    String pi = target.getRuntimeService().startProcessInstanceByKey("fourEyes").getId();
+    Task draft = target.getTaskService().createTaskQuery().processInstanceId(pi).singleResult();
+    target.getIdentityService().setAuthenticatedUserId("alice");
+    try {
+      target.getTaskService().claim(draft.getId(), "alice");
+      target.getTaskService().complete(draft.getId());
+    } finally {
+      target.getIdentityService().clearAuthentication();
+    }
+    return target.getTaskService().createTaskQuery().processInstanceId(pi).singleResult();
+  }
+
+  @Test
+  public void shouldReportTheStatusForTheUserOfTheRequest() {
+    Task approve = draftedByAlice(engine);
+    engine.getTaskService().setAssignee(approve.getId(), "alice");
+    as("alice");
+
+    given().pathParam("id", approve.getId())
+    .then().expect()
+        .statusCode(Status.OK.getStatusCode())
+        .contentType(ContentType.JSON)
+        .body("taskId", equalTo(approve.getId()))
+        .body("enabled", equalTo(true))
+        .body("guarded", equalTo(true))
+        .body("earlierSteps.id", contains("draft"))
+        .body("earlierSteps.name", contains("Draft contract"))
+        .body("userId", equalTo("alice"))
+        .body("userExcluded", equalTo(true))
+        .body("userSteps", contains("draft"))
+        .body("assignee", equalTo("alice"))
+        .body("assigneeExcluded", equalTo(true))
+        .body("assigneeSteps", contains("draft"))
+        .body("blocked", equalTo(true))
+    .when().get(FOUR_EYES_URL);
+
+    as("bob");
+    given().pathParam("id", approve.getId())
+    .then().expect()
+        .statusCode(Status.OK.getStatusCode())
+        .body("userId", equalTo("bob"))
+        .body("userExcluded", equalTo(false))
+        .body("userSteps", empty())
+        .body("assigneeExcluded", equalTo(true))
+        .body("blocked", equalTo(true))
+    .when().get(FOUR_EYES_URL);
+  }
+
+  @Test
+  public void shouldReportATaskWithoutRule() {
+    engine.getRepositoryService().createDeployment().addModelInstance("fourEyes.bpmn", model()).deploy();
+    String pi = engine.getRuntimeService().startProcessInstanceByKey("fourEyes").getId();
+    Task draft = engine.getTaskService().createTaskQuery().processInstanceId(pi).singleResult();
+    as("alice");
+
+    given().pathParam("id", draft.getId())
+    .then().expect()
+        .statusCode(Status.OK.getStatusCode())
+        .body("enabled", equalTo(true))
+        .body("guarded", equalTo(false))
+        .body("earlierSteps", empty())
+        .body("blocked", equalTo(false))
+    .when().get(FOUR_EYES_URL);
+  }
+
+  @Test
+  public void shouldRefuseTheCompletionWith403() {
+    Task approve = draftedByAlice(engine);
+    engine.getTaskService().setAssignee(approve.getId(), "alice");
+    as("alice");
+
+    given().pathParam("id", approve.getId()).contentType(ContentType.JSON).body(EMPTY_JSON_OBJECT)
+    .then().expect()
+        .statusCode(Status.FORBIDDEN.getStatusCode())
+        .contentType(ContentType.JSON)
+        .body("type", equalTo("FourEyesViolationException"))
+        .body("message", equalTo("Four-eyes control: user 'alice' cannot complete task 'Approve contract' (approve) "
+            + "after completing an earlier step it checks (draft). Another person must complete it."))
+        .body("userId", nullValue())
+    .when().post(TASK_URL + "/complete");
+
+    given().pathParam("id", approve.getId()).contentType(ContentType.JSON).body("{\"withVariablesInReturn\": true}")
+    .then().expect()
+        .statusCode(Status.FORBIDDEN.getStatusCode())
+        .body("type", equalTo("FourEyesViolationException"))
+    .when().post(TASK_URL + "/complete");
+  }
+
+  @Test
+  public void shouldRefuseAFormSubmitAndABpmnErrorWith403() {
+    Task approve = draftedByAlice(engine);
+    engine.getTaskService().setAssignee(approve.getId(), "alice");
+    as("alice");
+
+    given().pathParam("id", approve.getId()).contentType(ContentType.JSON).body(EMPTY_JSON_OBJECT)
+    .then().expect()
+        .statusCode(Status.FORBIDDEN.getStatusCode())
+        .body("type", equalTo("FourEyesViolationException"))
+    .when().post(TASK_URL + "/submit-form");
+
+    given().pathParam("id", approve.getId()).contentType(ContentType.JSON).body("{\"errorCode\": \"REJECT\"}")
+    .then().expect()
+        .statusCode(Status.FORBIDDEN.getStatusCode())
+        .body("type", equalTo("FourEyesViolationException"))
+    .when().post(TASK_URL + "/bpmnError");
+  }
+
+  @Test
+  public void shouldRefuseWhileTheAssigneeIsExcluded() {
+    Task approve = draftedByAlice(engine);
+    engine.getTaskService().setAssignee(approve.getId(), "alice");
+    as("bob");
+
+    given().pathParam("id", approve.getId()).contentType(ContentType.JSON).body(EMPTY_JSON_OBJECT)
+    .then().expect()
+        .statusCode(Status.FORBIDDEN.getStatusCode())
+        .body("type", equalTo("FourEyesViolationException"))
+        .body("message", containsString("is assigned to 'alice'"))
+    .when().post(TASK_URL + "/complete");
+  }
+
+  @Test
+  public void shouldLetAnotherUserComplete() {
+    Task approve = draftedByAlice(engine);
+    engine.getTaskService().setAssignee(approve.getId(), "bob");
+    as("bob");
+
+    given().pathParam("id", approve.getId()).contentType(ContentType.JSON).body(EMPTY_JSON_OBJECT)
+    .then().expect()
+        .statusCode(Status.NO_CONTENT.getStatusCode())
+    .when().post(TASK_URL + "/complete");
+  }
+
+  @Test
+  public void shouldAnswer404ForAMissingTask() {
+    as("alice");
+    given().pathParam("id", "missing")
+    .then().expect()
+        .statusCode(Status.NOT_FOUND.getStatusCode())
+        .body("type", equalTo("InvalidRequestException"))
+        .body("message", equalTo("No matching task with id missing"))
+    .when().get(FOUR_EYES_URL);
+  }
+
+  @Test
+  public void shouldAnswer403WithoutReadPermission() {
+    Task approve = draftedByAlice(engine);
+    ((ProcessEngineConfigurationImpl) engine.getProcessEngineConfiguration()).setAuthorizationEnabled(true);
+    as("mallory");
+
+    given().pathParam("id", approve.getId())
+    .then().expect()
+        .statusCode(Status.FORBIDDEN.getStatusCode())
+        .body("type", equalTo("AuthorizationException"))
+    .when().get(FOUR_EYES_URL);
+  }
+
+  @Test
+  public void shouldReportTheControlAsDisabledWithoutPlugin() {
+    use(engineWithoutPlugin);
+    Task approve = draftedByAlice(engineWithoutPlugin);
+    as("alice");
+
+    given().pathParam("id", approve.getId())
+    .then().expect()
+        .statusCode(Status.OK.getStatusCode())
+        .body("enabled", equalTo(false))
+        .body("guarded", equalTo(false))
+        .body("blocked", equalTo(false))
+    .when().get(FOUR_EYES_URL);
+
+    engineWithoutPlugin.getTaskService().setAssignee(approve.getId(), "alice");
+    given().pathParam("id", approve.getId()).contentType(ContentType.JSON).body(EMPTY_JSON_OBJECT)
+    .then().expect()
+        .statusCode(Status.NO_CONTENT.getStatusCode())
+    .when().post(TASK_URL + "/complete");
+  }
+}

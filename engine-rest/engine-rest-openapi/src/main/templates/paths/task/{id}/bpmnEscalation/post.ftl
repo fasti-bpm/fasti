@@ -60,7 +60,9 @@
     <@lib.response
         code = "403"
         dto = "AuthorizationExceptionDto"
-        desc = "If the authenticated user is unauthorized to update the process instance. See the
+        desc = "If the authenticated user is unauthorized to update the process instance, or if the
+                four-eyes control (Fasti) refuses it: the authenticated user or the assignee completed an
+                earlier step the task checks (type `FourEyesViolationException`). See the
                 [Introduction](${docsUrl}/reference/rest/overview/#error-handling)
                 for the error response format." />
 

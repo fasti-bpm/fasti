@@ -119,6 +119,16 @@
                 the error response format." />
 
     <@lib.response
+        code = "403"
+        dto = "AuthorizationExceptionDto"
+        desc = "If the authenticated user is unauthorized to work on the task, or if the four-eyes
+                control (Fasti) refuses the completion: the authenticated user or the assignee completed an
+                earlier step the task checks (type `FourEyesViolationException`, see
+                `GET /task/{id}/four-eyes`). See the
+                [Introduction](${docsUrl}/reference/rest/overview/#error-handling)
+                for the error response format." />
+
+    <@lib.response
         code = "500"
         dto = "ExceptionDto"
         last = true

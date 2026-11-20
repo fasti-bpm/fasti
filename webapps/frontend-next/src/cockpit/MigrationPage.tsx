@@ -301,7 +301,7 @@ export function MigrationPage() {
           </Button>
         </div>
         {versions.data && versions.data.length < 2 && <Notice tone="warning">{t('ops.migrate.oneVersion')}</Notice>}
-        {plan.isError && <ErrorState error={plan.error} />}
+        {plan.isError && <ErrorState error={plan.error} onRetry={() => void plan.refetch()} />}
       </Card>
 
       {targetId && (

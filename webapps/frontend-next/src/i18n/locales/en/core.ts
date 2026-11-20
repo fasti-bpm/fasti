@@ -862,7 +862,7 @@ const messages = {
   'filterEdit.scope.process': 'Process',
   'filterEdit.scope.task': 'Task',
   'filterEdit.sharing.everyone': 'Every user',
-  'filterEdit.sharing.everyoneHint': 'Everyone who can log in sees this filter.',
+  'filterEdit.sharing.everyoneHint': 'Everyone who can sign in sees this filter.',
   'filterEdit.sharing.group': 'Group {id}',
   'filterEdit.sharing.hint': 'The users and groups below see this filter in their Tasklist. Which tasks they see still depends on their own permissions.',
   'filterEdit.sharing.kind': 'Share with',

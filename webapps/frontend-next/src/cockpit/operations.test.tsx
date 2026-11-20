@@ -792,6 +792,27 @@ describe('history', () => {
 });
 
 describe('decision history', () => {
+  it('offers to try again when the evaluation could not be read', async () => {
+    const user = userEvent.setup();
+    let calls = 0;
+    const server = backend({
+      [`GET ${ENGINE}/history/decision-instance/e1`]: () =>
+        ++calls === 1
+          ? json({ type: 'InvalidRequestException', message: 'not now' }, 400)
+          : json({
+              id: 'e1', decisionDefinitionId: 'dish:1', decisionDefinitionKey: 'dish', decisionDefinitionName: 'Dish', evaluationTime: '2026-03-01T09:30:00.000+0700',
+              processDefinitionKey: null, processInstanceId: null, activityId: null, userId: 'demo', rootDecisionInstanceId: null, collectResultValue: null,
+              inputs: [], outputs: [],
+            }),
+      [`GET ${ENGINE}/decision-definition/dish:1/xml`]: () => json({ dmnXml: '<definitions />' }),
+    });
+    renderApp('/cockpit/decision-history/e1');
+
+    await user.click(await screen.findByRole('button', { name: 'Try again' }));
+    expect(await screen.findByRole('heading', { name: 'Dish' })).toBeVisible();
+    expect(server.find('GET', `${ENGINE}/history/decision-instance/e1`)).toHaveLength(2);
+  });
+
   it('shows inputs, outputs and the rules that matched', async () => {
     backend({
       [`GET ${ENGINE}/history/decision-instance/e1`]: () =>

@@ -155,7 +155,7 @@ export function DecisionInstancePage() {
       <div className="page">
         <PageHeader title={t('ops.decisions.instance')} back={{ to: '/cockpit/decision-history', label: t('ops.decisions.title') }} />
         <Card>
-          {isApiError(decision.error, 'notFound') ? <EmptyState icon={SearchX} title={t('ops.history.notFound')} /> : <ErrorState error={decision.error} />}
+          {isApiError(decision.error, 'notFound') ? <EmptyState icon={SearchX} title={t('ops.history.notFound')} /> : <ErrorState error={decision.error} onRetry={() => void decision.refetch()} />}
         </Card>
       </div>
     );
@@ -190,7 +190,7 @@ export function DecisionInstancePage() {
       />
       <Card flush className="model">
         {xml.isError ? (
-          <ErrorState error={xml.error} />
+          <ErrorState error={xml.error} onRetry={() => void xml.refetch()} />
         ) : !xml.data ? (
           <Loading label={t('diagram.loading')} />
         ) : (

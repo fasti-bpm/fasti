@@ -133,7 +133,14 @@ export function FilterEditor({ filterId, onClose, onSaved, onDeleted }: FilterEd
       wide
     >
       {error ? (
-        <ErrorState error={error} />
+        <ErrorState
+          error={error}
+          onRetry={() => {
+            void filter.refetch();
+            void access.refetch();
+            void shares.refetch();
+          }}
+        />
       ) : loading || shareable.isPending ? (
         <Loading label={t('state.loading')}>
           <Skeleton lines={6} />

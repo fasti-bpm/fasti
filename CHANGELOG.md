@@ -17,6 +17,27 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
 
 ### Added
 
+- Immutable audit trail ([docs](docs/audit-trail.md)): with `fasti.audit.enabled=true` the engine
+  records, next to its history, process instances, user tasks with who created, assigned,
+  completed or deleted them, variables (as SHA-256 or HMAC by default, in clear on request, never
+  for masked names such as `*password*`), deployments with the hash of every resource, incidents,
+  decisions and every entry of the user operation log (identity and authorization changes
+  included), with the authenticated user, the engine clock, the engine and the tenant, in the
+  transaction of what it records. Each record carries SHA-256(previous hash, canonical record);
+  every node appends to a few chains of its own, locking only the head row of a chain, so nodes
+  do not wait for one global lock. Checkpoints can be signed with an HMAC key that never reaches
+  the database (`FASTI_AUDIT_HMAC_KEY` or a key file). `POST /audit/verify` and the
+  **Cockpit → Audit trail** page recompute the chains and name the first changed, removed or
+  inserted record; the page and the new "Audit trail" tab of an instance history filter by
+  instance, business key, user, category and time and export CSV or JSON (the export is
+  recorded). History cleanup does not touch the records; an explicit, export-confirmed
+  `POST /audit/purge` removes records older than `fasti.audit.retention-days` and leaves a purge
+  record that keeps the chain verifiable. Reading needs an administrators group or `READ` on
+  `SYSTEM`, purging `DELETE` on `SYSTEM`. Stored in the optional tables `FASTI_AUDIT_EVENT` and
+  `FASTI_AUDIT_HEAD` (scripts for H2, PostgreSQL, MySQL/MariaDB, Oracle, SQL Server and DB2,
+  `sql/create/<database>_fasti_audit.sql`); the Camunda 7.24 schema is unchanged. Off by default
+  everywhere (plugin `dev.fasti.engine.audit.AuditTrailPlugin`, `FASTI_AUDIT_ENABLED` in the
+  container image).
 - Four-eyes control for approvals ([docs](docs/four-eyes.md)): a BPMN user task with the
   extension property `fasti:fourEyes` (ids of earlier user tasks of the same process, comma
   separated; the task itself for "a different person each time") cannot be completed, have its

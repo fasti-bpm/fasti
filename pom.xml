@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.camunda</groupId>
     <artifactId>camunda-bpm-release-parent</artifactId>
-    <version>2.5.0</version>
+    <version>2.5.1</version>
     <!-- do not remove empty tag - http://jira.codehaus.org/browse/MNG-4687 -->
     <relativePath />
   </parent>
@@ -30,8 +30,8 @@
     <license.includeTransitiveDependencies>false</license.includeTransitiveDependencies>
 
     <!-- These properties are used in both the BOM as well as fasti-parent and subprojects -->
-    <version.mybatis>3.5.19</version.mybatis>
-    <version.joda-time>2.12.5</version.joda-time>
+    <version.mybatis>3.6.0</version.mybatis>
+    <version.joda-time>2.15.1</version.joda-time>
     <version.uuid-generator>5.2.0</version.uuid-generator>
     <version.feel-scala>1.19.6</version.feel-scala>
   </properties>
@@ -57,7 +57,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>license-maven-plugin</artifactId>
-        <version>1.14</version>
+        <version>1.20</version>
         <configuration>
           <acceptPomPackaging>true</acceptPomPackaging>
           <excludedScopes>test</excludedScopes>

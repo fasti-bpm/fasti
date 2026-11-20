@@ -328,7 +328,7 @@
     <profile>
       <id>resteasy</id>
       <properties>
-        <version.netty>4.1.140.Final</version.netty>
+        <version.netty>4.2.21.Final</version.netty>
       </properties>
       <dependencies>
         <dependency>
@@ -436,7 +436,7 @@
         <dependency>
           <groupId>javax.ws.rs</groupId>
           <artifactId>javax.ws.rs-api</artifactId>
-          <version>2.0.1</version>
+          <version>2.1.1</version>
           <scope>provided</scope>
         </dependency>
         <dependency>

@@ -19,7 +19,7 @@
   <properties>
     <!-- 0: every test server start takes a free port; set a positive value to fix the port -->
     <rest.http.port>0</rest.http.port>
-    <version.resteasy>6.2.3.Final</version.resteasy>
+    <version.resteasy>6.2.20.Final</version.resteasy>
   </properties>
 
   <dependencyManagement>
@@ -502,7 +502,7 @@
       </activation>
 
       <properties>
-        <version.netty>4.1.140.Final</version.netty>
+        <version.netty>4.2.21.Final</version.netty>
         <version.undertow>2.3.27.Final</version.undertow>
       </properties>
 

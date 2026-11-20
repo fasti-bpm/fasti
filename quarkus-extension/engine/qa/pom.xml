@@ -15,7 +15,7 @@
   <name>Fasti BPM Platform - Quarkus Extension - Engine - CDI QA</name>
 
   <properties>
-    <arquillian.version>1.7.0.Final</arquillian.version>
+    <arquillian.version>1.10.2.Final</arquillian.version>
   </properties>
 
   <dependencyManagement>

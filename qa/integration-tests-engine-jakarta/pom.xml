@@ -18,14 +18,14 @@
   <properties>
     <!-- Needs to be updated after a new WildFly release -->
     <wildfly.container.adapter.groupId>org.wildfly.arquillian</wildfly.container.adapter.groupId>
-    <wildfly.container.adapter.version>5.0.1.Final</wildfly.container.adapter.version>
+    <wildfly.container.adapter.version>5.1.0.Final</wildfly.container.adapter.version>
     <version.spring.framework>${version.spring.framework6}</version.spring.framework>
 
-    <version.arquillian>1.7.0.Final</version.arquillian>
+    <version.arquillian>1.10.2.Final</version.arquillian>
 
     <redirect.test.output>true</redirect.test.output>
 
-    <weld.version>5.1.0.Final</weld.version>
+    <weld.version>5.1.7.Final</weld.version>
   </properties>
 
   <!-- import shrinkwrap and arquillian bom for artifact versions,
@@ -146,7 +146,7 @@
     <dependency>
       <groupId>jakarta.persistence</groupId>
       <artifactId>jakarta.persistence-api</artifactId>
-      <version>3.1.0</version>
+      <version>3.2.0</version>
       <scope>test</scope>
     </dependency>
 
@@ -544,7 +544,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.2.0</version>
+        <version>1.12</version>
         <executions>
           <execution>
             <id>add-jakarta-test-source</id>

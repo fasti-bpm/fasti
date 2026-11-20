@@ -22,8 +22,8 @@
     <os.type>linux64</os.type>
 
     <!-- imported only for its JNA dependency management; httpclient5 itself is managed by Spring Boot -->
-    <version.httpcomponents>5.3.1</version.httpcomponents>
-    <version.rest-assured6>6.3.0</version.rest-assured6>
+    <version.httpcomponents>5.6.5</version.httpcomponents>
+    <version.rest-assured6>4.5.1</version.rest-assured6>
     <version.chromedriver>112.0.5615.49</version.chromedriver>
   </properties>
 
@@ -41,7 +41,7 @@
       <dependency>
         <groupId>org.seleniumhq.selenium</groupId>
         <artifactId>selenium-java</artifactId>
-        <version>4.10.0</version>
+        <version>4.52.0</version>
       </dependency>
 
       <!-- no longer managed by spring-boot-dependencies since Spring Boot 4;

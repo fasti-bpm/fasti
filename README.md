@@ -24,7 +24,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
 ```
 
 Open <http://localhost:8080/fasti/> and sign in. Without `DB_URL` the image uses an H2 database
-inside the container, for trying out only. The REST API needs Basic credentials:
+inside the container, for evaluation only. The REST API needs Basic credentials:
 
 ```bash
 curl -i http://localhost:8080/engine-rest/task      # 401: no credentials
@@ -48,7 +48,7 @@ Run); only `FASTI_INSECURE_DEMO=true` turns them off, for demos.
 
 - **New web UI** at `/fasti/` (React):
   - search process instances by several variables at once, combined with AND/OR;
-  - case timeline inside the task (comments and actions of every step);
+  - case timeline within the task (comments and actions at every step);
   - a "Get next work" button;
   - due dates and urgency (SLA), overdue work;
   - team workload per user and group;
@@ -101,7 +101,7 @@ Basic credentials or a bearer token.
 - **Side by side** with Camunda 7.24 CE nodes on the same database: same history level, same
   `TZ`, same password settings. If the old nodes are process applications with Java classes that
   Fasti lacks, set `FASTI_JOB_EXECUTOR_ENABLED=false` on Fasti (or make every node
-  deployment-aware), and do not drive those processes (start, complete tasks) through Fasti: a
+  deployment-aware), and do not start those processes or complete their tasks through Fasti: a
   synchronous call runs the delegates on the node that receives it.
 - **Rollback**: Fasti does not change the schema, so stop Fasti and start the Camunda 7.24 nodes
   again on the same database. Deployed processes that use Fasti-only features will not run on
@@ -110,11 +110,11 @@ Basic credentials or a bearer token.
   (`/fasti/configuration/sql/upgrade`) up to 7.24 first; for example 7.23 → 7.24:
   `postgres_engine_7.23_to_7.24.sql`.
 
-Tested for real with the image (taking over a database created by Camunda Run 7.24.0, rolling
+Tested with the image (taking over a database created by Camunda Run 7.24.0, rolling
 back, running side by side): **PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022, Oracle
 Database 23** (the Oracle driver is not bundled; add `ojdbc11` yourself; rollback was not tested
 on MySQL). **DB2 is not
-verified.** H2 is for trying out only. Results per test and limits:
+verified.** H2 is for evaluation only. Results per test and limits:
 [migration guide](docs/migrate-from-camunda-7.md#limits).
 
 Detailed guides:
@@ -124,7 +124,7 @@ Detailed guides:
   troubleshooting.
 - [Moving from Camunda 7](docs/migrate-from-camunda-7.md): steps, what is identical and what
   differs, rollback, limits.
-- [Environment variable reference of the image](distro/docker/README.md#environment-variables).
+- [Environment variable reference for the image](distro/docker/README.md#environment-variables).
 
 ### Without Docker: Tomcat bundle (download from fasti.dev)
 
@@ -137,9 +137,8 @@ Verify the checksum before extracting, for example `sha256sum -c fasti-bpm-tomca
 The Tomcat distribution can also be built from source (`distro/tomcat`). Read `README.txt` in
 the bundle before starting it: the REST API (`/engine-rest`) requires HTTP Basic authentication
 by default, no user is created (create the first administrator on the setup page of `/fasti/`),
-and when taking over the database of Camunda Run set `jobExecutorDeploymentAware=false` in
-`conf/bpm-platform.xml`, otherwise the timers and async jobs of the existing deployments do not
-run.
+and when taking over a Camunda Run database, set `jobExecutorDeploymentAware=false` in
+`conf/bpm-platform.xml`, otherwise, timers and async jobs of existing deployments will not run.
 
 ## A UI built from real user complaints
 
@@ -149,7 +148,7 @@ Camunda forum and on GitHub, for example:
 | What users asked for | Source | In Fasti |
 |---|---|---|
 | Search instances by several variables, with OR | forum [39269](https://forum.camunda.io/t/39269), [45695](https://forum.camunda.io/t/45695), [48976](https://forum.camunda.io/t/48976), [64208](https://forum.camunda.io/t/64208), [28855](https://forum.camunda.io/t/28855), [4678](https://forum.camunda.io/t/4678); [camunda-bpm-platform#3236](https://github.com/camunda/camunda-bpm-platform/issues/3236) | Multi-variable condition builder, AND/OR |
-| See the comments of every step of a case | forum [30260](https://forum.camunda.io/t/30260), [52109](https://forum.camunda.io/t/52109), [2173](https://forum.camunda.io/t/2173) | Case timeline in the task; comments on the process instance itself |
+| See the comments at every step of a case | forum [30260](https://forum.camunda.io/t/30260), [52109](https://forum.camunda.io/t/52109), [2173](https://forum.camunda.io/t/2173) | Case timeline in the task; comments on the process instance itself |
 | Sort tasks by variables, oldest first | forum [17599](https://forum.camunda.io/t/17599), [42078](https://forum.camunda.io/t/42078), [41193](https://forum.camunda.io/t/41193), [67328](https://forum.camunda.io/t/67328) | Sorting by variables, due dates and urgency |
 | Delegation, substitutes during absence | forum [2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199), [9331](https://forum.camunda.io/t/9331) | Per-task delegation exists; out-of-office substitutes are on the [roadmap](#roadmap-plan) |
 | Business key and variables when starting a process without a form | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | Yes |
@@ -162,16 +161,16 @@ A compact comparison based on each project's public documentation (read in Novem
 "not verified" means we found no reliable source. Every project has its own direction and is a
 sound choice for different needs; check their documentation before you decide.
 
-| | Licence | Runs on an existing C7 DB | Migration needed | Security patches | Java / Spring Boot | UI | SSO | Docker image |
+| | License | Runs on an existing C7 DB | Migration needed | Security patches | Java / Spring Boot | UI | SSO | Docker image |
 |---|---|---|---|---|---|---|---|---|
 | **Fasti BPM** | Apache-2.0 | Yes, 7.24 schema unchanged | Image: none. Embedded apps: new Maven coordinates, Spring Boot 4.1 and Java 17+; `org.camunda.*` packages kept | Yes, see the [policy below](#commitments-support-and-security-patches) | 17+ / 4.1 | New (React) + classic (deprecated) | OIDC built in | Yes, from 1.0.0 |
 | Camunda 7 CE 7.24 | Apache-2.0 source; some bundled web components under MIT ([13]) | (the original) | — | No CE releases after 7.24 ([1]) | 17, 21, 25 ([2]) / 3.5 | Cockpit, Tasklist, Admin (AngularJS) | OAuth2 via the security starter | Former Run image |
 | Camunda 7 Enterprise | Commercial | Yes (same product line) | No | Until 04/2030, paid extension to 04/2032 ([3]) | not verified | Cockpit Enterprise | not verified | not verified |
-| Camunda 8 | Camunda License 1.0; self-managed production needs a licence since 8.6 ([4]) | No (different engine) | Yes (models, instances, data) | Yes (vendor) | different engine, not comparable | Operate, Tasklist | not verified | not verified |
+| Camunda 8 | Camunda License 1.0; self-managed production needs a license since 8.6 ([4]) | No (different engine) | Yes (models, instances, data) | Yes (vendor) | different engine, not comparable | Operate, Tasklist | not verified | not verified |
 | Operaton | Apache-2.0 | Same table structure as 7.24; 2.2 records schema version 7.25 through an upgrade script ([5]) | Packages renamed to `org.operaton.*` (OpenRewrite recipe available); schema-version script (2.2) | Yes, 2.2.x line ([6]) | 17+ / 4.1 ([5]) | Classic + webapps-neo (preview) | not verified | Yes ([7]) |
-| CIB seven | Apache-2.0; EE needs a licence key | Yes (7.24 changes merged) | Packages renamed to `org.cibseven.*`, prefix `cibseven.*` | Yes, per release ([8]) | 17, 21 / 3.5 and 4.0 ([9]) | Vue 3 webclient | OAuth2/JWT for REST ([8]) | Yes ([8]) |
+| CIB seven | Apache-2.0; EE needs a license key | Yes (7.24 changes merged) | Packages renamed to `org.cibseven.*`, prefix `cibseven.*` | Yes, per release ([8]) | 17, 21 / 3.5 and 4.0 ([9]) | Vue 3 webclient | OAuth2/JWT for REST ([8]) | Yes ([8]) |
 | OrqueIO | Apache-2.0 | Compatible with C7 tables per their docs ([10]) | Maven group `io.orqueio`; package rename not stated | Yes, per their docs ([10]) | 21 / 3.5, 4.0, 4.1 | Angular rewrite | Multi-provider OIDC | not verified |
-| EximeeBPMS | Apache-2.0 (Monitor: MIT) | The project states its schema stays compatible with Camunda 7 (not verified by Fasti) ([14]) | Packages renamed to `org.eximeebpms.*`, Model API renamed | Yes, two latest minors ([11]) | 21 / Spring Boot version not stated | Separate Monitor | not verified | Yes (`eximeebpms-docker` repository) |
+| EximeeBPMS | Apache-2.0 (Monitor: MIT) | The project states its schema stays compatible with Camunda 7 (not verified by Fasti) ([14]) | Packages renamed to `org.eximeebpms.*`, Model API renamed | Yes, the two latest minor releases ([11]) | 21 / Spring Boot version not stated | Separate Monitor | not verified | Yes (`eximeebpms-docker` repository) |
 | Fluxnova | Apache-2.0 (FINOS) | not verified | not verified | not verified | 21 (Corretto image) / not verified | Control Center | not verified | Yes ([12]) |
 
 Fasti's own weak points, stated plainly: a young project with a small team, no commercial
@@ -202,13 +201,13 @@ independent overview: [WZ-IT, 2026-10-15](https://wz-it.com/en/blog/camunda-7-en
 | 2024-03-06 | Camunda announces the end of life of Camunda 7 CE for October 2025, with 7.24 as the final CE release | [Camunda forum](https://forum.camunda.io/t/important-update-camunda-7-community-edition-end-of-life-announced/50921) |
 | 2025-02-28 | Camunda extends Camunda 7 Enterprise support to 2030-04-09, with paid extended support to April 2032 | [Camunda blog](https://camunda.com/blog/2025/02/camunda-7-enterprise-end-of-life-extension/) |
 | 2025-10-07 | Tag `7.24.0` created and published to Maven Central: the final CE release | [tag 7.24.0](https://github.com/camunda/camunda-bpm-platform/tree/7.24.0), [Maven Central](https://repo1.maven.org/maven2/org/camunda/bpm/camunda-engine/7.24.0/) |
-| 2025-10-14 | Release date of 7.24 as scheduled by Camunda; after it there are no CE releases, security patches included. The CE repository has since been archived | [announcement](https://forum.camunda.io/t/important-update-camunda-7-community-edition-end-of-life-announced/50921), [support page](https://docs.camunda.org/enterprise/announcement) |
+| 2025-10-14 | Release date of 7.24 as scheduled by Camunda; after this date there are no further CE releases, including security patches. The CE repository has since been archived | [announcement](https://forum.camunda.io/t/important-update-camunda-7-community-edition-end-of-life-announced/50921), [support page](https://docs.camunda.org/enterprise/announcement) |
 | April 2030 | End of Camunda 7 Enterprise support (7.24 LTS: 2030-04-13) | [support page](https://docs.camunda.org/enterprise/announcement) |
 | April 2032 | End of paid extended support for Camunda 7 Enterprise | [support page](https://docs.camunda.org/enterprise/announcement) |
 
 ### Fasti BPM
 
-Fasti continues directly from the `7.24.0` tag; every fix and change counts from there
+Fasti continues directly from the `7.24.0` tag; every fix and change is counted from that point
 (`git log 7.24.0..`). The phases below are ordered by the work done, without dates:
 
 1. **Foundation**: Java 17, Spring Boot 4.1, library upgrades; Maven coordinates
@@ -217,8 +216,7 @@ Fasti continues directly from the `7.24.0` tag; every fix and change counts from
    attachment/comment checks inside the engine, web application hardening.
 3. **New web UI** at `/fasti/`, gradually replacing the classic Cockpit, Tasklist and Admin.
 4. **Single sign-on** (OIDC) for Run, Spring Boot, Tomcat and WildFly.
-5. **Drop-in on existing databases**: the image accepts the former `DB_*` variables, checks the
-   schema version, tested for real on five database systems.
+5. **Drop-in on existing databases**: the image accepts the former `DB_*` variables and checks the schema version; tested on five database systems.
 6. **Pre-release security review** (code review, penetration test of the image, ZAP baseline
    scan; the findings were fixed) and **Java4Shell mitigation**.
 7. **1.0.0**: the first release (2026-11-20).
@@ -237,7 +235,7 @@ Fasti continues directly from the `7.24.0` tag; every fix and change counts from
 - **MyBatis upgrade** to a current release.
 - **Long-term support (LTS) lines** for users who upgrade rarely.
 - **DB2 verification**.
-- **Workload aggregate endpoint**, so that the workload page stays fast on large data.
+- **Workload aggregate endpoint**, so that the workload page stays fast with large datasets.
 
 ## Commitments: support and security patches
 
@@ -283,7 +281,7 @@ The goal is **backward compatibility** with applications that run on Camunda 7:
 - the `org.camunda.bpm.*` packages, the BPMN namespace
   `http://camunda.org/schema/1.0/bpmn` and the `camunda.bpm.*` configuration prefix are kept;
 - the database schema of 7.24 is kept;
-- all deployment flavours are kept: Spring Boot, Run, Tomcat, WildFly; `javax` and `jakarta`.
+- all deployment flavors are kept: Spring Boot, Run, Tomcat, WildFly; `javax` and `jakarta`.
 
 ## What is different from Camunda 7.24.0 CE
 
@@ -297,7 +295,7 @@ The goal is **backward compatibility** with applications that run on Camunda 7:
 - **Platform:** Java 17 or later, Spring Boot 4.1, GraalJS 25, Jackson 2.21 and many other
   libraries upgraded to releases with security fixes.
 
-Some fixes change defaults towards safer behaviour; read "What differs" in the
+Some fixes change defaults toward safer behavior; read "What differs" in the
 [migration guide](docs/migrate-from-camunda-7.md#what-differs) before upgrading.
 
 ## Versioning
@@ -437,8 +435,7 @@ by every distribution: `http://localhost:8080/fasti/` opens the new UI
 
 **The classic applications are deprecated.** The classic Cockpit, Tasklist, Admin and Welcome
 are built on AngularJS 1.8.2 and Bootstrap 3, both end of life. **The container image does not
-serve them by default** (breaking change): their pages and old bookmarks lead to the matching
-section of the new UI and their files answer `404`; `FASTI_CLASSIC_WEBAPPS=true` brings them
+serve them by default** (breaking change): their pages and old bookmarks redirect to the matching section of the new UI, and requests for their files return `404`; `FASTI_CLASSIC_WEBAPPS=true` brings them
 back (with a warning), see [distro/docker/README.md](distro/docker/README.md). The
 Tomcat and WildFly bundles do not serve them by default either (bring them back with
 `-Dfasti.webapp.classic.enabled=true` or `FASTI_CLASSIC_WEBAPPS=true`). The Run zip and the Spring
@@ -484,11 +481,11 @@ Spring Security client registration (`spring.security.oauth2.client.*`). For **T
 - **Logout:** `POST /logout` (same-origin requests only) ends the session; with
   `camunda.bpm.oauth2.sso-logout.enabled=true` the user continues to the provider's end
   session endpoint (RP-initiated logout, `post-logout-redirect-uri`). Spring Security's
-  back-channel logout stays enabled. `GET /logout` no longer logs out.
+  back-channel logout stays enabled. `GET /logout` no longer logs the user out.
 - **Session expiry:** when the access token cannot be refreshed or the session times out,
-  `/fasti/api/**` answers `401` (no redirect) and the new web application shows its login page.
+  requests to `/fasti/api/**` return `401` (no redirect) and the new web application shows its login page.
 - **CSRF:** `/fasti/api` and `/fasti/app` keep the web applications' own CSRF filter
-  (`X-XSRF-TOKEN`); Spring Security's CSRF protection stays off as upstream.
+  (`X-XSRF-TOKEN`); Spring Security's CSRF protection stays disabled, as upstream.
 - **Groups, administrators, tenants:** the groups claim is
   `camunda.bpm.oauth2.identity-provider.group-name-attribute` (upstream property name; nested
   claims such as `realm_access.roles` work). `fasti.security.oidc.groups.admin` lists the
@@ -503,8 +500,7 @@ Spring Security client registration (`spring.security.oauth2.client.*`). For **T
   `camunda.bpm.oauth2.identity-provider.enabled=false` to use the database instead (groups
   then come from the membership tables). Auto-provisioning is not implemented.
   While users come from the token (the default), the initial setup page (first administrator)
-  is switched off, since administrators come from the claims (`groups.admin`); before, users
-  outside the administrators group were sent to it.
+  is switched off, since administrators come from the claims (`groups.admin`); previously, users outside the administrators group were sent to the setup page.
 - **REST API with bearer tokens:** `fasti.security.oidc.rest.bearer-enabled=true` accepts
   `Authorization: Bearer <JWT>` on `/engine-rest` in addition to basic authentication.
   `rest.issuer-uri` and `rest.audiences` are required; signatures are checked against the
@@ -572,17 +568,15 @@ fasti.security.oidc:
 
 **Tomcat, WildFly (WAR):** the same features, configured in `fasti-oidc.properties` (Tomcat:
 `conf/`, WildFly: `standalone/configuration/`; an annotated `fasti-oidc.properties.example`
-sits next to it). Without the file nothing changes. The keys match `fasti.security.oidc.*` of
-Run, plus `issuer-uri`, `client-id`, `client-secret`, `user-name-claim`, `groups-claim`. The
+sits next to it). Without the file nothing changes. The keys match Run's `fasti.security.oidc.*` properties, plus `issuer-uri`, `client-id`, `client-secret`, `user-name-claim`, `groups-claim`. The
 provider must allow the redirect URI `<base>/fasti/sso/callback`; the back-channel logout URL is
 `<base>/fasti/sso/backchannel-logout`. Bearer tokens on `/engine-rest` are enabled with
 `fasti.security.oidc.rest.bearer-enabled=true` (basic authentication keeps working unless
 `rest.basic-enabled=false`; the engine list `/engine` requires credentials too). Users need not
 exist in the database. For the engine to answer queries about the groups and tenants of the
 signed-in user from the claims, enable the `OidcIdentityProviderPlugin` (commented out in
-`bpm-platform.xml` / `standalone.xml`). Limits: the sessions known for back-channel logout are
-kept in memory per server (not shared across cluster nodes); classic applications are only sent
-to the provider, a complete logout goes through the new web UI.
+`bpm-platform.xml` / `standalone.xml`). Limits: the sessions tracked for back-channel logout are
+kept in memory per server (not shared across cluster nodes); the classic applications only redirect to the provider; a complete logout requires the new web UI.
 
 ## Build
 

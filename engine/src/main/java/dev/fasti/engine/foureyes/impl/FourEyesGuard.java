@@ -221,7 +221,14 @@ public final class FourEyesGuard {
       try {
         JsonElement json = JsonParser.parseString((String) value);
         if (json.isJsonArray()) {
-          return JsonUtil.asStringList(json);
+          // only string entries count; anything else (null, numbers, objects) was not written here
+          List<String> users = new ArrayList<>();
+          for (JsonElement entry : json.getAsJsonArray()) {
+            if (entry.isJsonPrimitive() && entry.getAsJsonPrimitive().isString()) {
+              users.add(entry.getAsString());
+            }
+          }
+          return users;
         }
       } catch (JsonParseException e) {
         // reported below

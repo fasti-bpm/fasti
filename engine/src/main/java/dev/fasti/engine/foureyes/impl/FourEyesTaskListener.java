@@ -23,17 +23,29 @@ import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.persistence.entity.TaskEntity;
 
 /**
- * Built-in {@code complete} listener of the user tasks that take part in a four-eyes rule.
+ * The {@code complete} listeners of the user tasks that take part in a four-eyes rule.
  * <ul>
- * <li>A guarded task is checked here as well, unless the command checker already allowed it in
- * this command (the usual case: {@code TaskService#complete}, form submit). This catches
- * completions that bypass the task service, such as {@code DelegateTask#complete()} in a
- * listener. The engine wraps exceptions of task listeners, so there the refusal reaches the
- * caller as the cause of a {@code ProcessEngineException}.</li>
- * <li>For a checked step, the actors of the completion are recorded.</li>
+ * <li>{@link #CHECK}, built-in (before the listeners of the model) on a guarded task: checks it,
+ * unless the command checker already allowed it in this command (the usual case:
+ * {@code TaskService#complete}, form submit). This catches completions that bypass the task
+ * service, such as {@code DelegateTask#complete()} in a listener. The engine wraps exceptions of
+ * task listeners, so there the refusal reaches the caller as the cause of a
+ * {@code ProcessEngineException}.</li>
+ * <li>{@link #RECORD}, after the listeners of the model on a checked step: records the actors of
+ * the completion. Being last, it does not record a completion that a listener of the model ends
+ * with a BPMN error instead, and it sees an assignee such a listener set.</li>
  * </ul>
  */
 public class FourEyesTaskListener implements TaskListener {
+
+  public static final FourEyesTaskListener CHECK = new FourEyesTaskListener(true);
+  public static final FourEyesTaskListener RECORD = new FourEyesTaskListener(false);
+
+  protected final boolean check;
+
+  protected FourEyesTaskListener(boolean check) {
+    this.check = check;
+  }
 
   @Override
   public void notify(DelegateTask delegateTask) {
@@ -42,11 +54,12 @@ public class FourEyesTaskListener implements TaskListener {
       return;
     }
     TaskEntity task = (TaskEntity) delegateTask;
-    FourEyesRule rule = FourEyesRule.of(task);
-    if (rule != null && !commandContext.getSession(CheckedTasks.class).contains(task.getId())) {
-      FourEyesGuard.check(commandContext, task, rule);
-    }
-    if (FourEyesRule.isChecked(task)) {
+    if (check) {
+      FourEyesRule rule = FourEyesRule.of(task);
+      if (rule != null && !commandContext.getSession(CheckedTasks.class).contains(task.getId())) {
+        FourEyesGuard.check(commandContext, task, rule);
+      }
+    } else if (FourEyesRule.isChecked(task)) {
       FourEyesGuard.record(commandContext, task);
     }
   }

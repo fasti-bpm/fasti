@@ -516,6 +516,46 @@ public class FourEyesTest {
     assertThat(task(pi, "draft")).isNotNull();
   }
 
+  @Test
+  public void shouldNotRecordACompletionThatAListenerTurnsIntoABpmnError() {
+    testRule.deploy(rule(Bpmn.createExecutableProcess("fourEyes").camundaHistoryTimeToLive(180)
+        .startEvent()
+        .userTask("draft").camundaCandidateUsers(CANDIDATES)
+          .camundaTaskListenerClass(TaskListener.EVENTNAME_COMPLETE, RejectListener.class)
+          .boundaryEvent("rejected").error("REJECTED").userTask("redraft").camundaCandidateUsers(CANDIDATES)
+          .userTask("approve").camundaCandidateUsers(CANDIDATES).endEvent()
+        .moveToActivity("draft").connectTo("approve")
+        .done(), "approve", "draft"));
+    String pi = start("fourEyes");
+    completeAs("alice", task(pi, "draft"));
+    completeAs("bob", task(pi, "redraft"));
+
+    // draft ended with the error of its listener, so alice did not complete it
+    assertThat(runtimeService.getVariable(pi, FourEyesService.VARIABLE_PREFIX + "draft")).isNull();
+    completeAs("alice", task(pi, "approve"));
+  }
+
+  public static class RejectListener implements TaskListener {
+    @Override
+    public void notify(org.camunda.bpm.engine.delegate.DelegateTask delegateTask) {
+      throw new org.camunda.bpm.engine.delegate.BpmnError("REJECTED");
+    }
+  }
+
+  @Test
+  public void shouldIgnoreEntriesOfTheRecordThatAreNoUserIds() {
+    testRule.deploy(draftApprove());
+    String pi = start("fourEyes");
+    completeAs("alice", task(pi, "draft"));
+    runtimeService.setVariable(pi, FourEyesService.VARIABLE_PREFIX + "draft", "[null, 1, {\"a\": 2}, \"carol\"]");
+
+    // carol counts; the rest is skipped instead of failing
+    assertRefused("carol", task(pi, "approve"));
+    identityService.setAuthenticatedUserId("carol");
+    assertThat(fourEyes.getStatus(task(pi, "approve").getId()).getUserSteps()).containsExactly("draft");
+    identityService.clearAuthentication();
+  }
+
   public static class AutoCompleteListener implements TaskListener {
     @Override
     public void notify(org.camunda.bpm.engine.delegate.DelegateTask delegateTask) {

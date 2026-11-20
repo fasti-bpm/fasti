@@ -19,6 +19,7 @@ package dev.fasti.engine.foureyes.impl;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import dev.fasti.engine.foureyes.FourEyesService;
@@ -43,8 +44,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Reads the extension property {@value FourEyesService#PROPERTY_NAME} of BPMN user tasks. Once the
  * whole process is parsed, the named steps are resolved: each must be a user task of the same
- * process. The guarded task gets its {@link FourEyesRule}; each named step gets the built-in
- * {@code complete} listener that records who completed it.
+ * process. The guarded task gets its {@link FourEyesRule} and the built-in {@code complete}
+ * listener that checks it; each named step gets a {@code complete} listener, after those of the
+ * model, that records who completed it.
  *
  * <p>A wrong rule fails a new deployment with a parse error. A process that is already deployed
  * (deployed while the plugin was off, then parsed again into the cache) is not refused, so that
@@ -56,8 +58,6 @@ public class FourEyesBpmnParseListener extends AbstractBpmnParseListener {
 
   /** Property of the parsed process: the rules found while parsing it, not yet resolved. */
   static final String PROPERTY_PENDING = "fasti.fourEyes.pending";
-
-  protected final FourEyesTaskListener listener = new FourEyesTaskListener();
 
   /** A rule as declared, before the whole process is known. */
   static final class Declared {
@@ -143,23 +143,27 @@ public class FourEyesBpmnParseListener extends AbstractBpmnParseListener {
       return;
     }
     declared.activity.setProperty(FourEyesRule.PROPERTY_RULE, new FourEyesRule(steps));
-    addListener(declared.activity);
+    TaskDefinition guarded = taskDefinition(declared.activity);
+    if (guarded != null && !contains(guarded.getBuiltinTaskListeners(), FourEyesTaskListener.CHECK)) {
+      guarded.addBuiltInTaskListener(TaskListener.EVENTNAME_COMPLETE, FourEyesTaskListener.CHECK);
+    }
     for (ActivityImpl step : checked) {
       step.setProperty(FourEyesRule.PROPERTY_CHECKED, Boolean.TRUE);
-      addListener(step);
+      TaskDefinition definition = taskDefinition(step);
+      // after the listeners of the model, which the process parser has added by now
+      if (definition != null && !contains(definition.getTaskListeners(), FourEyesTaskListener.RECORD)) {
+        definition.addTaskListener(TaskListener.EVENTNAME_COMPLETE, FourEyesTaskListener.RECORD);
+      }
     }
   }
 
-  /** Adds the listener once per user task: it records completers and checks rules as needed. */
-  protected void addListener(ActivityImpl activity) {
-    TaskDefinition taskDefinition = ((UserTaskActivityBehavior) activity.getActivityBehavior()).getTaskDefinition();
-    if (taskDefinition == null) {
-      return;
-    }
-    List<TaskListener> listeners = taskDefinition.getBuiltinTaskListeners().get(TaskListener.EVENTNAME_COMPLETE);
-    if (listeners == null || !listeners.contains(listener)) {
-      taskDefinition.addBuiltInTaskListener(TaskListener.EVENTNAME_COMPLETE, listener);
-    }
+  static TaskDefinition taskDefinition(ActivityImpl activity) {
+    return ((UserTaskActivityBehavior) activity.getActivityBehavior()).getTaskDefinition();
+  }
+
+  static boolean contains(Map<String, List<TaskListener>> listeners, TaskListener listener) {
+    List<TaskListener> complete = listeners.get(TaskListener.EVENTNAME_COMPLETE);
+    return complete != null && complete.contains(listener);
   }
 
   /** The values of all {@value FourEyesService#PROPERTY_NAME} properties of the element. */

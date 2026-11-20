@@ -59,7 +59,7 @@
     <version.mockito>5.24.0</version.mockito>
     <version.wiremock>3.13.2</version.wiremock>
     <version.testcontainers>1.21.4</version.testcontainers>
-    <version.unirest-java>2.3.10</version.unirest-java>
+    <version.unirest-java>2.4.03</version.unirest-java>
 
     <version.commonj>1.1.0</version.commonj>
     <version.bouncycastle>1.87</version.bouncycastle>

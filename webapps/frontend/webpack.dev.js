@@ -30,14 +30,16 @@ module.exports = (_env, argv = {}) => {
   ))(_env, {...argv, eeBuild, devMode: true});
 
   const addEngines = engines => {
-    return engines.reduce((acc, engine) => {
-      acc[`/fasti/app/*/${engine}/`] = {
+    return engines.flatMap(engine => [
+      {
+        context: `/fasti/app/*/${engine}/`,
         target: 'http://localhost:8081/',
         pathRewrite: path => {
           return path.replace(`/${engine}`, '').replace('/fasti', '');
         }
-      };
-      acc[`/fasti/app/*/${engine}/setup/`] = {
+      },
+      {
+        context: `/fasti/app/*/${engine}/setup/`,
         target: 'http://localhost:8081/',
         pathRewrite: path => {
           return path
@@ -45,9 +47,8 @@ module.exports = (_env, argv = {}) => {
             .replace('/fasti', '')
             .replace('/setup', '');
         }
-      };
-      return acc;
-    }, {});
+      }
+    ]);
   };
 
   const developmentConfig = {
@@ -64,35 +65,42 @@ module.exports = (_env, argv = {}) => {
         directory: path.resolve(__dirname, './public'),
         publicPath: '/app'
       },
-      https: false,
-      proxy: {
-        '/api': {
+      server: 'http',
+      // Proxy rules are matched in order. The contexts keep the meaning they
+      // had with the former object notation, which turned a trailing "/*"
+      // into a plain path prefix.
+      proxy: [
+        {
+          context: '/api',
           target: 'http://localhost:8080/fasti/api',
           logLevel: 'debug',
           pathRewrite: {
             '^/api': ''
           }
         },
-        '/camunda-welcome': {
+        {
+          context: '/camunda-welcome',
           target: 'http://localhost:8080/',
           logLevel: 'debug'
         },
         ...addEngines(['default', 'engine2', 'engine3']),
-        '/fasti/*': {
+        {
+          context: '/fasti',
           target: 'http://localhost:8081/',
           logLevel: 'debug',
           pathRewrite: path => {
             return path.replace('/fasti', '');
           }
         },
-        '/fasti/api/*': {
+        {
+          context: '/fasti/api',
           target: 'http://localhost:8081/',
           logLevel: 'debug',
           pathRewrite: path => {
             return path.replace('/fasti', '');
           }
         }
-      },
+      ],
       open: ['/fasti/app/cockpit/default/']
     }
   };

@@ -6,7 +6,6 @@ import { Suspense, useEffect, useRef } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import { useI18n, type MessageKey } from '../i18n';
 import { Loading, Skeleton } from '../ui';
-import '../cockpit/cockpit.css';
 import './admin.css';
 import { OverflowRow } from '../app/OverflowMenu';
 
@@ -29,10 +28,10 @@ export function AdminLayout() {
   }, [pathname]);
 
   return (
-    <div className="cockpit">
-      <div className="cockpit__bar">
-        <OverflowRow className="cockpit__navrow" selector=".subnav-link" label={t('nav.more')} watch={pathname}>
-        <nav className="cockpit__nav" aria-label={t('admin.nav.title')}>
+    <div className="area">
+      <div className="area__bar">
+        <OverflowRow className="area__navrow" selector=".subnav-link" label={t('nav.more')} watch={pathname}>
+        <nav className="area__nav" aria-label={t('admin.nav.title')}>
           {SECTIONS.map((section) => (
             <NavLink key={section.to} to={section.to} className="subnav-link">
               {t(section.label)}
@@ -41,7 +40,7 @@ export function AdminLayout() {
         </nav>
         </OverflowRow>
       </div>
-      <div className="cockpit__content" ref={content}>
+      <div className="area__content" ref={content}>
         <Suspense
           fallback={
             <Loading label={t('state.loading')}>

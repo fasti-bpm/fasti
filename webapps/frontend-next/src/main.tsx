@@ -16,6 +16,7 @@ import './theme/base.css';
 import './theme/ui.css';
 import './theme/shell.css';
 import './app/prefs.css';
+import './theme/components.css';
 
 applyStoredTheme();
 applyDensity();

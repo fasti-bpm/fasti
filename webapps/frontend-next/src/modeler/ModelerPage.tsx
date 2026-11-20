@@ -598,9 +598,9 @@ export function ModelerPage() {
         <ErrorState error={sourceTenant.error} onRetry={() => void sourceTenant.refetch()} />
       )}
       {recovered && !dirty && (
-        <div className="notice notice--info form-draft" role="status">
+        <div className="notice notice--info notice--actions form-draft" role="status">
           <span className="notice__body">{t('modeler.draft', { time: relative(new Date(recovered.savedAt)) })}</span>
-          <span className="tasks__linked-actions">
+          <span className="notice__actions">
             <button
               type="button"
               className="link"

@@ -1,0 +1,1029 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ */
+/*
+ * Components that every area of the application shares: the frame of an
+ * area, page headers, cards, toolbars, tables, tabs, confirmations and
+ * options. They are loaded with the application, so a page looks the same
+ * whichever page was opened before it.
+ */
+
+/* --- frame ---------------------------------------------------------------- */
+
+.area {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.area__bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s-3);
+  height: 44px;
+  padding: 0 var(--s-2) 0 var(--s-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.area__navrow {
+  flex: 1;
+  align-self: stretch;
+}
+
+.area__nav {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.subnav-link {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: 30px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-md);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background var(--duration) var(--ease),
+    color var(--duration) var(--ease);
+}
+
+.subnav-link:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+/* the current page is marked in neutral tones; the accent stays for actions and the main navigation */
+.subnav-link.active {
+  background: var(--surface-pressed);
+  color: var(--text);
+  font-weight: var(--fw-semibold);
+}
+
+.area__content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  /* a page that opens settles in gently */
+  animation: rise var(--duration-slow) var(--ease);
+  gap: var(--s-4);
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: var(--s-5) var(--s-6) var(--s-10);
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--s-2);
+}
+
+.page-header__back {
+  margin: -3px 0 0 calc(-1 * var(--s-2));
+  text-decoration: none;
+}
+
+.page-header__titles {
+  display: flex;
+  /* the actions wrap below the title before the title gets narrow */
+  flex: 1 1 18rem;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+.page-header__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+}
+
+.page-header__title {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.018em;
+  overflow-wrap: anywhere;
+}
+
+.page-header__subtitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-1) var(--s-4);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.page-header__subtitle strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.page-header__actions {
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--s-2);
+}
+
+.card {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 44px;
+  padding: var(--s-2) var(--s-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.card__title {
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.card__body {
+  padding: var(--s-4);
+}
+
+.card--flush > .card__body {
+  padding: 0;
+}
+
+/* the corners of the card clip what reaches its border */
+.card--flush > .card__body > :last-child {
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+}
+
+/* --- toolbars and filters ------------------------------------------------- */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.toolbar__chips {
+  padding: var(--s-2) var(--s-4);
+  border-bottom: 1px solid var(--border);
+}
+
+/* starts a new line of filters on wide screens */
+.toolbar__break {
+  flex-basis: 100%;
+  height: 0;
+}
+
+@media (max-width: 640px) {
+  .toolbar__break {
+    display: none;
+  }
+}
+
+.toolbar__select {
+  flex: none;
+  width: auto;
+}
+
+.toolbar__text {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-muted);
+}
+
+.search-input {
+  position: relative;
+  display: flex;
+  flex: 1 1 240px;
+  align-items: center;
+  max-width: 380px;
+  min-width: 0;
+}
+
+.search-input svg {
+  position: absolute;
+  inset-inline-start: var(--s-3);
+  color: var(--text-subtle);
+  pointer-events: none;
+}
+
+.search-input .input {
+  padding-inline-start: var(--s-8);
+}
+
+/* --- tables --------------------------------------------------------------- */
+
+.table-wrap {
+  max-height: min(72vh, 760px);
+  overflow: auto;
+  /* shadows at the edges say that the table scrolls sideways; they move away at its ends */
+  background:
+    linear-gradient(to right, var(--surface) 30%, transparent) left / 32px 100% no-repeat local,
+    linear-gradient(to left, var(--surface) 30%, transparent) right / 32px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.22), transparent) left / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.22), transparent) right / 12px 100% no-repeat scroll;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table th {
+  position: sticky;
+  letter-spacing: 0.01em;
+  top: 0;
+  z-index: 1;
+  padding: var(--s-2) var(--s-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-subtle);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-align: start;
+  white-space: nowrap;
+}
+
+.table td {
+  height: 42px;
+  padding: var(--s-2) var(--s-4);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr:hover td {
+  background: var(--surface-subtle);
+}
+
+.table time,
+.nowrap {
+  white-space: nowrap;
+}
+
+.table .is-end {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.table__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  margin: -4px -6px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.table__sort:hover,
+.table__sort.is-sorted {
+  color: var(--text);
+}
+
+.table__sort-idle {
+  opacity: 0.45;
+}
+
+.cell-link {
+  /* names keep a readable width; the table scrolls before they wrap word by word */
+  display: inline-block;
+  min-width: min(11rem, 40vw);
+  color: var(--text);
+  font-weight: var(--fw-medium);
+  text-decoration: none;
+}
+
+.cell-link:hover {
+  color: var(--accent-soft-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mono,
+.id {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+}
+
+.muted {
+  color: var(--text-subtle);
+}
+
+.id {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  white-space: nowrap;
+}
+
+.id__copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-subtle);
+}
+
+.id__copy:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+}
+
+.badge--danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.badge--warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.badge--success {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.badge--button {
+  border: 0;
+  font-family: inherit;
+}
+
+.badge--button:hover {
+  text-decoration: underline;
+}
+
+.count--danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.table-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s-1);
+  padding: var(--s-1) var(--s-2);
+  border-top: 1px solid var(--border);
+}
+
+.table-pager__text {
+  padding: 0 var(--s-2);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s-1);
+}
+
+/* --- tabs ----------------------------------------------------------------- */
+
+.ctabs__list {
+  display: flex;
+  gap: var(--s-1);
+  padding: 0 var(--s-2);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ctabs__tab {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s-2);
+  height: 42px;
+  padding: 0 var(--s-3);
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color var(--duration) var(--ease);
+}
+
+.ctabs__tab:hover {
+  color: var(--text);
+}
+
+.ctabs__tab:focus-visible {
+  outline-offset: -2px;
+}
+
+.ctabs__tab[data-state='active'] {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.ctabs__tab[data-state='active']::after {
+  position: absolute;
+  inset-inline-end: var(--s-3);
+  bottom: 0;
+  inset-inline-start: var(--s-3);
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--accent);
+  content: '';
+}
+
+.ctabs__content {
+  outline: none;
+}
+
+/* the panel takes the focus after its tab, so keyboard users must see it */
+.ctabs__content:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* --- dialogs -------------------------------------------------------------- */
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.confirm__text {
+  overflow-wrap: anywhere;
+}
+
+.confirm__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.confirm__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-2);
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+}
+
+.option input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: var(--accent);
+}
+
+.option__label {
+  display: block;
+  font-weight: 500;
+}
+
+.option__hint {
+  display: block;
+  color: var(--text-subtle);
+  font-size: var(--fs-xs);
+}
+
+/* --- code and facts ------------------------------------------------------- */
+
+.code {
+  max-height: 60vh;
+  margin: 0;
+  padding: var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-subtle);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  line-height: 1.55;
+  overflow: auto;
+  tab-size: 2;
+  white-space: pre;
+}
+
+.code--resource {
+  max-height: 70vh;
+  border: 0;
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-6);
+  margin-bottom: var(--s-3);
+}
+
+.facts dt {
+  color: var(--text-subtle);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.facts dd {
+  overflow-wrap: anywhere;
+}
+
+/* a stack trace needs more room than a form */
+.dialog--wide:has(.trace) {
+  width: min(1040px, calc(100vw - 2 * var(--s-4)));
+}
+
+.dialog-table {
+  margin: calc(-1 * var(--s-5));
+}
+
+/* --- narrower screens ----------------------------------------------------- */
+
+@media (max-width: 760px) {
+  .area__bar {
+    padding: 0 var(--s-1) 0 var(--s-2);
+  }
+
+  .page {
+    padding: var(--s-4) var(--s-3) var(--s-8);
+  }
+
+  .page-header {
+    flex-wrap: wrap;
+  }
+
+  .page-header__title {
+    font-size: var(--fs-xl);
+  }
+
+  .page-header__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .table .is-secondary {
+    display: none;
+  }
+
+  .table th,
+  .table td {
+    padding: var(--s-2) var(--s-3);
+  }
+
+  .toolbar {
+    padding: var(--s-3);
+  }
+
+  .row-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* --- phones: every row of a table is a card ------------------------------ */
+
+.table-phone-sort {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .table-wrap {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .table--cards,
+  .table--cards tbody,
+  .table--cards tr,
+  .table--cards td {
+    display: block;
+    width: 100%;
+  }
+
+  /* the sorting is chosen above the cards; the header stays only for assistive technology */
+  .table--cards thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* the selector above replaces them: out of the tab order as well */
+  .table--cards th .table__sort {
+    visibility: hidden;
+  }
+
+  .table-phone-sort {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--s-2);
+    padding: var(--s-2) var(--s-3);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-subtle);
+  }
+
+  .table-phone-sort__label {
+    display: grid;
+    flex: 1 1 160px;
+    gap: 2px;
+    min-width: 0;
+    font-size: var(--fs-sm, 0.8125rem);
+    color: var(--text-muted);
+  }
+
+  .table--cards th {
+    position: static;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  /* out of sight, but still the headers of the cells for assistive technology */
+  .table--cards th:not(:has(.table__sort)) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* every sort stays available, also of columns a phone does not show */
+  .table--cards th.is-secondary:has(.table__sort) {
+    display: block;
+  }
+
+  /* a header without sorting has nothing left to show */
+  .table--cards thead:not(:has(.table__sort)) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* the checkbox of a selectable record sits in its top corner, beside the first line */
+  .table--cards tbody tr {
+    position: relative;
+  }
+
+  .table--cards td:has(> .row-check) {
+    position: absolute;
+    top: var(--s-2);
+    inset-inline-end: var(--s-3);
+    width: auto;
+    padding: var(--s-1) 0;
+    border: 0;
+  }
+
+  .table--cards td:has(> .row-check) + td {
+    padding-inline-end: calc(var(--s-3) + 28px);
+  }
+
+  .table--cards th .table__sort {
+    margin: 0;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .table--cards tbody tr {
+    padding: var(--s-2) 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table--cards tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .table--cards td,
+  .table--cards td.is-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-3);
+    height: auto;
+    min-height: 0;
+    padding: 3px var(--s-3);
+    border: 0;
+    text-align: end;
+    overflow-wrap: anywhere;
+  }
+
+  .table--cards td::before {
+    content: attr(data-label);
+    flex: none;
+    max-width: 45%;
+    color: var(--text-subtle);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-align: start;
+  }
+
+  .table--cards td:not([data-label])::before,
+  .table--cards td:first-child::before {
+    content: none;
+  }
+
+  /* the first value names the row; a value without a column name, e.g. the actions, fills the card */
+  .table--cards td:first-child {
+    justify-content: flex-start;
+    font-weight: 600;
+    text-align: start;
+  }
+
+  .table--cards td:not([data-label]) {
+    justify-content: flex-end;
+  }
+
+  .table--cards td:empty {
+    display: none;
+  }
+
+  .table--cards tbody tr:hover td {
+    background: transparent;
+  }
+
+  .table--cards tbody tr:hover {
+    background: var(--surface-subtle);
+  }
+}
+
+/* --- more toolbar pieces -------------------------------------------------- */
+
+.toolbar--select .option--inline {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.row-check {
+  width: 18px;
+  height: 18px;
+}
+
+/* filters of the new lists keep a readable width instead of filling the row */
+.toolbar--filters > .input,
+.toolbar--filters .more-filters__body > .input {
+  flex: 0 1 240px;
+  min-width: 160px;
+}
+
+@media (max-width: 640px) {
+  .toolbar--filters > .input,
+  .toolbar--filters .more-filters__body > .input {
+    flex: 1 1 100%;
+  }
+}
+
+/* --- table tools, card notes and samples ---------------------------------- */
+
+.toolbar__spacer {
+  flex: 1;
+}
+
+/* the export of the shown rows, above the table */
+.table-export {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  justify-content: flex-end;
+  padding: var(--s-1) var(--s-2) 0;
+}
+
+.table-columns {
+  position: relative;
+}
+
+.table-columns > summary {
+  list-style: none;
+  cursor: pointer;
+  gap: var(--s-1);
+}
+
+.table-columns > summary::-webkit-details-marker {
+  display: none;
+}
+
+.table-columns__menu {
+  position: absolute;
+  right: 0;
+  z-index: 20;
+  min-width: 200px;
+  margin: var(--s-1) 0 0;
+  padding: var(--s-2);
+  display: grid;
+  gap: var(--s-1);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-pop);
+}
+
+.table-columns__legend {
+  padding: 0;
+  font-weight: 600;
+  margin-bottom: var(--s-1);
+}
+
+.table-columns__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  white-space: nowrap;
+}
+
+.card__notice {
+  padding: var(--s-3) var(--s-4) 0;
+}
+
+.card__hint {
+  margin: 0 0 var(--s-2);
+  font-size: 0.85rem;
+}
+
+/* a few of the items a bulk action changes */
+.sample {
+  margin: var(--s-2) 0;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-subtle);
+}
+
+.sample__label {
+  margin: 0 0 var(--s-1);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.sample__list {
+  margin: 0;
+  padding-inline-start: var(--s-5);
+}
+
+.sample__item {
+  overflow-wrap: anywhere;
+}
+
+.sample__more {
+  margin: var(--s-1) 0 0;
+  font-size: var(--fs-sm);
+}
+
+/* --- table states --------------------------------------------------------- */
+
+.toolbar__hint {
+  font-size: var(--fs-sm);
+  align-self: center;
+}
+
+.table-wrap--updating table {
+  opacity: 0.6;
+  transition: opacity 120ms ease;
+}
+
+.table-stale {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
+  color: var(--danger);
+  font-size: var(--fs-sm);
+}
+
+/* --- documentation text --------------------------------------------------- */
+
+.doc-text p,
+.doc-text ul {
+  margin: 0 0 var(--s-2);
+}
+
+.doc-text p:last-child,
+.doc-text ul:last-child {
+  margin-bottom: 0;
+}
+
+.doc-text ul {
+  padding-inline-start: var(--s-5);
+}
+
+.doc-text code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+.doc-text a {
+  color: var(--accent);
+}
+
+/* --- lists to pick from --------------------------------------------------- */
+
+.resource-list li + li {
+  border-top: 1px solid var(--border);
+}
+
+.resource-list__item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  width: 100%;
+  padding: var(--s-2) var(--s-4);
+  border: 0;
+  background: transparent;
+  text-align: start;
+}
+
+.resource-list__item svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--text-subtle);
+}
+
+.resource-list__item:hover {
+  background: var(--surface-subtle);
+}
+
+.resource-list__item:focus-visible {
+  outline-offset: -2px;
+}
+
+.resource-list__item.is-selected {
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+  font-weight: 600;
+}
+
+.resource-list__name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.resource-list__link {
+  display: flex;
+  padding: 0 var(--s-4) var(--s-2) calc(var(--s-4) + 23px);
+}

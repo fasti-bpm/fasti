@@ -91,15 +91,5 @@
 
 /* a form that shows a draft says so and offers to start over */
 .form-draft {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s-2) var(--s-3);
   margin-bottom: var(--s-3);
-}
-
-.form-draft .link:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }

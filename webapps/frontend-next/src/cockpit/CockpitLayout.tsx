@@ -29,10 +29,10 @@ export function CockpitLayout() {
 
   return (
     <RefreshProvider>
-      <div className="cockpit">
-        <div className="cockpit__bar">
-          <OverflowRow className="cockpit__navrow" selector=".subnav-link" label={t('nav.more')} watch={pathname}>
-          <nav className="cockpit__nav" aria-label={t('cockpit.nav.title')}>
+      <div className="area">
+        <div className="area__bar">
+          <OverflowRow className="area__navrow" selector=".subnav-link" label={t('nav.more')} watch={pathname}>
+          <nav className="area__nav" aria-label={t('cockpit.nav.title')}>
             {COCKPIT_GROUPS.map((group) => (
               <div key={group.label} className="cockpit__group" role="group" aria-label={t(group.label)}>
                 <span className="cockpit__group-label" aria-hidden>
@@ -49,7 +49,7 @@ export function CockpitLayout() {
           </OverflowRow>
           <RefreshControl />
         </div>
-        <div className="cockpit__content" ref={content}>
+        <div className="area__content" ref={content}>
           <BatchReceipts />
           <Suspense
             fallback={

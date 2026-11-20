@@ -11,7 +11,6 @@ import { enginePageUrl, env } from '../env';
 import { useI18n } from '../i18n';
 import { Notice } from '../ui';
 import { NewUserForm } from './UsersPage';
-import '../cockpit/cockpit.css';
 import './admin.css';
 
 /**

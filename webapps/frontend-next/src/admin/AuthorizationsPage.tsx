@@ -330,7 +330,7 @@ function CheckAccessDialog({ initialType, onClose }: { initialType: ResourceType
         <Field label={t('admin.check.resource')} hint={t(type.idHint)}>
           {(props) => <input {...props} className="input" value={resourceId} onChange={(event) => setResourceId(event.target.value)} />}
         </Field>
-        <div className="form-actions">
+        <div className="confirm__actions">
           <Button variant="primary" type="submit" busy={result.isPending} disabled={!userId.trim()}>
             {t('admin.check.run')}
           </Button>

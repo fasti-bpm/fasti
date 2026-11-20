@@ -31,7 +31,6 @@ import { Card, PageHeader } from '../cockpit/common';
 import { classicAppUrl, classicWebapps, env, type ClassicApp } from '../env';
 import { useI18n, type MessageKey } from '../i18n';
 import { EmptyState, ErrorState, Loading, Skeleton } from '../ui';
-import '../cockpit/cockpit.css';
 import '../admin/admin.css';
 import './welcome.css';
 
@@ -274,8 +273,8 @@ export function WelcomePage() {
   const session = useSession();
   const canUse = (app: string) => session.authorizedApps.includes(app);
   return (
-    <div className="cockpit">
-      <div className="cockpit__content">
+    <div className="area">
+      <div className="area__content">
         <div className="page welcome">
           <PageHeader
             title={t('welcome.title', { name: session.displayName })}

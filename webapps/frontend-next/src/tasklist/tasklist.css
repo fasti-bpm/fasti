@@ -1163,6 +1163,7 @@
   align-items: center;
   gap: var(--s-1);
 }
+
 /* saved searches */
 .saved-searches {
   display: grid;
@@ -1182,17 +1183,10 @@
   flex: 1;
   overflow-wrap: anywhere;
 }
-.tasks__linked {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 16px;
-  margin: 8px 12px 0;
-}
 
-.tasks__linked-actions {
-  display: flex;
-  gap: 12px;
+.tasks__linked {
+  align-items: center;
+  margin: var(--s-2) var(--s-3) 0;
 }
 
 /* what happened after a process was started */
@@ -1364,29 +1358,6 @@
   margin: 0 0 var(--s-1);
   font-size: var(--fs-md);
   font-weight: var(--fw-semibold);
-}
-
-.doc-text p,
-.doc-text ul {
-  margin: 0 0 var(--s-2);
-}
-
-.doc-text p:last-child,
-.doc-text ul:last-child {
-  margin-bottom: 0;
-}
-
-.doc-text ul {
-  padding-inline-start: var(--s-5);
-}
-
-.doc-text code {
-  font-family: var(--font-mono);
-  font-size: 0.92em;
-}
-
-.doc-text a {
-  color: var(--accent);
 }
 
 .task-list--updating {

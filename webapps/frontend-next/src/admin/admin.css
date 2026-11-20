@@ -2,8 +2,8 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright Fasti BPM contributors
  */
-/* The administration reuses the frame, tables and dialogs of the monitoring
-   pages (cockpit.css); this file only adds what is particular to it. */
+/* The administration uses the shared frame, tables and dialogs
+   (theme/components.css); this file only adds what is particular to it. */
 
 /* --- forms ---------------------------------------------------------------- */
 

@@ -562,7 +562,7 @@ export function TasklistPage() {
               <>
               {nextWork.status?.visible && (
                 // announced by the live region of the page, which stays when a phone shows only the task
-                <div className={`notice notice--${nextWork.status.tone} tasks__linked`}>
+                <div className={`notice notice--${nextWork.status.tone} notice--actions tasks__linked`}>
                   <span className="notice__body">{nextWork.status.text}</span>
                   <button type="button" className="link" onClick={nextWork.dismiss}>
                     {t('action.close')}
@@ -571,7 +571,7 @@ export function TasklistPage() {
               )}
 
               {stable && stable.added > 0 && (
-                <div className="notice notice--info tasks__linked" role="status">
+                <div className="notice notice--info notice--actions tasks__linked" role="status">
                   <span className="notice__body">{t('tasks.arrived', { count: stable.added })}</span>
                   <button
                     type="button"
@@ -583,9 +583,9 @@ export function TasklistPage() {
                 </div>
               )}
               {linkedSearch && (
-                <div className="notice notice--info tasks__linked" role="status">
+                <div className="notice notice--info notice--actions tasks__linked" role="status">
                   <span className="notice__body">{t('tasks.linked')}</span>
-                  <span className="tasks__linked-actions">
+                  <span className="notice__actions">
                     <button
                       type="button"
                       className="link"

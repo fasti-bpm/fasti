@@ -22,7 +22,7 @@ export function DraftNotice({
   }
   const prefill = draft.kind === 'variables';
   return (
-    <div className="notice notice--info form-draft" role="status">
+    <div className="notice notice--info notice--actions form-draft" role="status">
       <span className="notice__body">
         {prefill ? t('form.draft.prefilled') : t('form.draft.restored', { time: relative(new Date(draft.savedAt)) })}
       </span>

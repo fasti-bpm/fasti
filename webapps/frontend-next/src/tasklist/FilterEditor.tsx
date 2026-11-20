@@ -40,7 +40,6 @@ import {
   type VariableCriterionRow,
 } from './filterCriteria';
 import { IdentityInput } from './IdentityInput';
-import '../cockpit/cockpit.css';
 
 const COLOR = /^#[0-9a-f]{6}$/i;
 const DEFAULT_COLOR = '#555555';

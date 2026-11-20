@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Fasti BPM contributors
+
+name: fasti-codeql
+
+# Test code of the web applications: browser test pages, unit tests and
+# end-to-end tests. Shipped code stays analyzed.
+#
+# paths-ignore applies to the JavaScript/TypeScript analysis (build mode
+# none). The Java analysis is built with Maven, where CodeQL analyzes all
+# compiled code, test sources included; alerts in Java test code and in the
+# OpenAPI client generated for the REST tests are dismissed in the UI.
+paths-ignore:
+  - webapps/frontend/ui/*/tests
+  - webapps/frontend/camunda-bpm-sdk-js/test
+  - webapps/frontend/camunda-commons-ui/test
+  - webapps/frontend/camunda-commons-ui/lib/widgets/*/test
+  - webapps/frontend-next/e2e
+  - webapps/frontend-next/src/test
+  - '**/*.test.ts'
+  - '**/*.test.tsx'
+  - '**/src/test/**'

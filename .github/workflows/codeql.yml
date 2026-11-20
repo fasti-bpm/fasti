@@ -41,6 +41,7 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
+          config-file: ./.github/codeql/codeql-config.yml
       - name: Compile
         if: matrix.build-mode == 'manual'
         run: ./mvnw -B -ntp -DskipTests -Dskip.frontend.build=true package

@@ -92,7 +92,9 @@ public final class AbsenceStore {
 
   /**
    * Holds the exclusive lock of the engine (the row of ACT_GE_PROPERTY that deployments lock) until
-   * the end of the transaction. Absences change rarely; this needs no new table.
+   * the end of the transaction. Absences change rarely; this needs no new table. The engine takes no
+   * such lock on H2 (see DbSqlSession#lock), which is meant for development; a later write
+   * replaces any duplicate rows.
    */
   static void lock(CommandContext commandContext) {
     commandContext.getPropertyManager().acquireExclusiveLock();

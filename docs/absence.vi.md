@@ -106,3 +106,6 @@ không thêm bảng hay cột, vẫn quay lui được.
   được lịch vắng mặt: plugin ghi log lý do, REST API trả `enabled: false` kèm lý do, và giao
   diện web báo tính năng không khả dụng.
 - Xóa người dùng (qua engine) sẽ xóa lịch vắng mặt cùng các user info khác.
+- Thao tác ghi lịch vắng mặt giữ khóa độc quyền của engine (dòng `ACT_GE_PROPERTY` mà thao tác
+  deploy khóa), nên hai lần ghi đầu tiên cho cùng một người dùng cùng lúc không bị trộn lẫn. Giống
+  như engine khi deploy, Fasti không khóa trên H2 (vốn chỉ dành cho phát triển).

@@ -106,3 +106,6 @@ table or column, rollback stays possible.
   cannot be stored: the plugin logs why, the REST API answers `enabled: false` with the reason,
   and the web UI says the feature is not available.
 - Deleting a user (through the engine) deletes their absence with the other user info.
+- Writes of absences hold the exclusive lock of the engine (the row of `ACT_GE_PROPERTY` that
+  deployments lock), so two first writes for the same user at the same time cannot mix. Like
+  the engine for deployments, Fasti takes no such lock on H2, which is meant for development.

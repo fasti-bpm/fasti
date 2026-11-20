@@ -18,7 +18,7 @@
   <name>Fasti BPM Platform - engine - REST - Root</name>
 
   <properties>
-    <version.rest-assured>4.5.0</version.rest-assured>
+    <version.rest-assured>6.3.0</version.rest-assured>
     <!-- override groovy version with the one used by rest-assured -->
     <version.groovy>3.0.9</version.groovy>
     <version.apache.httpcore>4.4.5</version.apache.httpcore>

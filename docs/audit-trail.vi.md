@@ -66,8 +66,9 @@ nó (mặc định 4), tên là `<node id>/<slot>`; một giao dịch dùng slot
 Khi ghi, chỉ dòng head của chuỗi đó bị khóa (bằng một lệnh `UPDATE`, mọi cơ sở dữ liệu đều hỗ trợ
 như nhau), vào cuối lệnh, cho đến khi commit. Vì vậy lệnh trên slot khác và node khác không bao
 giờ chờ nhau, còn các lệnh cùng slot chỉ xếp hàng trong khoảnh khắc commit. Một giao dịch lồng
-bắt đầu khi giao dịch ngoài của cùng luồng đang giữ một chuỗi sẽ lấy slot khác, nên không thể
-chờ chính giao dịch ngoài của nó. Đánh đổi: không có một thứ tự toàn cục duy nhất cho mọi bản
+bắt đầu khi giao dịch ngoài của cùng luồng đang giữ một chuỗi sẽ lấy slot khác (thêm một slot
+ngoài `chains` nếu mọi slot đều đang bị luồng đó giữ), nên không thể chờ chính giao dịch ngoài
+của nó. Đánh đổi: không có một thứ tự toàn cục duy nhất cho mọi bản
 ghi (mỗi chuỗi có thứ tự; giữa các chuỗi thì sắp theo thời gian), và việc kiểm tra phải đọc mọi
 chuỗi.
 
@@ -96,7 +97,11 @@ một khóa ít nhất 32 byte (`fasti.audit.hmac-key`, tốt nhất qua biến 
 `FASTI_AUDIT_HMAC_KEY`, hoặc một tệp trong `fasti.audit.hmac-key-file`). Sau mỗi
 `checkpoint-interval` bản ghi (mặc định 1000), chuỗi có một bản ghi `checkpoint` chứa
 HMAC-SHA256 của vị trí và mã băm trước nó. Khóa không bao giờ vào cơ sở dữ liệu; `keyId` (phần
-đầu SHA-256 của khóa) giúp phân biệt các khóa. Mỗi điểm kiểm tra cũng được ghi vào log của ứng
+đầu SHA-256 của khóa) giúp phân biệt các khóa. Điểm kiểm tra ghi khóa hiện tại mà không có chữ ký
+hợp lệ sẽ làm đứt chuỗi; điểm kiểm tra ghi trước khi đặt khóa, hoặc bằng khóa cũ, không kiểm tra
+được và được tính là chưa xác minh ("đã xác minh 3/5" trong giao diện web, `checkpointsVerified`
+qua REST). Sau khi đổi khóa, hãy kiểm tra và lưu kết quả trước khi các điểm kiểm tra cũ trở nên
+không kiểm tra được. Mỗi điểm kiểm tra cũng được ghi vào log của ứng
 dụng (`Audit trail checkpoint …`); khi log được chuyển sang kho log, đó là một mốc nằm ngoài cơ sở
 dữ liệu. Các bản ghi sau điểm kiểm tra cuối chỉ được chuỗi bảo vệ: hãy lưu các mã băm cuối mà
 việc kiểm tra báo (hoặc các dòng log) ở ngoài cơ sở dữ liệu để phát hiện việc cắt bớt hay viết
@@ -109,7 +114,8 @@ lại chúng về sau.
 - Bản ghi được giữ cho đến khi bị dọn có chủ đích. `POST /audit/purge`
   `{"before": "…", "exported": true}` (Java: `AuditService#purge`) xóa, theo từng chuỗi, các bản
   ghi từ đầu chuỗi đến bản ghi cuối cùng trước `before`, rồi thêm một bản ghi `purge` nêu mã băm
-  của bản ghi cuối bị xóa, để phần còn lại của chuỗi vẫn kiểm tra được. Bản ghi mới hơn
+  của bản ghi cuối bị xóa, để phần còn lại của chuỗi vẫn kiểm tra được. Việc dọn chạy trong giao
+  dịch riêng (không nằm trong giao dịch đã ghi bản ghi kiểm toán). Bản ghi mới hơn
   `fasti.audit.retention-days` (mặc định 365) ngày không bao giờ bị dọn. Hãy xuất trước: bản xuất
   JSON có đủ mọi mã băm, nên phần đã xóa vẫn kiểm tra được ngoại tuyến với bản ghi dọn. Dọn cần
   nhóm quản trị hoặc quyền `DELETE` trên `SYSTEM`.

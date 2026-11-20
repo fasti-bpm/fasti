@@ -68,7 +68,8 @@ locks only the head row of that chain (an `UPDATE`, which every database support
 at the end of the command, until the commit. So commands on other slots and other nodes never
 wait for each other, and commands of one slot are serialized only for the moment of their
 commit. A nested transaction that starts while an outer one of the same thread holds a chain
-takes another slot, so it cannot wait for its own outer transaction. The trade-off: there is no
+takes another slot (an extra one beyond `chains` if every slot is held on that thread), so it
+cannot wait for its own outer transaction. The trade-off: there is no
 single global order of all records (each chain is ordered; across chains the time orders them),
 and verifying reads every chain.
 
@@ -97,7 +98,11 @@ of at least 32 bytes (`fasti.audit.hmac-key`, best as the environment variable
 `FASTI_AUDIT_HMAC_KEY`, or a file in `fasti.audit.hmac-key-file`). After every
 `checkpoint-interval` records (default 1000) the chain gets a `checkpoint` record with the
 HMAC-SHA256 of the position and hash before it. The key never reaches the database; the
-`keyId` (the start of the SHA-256 of the key) tells keys apart. Each checkpoint is also written
+`keyId` (the start of the SHA-256 of the key) tells keys apart. A checkpoint that names the
+current key but has no valid signature breaks the chain; checkpoints written before the key was
+set, or with an earlier key, cannot be checked and are counted as unverified ("3 of 5 verified"
+in the web UI, `checkpointsVerified` over REST). After changing the key, verify and keep the
+result before the old checkpoints become unverifiable. Each checkpoint is also written
 to the application log (`Audit trail checkpoint …`), which, shipped to a log store, is an anchor
 outside the database. The records written after the last checkpoint are protected by the
 chain only: keep the last hashes that a verification reports (or the log lines) outside the
@@ -110,7 +115,8 @@ database to detect a later truncation or rewrite of them.
 - Records are kept until they are purged explicitly. `POST /audit/purge`
   `{"before": "…", "exported": true}` (Java: `AuditService#purge`) removes, per chain, the
   records from its start up to the last one before `before`, and appends a `purge` record that
-  names the hash of the last removed record, so the rest of the chain still verifies. Records
+  names the hash of the last removed record, so the rest of the chain still verifies. The purge
+  runs in a transaction of its own (not inside one that has written audit records). Records
   younger than `fasti.audit.retention-days` (default 365) are never purged. Export first: the
   JSON export carries every hash, so the removed part can still be verified offline against the
   purge record. Purging needs an administrators group or `DELETE` on `SYSTEM`.

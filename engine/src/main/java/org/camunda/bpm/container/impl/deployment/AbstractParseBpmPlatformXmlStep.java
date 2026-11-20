@@ -136,7 +136,7 @@ public abstract class AbstractParseBpmPlatformXmlStep extends DeploymentOperatio
       return null;
     }
 
-    Pattern filePattern = Pattern.compile("^(/|[A-z]://?|[A-z]:\\\\).*[/|\\\\]bpm-platform\\.xml$", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    Pattern filePattern = Pattern.compile("^(/|[a-z]://?|[a-z]:\\\\).*[/\\\\]bpm-platform\\.xml$", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
     Matcher fileMatcher = filePattern.matcher(url);
     if (fileMatcher.matches()) {
       File configurationLocation = new File(url);

@@ -151,3 +151,8 @@ app.kubernetes.io/part-of: fasti-bpm
 {{- if .Values.config -}}{{- $files = append $files "/fasti/configuration/helm/fasti-config.yml" -}}{{- end -}}
 {{- join "," $files -}}
 {{- end -}}
+
+{{/* name label of the helm test pod (not matched by the selector of the release) */}}
+{{- define "fasti.testName" -}}
+{{- printf "%s-test" (include "fasti.name" . | trunc 58 | trimSuffix "-") -}}
+{{- end -}}

@@ -33,7 +33,7 @@ spec:
         # the pod of "helm test"
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: {{ include "fasti.name" $ }}-test
+              app.kubernetes.io/name: {{ include "fasti.testName" $ }}
               app.kubernetes.io/instance: {{ $.Release.Name }}
       {{- end }}
   {{- if .Values.networkPolicy.egress }}

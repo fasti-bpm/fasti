@@ -12,7 +12,7 @@ metadata:
   # not the selector labels of the release: the Service must not route to this pod
   labels:
     helm.sh/chart: {{ include "fasti.chart" . }}
-    app.kubernetes.io/name: {{ include "fasti.name" . }}-test
+    app.kubernetes.io/name: {{ include "fasti.testName" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/component: test

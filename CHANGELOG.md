@@ -12,6 +12,18 @@ entries below describe the differences from that release.
 
 ## [Unreleased]
 
+### Added
+
+- Helm chart (`distro/kubernetes/helm/fasti-bpm`) and plain Kubernetes manifests with Kustomize
+  (`distro/kubernetes/manifests`) for the container image against an external database:
+  production mode on by default, credentials only from existing Secrets (mounted as files),
+  non-root pod with a read-only root file system that passes the `restricted` Pod Security
+  Standard, startup/liveness/readiness probes on the actuator health endpoints, graceful
+  shutdown, pod anti-affinity, topology spread, PodDisruptionBudget, and optional Ingress with
+  TLS, HorizontalPodAutoscaler, NetworkPolicy, ServiceMonitor and OpenID Connect settings. A
+  values schema rejects unknown keys. Guide: `docs/install-kubernetes.md`. CI checks the chart
+  and the manifests with `helm lint` and kubeconform against Kubernetes 1.29–1.33.
+
 ## [1.0.1] - 2026-11-21
 
 ### Security

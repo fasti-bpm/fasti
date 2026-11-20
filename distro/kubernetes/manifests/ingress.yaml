@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Fasti BPM contributors
+
+# Optional. TLS is required: --production sets Secure session cookies. With several replicas add
+# the cookie-based session affinity of your ingress controller (web UI sessions are per pod),
+# for example for ingress-nginx:
+#   nginx.ingress.kubernetes.io/affinity: cookie
+#   nginx.ingress.kubernetes.io/session-cookie-name: FASTI_ROUTE
+# Rate-limit /engine-rest and /fasti/api/admin/auth per client at the proxy as well.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fasti
+  namespace: fasti
+  labels:
+    app.kubernetes.io/name: fasti-bpm
+    app.kubernetes.io/instance: fasti
+spec:
+  # ingressClassName: nginx
+  tls:
+    - secretName: fasti-tls
+      hosts:
+        - fasti.example.com
+  rules:
+    - host: fasti.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: fasti
+                port:
+                  name: http

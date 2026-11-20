@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Fasti BPM contributors
+
+# Optional example. Allows HTTP to Fasti only from the namespace of the ingress controller, and
+# egress only to DNS and the database (namespace "db", port 5432). Add the OpenID Connect
+# provider (HTTPS) and the other services your processes call, and adapt the selectors.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: fasti
+  namespace: fasti
+  labels:
+    app.kubernetes.io/name: fasti-bpm
+    app.kubernetes.io/instance: fasti
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: fasti-bpm
+      app.kubernetes.io/instance: fasti
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - port: http
+          protocol: TCP
+  egress:
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: db
+      ports:
+        - port: 5432
+          protocol: TCP

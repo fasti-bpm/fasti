@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Fasti BPM contributors
+
+apiVersion: v2
+name: fasti-bpm
+description: >-
+  Fasti BPM, a BPMN/DMN process engine with REST API and web UI built on Camunda 7 CE 7.24.0,
+  on Kubernetes with an external database.
+type: application
+# chart version; bumped on every change of the chart
+version: 1.0.1
+# image tag used when image.tag is empty; update with the release
+appVersion: "1.0.1"
+kubeVersion: ">=1.29.0-0"
+home: https://fasti.dev
+sources:
+  - https://github.com/fasti-bpm/fasti
+keywords:
+  - bpmn
+  - dmn
+  - workflow
+  - process-engine
+  - camunda-7-compatible
+maintainers:
+  - name: Fasti BPM contributors
+    email: dev@fasti.dev
+annotations:
+  artifacthub.io/license: Apache-2.0

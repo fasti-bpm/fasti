@@ -1,0 +1,293 @@
+{{/*
+SPDX-License-Identifier: Apache-2.0
+Copyright Fasti BPM contributors
+*/}}
+{{- include "fasti.validate" . }}
+{{- $fullname := include "fasti.fullname" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullname }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "fasti.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      {{- include "fasti.selectorLabels" . | nindent 6 }}
+  strategy:
+    {{- toYaml .Values.updateStrategy | nindent 4 }}
+  template:
+    metadata:
+      labels:
+        {{- include "fasti.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- if include "fasti.hasConfig" . }}
+        # rolls the pods when the configuration files change
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- end }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "fasti.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      # Service links would define FASTI_PORT=tcp://... for a Service named "fasti", which the
+      # entrypoint reads as the HTTP port
+      enableServiceLinks: {{ .Values.enableServiceLinks }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.initContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: fasti
+          image: {{ include "fasti.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            {{- include "fasti.args" . | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            {{- if .Values.metrics.extraPort.enabled }}
+            - name: {{ .Values.metrics.extraPort.name }}
+              containerPort: {{ .Values.metrics.extraPort.port }}
+              protocol: TCP
+            {{- end }}
+          env:
+            # database: credentials are read from the mounted Secret (DB_*_FILE)
+            {{- with .Values.database.driver }}
+            - name: DB_DRIVER
+              value: {{ . | quote }}
+            {{- end }}
+            {{- if .Values.database.urlKey }}
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret }}
+                  key: {{ .Values.database.urlKey }}
+            {{- else }}
+            - name: DB_URL
+              value: {{ .Values.database.url | quote }}
+            {{- end }}
+            - name: DB_USERNAME_FILE
+              value: /run/secrets/fasti/db-username
+            - name: DB_PASSWORD_FILE
+              value: /run/secrets/fasti/db-password
+            - name: FASTI_DB_SCHEMA_UPDATE
+              value: {{ .Values.database.schemaUpdate | quote }}
+            - name: FASTI_SCHEMA_VERSION_CHECK
+              value: {{ .Values.database.schemaVersionCheck | quote }}
+            {{- with .Values.database.schema }}
+            - name: FASTI_DB_SCHEMA
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.database.tablePrefix }}
+            - name: FASTI_DB_TABLE_PREFIX
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.database.pool.maxActive }}
+            - name: FASTI_DB_CONN_MAXACTIVE
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.database.pool.minIdle }}
+            - name: FASTI_DB_CONN_MINIDLE
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.database.waitFor }}
+            - name: FASTI_WAIT_FOR
+              value: {{ . | quote }}
+            - name: FASTI_WAIT_FOR_TIMEOUT
+              value: {{ $.Values.database.waitForTimeout | quote }}
+            {{- end }}
+            {{- if .Values.admin.user }}
+            - name: FASTI_ADMIN_USER
+              value: {{ .Values.admin.user | quote }}
+            - name: FASTI_ADMIN_PASSWORD_FILE
+              value: /run/secrets/fasti/admin-password
+            {{- end }}
+            - name: TZ
+              value: {{ .Values.engine.timezone | quote }}
+            {{- with .Values.engine.historyLevel }}
+            - name: FASTI_HISTORY_LEVEL
+              value: {{ . | quote }}
+            {{- end }}
+            - name: FASTI_JOB_EXECUTOR_ENABLED
+              value: {{ .Values.engine.jobExecutor.enabled | quote }}
+            - name: FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE
+              value: {{ .Values.engine.jobExecutor.deploymentAware | quote }}
+            {{- with .Values.webapp.path }}
+            - name: FASTI_WEBAPP_PATH
+              value: {{ . | quote }}
+            {{- end }}
+            {{- if ne (toString .Values.webapp.legacyPathRedirect) "" }}
+            - name: FASTI_LEGACY_PATH_REDIRECT
+              value: {{ .Values.webapp.legacyPathRedirect | quote }}
+            {{- end }}
+            {{- if .Values.webapp.classicWebapps }}
+            - name: FASTI_CLASSIC_WEBAPPS
+              value: "true"
+            {{- end }}
+            {{- with .Values.webapp.corsAllowedOrigins }}
+            - name: FASTI_CORS_ALLOWED_ORIGINS
+              value: {{ . | quote }}
+            {{- end }}
+            {{- if .Values.oidc.enabled }}
+            - name: FASTI_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.oidc.existingSecret }}
+                  key: {{ .Values.oidc.clientSecretKey }}
+            {{- end }}
+            {{- if include "fasti.hasConfig" . }}
+            - name: FASTI_CONFIG
+              value: {{ include "fasti.configFiles" . | quote }}
+            {{- end }}
+            - name: FASTI_MAX_RAM_PERCENTAGE
+              value: {{ .Values.jvm.maxRamPercentage | quote }}
+            {{- with .Values.jvm.javaOpts }}
+            - name: JAVA_OPTS
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- range $name := list "startupProbe" "livenessProbe" "readinessProbe" }}
+          {{- $probe := index $.Values $name }}
+          {{- if $probe.enabled }}
+          {{ $name }}:
+            {{- toYaml (omit $probe "enabled") | nindent 12 }}
+          {{- end }}
+          {{- end }}
+          {{- with .Values.lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: secrets
+              mountPath: /run/secrets/fasti
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: data
+              mountPath: /fasti/data
+            {{- if include "fasti.hasConfig" . }}
+            - name: config
+              mountPath: /fasti/configuration/helm
+              readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+        {{- with .Values.extraContainers }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+        - name: secrets
+          projected:
+            # readable by the group of the container user (fsGroup) only
+            defaultMode: 0440
+            sources:
+              - secret:
+                  name: {{ .Values.database.existingSecret }}
+                  items:
+                    - key: {{ .Values.database.usernameKey }}
+                      path: db-username
+                    - key: {{ .Values.database.passwordKey }}
+                      path: db-password
+              {{- if .Values.admin.user }}
+              - secret:
+                  name: {{ .Values.admin.existingSecret }}
+                  items:
+                    - key: {{ .Values.admin.passwordKey }}
+                      path: admin-password
+              {{- end }}
+        - name: tmp
+          emptyDir:
+            {{- with .Values.tmpVolume.sizeLimit }}
+            sizeLimit: {{ . }}
+            {{- end }}
+        - name: data
+          emptyDir:
+            {{- with .Values.dataVolume.sizeLimit }}
+            sizeLimit: {{ . }}
+            {{- end }}
+        {{- if include "fasti.hasConfig" . }}
+        - name: config
+          configMap:
+            name: {{ $fullname }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.affinity }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 8 }}
+      {{- else if eq .Values.podAntiAffinityPreset "soft" }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    {{- include "fasti.selectorLabels" . | nindent 20 }}
+      {{- else if eq .Values.podAntiAffinityPreset "hard" }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  {{- include "fasti.selectorLabels" . | nindent 18 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- range . }}
+        {{- $c := . }}
+        {{- if not .labelSelector }}
+        {{- $c = merge (dict "labelSelector" (dict "matchLabels" (include "fasti.selectorLabels" $ | fromYaml))) . }}
+        {{- end }}
+        {{- toYaml (list $c) | nindent 8 }}
+        {{- end }}
+      {{- end }}

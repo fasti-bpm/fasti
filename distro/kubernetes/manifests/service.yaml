@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Fasti BPM contributors
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: fasti
+  namespace: fasti
+  labels:
+    app.kubernetes.io/name: fasti-bpm
+    app.kubernetes.io/instance: fasti
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: fasti-bpm
+    app.kubernetes.io/instance: fasti

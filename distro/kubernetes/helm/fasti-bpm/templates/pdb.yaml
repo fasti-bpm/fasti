@@ -1,0 +1,22 @@
+{{/*
+SPDX-License-Identifier: Apache-2.0
+Copyright Fasti BPM contributors
+*/}}
+{{- if .Values.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "fasti.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "fasti.labels" . | nindent 4 }}
+spec:
+  {{- if ne (toString .Values.pdb.minAvailable) "" }}
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  {{- else }}
+  maxUnavailable: {{ default 1 .Values.pdb.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "fasti.selectorLabels" . | nindent 6 }}
+{{- end }}

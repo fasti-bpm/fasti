@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Fasti BPM contributors
+
+# Plain Kubernetes manifests of Fasti BPM against an external PostgreSQL database.
+# Guide: docs/install-kubernetes.md. Create the Secrets first (see secret-example.yaml), then
+#
+#   kubectl apply -k distro/kubernetes/manifests
+#
+# The Helm chart in distro/kubernetes/helm/fasti-bpm offers the same with more options.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: fasti
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: fasti-bpm
+resources:
+  - namespace.yaml
+  - serviceaccount.yaml
+  - deployment.yaml
+  - service.yaml
+  - poddisruptionbudget.yaml
+  # optional: uncomment after adapting host, TLS secret and peers
+  # - ingress.yaml
+  # - networkpolicy.yaml

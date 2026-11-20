@@ -1,0 +1,23 @@
+{{/*
+SPDX-License-Identifier: Apache-2.0
+Copyright Fasti BPM contributors
+*/}}
+{{- if include "fasti.hasConfig" . }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "fasti.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "fasti.labels" . | nindent 4 }}
+data:
+  {{- if .Values.oidc.enabled }}
+  # OpenID Connect; the client secret is read from the environment
+  oidc.yml: |
+    {{- include "fasti.oidcConfig" . | nindent 4 }}
+  {{- end }}
+  {{- if .Values.config }}
+  fasti-config.yml: |
+    {{- toYaml .Values.config | nindent 4 }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,343 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Fasti BPM contributors
+
+# Values of the Fasti BPM chart. The chart runs the container image (distro/docker) against an
+# external database; the reference of every environment variable the image accepts is in
+# distro/docker/README.md. Required: database.url (or database.urlKey) and
+# database.existingSecret.
+
+image:
+  # Docker Hub; the same image is published as ghcr.io/fasti-bpm/fasti-bpm
+  repository: fastidev/fasti-bpm
+  # empty: the appVersion of the chart
+  tag: ""
+  # sha256:... pins the image by digest (recommended); used together with the tag if both are set
+  digest: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Several replicas share one database. The job executor of every replica acquires jobs from the
+# same tables with optimistic locking, so a job runs on one replica only; see "Several replicas"
+# in the README of the chart. The web UI keeps sessions per pod: use session affinity (see
+# service.sessionAffinity and ingress) when replicas > 1. Ignored when autoscaling.enabled.
+replicaCount: 1
+
+# --production: Secure and SameSite=Strict session cookies, password policy, deserialization
+# allow-list, no WADL, refuses the built-in H2 database and remote debugging. Needs HTTPS in
+# front (Ingress with TLS); browsers send the Secure cookie only over HTTPS.
+production: true
+
+# parts of Fasti BPM Run that are started; at least one of webapps and rest
+components:
+  webapps: true
+  rest: true
+  # the invoice example process; for trying out only
+  example: false
+
+# Database. Only external databases are supported: the chart never starts the built-in H2
+# database. Username and password come from an existing Secret; no credentials are stored in
+# values. Bundled drivers: PostgreSQL, MySQL, MariaDB, SQL Server (Oracle and DB2: see
+# extraVolumes and FASTI_EXTRA_LIB in the README).
+database:
+  # JDBC driver class; empty derives it from the URL
+  driver: org.postgresql.Driver
+  # JDBC URL, for example jdbc:postgresql://postgres.db.svc:5432/fasti
+  url: ""
+  # name of an existing Secret with the credentials (required)
+  existingSecret: ""
+  usernameKey: username
+  passwordKey: password
+  # key in existingSecret that holds the JDBC URL instead of database.url (optional)
+  urlKey: ""
+  # true creates missing tables in a new, empty database; never upgrades an existing schema
+  schemaUpdate: false
+  # enforce: stop when the schema is not 7.24; warn: only log (unsupported, see the image docs)
+  schemaVersionCheck: enforce
+  # camunda.bpm.database.schema-name / table-prefix (empty: database defaults)
+  schema: ""
+  tablePrefix: ""
+  # HikariCP pool per pod; all pods together must stay below the database's max_connections
+  pool:
+    maxActive: ""
+    minIdle: ""
+  # host:port[,host:port] the entrypoint waits for before starting the JVM (empty: no wait)
+  waitFor: ""
+  waitForTimeout: 60
+
+# Administrator created when it does not exist yet (new, empty database). An existing
+# administrator is left unchanged. With production: true the password must satisfy the password
+# policy (at least 10 characters, upper- and lowercase letters, a digit, a special character).
+admin:
+  # user id; empty: no administrator is created
+  user: ""
+  # existing Secret with the password (required when admin.user is set)
+  existingSecret: ""
+  passwordKey: password
+
+# Engine settings; must be the same on every node that shares the database.
+engine:
+  # JVM time zone (TZ)
+  timezone: UTC
+  # empty: the level stored in the database (new database: full)
+  historyLevel: ""
+  jobExecutor:
+    enabled: true
+    # false: every pod runs the jobs of every deployment (right when all pods run this image).
+    # true only when the database is shared with nodes that run process applications whose
+    # Java classes these pods lack (see the README).
+    deploymentAware: false
+
+webapp:
+  # application path of the web UI (empty: /fasti)
+  path: ""
+  # redirect /camunda/... to /fasti/... (empty: image default, true)
+  legacyPathRedirect: ""
+  # true serves the deprecated classic Cockpit, Tasklist and Admin (AngularJS, end of life)
+  classicWebapps: false
+  # CORS for REST calls from browsers on other origins, comma-separated (empty: off)
+  corsAllowedOrigins: ""
+
+# Single sign-on with an OpenID Connect provider (adds --oauth2) and JWT bearer tokens on the
+# REST API. The client secret comes from an existing Secret. Rendered into a configuration file;
+# see "Single sign-on (OpenID Connect)" in the project README.
+oidc:
+  enabled: false
+  # Spring Security client registration id
+  registrationId: oidc
+  # shown on the login button ("Sign in with ...")
+  clientName: ""
+  issuerUri: ""
+  clientId: ""
+  # existing Secret with the client secret (required when enabled)
+  existingSecret: ""
+  clientSecretKey: client-secret
+  scope: [openid, profile, email]
+  userNameAttribute: preferred_username
+  # claim with the groups of the user (for example groups or realm_access.roles)
+  groupsClaim: ""
+  # claim values that grant camunda-admin
+  adminGroups: []
+  # claim values mapped to engine group ids
+  groupMapping: {}
+  includeUnmappedGroups: true
+  # claim with the tenants of the user
+  tenantsClaim: ""
+  # true: users, groups and tenants come from the token (default); false: from the database
+  identityProvider: true
+  ssoLogout:
+    enabled: false
+    postLogoutRedirectUri: "{baseUrl}/fasti/app/next/default/"
+  # JWT bearer tokens on /engine-rest
+  rest:
+    bearerEnabled: false
+    # empty: oidc.issuerUri
+    issuerUri: ""
+    audiences: []
+    userIdClaim: sub
+    groupsClaim: ""
+
+# Additional Spring Boot configuration (YAML), rendered into a file named in FASTI_CONFIG.
+# Settings that turn REST authentication or authorization off are refused by the application.
+config: {}
+#  camunda.bpm:
+#    job-execution:
+#      core-pool-size: 8
+#      max-pool-size: 16
+
+jvm:
+  # percentage of the container memory limit used for the heap
+  maxRamPercentage: 75
+  # additional JVM options (JAVA_OPTS)
+  javaOpts: ""
+
+# arguments appended after the ones derived from the values
+extraArgs: []
+# additional environment variables (list of EnvVar)
+extraEnv: []
+#  - name: CAMUNDA_BPM_JOB_EXECUTION_MAX_JOBS_PER_ACQUISITION
+#    value: "16"
+# additional sources of environment variables (list of EnvFromSource)
+extraEnvFrom: []
+extraVolumes: []
+extraVolumeMounts: []
+initContainers: []
+extraContainers: []
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+  # the application does not call the Kubernetes API
+  automountServiceAccountToken: false
+
+# false: Kubernetes does not add <SERVICE>_PORT=tcp://... variables. Keep it off: a Service
+# named "fasti" in the namespace would set FASTI_PORT, which the image reads as its HTTP port.
+enableServiceLinks: false
+
+podAnnotations: {}
+podLabels: {}
+commonLabels: {}
+priorityClassName: ""
+# SIGTERM shuts down gracefully (30 s for running requests); leave time on top of preStop
+terminationGracePeriodSeconds: 60
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  fsGroupChangePolicy: OnRootMismatch
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  # writable paths are emptyDir volumes: /tmp and /fasti/data
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  capabilities:
+    drop: [ALL]
+
+# size limits of the writable emptyDir volumes
+tmpVolume:
+  sizeLimit: 256Mi
+dataVolume:
+  sizeLimit: 256Mi
+
+# At least 2 CPUs and 2 GiB for real workloads (below that the JVM picks the Serial GC).
+resources:
+  requests:
+    cpu: "1"
+    memory: 2Gi
+  limits:
+    memory: 2Gi
+
+# Probes on the actuator health endpoints of the image (no login needed).
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /actuator/health/liveness
+    port: http
+  periodSeconds: 5
+  timeoutSeconds: 3
+  # up to 5 minutes for the first start (schema creation, slow databases)
+  failureThreshold: 60
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /actuator/health/liveness
+    port: http
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 4
+readinessProbe:
+  enabled: true
+  httpGet:
+    # includes the database connection and the process engine
+    path: /actuator/health/readiness
+    port: http
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# gives the load balancer time to drop the pod before the JVM stops accepting requests
+lifecycle:
+  preStop:
+    exec:
+      command: ["sleep", "10"]
+
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+# soft (preferred), hard (required) or "" (none): spread the pods over nodes
+podAntiAffinityPreset: soft
+affinity: {}
+nodeSelector: {}
+tolerations: []
+# entries without labelSelector get the selector of this release
+topologySpreadConstraints: []
+#  - maxSkew: 1
+#    topologyKey: topology.kubernetes.io/zone
+#    whenUnsatisfiable: ScheduleAnyway
+
+service:
+  type: ClusterIP
+  port: 8080
+  annotations: {}
+  # ClientIP keeps a client on one pod (web UI sessions are per pod) for in-cluster clients and
+  # load balancers that preserve the client address; prefer cookie affinity at the Ingress
+  sessionAffinity: None
+  sessionAffinityTimeoutSeconds: 10800
+  nodePort: ""
+
+ingress:
+  enabled: false
+  className: ""
+  # for replicas > 1 add cookie affinity of your controller here (see the README)
+  annotations: {}
+  hosts:
+    - host: fasti.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  # TLS is required in production mode (Secure cookies)
+  tls: []
+  #  - secretName: fasti-tls
+  #    hosts: [fasti.example.com]
+
+pdb:
+  enabled: true
+  # one of maxUnavailable or minAvailable
+  maxUnavailable: 1
+  minAvailable: ""
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: ""
+  behavior: {}
+
+networkPolicy:
+  enabled: false
+  # peers allowed to reach the HTTP port; empty allows every source
+  ingressFrom: []
+  #  - namespaceSelector:
+  #      matchLabels:
+  #        kubernetes.io/metadata.name: ingress-nginx
+  # egress rules; empty leaves egress open. When set, DNS (port 53) is allowed in addition.
+  egress: []
+  #  - to:
+  #      - namespaceSelector:
+  #          matchLabels:
+  #            kubernetes.io/metadata.name: db
+  #    ports:
+  #      - port: 5432
+  #        protocol: TCP
+
+# Prometheus Operator ServiceMonitor. The 1.0.x image exposes no metrics endpoint (only
+# /actuator/health); enable it with an image that serves metrics at path on port.
+metrics:
+  serviceMonitor:
+    enabled: false
+    path: /actuator/prometheus
+    # name of a container port: http, or a port added with metrics.extraPort
+    port: http
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}
+    relabelings: []
+    metricRelabelings: []
+  # additional container and service port, for example 9404 of the JMX exporter agent
+  extraPort:
+    enabled: false
+    name: metrics
+    port: 9404

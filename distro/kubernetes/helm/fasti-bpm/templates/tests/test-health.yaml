@@ -1,0 +1,49 @@
+{{/*
+SPDX-License-Identifier: Apache-2.0
+Copyright Fasti BPM contributors
+*/}}
+{{/* helm test: readiness through the Service, with the image of the release (busybox wget) */}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "fasti.fullname" . }}-test-health
+  namespace: {{ .Release.Namespace }}
+  # not the selector labels of the release: the Service must not route to this pod
+  labels:
+    helm.sh/chart: {{ include "fasti.chart" . }}
+    app.kubernetes.io/name: {{ include "fasti.name" . }}-test
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/component: test
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  {{- with .Values.imagePullSecrets }}
+  imagePullSecrets:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: wget
+      image: {{ include "fasti.image" . | quote }}
+      imagePullPolicy: {{ .Values.image.pullPolicy }}
+      command: ["wget", "-q", "-O", "-", "http://{{ include "fasti.fullname" . }}:{{ .Values.service.port }}/actuator/health/readiness"]
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          memory: 64Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: [ALL]

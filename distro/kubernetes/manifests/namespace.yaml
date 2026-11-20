@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Fasti BPM contributors
+
+# Pod Security Standard "restricted": the Fasti pod runs as non-root with a read-only root
+# file system and no capabilities.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fasti
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/warn: restricted

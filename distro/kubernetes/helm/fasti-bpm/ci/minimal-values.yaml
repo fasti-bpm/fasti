@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Fasti BPM contributors
+
+# smallest valid configuration (CI: helm lint, helm template, kubeconform)
+database:
+  url: jdbc:postgresql://postgres:5432/fasti
+  existingSecret: fasti-db

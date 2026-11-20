@@ -1,0 +1,39 @@
+{{/*
+SPDX-License-Identifier: Apache-2.0
+Copyright Fasti BPM contributors
+*/}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "fasti.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "fasti.labels" . | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  {{- if ne .Values.service.sessionAffinity "None" }}
+  sessionAffinity: {{ .Values.service.sessionAffinity }}
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: {{ .Values.service.sessionAffinityTimeoutSeconds }}
+  {{- end }}
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      {{- if and (has .Values.service.type (list "NodePort" "LoadBalancer")) .Values.service.nodePort }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}
+    {{- if .Values.metrics.extraPort.enabled }}
+    - name: {{ .Values.metrics.extraPort.name }}
+      port: {{ .Values.metrics.extraPort.port }}
+      targetPort: {{ .Values.metrics.extraPort.name }}
+      protocol: TCP
+    {{- end }}
+  selector:
+    {{- include "fasti.selectorLabels" . | nindent 4 }}

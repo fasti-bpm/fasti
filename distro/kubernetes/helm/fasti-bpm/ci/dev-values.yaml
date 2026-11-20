@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Fasti BPM contributors
+
+# non-production variant: no --production, REST only, small resources, no anti-affinity
+production: false
+components:
+  webapps: false
+database:
+  driver: ""
+  url: jdbc:mysql://mysql:3306/fasti
+  existingSecret: fasti-db
+podAntiAffinityPreset: ""
+pdb:
+  enabled: false
+resources:
+  requests:
+    cpu: 250m
+    memory: 768Mi
+  limits:
+    memory: 768Mi
+service:
+  type: NodePort
+  nodePort: 30080
+startupProbe:
+  enabled: false
+serviceAccount:
+  create: false

@@ -1,0 +1,45 @@
+{{- /*
+SPDX-License-Identifier: Apache-2.0
+Copyright Fasti BPM contributors
+*/ -}}
+Fasti BPM {{ include "fasti.imageTag" . }} is being deployed as {{ include "fasti.fullname" . }} in namespace {{ .Release.Namespace }}.
+
+Wait until the pods are ready (the first start can take a few minutes):
+
+  kubectl -n {{ .Release.Namespace }} rollout status deployment/{{ include "fasti.fullname" . }}
+
+{{- if .Values.ingress.enabled }}
+
+Web UI and REST API:
+{{- range .Values.ingress.hosts }}
+  {{ if $.Values.ingress.tls }}https{{ else }}http{{ end }}://{{ .host }}/fasti/   (REST: /engine-rest)
+{{- end }}
+{{- else }}
+
+Local access through a port-forward:
+
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "fasti.fullname" . }} 8080:{{ .Values.service.port }}
+  curl -s http://localhost:8080/actuator/health/readiness
+  open http://localhost:8080/fasti/
+{{- end }}
+
+The REST API at /engine-rest requires authentication (HTTP Basic or a bearer token).
+{{- if .Values.admin.user }}
+Administrator: "{{ .Values.admin.user }}" (created only if it does not exist), password in Secret {{ .Values.admin.existingSecret }}.
+{{- end }}
+{{- if and .Values.production (not .Values.ingress.tls) }}
+
+NOTE: production mode sets Secure session cookies; browsers send them only over HTTPS (or to
+localhost). Put TLS in front of Fasti (ingress.tls or a TLS-terminating proxy).
+{{- end }}
+{{- $replicas := ternary .Values.autoscaling.minReplicas .Values.replicaCount .Values.autoscaling.enabled }}
+{{- if gt (int $replicas) 1 }}
+
+NOTE: {{ $replicas }} or more replicas share the database. Web UI sessions are kept per pod:
+enable cookie-based session affinity at the Ingress controller (or service.sessionAffinity=ClientIP).
+All replicas must use the same image, time zone, history level and plugins.
+{{- end }}
+{{- if .Values.database.schemaUpdate }}
+
+database.schemaUpdate=true creates missing tables in a new database; it never upgrades a schema.
+{{- end }}

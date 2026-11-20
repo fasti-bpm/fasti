@@ -222,7 +222,8 @@ docker inspect -f '{{.State.Health.Status}}' fasti           # healthy
 ```
 
 Kubernetes: `livenessProbe` → `/actuator/health/liveness`, `readinessProbe` →
-`/actuator/health/readiness`, `terminationGracePeriodSeconds: 60`.
+`/actuator/health/readiness`, `terminationGracePeriodSeconds: 60`. Helm chart and manifests:
+[install-kubernetes.md](install-kubernetes.md).
 
 <a id="10-upgrade-and-rollback"></a>
 

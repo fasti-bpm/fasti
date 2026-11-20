@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Fasti BPM contributors
+
+name: kubernetes
+
+# Helm chart and plain manifests: helm lint, helm template with every value set, refusal cases
+# and kubeconform (strict) against several Kubernetes versions. Helm and kubeconform run from
+# container images pinned by digest (see distro/kubernetes/validate.sh).
+on:
+  pull_request:
+    paths:
+      - distro/kubernetes/**
+      - .github/workflows/kubernetes.yml
+  push:
+    branches: [main]
+    paths:
+      - distro/kubernetes/**
+      - .github/workflows/kubernetes.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kubernetes-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Helm chart and manifests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate
+        run: bash distro/kubernetes/validate.sh "$RUNNER_TEMP/kubernetes"

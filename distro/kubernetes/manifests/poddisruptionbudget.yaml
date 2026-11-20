@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Fasti BPM contributors
+
+# With replicas: 1 this still allows a node drain (the pod is started again elsewhere, with a
+# short interruption); with more replicas at most one is down at a time.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: fasti
+  namespace: fasti
+  labels:
+    app.kubernetes.io/name: fasti-bpm
+    app.kubernetes.io/instance: fasti
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fasti-bpm
+      app.kubernetes.io/instance: fasti

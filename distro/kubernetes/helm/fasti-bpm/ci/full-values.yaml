@@ -1,0 +1,112 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Fasti BPM contributors
+
+# every optional feature switched on (CI: helm lint, helm template, kubeconform)
+image:
+  tag: "1.0.0"
+  digest: sha256:49ef5b6551e24d9bfa7a57d20defcb622d770c329be5b4eed87e59dd6d453eca
+replicaCount: 3
+database:
+  driver: org.postgresql.Driver
+  existingSecret: fasti-db
+  urlKey: jdbc-url
+  schemaUpdate: true
+  pool:
+    maxActive: 30
+    minIdle: 5
+  waitFor: postgres:5432
+admin:
+  user: admin
+  existingSecret: fasti-admin
+engine:
+  timezone: Asia/Ho_Chi_Minh
+  historyLevel: full
+  jobExecutor:
+    deploymentAware: true
+webapp:
+  corsAllowedOrigins: https://app.example.com
+oidc:
+  enabled: true
+  clientName: Keycloak
+  issuerUri: https://sso.example.com/realms/fasti
+  clientId: fasti
+  existingSecret: fasti-oidc
+  groupsClaim: groups
+  adminGroups: [fasti-admins]
+  groupMapping:
+    accounting-team: accounting
+  tenantsClaim: tenants
+  ssoLogout:
+    enabled: true
+  rest:
+    bearerEnabled: true
+    audiences: [fasti-api]
+    userIdClaim: preferred_username
+config:
+  camunda.bpm:
+    job-execution:
+      core-pool-size: 8
+      max-pool-size: 16
+jvm:
+  javaOpts: -XX:+UseG1GC
+extraEnv:
+  - name: CAMUNDA_BPM_JOB_EXECUTION_MAX_JOBS_PER_ACQUISITION
+    value: "16"
+extraEnvFrom:
+  - configMapRef:
+      name: fasti-extra
+extraVolumes:
+  - name: drivers
+    emptyDir: {}
+extraVolumeMounts:
+  - name: drivers
+    mountPath: /drivers
+    readOnly: true
+podAntiAffinityPreset: hard
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway
+service:
+  sessionAffinity: ClientIP
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/affinity: cookie
+  hosts:
+    - host: fasti.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: fasti-tls
+      hosts: [fasti.example.com]
+pdb:
+  maxUnavailable: ""
+  minAvailable: 2
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 6
+networkPolicy:
+  enabled: true
+  ingressFrom:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: db
+      ports:
+        - port: 5432
+          protocol: TCP
+metrics:
+  serviceMonitor:
+    enabled: true
+    port: metrics
+    path: /metrics
+  extraPort:
+    enabled: true

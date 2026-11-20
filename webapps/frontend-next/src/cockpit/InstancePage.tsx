@@ -80,6 +80,7 @@ import { InstanceTimeline } from './Timeline';
 import { MessageDialog } from './MessageDialog';
 import { JobDueDateDialog } from './JobDueDate';
 import { OverflowRow } from '../app/OverflowMenu';
+import { scrollBehavior } from '../lib/motion';
 
 const BpmnDiagram = lazy(() => import('../bpmn/BpmnDiagram'));
 
@@ -1095,7 +1096,7 @@ export function InstancePage() {
           }))}
           onShowIncidents={() => {
             setParams({ tab: 'incidents', page: null });
-            document.getElementById('instance-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.getElementById('instance-tabs')?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
           }}
         />
       )}

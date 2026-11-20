@@ -18,7 +18,7 @@ import {
 } from '../api/operations';
 import { useI18n } from '../i18n';
 import { MoreFilters } from './MoreFilters';
-import { fromDateTimeInput, parseEngineDate, toEngineDate } from '../lib/dates';
+import { formatDateTime, fromDateTimeInput, parseEngineDate, toEngineDate } from '../lib/dates';
 import { downloadCsv } from '../lib/csv';
 import { useToast } from '../ui/toast';
 import { Button, Dialog, EmptyState, Field, NoMatch, cx } from '../ui';
@@ -214,7 +214,7 @@ export function auditRows(entries: OperationLogEntry[], taskNames?: Map<string, 
 
 function formatCaseStart(value: string | null, locale: string): string {
   const date = value ? parseEngineDate(value) : null;
-  return date ? date.toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' }) : '';
+  return date ? formatDateTime(date, locale) : '';
 }
 
 function stateLabel(state: string | null, t: ReturnType<typeof useI18n>['t']): string {

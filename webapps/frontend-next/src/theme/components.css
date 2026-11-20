@@ -609,6 +609,11 @@
 /* --- narrower screens ----------------------------------------------------- */
 
 @media (max-width: 760px) {
+  .search-input {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
   .area__bar {
     padding: 0 var(--s-1) 0 var(--s-2);
   }

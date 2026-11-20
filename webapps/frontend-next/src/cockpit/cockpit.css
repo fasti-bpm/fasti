@@ -764,7 +764,6 @@
     font-size: var(--fs-2xl);
   }
 
-  .search-input,
   .filter-group,
   .filter-group--variable {
     flex: 1 1 100%;

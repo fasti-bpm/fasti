@@ -1,4 +1,4 @@
-English | [Tiếng Việt](README.vi.md)
+English | [Tiếng Việt](README.vi.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | [Bahasa Indonesia](README.id.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | [ไทย](README.th.md) | [简体中文](README.zh-CN.md)
 
 # Fasti BPM Platform
 
@@ -10,6 +10,8 @@ continued fixes and library upgrades, and a new web UI.
 > Fasti BPM is an independent open-source project (Apache-2.0). It is not part of, sponsored by
 > or endorsed by Camunda Services GmbH. The name "Camunda" is used only to describe where the
 > source code comes from and what Fasti is compatible with.
+
+<a id="quick-start"></a>
 
 ## Quick start
 
@@ -44,6 +46,8 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 The image **requires REST authentication and enforces authorizations by default** (unlike Camunda
 Run); only `FASTI_INSECURE_DEMO=true` turns them off, for demos.
 
+<a id="highlights"></a>
+
 ## Highlights
 
 - **New web UI** at `/fasti/` (React):
@@ -74,7 +78,11 @@ Run); only `FASTI_INSECURE_DEMO=true` turns them off, for demos.
   [distro/docker/README.md](distro/docker/README.md#performance-tuning)).
 - **Current platform**: Java 17 or later, Spring Boot 4.1, GraalJS 25, Jackson 2.21.
 
+<a id="installation"></a>
+
 ## Installation
+
+<a id="one-command-on-your-existing-camunda-724-database"></a>
 
 ### One command, on your existing Camunda 7.24 database
 
@@ -126,6 +134,8 @@ Detailed guides:
   differs, rollback, limits.
 - [Environment variable reference for the image](distro/docker/README.md#environment-variables).
 
+<a id="without-docker-tomcat-bundle-download-from-fastidev"></a>
+
 ### Without Docker: Tomcat bundle (download from fasti.dev)
 
 Ready-made Tomcat 1.0.0 bundle (download page: https://fasti.dev/download):
@@ -139,6 +149,8 @@ the bundle before starting it: the REST API (`/engine-rest`) requires HTTP Basic
 by default, no user is created (create the first administrator on the setup page of `/fasti/`),
 and when taking over a Camunda Run database, set `jobExecutorDeploymentAware=false` in
 `conf/bpm-platform.xml`, otherwise, timers and async jobs of existing deployments will not run.
+
+<a id="a-ui-built-from-real-user-complaints"></a>
 
 ## A UI built from real user complaints
 
@@ -154,6 +166,8 @@ Camunda forum and on GitHub, for example:
 | Business key and variables when starting a process without a form | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | Yes |
 | Download the deployed BPMN XML | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Yes |
 | Consistent labels, several languages | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 languages |
+
+<a id="comparison"></a>
 
 ## Comparison
 
@@ -192,7 +206,11 @@ Sources: [1] [CE end-of-life announcement](https://forum.camunda.io/t/important-
 [14] [EximeeBPMS](https://github.com/EximeeBPMS/eximeebpms);
 independent overview: [WZ-IT, 2026-10-15](https://wz-it.com/en/blog/camunda-7-end-of-life-operaton-cibseven-fluxnova-compared/).
 
+<a id="timeline"></a>
+
 ## Timeline
+
+<a id="camunda-7-milestones"></a>
 
 ### Camunda 7 milestones
 
@@ -204,6 +222,8 @@ independent overview: [WZ-IT, 2026-10-15](https://wz-it.com/en/blog/camunda-7-en
 | 2025-10-14 | Release date of 7.24 as scheduled by Camunda; after this date there are no further CE releases, including security patches. The CE repository has since been archived | [announcement](https://forum.camunda.io/t/important-update-camunda-7-community-edition-end-of-life-announced/50921), [support page](https://docs.camunda.org/enterprise/announcement) |
 | April 2030 | End of Camunda 7 Enterprise support (7.24 LTS: 2030-04-13) | [support page](https://docs.camunda.org/enterprise/announcement) |
 | April 2032 | End of paid extended support for Camunda 7 Enterprise | [support page](https://docs.camunda.org/enterprise/announcement) |
+
+<a id="fasti-bpm"></a>
 
 ### Fasti BPM
 
@@ -221,6 +241,8 @@ Fasti continues directly from the `7.24.0` tag; every fix and change is counted 
    scan; the findings were fixed) and **Java4Shell mitigation**.
 7. **1.0.0**: the first release (2026-11-20).
 
+<a id="roadmap-plan"></a>
+
 ## Roadmap (plan)
 
 > This is a **plan**, not a commitment; the order may change with user feedback.
@@ -236,6 +258,8 @@ Fasti continues directly from the `7.24.0` tag; every fix and change is counted 
 - **Long-term support (LTS) lines** for users who upgrade rarely.
 - **DB2 verification**.
 - **Workload aggregate endpoint**, so that the workload page stays fast with large datasets.
+
+<a id="commitments-support-and-security-patches"></a>
 
 ## Commitments: support and security patches
 
@@ -257,6 +281,8 @@ Fasti continues directly from the `7.24.0` tag; every fix and change is counted 
   what was fixed compared with Camunda 7 CE 7.24.0; advisories are listed in
   [SECURITY.md](SECURITY.md#advisories).
 
+<a id="documentation"></a>
+
 ## Documentation
 
 | Document | Contents |
@@ -268,6 +294,8 @@ Fasti continues directly from the `7.24.0` tag; every fix and change is counted 
 | [webapps/frontend-next/README.md](webapps/frontend-next/README.md#new-web-ui-frontend-next) | The new web UI |
 | [docs/security/CVE-2026-114938.md](docs/security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell and Fasti |
 | [CHANGELOG.md](CHANGELOG.md), [SECURITY.md](SECURITY.md#security-policy), [CONTRIBUTING.md](CONTRIBUTING.md#how-to-contribute) | Changes, security, contributing |
+
+<a id="what-this-is"></a>
 
 ## What this is
 
@@ -282,6 +310,8 @@ The goal is **backward compatibility** with applications that run on Camunda 7:
   `http://camunda.org/schema/1.0/bpmn` and the `camunda.bpm.*` configuration prefix are kept;
 - the database schema of 7.24 is kept;
 - all deployment flavors are kept: Spring Boot, Run, Tomcat, WildFly; `javax` and `jakarta`.
+
+<a id="what-is-different-from-camunda-7240-ce"></a>
 
 ## What is different from Camunda 7.24.0 CE
 
@@ -298,10 +328,14 @@ The goal is **backward compatibility** with applications that run on Camunda 7:
 Some fixes change defaults toward safer behavior; read "What differs" in the
 [migration guide](docs/migrate-from-camunda-7.md#what-differs) before upgrading.
 
+<a id="versioning"></a>
+
 ## Versioning
 
 Fasti BPM Platform follows [Semantic Versioning](https://semver.org/), starting at `1.0.0`.
 The `1.x` line is compatible with applications written for Camunda 7.24.
+
+<a id="maven-coordinates"></a>
 
 ## Maven coordinates
 
@@ -371,6 +405,8 @@ Frequently used artifacts:
 The FEEL library `org.camunda.feel:feel-engine` is an external library that is not part of
 this repository; its coordinates stay as they are.
 
+<a id="third-party-libraries-that-still-pull-in-the-original-engine"></a>
+
 ### Third-party libraries that still pull in the original engine
 
 Because the packages are unchanged, the original engine (`org.camunda.bpm:camunda-engine`)
@@ -408,6 +444,8 @@ Fasti artifacts instead:
 `mvn dependency:tree -Dincludes="org.camunda*"` lists original artifacts that are still
 present (`org.camunda.feel:feel-engine` is legitimate, do not exclude it).
 
+<a id="startup-check"></a>
+
 ### Startup check
 
 When it is created, the engine inspects the class path and **refuses to start** if it finds
@@ -425,6 +463,8 @@ Limitation: if the original engine library precedes `fasti-engine` on the class 
 engine is built by the classes of the original library, which do not contain this check.
 In that case only applications that use the Fasti Spring Boot starter are stopped; with
 other integrations, review the dependencies as described above.
+
+<a id="web-application-path-fasti"></a>
 
 ## Web application path: `/fasti`
 
@@ -463,6 +503,8 @@ To restore `/camunda`:
 paths, CSP or health checks for `/camunda`), add `/fasti/` or move to `/fasti/` entirely.
 The `XSRF-TOKEN` cookie (and `JSESSIONID` on Tomcat and WildFly) now has the path `/fasti`,
 so users sign in once more. Bookmarks and old links keep working through the redirect.
+
+<a id="single-sign-on-openid-connect"></a>
 
 ## Single sign-on (OpenID Connect)
 
@@ -578,6 +620,8 @@ signed-in user from the claims, enable the `OidcIdentityProviderPlugin` (comment
 `bpm-platform.xml` / `standalone.xml`). Limits: the sessions tracked for back-channel logout are
 kept in memory per server (not shared across cluster nodes); the classic applications only redirect to the provider; a complete logout requires the new web UI.
 
+<a id="build"></a>
+
 ## Build
 
 Requires JDK 17 or later (21 recommended).
@@ -590,6 +634,8 @@ A full build runs all Java tests and the web UI unit tests (close to an hour; th
 end-to-end tests run separately, see [webapps/frontend-next](webapps/frontend-next/README.md#end-to-end-tests-playwright)) and needs network access to Maven Central,
 nodejs.org and the npm registry. See [TESTING.md](TESTING.md).
 
+<a id="acknowledgements"></a>
+
 ## Acknowledgements
 
 - Fasti BPM Platform builds on more than a decade of work by Camunda and the Camunda 7
@@ -598,6 +644,8 @@ nodejs.org and the npm registry. See [TESTING.md](TESTING.md).
   release notes) of other community projects that descend from Camunda 7: Operaton, CIB
   seven, OrqueIO and EximeeBPMS. The source code in this repository was written
   independently on top of Camunda 7 CE.
+
+<a id="license"></a>
 
 ## License
 

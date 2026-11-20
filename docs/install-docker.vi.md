@@ -1,4 +1,4 @@
-[English](install-docker.md) | Tiếng Việt
+[English](install-docker.md) | Tiếng Việt | [Deutsch](install-docker.de.md) | [Español](install-docker.es.md) | [Français](install-docker.fr.md) | [हिन्दी](install-docker.hi.md) | [Bahasa Indonesia](install-docker.id.md) | [日本語](install-docker.ja.md) | [한국어](install-docker.ko.md) | [Português (Brasil)](install-docker.pt-BR.md) | [Русский](install-docker.ru.md) | [ไทย](install-docker.th.md) | [简体中文](install-docker.zh-CN.md)
 
 # Cài đặt Fasti BPM bằng Docker
 
@@ -8,12 +8,16 @@ quay lại và xử lý sự cố. Tham chiếu đầy đủ của image: [distr
 Fasti BPM được xây dựng trên Camunda 7 CE 7.24.0 và là dự án độc lập, không liên kết với Camunda
 Services GmbH.
 
+<a id="1-requirements"></a>
+
 ## 1. Yêu cầu
 
 - Docker Engine có Docker Compose v2 (`docker compose`).
 - Với tải thật: ít nhất 2 CPU và 2 GB bộ nhớ cho container Fasti (dưới mức đó JVM tự chọn Serial GC).
 - Cơ sở dữ liệu production: PostgreSQL, MariaDB, MySQL, SQL Server hoặc Oracle (xem
   [bảng đã thử](migrate-from-camunda-7.vi.md#giới-hạn)). DB2 chưa được kiểm chứng. H2 chỉ để thử.
+
+<a id="2-pull-the-image"></a>
 
 ## 2. Tải image
 
@@ -37,6 +41,8 @@ lệnh bên dưới:
 docker build -t fasti-bpm:local distro/docker/target/docker
 ```
 
+<a id="3-quick-trial-with-h2"></a>
+
 ## 3. Thử nhanh với H2
 
 ```bash
@@ -53,6 +59,8 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   `--example` thì web UI và REST API không được bật.
 - REST API ở `http://localhost:8080/engine-rest` và cần Basic auth; xem
   [hướng dẫn REST API](api/README.vi.md).
+
+<a id="4-production-with-postgresql-docker-run"></a>
 
 ## 4. Production với PostgreSQL: `docker run`
 
@@ -98,6 +106,8 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
 - `WAIT_FOR` chờ cơ sở dữ liệu nhận kết nối trước khi khởi động.
 - Mật khẩu admin chỉ được đặt khi admin chưa tồn tại; đổi mật khẩu sau đó trong mục Quản trị.
 
+<a id="5-production-with-postgresql-docker-compose"></a>
+
 ## 5. Production với PostgreSQL: `docker compose`
 
 Tệp mẫu: [distro/docker/examples/docker-compose.postgres.yml](../distro/docker/examples/docker-compose.postgres.yml)
@@ -116,6 +126,8 @@ docker compose -f docker-compose.postgres.yml ps      # cả hai dịch vụ "he
 
 Biến có thể đặt khi chạy: `FASTI_IMAGE` (mặc định `fastidev/fasti-bpm:1.0.0`, ví dụ
 `FASTI_IMAGE=fasti-bpm:local`), `FASTI_HOST_PORT` (mặc định `8080`), `TZ` (mặc định `UTC`).
+
+<a id="6-connecting-to-an-existing-camunda-7-database"></a>
 
 ## 6. Nối vào cơ sở dữ liệu Camunda 7 có sẵn
 
@@ -152,6 +164,8 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   chỉ hợp lệ, đúng tên máy trong URL. `trustServerCertificate=true` (bỏ kiểm tra chứng chỉ) hoặc
   `encrypt=false` (không mã hóa) chỉ nên dùng khi thử trên máy cục bộ. MySQL/MariaDB cần `transaction-isolation=READ-COMMITTED`.
 
+<a id="7-side-by-side-with-camunda-7-nodes"></a>
+
 ## 7. Chạy song song với node Camunda 7
 
 Fasti và Camunda 7.24 chạy cùng lúc trên một cơ sở dữ liệu được (đã thử: cả hai thấy dữ liệu của
@@ -166,6 +180,8 @@ nhau). Điều kiện:
 - load balancer: sticky session cho web app; REST với Basic auth không cần.
 
 Chi tiết: [Chạy lẫn với node Camunda 7](migrate-from-camunda-7.vi.md#chạy-lẫn-với-node-camunda-7).
+
+<a id="8-common-environment-variables"></a>
 
 ## 8. Biến môi trường hay dùng
 
@@ -182,6 +198,8 @@ Chi tiết: [Chạy lẫn với node Camunda 7](migrate-from-camunda-7.vi.md#ch�
 | `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | tùy chọn JVM, phần trăm RAM cho heap (75) |
 
 Bảng đầy đủ: [distro/docker/README.vi.md](../distro/docker/README.vi.md#biến-môi-trường).
+
+<a id="9-health-checks"></a>
 
 ## 9. Health check
 
@@ -201,6 +219,8 @@ docker inspect -f '{{.State.Health.Status}}' fasti           # healthy
 
 Kubernetes: `livenessProbe` → `/actuator/health/liveness`, `readinessProbe` →
 `/actuator/health/readiness`, `terminationGracePeriodSeconds: 60`.
+
+<a id="10-upgrade-and-rollback"></a>
 
 ## 10. Nâng cấp và quay lại
 
@@ -225,6 +245,8 @@ thúc êm trước khi container bị dừng.
   process đã deploy có dùng tính năng chỉ Fasti có thì không chạy được trên Camunda 7. Xem
   [Quay lại Camunda 7.24](migrate-from-camunda-7.vi.md#quay-lại-camunda-724).
 
+<a id="11-troubleshooting"></a>
+
 ## 11. Xử lý sự cố
 
 Xem log bằng `docker logs fasti` (hoặc `docker compose logs fasti`).
@@ -245,6 +267,8 @@ Xem log bằng `docker logs fasti` (hoặc `docker compose logs fasti`).
 | Container khởi động lại liên tục, log có `OutOfMemoryError` | JVM thoát khi hết bộ nhớ: tăng giới hạn bộ nhớ (2 GB) của container |
 
 Vẫn chưa được? Mở issue trên GitHub kèm log (bỏ mật khẩu). Lỗi bảo mật: xem [SECURITY.vi.md](../SECURITY.vi.md).
+
+<a id="12-without-docker"></a>
 
 ## 12. Không dùng Docker
 

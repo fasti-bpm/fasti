@@ -1,9 +1,11 @@
-[English](migrate-from-camunda-7.md) | Tiếng Việt
+[English](migrate-from-camunda-7.md) | Tiếng Việt | [Deutsch](migrate-from-camunda-7.de.md) | [Español](migrate-from-camunda-7.es.md) | [Français](migrate-from-camunda-7.fr.md) | [हिन्दी](migrate-from-camunda-7.hi.md) | [Bahasa Indonesia](migrate-from-camunda-7.id.md) | [日本語](migrate-from-camunda-7.ja.md) | [한국어](migrate-from-camunda-7.ko.md) | [Português (Brasil)](migrate-from-camunda-7.pt-BR.md) | [Русский](migrate-from-camunda-7.ru.md) | [ไทย](migrate-from-camunda-7.th.md) | [简体中文](migrate-from-camunda-7.zh-CN.md)
 
 # Chuyển từ Camunda 7 sang Fasti BPM
 
 Fasti BPM được xây dựng trên Camunda 7 Community Edition 7.24.0 và tương thích với cơ sở dữ
 liệu của Camunda 7. Fasti BPM là dự án độc lập, không liên kết với Camunda Services GmbH.
+
+<a id="summary"></a>
 
 ## Tóm tắt
 
@@ -15,6 +17,8 @@ thay hẳn các node cũ, chạy Fasti song song với chúng, và quay lại Ca
 Cơ sở dữ liệu của 7.23 trở về trước phải được nâng cấp lên 7.24 bằng script SQL trước (xem
 [Phiên bản cũ hơn](#phiên-bản-cũ-hơn-717723)). Fasti không tự nâng cấp schema, và từ chối
 khởi động trên schema cũ với thông báo nêu rõ script cần chạy.
+
+<a id="steps-container-image"></a>
 
 ## Các bước (image container)
 
@@ -50,6 +54,8 @@ classpath: Fasti dừng khởi động khi thấy cả hai (giới hạn của p
 > Java 17+ cùng lúc với việc đổi artifact. Xem [README](../README.vi.md#khác-gì-so-với-camunda-7240-ce)
 > và [CHANGELOG](../CHANGELOG.md#changed).
 
+<a id="tomcat-and-wildfly-distributions"></a>
+
 ## Bản phân phối Tomcat và WildFly
 
 > **Bắt buộc khi tiếp quản cơ sở dữ liệu của Camunda Run** (hoặc của máy chủ mà process được
@@ -82,6 +88,8 @@ Khác với bản Tomcat/WildFly của Camunda 7.24:
   `JAVA_OPTS` (WildFly), biến môi trường `FASTI_CLASSIC_WEBAPPS=true`, hoặc context parameter
   `fasti.webapp.classic.enabled` trong `WEB-INF/web.xml` của web app.
 
+<a id="what-is-identical"></a>
+
 ## Cái gì giống hệt
 
 - Schema cơ sở dữ liệu và giá trị `ACT_GE_PROPERTY`/`ACT_GE_SCHEMA_LOG` (Fasti không thêm dòng
@@ -94,6 +102,8 @@ Khác với bản Tomcat/WildFly của Camunda 7.24:
   `X-XSRF-TOKEN`; thuộc tính `camunda.bpm.*`; namespace BPMN `camunda:`.
 - Filter của Tasklist cổ điển (`color`, `description`, `priority`, `refresh`, `variables`,
   `showUndefinedVariable`) được Tasklist mới đọc và lưu cùng định dạng.
+
+<a id="what-differs"></a>
 
 ## Cái gì khác
 
@@ -121,6 +131,8 @@ Khác với bản Tomcat/WildFly của Camunda 7.24:
 Bảo mật và lỗi đã vá so với 7.24.0 (phân quyền attachment/comment, setup lần đầu, …) có thể
 làm một số lời gọi trước đây thành công nay trả 403; xem [README.vi.md](../README.vi.md) của kho mã.
 
+<a id="rollback-to-camunda-724"></a>
+
 ## Quay lại Camunda 7.24
 
 Vì Fasti không đổi schema, quay lại chỉ là: dừng Fasti, khởi động lại node Camunda 7.24 trên
@@ -130,6 +142,8 @@ filter) hiện ra trên Camunda 7. Còn lại sau khi quay lại:
 - dòng `fasti.prefs.*` trong `ACT_ID_INFO` (tùy chọn giao diện mới) — Camunda 7 bỏ qua;
 - filter đã lưu bằng Tasklist mới có `refresh: true` nếu trước đó vắng mặt;
 - process đã deploy có dùng tính năng chỉ Fasti có thì không chạy được trên Camunda 7.
+
+<a id="mixed-operation-with-camunda-7-nodes"></a>
 
 ## Chạy lẫn với node Camunda 7
 
@@ -153,6 +167,8 @@ của nhau, job chạy trên node nào cũng được). Điều kiện:
 - web app cổ điển (trên node Camunda 7, hoặc Fasti với `FASTI_CLASSIC_WEBAPPS=true`) và web
   app mới dùng chung filter và người dùng.
 
+<a id="older-versions-717723"></a>
+
 ## Phiên bản cũ hơn (7.17–7.23)
 
 1. Sao lưu.
@@ -165,12 +181,16 @@ của nhau, job chạy trên node nào cũng được). Điều kiện:
 Node Camunda cũ hơn 7.24 không được chạy cùng lúc trên schema đã nâng cấp, trừ khi theo quy
 trình rolling update của Camunda (chỉ một minor, và node cũ không được dùng tính năng mới).
 
+<a id="performance"></a>
+
 ## Hiệu năng
 
 Mặc định của image (pool 10 kết nối, job executor core 3/max 10) giống Camunda Run. Nếu hệ
 Camunda 7 cũ đã chỉnh pool hoặc job executor, đặt lại các giá trị đó (`FASTI_DB_CONN_MAXACTIVE`,
 `CAMUNDA_BPM_JOB_EXECUTION_*`); hướng dẫn và số đo trong `distro/docker/README.md`, mục "Tinh
 chỉnh hiệu năng". Fasti không thêm chỉ mục nào vào schema.
+
+<a id="limits"></a>
 
 ## Giới hạn
 

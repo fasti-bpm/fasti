@@ -1,4 +1,4 @@
-English | [Tiếng Việt](install-docker.vi.md)
+English | [Tiếng Việt](install-docker.vi.md) | [Deutsch](install-docker.de.md) | [Español](install-docker.es.md) | [Français](install-docker.fr.md) | [हिन्दी](install-docker.hi.md) | [Bahasa Indonesia](install-docker.id.md) | [日本語](install-docker.ja.md) | [한국어](install-docker.ko.md) | [Português (Brasil)](install-docker.pt-BR.md) | [Русский](install-docker.ru.md) | [ไทย](install-docker.th.md) | [简体中文](install-docker.zh-CN.md)
 
 # Installing Fasti BPM with Docker
 
@@ -8,6 +8,8 @@ checks, upgrade, rollback and troubleshooting. Full image reference:
 [distro/docker/README.md](../distro/docker/README.md). Fasti BPM is built on Camunda 7 CE
 7.24.0 and is an independent project, not affiliated with Camunda Services GmbH.
 
+<a id="1-requirements"></a>
+
 ## 1. Requirements
 
 - Docker Engine with Docker Compose v2 (`docker compose`).
@@ -15,6 +17,8 @@ checks, upgrade, rollback and troubleshooting. Full image reference:
   JVM picks the Serial GC).
 - Production database: PostgreSQL, MariaDB, MySQL, SQL Server or Oracle (see the
   [tested matrix](migrate-from-camunda-7.md#limits)). DB2 is not verified. H2 is for evaluation only.
+
+<a id="2-pull-the-image"></a>
 
 ## 2. Pull the image
 
@@ -38,6 +42,8 @@ Central, nodejs.org and the npm registry) and use the name `fasti-bpm:local` ins
 docker build -t fasti-bpm:local distro/docker/target/docker
 ```
 
+<a id="3-quick-trial-with-h2"></a>
+
 ## 3. Quick trial with H2
 
 ```bash
@@ -54,6 +60,8 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   well. `--example` alone leaves the web UI and the REST API off.
 - The REST API is at `http://localhost:8080/engine-rest` and requires HTTP Basic credentials; see the
   [REST API guide](api/README.md).
+
+<a id="4-production-with-postgresql-docker-run"></a>
 
 ## 4. Production with PostgreSQL: `docker run`
 
@@ -101,6 +109,8 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
 - `WAIT_FOR` delays startup until the database accepts connections.
 - The admin password is only set when the admin does not exist yet; change it later in Admin.
 
+<a id="5-production-with-postgresql-docker-compose"></a>
+
 ## 5. Production with PostgreSQL: `docker compose`
 
 Example file: [distro/docker/examples/docker-compose.postgres.yml](../distro/docker/examples/docker-compose.postgres.yml)
@@ -119,6 +129,8 @@ docker compose -f docker-compose.postgres.yml ps      # both services "healthy"
 
 Variables you can set when starting: `FASTI_IMAGE` (default `fastidev/fasti-bpm:1.0.0`, for
 example `FASTI_IMAGE=fasti-bpm:local`), `FASTI_HOST_PORT` (default `8080`), `TZ` (default `UTC`).
+
+<a id="6-connecting-to-an-existing-camunda-7-database"></a>
 
 ## 6. Connecting to an existing Camunda 7 database
 
@@ -157,6 +169,8 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   (skips certificate checks) or `encrypt=false` (no encryption) are for local trials only. MySQL/MariaDB need
   `transaction-isolation=READ-COMMITTED`.
 
+<a id="7-side-by-side-with-camunda-7-nodes"></a>
+
 ## 7. Side by side with Camunda 7 nodes
 
 Fasti and Camunda 7.24 can run at the same time on one database (tested: both see each other's
@@ -170,6 +184,8 @@ data). Conditions:
 - load balancer: sticky sessions for the web applications; REST with Basic credentials needs none.
 
 Details: [Mixed operation with Camunda 7 nodes](migrate-from-camunda-7.md#mixed-operation-with-camunda-7-nodes).
+
+<a id="8-common-environment-variables"></a>
 
 ## 8. Common environment variables
 
@@ -186,6 +202,8 @@ Details: [Mixed operation with Camunda 7 nodes](migrate-from-camunda-7.md#mixed-
 | `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | JVM options, percentage of memory for the heap (75) |
 
 Full table: [distro/docker/README.md](../distro/docker/README.md#environment-variables).
+
+<a id="9-health-checks"></a>
 
 ## 9. Health checks
 
@@ -205,6 +223,8 @@ docker inspect -f '{{.State.Health.Status}}' fasti           # healthy
 
 Kubernetes: `livenessProbe` → `/actuator/health/liveness`, `readinessProbe` →
 `/actuator/health/readiness`, `terminationGracePeriodSeconds: 60`.
+
+<a id="10-upgrade-and-rollback"></a>
 
 ## 10. Upgrade and rollback
 
@@ -228,6 +248,8 @@ container is stopped.
 - to Camunda 7.24: stop Fasti and start the Camunda 7.24 nodes again on the same database. The preferences of the new UI remain (`fasti.prefs.*` in `ACT_ID_INFO`, ignored by Camunda 7). Deployed processes that use Fasti-only features will not run on Camunda 7. See
   [Rollback to Camunda 7.24](migrate-from-camunda-7.md#rollback-to-camunda-724).
 
+<a id="11-troubleshooting"></a>
+
 ## 11. Troubleshooting
 
 Read the log with `docker logs fasti` (or `docker compose logs fasti`).
@@ -249,6 +271,8 @@ Read the log with `docker logs fasti` (or `docker compose logs fasti`).
 
 Still stuck? Open a GitHub issue with the log (passwords removed). Security issues: see
 [SECURITY.md](../SECURITY.md#security-policy).
+
+<a id="12-without-docker"></a>
 
 ## 12. Without Docker
 

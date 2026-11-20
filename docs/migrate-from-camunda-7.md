@@ -1,9 +1,11 @@
-English | [Tiếng Việt](migrate-from-camunda-7.vi.md)
+English | [Tiếng Việt](migrate-from-camunda-7.vi.md) | [Deutsch](migrate-from-camunda-7.de.md) | [Español](migrate-from-camunda-7.es.md) | [Français](migrate-from-camunda-7.fr.md) | [हिन्दी](migrate-from-camunda-7.hi.md) | [Bahasa Indonesia](migrate-from-camunda-7.id.md) | [日本語](migrate-from-camunda-7.ja.md) | [한국어](migrate-from-camunda-7.ko.md) | [Português (Brasil)](migrate-from-camunda-7.pt-BR.md) | [Русский](migrate-from-camunda-7.ru.md) | [ไทย](migrate-from-camunda-7.th.md) | [简体中文](migrate-from-camunda-7.zh-CN.md)
 
 # Moving from Camunda 7 to Fasti BPM
 
 Fasti BPM is built on Camunda 7 Community Edition 7.24.0 and is compatible with Camunda 7
 databases. It is an independent project, not affiliated with Camunda Services GmbH.
+
+<a id="summary"></a>
 
 ## Summary
 
@@ -15,6 +17,8 @@ the old nodes, run Fasti next to them, and go back to Camunda 7.24 at any time.
 Databases of Camunda 7.23 and earlier must first be upgraded to 7.24 with the SQL scripts (see
 [Older versions](#older-versions-717723)). Fasti never upgrades a schema itself; it refuses to
 start on an older schema and names the scripts to run.
+
+<a id="steps-container-image"></a>
 
 ## Steps (container image)
 
@@ -50,6 +54,8 @@ the `org.camunda.bpm.*` packages. Do not keep both engine jars on the classpath;
 > [README](../README.md#what-is-different-from-camunda-7240-ce) and the
 > [CHANGELOG](../CHANGELOG.md#changed).
 
+<a id="tomcat-and-wildfly-distributions"></a>
+
 ## Tomcat and WildFly distributions
 
 > **Required when taking over the database of Camunda Run** (or of a server whose processes were
@@ -81,6 +87,8 @@ Compared with the Tomcat/WildFly distributions of Camunda 7.24:
   environment variable `FASTI_CLASSIC_WEBAPPS=true`, or the context parameter
   `fasti.webapp.classic.enabled` in `WEB-INF/web.xml` of the web application.
 
+<a id="what-is-identical"></a>
+
 ## What is identical
 
 - The schema and the rows of `ACT_GE_PROPERTY`/`ACT_GE_SCHEMA_LOG` (Fasti adds no version row),
@@ -93,6 +101,8 @@ Compared with the Tomcat/WildFly distributions of Camunda 7.24:
   properties, the `camunda:` BPMN namespace.
 - Filters from the classic Tasklist (`color`, `description`, `priority`, `refresh`, `variables`,
   `showUndefinedVariable`) are read and written in the same format by the new one.
+
+<a id="what-differs"></a>
 
 ## What differs
 
@@ -125,12 +135,16 @@ Compared with the Tomcat/WildFly distributions of Camunda 7.24:
 - The Run jar is `fasti-bpm-run-core.jar`.
 - Security fixes relative to 7.24.0 (attachment/comment authorization, initial setup, ...) can make some previously successful calls return 403; see the [README](../README.md).
 
+<a id="rollback-to-camunda-724"></a>
+
 ## Rollback to Camunda 7.24
 
 Stop Fasti and start the Camunda 7.24 nodes on the same database again. Everything done on
 Fasti is visible there. What remains: `fasti.prefs.*` rows in `ACT_ID_INFO` (preferences of the
 new web UI, ignored by Camunda 7) and `refresh: true` on filters saved by the new Tasklist where
 it was absent. Deployed processes that use Fasti-only features do not run on Camunda 7.
+
+<a id="mixed-operation-with-camunda-7-nodes"></a>
 
 ## Mixed operation with Camunda 7 nodes
 
@@ -155,6 +169,8 @@ data and jobs run on either node). Requirements:
 - the classic web applications (on Camunda 7 nodes, or Fasti with
   `FASTI_CLASSIC_WEBAPPS=true`) and the new one share filters and users.
 
+<a id="older-versions-717723"></a>
+
 ## Older versions (7.17–7.23)
 
 Back up; run `sql/upgrade/<db>_engine_<from>_to_<to>.sql` in order up to 7.24, including
@@ -165,11 +181,15 @@ start Fasti. Example 7.22 → 7.24: `postgres_engine_7.22_to_7.23.sql`, then
 upgraded schema except within Camunda's rolling-update rules (one minor version only, and the
 old nodes must not use new features).
 
+<a id="performance"></a>
+
 ## Performance
 
 The image defaults (10 pooled connections, job executor core 3/max 10) match Camunda Run. If you tuned the connection pool or job executor of your former Camunda 7 installation, carry those values over
 (`FASTI_DB_CONN_MAXACTIVE`, `CAMUNDA_BPM_JOB_EXECUTION_*`); guidance and measurements are in
 `distro/docker/README.md`, "Performance tuning". Fasti adds no index to the schema.
+
+<a id="limits"></a>
 
 ## Limits
 

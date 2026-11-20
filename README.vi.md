@@ -1,4 +1,4 @@
-[English](README.md) | Tiếng Việt
+[English](README.md) | Tiếng Việt | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | [Bahasa Indonesia](README.id.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | [ไทย](README.th.md) | [简体中文](README.zh-CN.md)
 
 # Fasti BPM Platform
 
@@ -10,6 +10,8 @@ viện, kèm giao diện web mới.
 > Fasti BPM là dự án độc lập mã nguồn mở (Apache-2.0), không thuộc, không được bảo trợ hay chứng
 > thực bởi Camunda Services GmbH. Tên "Camunda" chỉ được dùng để mô tả nguồn gốc mã nguồn và
 > khả năng tương thích.
+
+<a id="quick-start"></a>
 
 ## Bắt đầu nhanh
 
@@ -44,6 +46,8 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 Image **bật sẵn xác thực REST và phân quyền** (khác Camunda Run); chỉ `FASTI_INSECURE_DEMO=true`
 tắt được, để demo.
 
+<a id="highlights"></a>
+
 ## Tính năng nổi bật
 
 - **Giao diện web mới** ở `/fasti/` (React):
@@ -72,7 +76,11 @@ tắt được, để demo.
   [distro/docker/README.vi.md](distro/docker/README.vi.md#tinh-chỉnh-hiệu-năng)).
 - **Nền mới**: Java 17 trở lên, Spring Boot 4.1, GraalJS 25, Jackson 2.21.
 
+<a id="installation"></a>
+
 ## Cài đặt
+
+<a id="one-command-on-your-existing-camunda-724-database"></a>
 
 ### Một lệnh, trên cơ sở dữ liệu Camunda 7.24 đang có
 
@@ -120,6 +128,8 @@ Hướng dẫn chi tiết:
   giới hạn.
 - [Tham chiếu biến môi trường của image](distro/docker/README.vi.md#biến-môi-trường).
 
+<a id="without-docker-tomcat-bundle-download-from-fastidev"></a>
+
 ### Không dùng Docker: gói Tomcat (tải từ fasti.dev)
 
 Gói Tomcat 1.0.0 dựng sẵn (trang tải: https://fasti.dev/download):
@@ -133,6 +143,8 @@ trước khi chạy: REST API (`/engine-rest`) cần đăng nhập HTTP Basic th
 dùng nào được tạo sẵn (tạo quản trị viên đầu tiên ở trang thiết lập của `/fasti/`), và khi tiếp
 quản cơ sở dữ liệu của Camunda Run phải đặt `jobExecutorDeploymentAware=false` trong
 `conf/bpm-platform.xml`, nếu không timer và job async của các deployment cũ không chạy.
+
+<a id="a-ui-built-from-real-user-complaints"></a>
 
 ## Giao diện xây từ những phàn nàn có thật
 
@@ -148,6 +160,8 @@ trên diễn đàn Camunda và GitHub, ví dụ:
 | Bắt đầu quy trình không có form vẫn nhập business key và biến | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | Có |
 | Tải XML BPMN đã triển khai | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Có |
 | Nhãn nhất quán, nhiều ngôn ngữ | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 ngôn ngữ |
+
+<a id="comparison"></a>
 
 ## So sánh
 
@@ -186,7 +200,11 @@ Nguồn: [1] [thông báo CE hết vòng đời](https://forum.camunda.io/t/impo
 [14] [EximeeBPMS](https://github.com/EximeeBPMS/eximeebpms);
 tổng quan độc lập: [WZ-IT, 15/10/2026](https://wz-it.com/en/blog/camunda-7-end-of-life-operaton-cibseven-fluxnova-compared/).
 
+<a id="timeline"></a>
+
 ## Dòng thời gian
+
+<a id="camunda-7-milestones"></a>
 
 ### Các mốc của Camunda 7
 
@@ -198,6 +216,8 @@ tổng quan độc lập: [WZ-IT, 15/10/2026](https://wz-it.com/en/blog/camunda-
 | 14/10/2025 | Ngày phát hành 7.24 theo lịch Camunda công bố; sau ngày này không còn bản CE nào, kể cả bản vá bảo mật. Kho mã CE nay đã được lưu trữ (archived) | [thông báo](https://forum.camunda.io/t/important-update-camunda-7-community-edition-end-of-life-announced/50921), [trang hỗ trợ](https://docs.camunda.org/enterprise/announcement) |
 | 04/2030 | Kết thúc hỗ trợ Camunda 7 Enterprise (7.24 LTS: 13/04/2030) | [trang hỗ trợ](https://docs.camunda.org/enterprise/announcement) |
 | 04/2032 | Kết thúc hỗ trợ mở rộng trả phí của Camunda 7 Enterprise | [trang hỗ trợ](https://docs.camunda.org/enterprise/announcement) |
+
+<a id="fasti-bpm"></a>
 
 ### Fasti BPM
 
@@ -215,6 +235,8 @@ Fasti tiếp nối trực tiếp từ tag `7.24.0`; mọi bản vá và thay đ�
    baseline; đã sửa các lỗi tìm được) và **giảm thiểu Java4Shell**.
 7. **1.0.0**: bản phát hành đầu tiên (20/11/2026).
 
+<a id="roadmap-plan"></a>
+
 ## Lộ trình (kế hoạch)
 
 > Đây là **kế hoạch**, chưa phải cam kết; thứ tự có thể đổi theo phản hồi của người dùng.
@@ -229,6 +251,8 @@ Fasti tiếp nối trực tiếp từ tag `7.24.0`; mọi bản vá và thay đ�
 - **Dòng hỗ trợ dài hạn (LTS)** cho người cần nâng cấp thưa.
 - **Kiểm chứng DB2**.
 - **Endpoint tổng hợp khối lượng công việc** để trang khối lượng nhanh hơn với dữ liệu lớn.
+
+<a id="commitments-support-and-security-patches"></a>
 
 ## Cam kết: hỗ trợ và bản vá bảo mật
 
@@ -249,6 +273,8 @@ Fasti tiếp nối trực tiếp từ tag `7.24.0`; mọi bản vá và thay đ�
 - **Danh sách lỗi đã vá:** mục *Fixed* và *Security* của [CHANGELOG](CHANGELOG.md) liệt kê các lỗi
   đã sửa so với Camunda 7 CE 7.24.0; thông báo bảo mật nằm trong [SECURITY.vi.md](SECURITY.vi.md#thông-báo-bảo-mật).
 
+<a id="documentation"></a>
+
 ## Tài liệu
 
 | Tài liệu | Nội dung |
@@ -260,6 +286,8 @@ Fasti tiếp nối trực tiếp từ tag `7.24.0`; mọi bản vá và thay đ�
 | [webapps/frontend-next/README.vi.md](webapps/frontend-next/README.vi.md) | Giao diện web mới |
 | [docs/security/CVE-2026-114938.vi.md](docs/security/CVE-2026-114938.vi.md) | Java4Shell và Fasti |
 | [CHANGELOG.md](CHANGELOG.md), [SECURITY.vi.md](SECURITY.vi.md), [CONTRIBUTING.vi.md](CONTRIBUTING.vi.md) | Thay đổi, bảo mật, đóng góp |
+
+<a id="what-this-is"></a>
 
 ## Đây là gì
 
@@ -273,6 +301,8 @@ Mục tiêu là **tương thích ngược** với ứng dụng đang chạy trê
   và tiền tố cấu hình `camunda.bpm.*`;
 - giữ nguyên schema cơ sở dữ liệu của 7.24;
 - giữ đủ các kiểu triển khai: Spring Boot, Run, Tomcat, WildFly; cả `javax` lẫn `jakarta`.
+
+<a id="what-is-different-from-camunda-7240-ce"></a>
 
 ## Khác gì so với Camunda 7.24.0 CE
 
@@ -288,10 +318,14 @@ Mục tiêu là **tương thích ngược** với ứng dụng đang chạy trê
 Một số bản vá làm thay đổi hành vi mặc định theo hướng an toàn hơn; hãy đọc mục "Cái gì khác"
 của [hướng dẫn chuyển đổi](docs/migrate-from-camunda-7.vi.md) trước khi nâng cấp.
 
+<a id="versioning"></a>
+
 ## Phiên bản
 
 Fasti BPM Platform đánh số theo [Semantic Versioning](https://semver.org/lang/vi/), bắt đầu
 từ `1.0.0`. Dòng `1.x` tương thích với ứng dụng viết cho Camunda 7.24.
+
+<a id="maven-coordinates"></a>
 
 ## Tọa độ Maven
 
@@ -360,6 +394,8 @@ Các artifact hay dùng:
 Thư viện FEEL `org.camunda.feel:feel-engine` là thư viện bên ngoài, không thuộc kho mã này
 và giữ nguyên tọa độ.
 
+<a id="third-party-libraries-that-still-pull-in-the-original-engine"></a>
+
 ### Thư viện bên thứ ba vẫn kéo theo engine gốc
 
 Vì package không đổi, engine gốc (`org.camunda.bpm:camunda-engine`) và `fasti-engine` chứa
@@ -396,6 +432,8 @@ gốc, hãy loại chúng ra và khai báo artifact tương ứng của Fasti:
 Lệnh `mvn dependency:tree -Dincludes="org.camunda*"` liệt kê những artifact gốc còn sót lại
 (`org.camunda.feel:feel-engine` là hợp lệ, đừng loại nó).
 
+<a id="startup-check"></a>
+
 ### Kiểm tra khi khởi động
 
 Khi được khởi tạo, engine kiểm tra class path và **từ chối chạy** nếu tìm thấy các class của
@@ -413,6 +451,8 @@ Giới hạn: nếu thư viện engine gốc đứng trước `fasti-engine` tr�
 dựng bằng các class của thư viện gốc, vốn không có bước kiểm tra này. Khi đó chỉ ứng dụng
 dùng Spring Boot starter của Fasti mới được chặn lại; với các cách tích hợp khác hãy tự rà
 soát dependency như mô tả ở trên.
+
+<a id="web-application-path-fasti"></a>
 
 ## Đường dẫn web app: `/fasti`
 
@@ -450,6 +490,8 @@ Quay lại `/camunda`:
 cookie path, CSP, health check theo `/camunda`), hãy thêm `/fasti/` — hoặc chuyển hẳn sang
 `/fasti/`. Cookie `XSRF-TOKEN` (và `JSESSIONID` trên Tomcat, WildFly) giờ có path `/fasti`,
 nên người dùng phải đăng nhập lại một lần. Bookmark và liên kết cũ vẫn chạy nhờ chuyển hướng.
+
+<a id="single-sign-on-openid-connect"></a>
 
 ## Đăng nhập một lần (SSO, OpenID Connect)
 
@@ -567,6 +609,8 @@ trong `bpm-platform.xml` / `standalone.xml`). Giới hạn: danh sách phiên ch
 nằm trong bộ nhớ của từng server (không chia sẻ giữa các node của cụm); ứng dụng cổ điển chỉ
 được chuyển tới nhà cung cấp, đăng xuất đầy đủ dùng giao diện mới.
 
+<a id="build"></a>
+
 ## Build
 
 Yêu cầu: JDK 17 trở lên (khuyến nghị 21).
@@ -579,12 +623,16 @@ Build đầy đủ chạy toàn bộ test Java và test đơn vị của web UI 
 đầu-cuối Playwright chạy riêng, xem [webapps/frontend-next](webapps/frontend-next/README.vi.md)) và cần mạng tới Maven Central,
 nodejs.org và npm registry. Xem thêm [TESTING.md](TESTING.md).
 
+<a id="acknowledgements"></a>
+
 ## Ghi nhận
 
 - Fasti BPM Platform dựng trên công sức của Camunda và cộng đồng Camunda 7 trong hơn mười năm.
 - Khi rà soát lỗi, dự án có tham khảo thông tin công khai (issue, advisory, ghi chú phát
   hành) của các dự án cộng đồng cùng gốc Camunda 7: Operaton, CIB seven, OrqueIO và
   EximeeBPMS. Mã nguồn trong kho này được viết độc lập trên nền Camunda 7 CE.
+
+<a id="license"></a>
 
 ## Giấy phép
 

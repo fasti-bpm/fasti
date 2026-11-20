@@ -94,7 +94,7 @@ docker run -d --name fasti -p 8080:8080 \
   -e DB_URL=jdbc:postgresql://db.example.com:5432/camunda \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -e WAIT_FOR=db.example.com:5432 \
-  -e TZ=Asia/Ho_Chi_Minh \
+  -e TZ=UTC \
   fasti-bpm:1.0.1
 ```
 
@@ -112,7 +112,8 @@ cấu hình riêng): image dùng H2 trong `/fasti/data`, chỉ để thử.
 
 Tên biến của image cũ và các bí danh `FASTI_*` đều được chấp nhận (khi đặt cả hai, giá trị `FASTI_*` được dùng;
 với `DEBUG` và `JMX_PROMETHEUS`, chỉ cần một trong hai tên là `true`). Mọi thuộc tính
-Spring Boot cũng đặt được bằng biến môi trường (ví dụ `CAMUNDA_BPM_RUN_AUTH_ENABLED=true`).
+Spring Boot cũng đặt được bằng biến môi trường (ví dụ `CAMUNDA_BPM_RUN_AUTH_ENABLED=true`). Các
+mục ghi **từ 1.1.0** đã có trên nhánh `main` nhưng chưa có trong image 1.0.1 đã công bố.
 
 | Biến | Mặc định | Ý nghĩa |
 |---|---|---|
@@ -146,12 +147,12 @@ Spring Boot cũng đặt được bằng biến môi trường (ví dụ `CAMUND
 | `FASTI_CONFIG` | | file YAML thêm (cách nhau dấu phẩy) |
 | `FASTI_EXTRA_LIB` | | thư mục jar thêm (driver, plugin) |
 | `FASTI_MARIADB_USE_MYSQL_DRIVER` | `true` | khi thiếu driver MariaDB, dùng MySQL Connector/J |
-| `FASTI_PORT` | 8080 | cổng HTTP; `HEALTHCHECK` của image dùng cùng cổng này |
-| `FASTI_LOG_FORMAT` | `text` | `json`: mỗi dòng log là một đối tượng JSON (Elastic Common Schema); có thêm `logstash`, `gelf` |
-| `FASTI_METRICS_PROMETHEUS_ENABLED` | `false` | `true`: metrics Prometheus tại `/actuator/prometheus` (JVM, HTTP, pool, engine); cần token hoặc `FASTI_MANAGEMENT_PORT` |
-| `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | | token scrape (`Authorization: Bearer <token>`) cho metrics trên cổng của ứng dụng |
-| `FASTI_MANAGEMENT_PORT` | | actuator (health và metrics) chạy trên cổng riêng; `HEALTHCHECK` theo cổng này |
-| `FASTI_TRACING_ENABLED` | `false` | `true`: span OpenTelemetry cho request, lệnh engine và job, gửi tới `OTEL_EXPORTER_OTLP_ENDPOINT` (OTLP/HTTP) |
+| `FASTI_PORT` | 8080 | cổng HTTP; `HEALTHCHECK` của image dùng cùng cổng này. **Từ 1.1.0:** giá trị không phải số (Kubernetes đặt `FASTI_PORT=tcp://...` cho Service tên `fasti`) bị bỏ qua kèm cảnh báo; image 1.0.1 không khởi động được với giá trị đó |
+| `FASTI_LOG_FORMAT` | `text` | **Từ 1.1.0.** `json`: mỗi dòng log là một đối tượng JSON (Elastic Common Schema); có thêm `logstash`, `gelf` |
+| `FASTI_METRICS_PROMETHEUS_ENABLED` | `false` | **Từ 1.1.0.** `true`: metrics Prometheus tại `/actuator/prometheus` (JVM, HTTP, pool, engine); cần token hoặc `FASTI_MANAGEMENT_PORT` |
+| `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | | **Từ 1.1.0.** Token scrape (`Authorization: Bearer <token>`) cho metrics trên cổng của ứng dụng |
+| `FASTI_MANAGEMENT_PORT` | | **Từ 1.1.0.** Actuator (health và metrics) chạy trên cổng riêng; `HEALTHCHECK` theo cổng này (giá trị không phải số bị bỏ qua kèm cảnh báo) |
+| `FASTI_TRACING_ENABLED` | `false` | **Từ 1.1.0.** `true`: span OpenTelemetry cho request, lệnh engine và job, gửi tới `OTEL_EXPORTER_OTLP_ENDPOINT` (OTLP/HTTP) |
 | `FASTI_APPCDS`, `FASTI_APPCDS_FILE` | `false`, `/fasti/data/fasti-appcds.jsa` | class data sharing để khởi động nhanh hơn (xem Tinh chỉnh hiệu năng) |
 | `FASTI_BASE64_INTRINSICS` | `false` | `false` thêm `-XX:-UseBASE64Intrinsics` để giảm thiểu CVE-2026-114938 ("Java4Shell"); `true` giữ intrinsic Base64 của JVM. Xem [docs/security/CVE-2026-114938.vi.md](../../docs/security/CVE-2026-114938.vi.md) |
 
@@ -185,7 +186,7 @@ hoặc gắn thư mục và đặt `FASTI_EXTRA_LIB=/drivers`.
   (readiness gồm kết nối cơ sở dữ liệu và engine). Chỉ endpoint health được mở; không cần
   đăng nhập. Kubernetes: liveness → `/actuator/health/liveness`, readiness →
   `/actuator/health/readiness`. `HEALTHCHECK` của image dùng readiness.
-- **Metrics, tracing, log JSON:** tắt theo mặc định; xem
+- **Metrics, tracing, log JSON (từ 1.1.0):** tắt theo mặc định; xem
   [docs/install-docker.vi.md](../../docs/install-docker.vi.md#13-observability). Endpoint
   `/actuator/prometheus` có sẵn thay được agent JMX exporter (`JMX_PROMETHEUS`) trong phần lớn trường hợp.
 - **Giới hạn tốc độ:** đăng nhập sai nhiều lần làm tài khoản bị khóa tạm thời (thời gian tăng

@@ -44,7 +44,10 @@ Algumas correções alteram os padrões para um comportamento mais seguro; leia 
 ## Versionamento
 
 O Fasti BPM Platform segue o [Versionamento Semântico](https://semver.org/), começando em `1.0.0`.
-A linha `1.x` é compatível com aplicações escritas para o Camunda 7.24.
+A linha `1.x` mantém a API Java, os pacotes `org.camunda.bpm.*`, o prefixo de configuração
+`camunda.bpm.*` e o esquema do banco de dados do Camunda 7.24. As aplicações que embutem o engine
+passam para o Java 17 ou posterior e, com o starter Spring Boot, para o Spring Boot 4.1; plugins e
+aplicações de processo são recompilados com os artefatos `dev.fasti.platform`.
 
 <a id="maven-coordinates"></a>
 

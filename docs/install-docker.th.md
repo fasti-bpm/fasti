@@ -32,8 +32,10 @@ docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
 docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-แท็ก: `1.0.1` (รุ่นนั้นโดยเฉพาะ) และ `1.0` (รุ่นแพตช์ล่าสุดของ 1.0) อิมเมจลงลายเซ็นด้วย
-cosign (แบบไม่ใช้คีย์, GitHub OIDC) และมาพร้อม SBOM และเอกสารรับรองแหล่งที่มา
+แท็ก: `1.0.1` (รุ่นนั้นโดยเฉพาะ), `1.0` (รุ่นแพตช์ล่าสุดของ 1.0) และ `latest` (รุ่นที่เผยแพร่
+ล่าสุด) อิมเมจลงลายเซ็นด้วย cosign (แบบไม่ใช้คีย์, GitHub OIDC) และมาพร้อม SBOM และเอกสารรับรอง
+แหล่งที่มา ตั้งแต่ 1.0.1 ลายเซ็นอยู่ในรูปแบบ Sigstore bundle ของ cosign 3 ส่วนอิมเมจ 1.0.0
+มีลายเซ็นในรูปแบบเดิมของ cosign 2
 
 คุณยังสามารถสร้างอิมเมจจากซอร์สโค้ดได้ (ต้องใช้ JDK 17+ และเชื่อมต่อเครือข่ายไปยัง Maven
 Central, nodejs.org และ npm registry ได้) โดยใช้ชื่อ `fasti-bpm:local` แทน
@@ -98,7 +100,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -e FASTI_DB_SCHEMA_UPDATE=true \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD_FILE=/run/secrets/admin-password \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
   fastidev/fasti-bpm:1.0.1 --production
 ```
@@ -156,7 +158,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   fastidev/fasti-bpm:1.0.1 --production
 ```
 
@@ -283,3 +285,5 @@ docker run -d --name fasti ... fastidev/fasti-bpm:1.0.1 --production   # same op
 - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
 ตรวจสอบเช็กซัมก่อนแตกไฟล์ เช่น `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`
+ชุดนี้ยังเป็นเวอร์ชัน 1.0.0 และยังไม่มีการแก้ไขด้านความปลอดภัยสองรายการของ 1.0.1 (template filter,
+ใบรับรอง LDAP) หากต้องการ ให้ใช้อิมเมจหรือสร้างชุดแจกจ่าย Tomcat (`distro/tomcat`) จากแท็ก `v1.0.1`

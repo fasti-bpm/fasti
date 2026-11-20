@@ -7,6 +7,9 @@ bên ngoài, qua **Helm chart** (`distro/kubernetes/helm/fasti-bpm`) hoặc **ma
 (`distro/kubernetes/manifests`, Kustomize). Fasti BPM được xây dựng trên Camunda 7 CE 7.24.0 và
 là dự án độc lập, không liên kết với Camunda Services GmbH.
 
+> Helm chart và manifest đã có trên nhánh `main` và sẽ được phát hành cùng Fasti 1.1.0; chúng
+> không thuộc bản phát hành 1.0.1. Chúng chạy image 1.0.1 đã công bố.
+
 Tham chiếu: [README của chart](../distro/kubernetes/helm/fasti-bpm/README.md) (mọi giá trị, tiếng
 Anh), [tham chiếu image](../distro/docker/README.vi.md) (mọi biến môi trường),
 [hướng dẫn Docker](install-docker.vi.md), [chuyển từ Camunda 7](migrate-from-camunda-7.vi.md).
@@ -68,7 +71,7 @@ admin:                             # chỉ với cơ sở dữ liệu mới
   user: admin
   existingSecret: fasti-admin
 engine:
-  timezone: Asia/Ho_Chi_Minh       # giống nhau trên mọi node dùng chung cơ sở dữ liệu
+  timezone: UTC                    # giống nhau trên mọi node dùng chung cơ sở dữ liệu
 ingress:
   enabled: true
   className: nginx
@@ -202,7 +205,7 @@ oidc:
 Nhà cung cấp phải cho phép redirect URI `https://fasti.example.com/login/oauth2/code/oidc`. Pod
 phải truy cập được issuer qua HTTPS (thêm vào `networkPolicy.egress` nếu giới hạn egress). Thêm
 tùy chọn: [README của chart](../distro/kubernetes/helm/fasti-bpm/README.md#single-sign-on-openid-connect)
-và [README dự án](../README.vi.md).
+và [hướng dẫn đăng nhập một lần](single-sign-on.vi.md).
 
 <a id="8-network-policy"></a>
 
@@ -238,8 +241,10 @@ mail và mọi dịch vụ mà quy trình của bạn gọi. Cần CNI có thự
 | `/actuator/health/readiness` | readiness probe; gồm kết nối cơ sở dữ liệu và engine |
 
 Không cần đăng nhập và ngoài các endpoint này actuator không mở gì khác. Image 1.0.x chưa có
-endpoint metrics; vì vậy `metrics.serviceMonitor` tắt theo mặc định và dành cho các image có phục
-vụ metrics (xem README của chart).
+endpoint metrics; vì vậy `metrics.serviceMonitor` tắt theo mặc định. Từ 1.1.0, khi bật metrics
+(`FASTI_METRICS_PROMETHEUS_ENABLED=true` cùng token scrape hoặc cổng management, xem
+[hướng dẫn Docker](install-docker.vi.md#13-observability)), image phục vụ metrics Prometheus tại
+`/actuator/prometheus`; chart chưa cấu hình phần này (xem README của chart).
 
 <a id="10-upgrade-and-rollback"></a>
 
@@ -268,7 +273,7 @@ hoặc `oidc` tự động khởi động lại pod (annotation checksum); Secre
 |---|---|
 | `helm install` báo `database.url … is required` | đặt `database.url` (hoặc `urlKey`) và `database.existingSecret` |
 | Pod mãi ở `Pending` | không đủ CPU hoặc bộ nhớ cho requests, hoặc `podAntiAffinityPreset: hard` khi số node ít hơn số bản sao |
-| Lỗi `Invalid value 'tcp://…' for configuration property 'server.port'` | có Service tên `fasti` trong namespace và service links đang bật: Kubernetes đặt `FASTI_PORT=tcp://…`, image hiểu đó là cổng HTTP. Giữ `enableServiceLinks: false` (mặc định của chart và manifest) |
+| Lỗi `Invalid value 'tcp://…' for configuration property 'server.port'` | có Service tên `fasti` trong namespace và service links đang bật: Kubernetes đặt `FASTI_PORT=tcp://…`, image 1.0.x hiểu đó là cổng HTTP (từ 1.1.0 image bỏ qua giá trị đó kèm cảnh báo). Giữ `enableServiceLinks: false` (mặc định của chart và manifest) |
 | `… cannot be read` cho biến `_FILE` | thiếu Secret hoặc khóa; kiểm tra `database.existingSecret` và tên khóa |
 | `password authentication failed` | Secret không khớp mật khẩu cơ sở dữ liệu |
 | Readiness không lên, log có `ENGINE-03111` | schema cũ hơn 7.24: chạy script nâng cấp (xem hướng dẫn Docker) |

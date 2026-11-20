@@ -47,8 +47,12 @@ Hướng dẫn đầy đủ, kể cả dùng cơ sở dữ liệu của bạn: <
 - **Mô hình hóa và triển khai ngay trên trình duyệt**: BPMN, DMN và biểu mẫu ([modeler](https://fasti.dev/#modeler)).
 - **Công cụ vận hành đã có sẵn**: lịch sử có thể tìm kiếm, sửa instance đang chạy, chạy lại job
   lỗi hàng loạt, nhật ký thao tác ([vận hành](https://fasti.dev/#operate)).
-- **Mặc định là đóng**: phải đăng nhập ngay từ lần chạy đầu, không có người dùng mặc định, đã vá
-  các lỗ hổng đã biết, đã giảm thiểu Java4Shell ([bảo mật](https://fasti.dev/security)).
+- **Image container mặc định là đóng**: phải đăng nhập ngay từ lần chạy đầu, không có người dùng
+  mặc định, từ chối các thiết lập tắt xác thực REST hoặc phân quyền, và đã giảm thiểu Java4Shell.
+  Tomcat và WildFly yêu cầu thông tin đăng nhập cho REST API và không tạo người dùng nào (quản trị
+  viên đầu tiên được tạo trên trang setup); Run zip và Spring Boot starter giữ mặc định của
+  Camunda 7. Mọi bản phân phối đều có các bản vá bảo mật và cảnh báo khi khởi động nếu JVM bị
+  Java4Shell ảnh hưởng ([bảo mật](https://fasti.dev/security)).
 - **Đăng nhập một lần (SSO)**: OpenID Connect và JWT bearer token ([hướng dẫn](docs/single-sign-on.vi.md)).
 - **Nền tảng:** Java 17 trở lên, Spring Boot 4.1, GraalJS 25, Jackson 2.21
   ([hiệu năng](https://fasti.dev/#performance)).
@@ -65,7 +69,9 @@ Hướng dẫn đầy đủ, kể cả dùng cơ sở dữ liệu của bạn: <
   - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
   Kiểm tra checksum trước khi giải nén, ví dụ `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`,
-  và đọc `README.txt` trong gói trước khi chạy.
+  và đọc `README.txt` trong gói trước khi chạy. Gói này vẫn là bản 1.0.0 và chưa có hai bản vá
+  bảo mật của 1.0.1 (template filter, chứng chỉ LDAP); để có chúng, hãy dùng image hoặc build bản
+  phân phối Tomcat (`distro/tomcat`) từ tag `v1.0.1`.
 - **Nhúng** vào Spring Boot hoặc một ứng dụng Java khác: tọa độ Maven mới
   (`dev.fasti.platform:fasti-*`), vẫn các package `org.camunda.bpm.*`; xem
   [docs/embedding.vi.md](docs/embedding.vi.md).
@@ -77,8 +83,9 @@ Hướng dẫn đầy đủ, kể cả dùng cơ sở dữ liệu của bạn: <
 Nếu bạn đang chạy Camunda 7.24, Fasti chạy trên chính cơ sở dữ liệu đó mà không thay đổi schema. Bạn
 có thể thay các nút cũ, chạy Fasti bên cạnh chúng, và quay lại Camunda 7.24 bất cứ lúc nào. Image
 Fasti đã được kiểm thử khi tiếp quản cơ sở dữ liệu do Camunda Run 7.24 tạo ra trên PostgreSQL 16,
-MariaDB 11.8, MySQL 8.4, SQL Server 2022 và Oracle Database 23ai; DB2 chưa được kiểm thử. Mọi REST
-client, kể cả external task worker, từ nay phải gửi thông tin đăng nhập Basic hoặc bearer token.
+MariaDB 11.8, MySQL 8.4, SQL Server 2022 và Oracle Database 23ai; việc quay lại Camunda Run đã
+được kiểm thử trên các cơ sở dữ liệu đó, trừ MySQL. DB2 chưa được kiểm thử. Mọi REST client, kể cả
+external task worker, từ nay phải gửi thông tin đăng nhập Basic hoặc bearer token.
 
 Ứng dụng Spring Boot nhúng engine cũng chuyển lên Spring Boot 4.1 và Java 17; schema cũ hơn cần được
 nâng cấp bằng các script chuẩn trước. Plugin và process application viết cho Camunda 7 phải được

@@ -14,7 +14,8 @@ Datenbanken kompatibel. Es ist ein unabhängiges Projekt und nicht mit Camunda S
 Wenn Sie Camunda 7 **7.24** einsetzen (Run, das Container-Image, den Spring Boot Starter, Tomcat oder
 WildFly), läuft Fasti mit **derselben Datenbank, ohne deren Schema zu ändern**: Es verwendet das 7.24-
 Schema unverändert und fügt keine eigenen Tabellen, Spalten oder Schemaversionen hinzu. Sie können
-die alten Knoten ersetzen, Fasti parallel dazu betreiben und jederzeit zu Camunda 7.24 zurückkehren.
+die alten Knoten ersetzen, Fasti parallel dazu betreiben und zu Camunda 7.24 zurückkehren (siehe
+[Rückkehr zu Camunda 7.24](#rollback-to-camunda-724) und die getesteten Datenbanken unter [Einschränkungen](#limits)).
 
 Datenbanken von Camunda 7.23 und älter müssen zunächst mit den SQL-Skripten auf 7.24 aktualisiert werden (siehe
 [Ältere Versionen](#older-versions-717723)). Fasti aktualisiert niemals selbst ein Schema; bei einem älteren Schema verweigert es den
@@ -33,7 +34,8 @@ Start und nennt die auszuführenden Skripte.
    (`camunda.bpm.run.auth.enabled`), Berechtigungen (`camunda.bpm.authorization.enabled`),
    Plugins, LDAP/SSO, JVM-Zeitzone, Passwort-Hashing (`passwordEncryptor`, `saltGenerator`),
    Tabellenpräfix/Schema.
-4. **Erstellen Sie das Image** wie in [distro/docker/README.md](../distro/docker/README.md) beschrieben.
+4. **Laden Sie das Image** `fastidev/fasti-bpm:1.0.1` herunter (oder bauen Sie es aus dem Quellcode,
+   wie in [distro/docker/README.md](../distro/docker/README.md) beschrieben).
 5. **Starten Sie Fasti mit denselben `DB_*`-Variablen** (und demselben `TZ`). Anders als Camunda Run
    **verlangt das Fasti-Image standardmäßig REST-Authentifizierung und erzwingt Berechtigungen**: Datenbank-
    Benutzerkonten funktionieren weiterhin, aber jeder REST-Client muss Basic-Anmeldedaten oder ein Bearer-Token senden,
@@ -98,7 +100,8 @@ Im Vergleich zu den Tomcat-/WildFly-Distributionen von Camunda 7.24:
   standardmäßige `DbIdGenerator` der Engine).
 - Passwörter: SHA-512 mit einem 16-Byte-Salt wie bei Camunda 7; bestehende Benutzer können sich anmelden, und
   in Fasti geänderte Passwörter funktionieren in Camunda 7.
-- Die REST-API unter `/engine-rest` (unverändertes Verhalten plus zusätzliche Endpunkte), externe Aufgaben
+- Die REST-API unter `/engine-rest`: dieselben Endpunkte, Parameter und Nutzdaten, plus zusätzliche
+  Endpunkte (Authentifizierung und einige Statuscodes unterscheiden sich, siehe [Was sich unterscheidet](#what-differs)); externe Aufgaben
   (`fetchAndLock`, Long Polling), die Java- und JS-Clients, `JSESSIONID`, `XSRF-TOKEN`/`X-XSRF-TOKEN`, `camunda.bpm.*`-
   Eigenschaften, der BPMN-Namensraum `camunda:`.
 - Filter aus der klassischen Tasklist (`color`, `description`, `priority`, `refresh`, `variables`,
@@ -126,6 +129,16 @@ Im Vergleich zu den Tomcat-/WildFly-Distributionen von Camunda 7.24:
   Benutzer); Filter, die benutzerdefinierte Beans oder Funktionen verwenden, benötigen deren Deklaration in den Engine-Konfigurations-
   Eigenschaften `allowedExpressionFunctionsInQueries`, `allowedExpressionBeansInQueries` und
   `allowedExpressionPropertiesInQueries`.
+- Verhalten der REST-API: Im Container-Image und in den Tomcat- und WildFly-Distributionen braucht
+  jede Anfrage außer der Liste der Engines (`/engine`) Basic-Zugangsdaten oder ein Bearer-Token;
+  REST-Clients und External-Task-Worker müssen daher so konfiguriert werden, dass sie diese senden
+  (ihr Code ändert sich nicht). In jeder Distribution werden Abfrageausdrücke außerhalb der
+  Allow-List mit `400` abgelehnt; das Lesen oder Ändern von Anhängen und Kommentaren von Aufgaben
+  ohne Berechtigung wird mit `403` beantwortet (bei eingeschalteten Berechtigungsprüfungen); einige
+  ungültige Anfragen, die mit `500` beantwortet wurden, werden mit `400` beantwortet (nicht
+  parsebare Deployment-Ressourcen, Variablen im verbotenen Java-Serialisierungsformat,
+  Abfrageparameter des falschen Typs, Passwörter, die gegen die Passwortrichtlinie verstoßen). Siehe
+  [Unterschiede zu Camunda 7](api/README.md#differences-from-camunda-7) (Englisch).
 - Standardeinstellungen des Images: Schemaaktualisierung `false` (`FASTI_DB_SCHEMA_UPDATE=true` für eine neue Datenbank); kein
   Demobenutzer, Rechnungsbeispiel oder Filter „Alle Aufgaben“; CORS deaktiviert (`FASTI_CORS_ALLOWED_ORIGINS=*`
   aktiviert es wieder); `/actuator/health` hinzugefügt; Dateien unter `/fasti` (unter
@@ -135,7 +148,7 @@ Im Vergleich zu den Tomcat-/WildFly-Distributionen von Camunda 7.24:
   die Abmeldung erfordert einen POST vom selben Ursprung.
 - Neue Tasklist: Ein Filter ohne `refresh` wird automatisch aktualisiert.
 - Die Run-JAR heißt `fasti-bpm-run-core.jar`.
-- Sicherheitskorrekturen gegenüber 7.24.0 (Berechtigungen für Anhänge/Kommentare, Ersteinrichtung, ...) können dazu führen, dass einige zuvor erfolgreiche Aufrufe 403 zurückgeben; siehe die [README](../README.de.md).
+- Sicherheitskorrekturen gegenüber 7.24.0 (Berechtigungen für Anhänge/Kommentare, Ersteinrichtung, ...) können dazu führen, dass einige zuvor erfolgreiche Aufrufe 403 zurückgeben; siehe die Abschnitte *Security* im [CHANGELOG](../CHANGELOG.md) und <https://fasti.dev/security>.
 
 <a id="rollback-to-camunda-724"></a>
 
@@ -212,5 +225,7 @@ Die Standardeinstellungen des Images (10 Verbindungen im Pool, Job Executor mit 
   jeder Engine eine eigene Datenbank: Die Engine (sowohl Camunda Run als auch Fasti) sucht nach Tabellen
   in jeder Datenbank, auf die das Benutzerkonto zugreifen kann.
 - Für Camunda 7 erstellte Plugins und Prozessanwendungen müssen mit den Fasti-
-  Artefakten neu gebaut werden, um innerhalb von Fasti zu laufen; REST-Clients und Clients für externe Aufgaben benötigen keine Änderungen.
+  Artefakten neu gebaut werden, um innerhalb von Fasti zu laufen. REST-Clients und Clients für externe Aufgaben benötigen keine Codeänderungen;
+  mit dem Container-Image, Tomcat oder WildFly müssen sie so konfiguriert werden, dass sie Basic-Zugangsdaten
+  oder ein Bearer-Token senden.
 - Die Schemaprüfung liest nur `ACT_GE_SCHEMA_LOG`; sie vergleicht keine Spalten.

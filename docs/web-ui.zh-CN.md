@@ -21,7 +21,7 @@ Camunda 论坛和 GitHub 上公开提出的需求，例如：
 | 委派、缺勤期间的替代人 | 论坛 [2788](https://forum.camunda.io/t/2788)、[38199](https://forum.camunda.io/t/38199)、[9331](https://forum.camunda.io/t/9331) | 已支持单个任务的委派；离岗替代人已列入[路线图](https://fasti.dev/#timeline) |
 | 无表单启动流程时填写业务键和变量 | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | 支持 |
 | 下载已部署的 BPMN XML | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | 支持 |
-| 一致的标签、多语言支持 | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 种语言 |
+| 一致的标签、多语言支持 | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 种语言；BPMN、DMN 和表单编辑器内置的标签仅有英语和越南语 |
 
 <a id="web-application-path-fasti"></a>
 

@@ -21,7 +21,7 @@ Camunda-Forum und auf GitHub ausgewählt, zum Beispiel:
 | Delegation, Vertretungen bei Abwesenheit | Forum [2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199), [9331](https://forum.camunda.io/t/9331) | Delegation einzelner Aufgaben vorhanden; Abwesenheitsvertretungen stehen auf der [Roadmap](https://fasti.dev/#timeline) |
 | Business Key und Variablen beim Start eines Prozesses ohne Formular | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | Ja |
 | Bereitgestelltes BPMN-XML herunterladen | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Ja |
-| Einheitliche Bezeichnungen, mehrere Sprachen | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 Sprachen |
+| Einheitliche Bezeichnungen, mehrere Sprachen | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 Sprachen; in den BPMN-, DMN- und Formular-Editoren sind die eingebauten Bezeichnungen nur auf Englisch und Vietnamesisch |
 
 <a id="web-application-path-fasti"></a>
 

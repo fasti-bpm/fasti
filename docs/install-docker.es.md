@@ -32,8 +32,10 @@ docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
 docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-Etiquetas: `1.0.1` (exactamente esa versión) y `1.0` (última versión de parche de 1.0). La imagen está firmada con
-cosign (sin claves, GitHub OIDC) e incluye una SBOM y una atestación de procedencia.
+Etiquetas: `1.0.1` (exactamente esa versión), `1.0` (última versión de parche de 1.0) y `latest` (la
+versión publicada más reciente). La imagen está firmada con cosign (sin claves, GitHub OIDC) e incluye
+una SBOM y una atestación de procedencia. A partir de 1.0.1 la firma usa el formato de bundle de
+Sigstore de cosign 3; la imagen 1.0.0 lleva una firma en el formato anterior de cosign 2.
 
 También puede compilar la imagen a partir del código fuente (requiere JDK 17+ y acceso de red a Maven
 Central, nodejs.org y al registro de npm) y usar el nombre `fasti-bpm:local` en lugar de
@@ -98,7 +100,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -e FASTI_DB_SCHEMA_UPDATE=true \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD_FILE=/run/secrets/admin-password \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
   fastidev/fasti-bpm:1.0.1 --production
 ```
@@ -156,7 +158,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   fastidev/fasti-bpm:1.0.1 --production
 ```
 
@@ -283,3 +285,6 @@ Paquete de Tomcat 1.0.0 listo para usar (página de descarga: https://fasti.dev/
 - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
 Verifique la suma de comprobación antes de extraer el archivo, por ejemplo con `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
+El paquete sigue siendo la versión 1.0.0 y no contiene las dos correcciones de seguridad de 1.0.1
+(filtro de plantillas, certificados LDAP); para obtenerlas, use la imagen o compile la distribución de
+Tomcat (`distro/tomcat`) desde la etiqueta `v1.0.1`.

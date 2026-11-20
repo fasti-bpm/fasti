@@ -49,8 +49,12 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 - **สร้างโมเดลและ deploy ในเบราว์เซอร์**: BPMN, DMN และฟอร์ม ([โมเดลเลอร์](https://fasti.dev/#modeler))
 - **เครื่องมือสำหรับดูแลระบบมีมาให้พร้อม**: ประวัติ การซ่อม instance การลอง job ใหม่แบบกลุ่ม และ
   operation log ([การดูแลระบบ](https://fasti.dev/#operate))
-- **ปิดไว้เป็นค่าเริ่มต้น**: ต้องลงชื่อเข้าใช้ตั้งแต่เริ่มทำงานครั้งแรก ไม่มีผู้ใช้เริ่มต้น ปิดช่องโหว่ที่
-  ทราบแล้ว และบรรเทา Java4Shell แล้ว ([ความปลอดภัย](https://fasti.dev/security))
+- **image คอนเทนเนอร์ปิดไว้เป็นค่าเริ่มต้น**: ต้องลงชื่อเข้าใช้ตั้งแต่เริ่มทำงานครั้งแรก ไม่มีผู้ใช้
+  เริ่มต้น ปฏิเสธการตั้งค่าที่ปิดการยืนยันตัวตนของ REST หรือการตรวจสอบสิทธิ์ และบรรเทา Java4Shell แล้ว
+  Tomcat และ WildFly ต้องใช้ข้อมูลรับรองสำหรับ REST API และไม่สร้างผู้ใช้ใด ๆ (ผู้ดูแลระบบคนแรกสร้าง
+  ในหน้า setup) ส่วน Run zip และ Spring Boot starter ยังคงค่าเริ่มต้นของ Camunda 7 ทุกรูปแบบการแจกจ่าย
+  มีการแก้ไขด้านความปลอดภัย และแจ้งเตือนตอนเริ่มทำงานหาก JVM ได้รับผลกระทบจาก Java4Shell
+  ([ความปลอดภัย](https://fasti.dev/security))
 - **Single sign-on**: OpenID Connect และ JWT bearer token ([คู่มือ](docs/single-sign-on.th.md))
 - **แพลตฟอร์มปัจจุบัน**: Java 17 ขึ้นไป, Spring Boot 4.1, GraalJS 25, Jackson 2.21
   ([ประสิทธิภาพ](https://fasti.dev/#performance))
@@ -67,7 +71,9 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
   - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
   ตรวจสอบค่าเช็กซัมก่อนแตกไฟล์ ตัวอย่างเช่น `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`
-  และอ่าน `README.txt` ในชุดก่อนเริ่มใช้งาน
+  และอ่าน `README.txt` ในชุดก่อนเริ่มใช้งาน ชุดนี้ยังเป็นเวอร์ชัน 1.0.0 และยังไม่มีการแก้ไขด้าน
+  ความปลอดภัยสองรายการของ 1.0.1 (template filter, ใบรับรอง LDAP) หากต้องการ ให้ใช้ image หรือ build
+  ชุดแจกจ่าย Tomcat (`distro/tomcat`) จาก tag `v1.0.1`
 - **แบบฝัง** ใน Spring Boot หรือแอปพลิเคชัน Java อื่น: พิกัด Maven ใหม่
   (`dev.fasti.platform:fasti-*`) แพ็กเกจ `org.camunda.bpm.*` ชุดเดิม ดู
   [docs/embedding.th.md](docs/embedding.th.md)
@@ -78,7 +84,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 
 หากคุณใช้ Camunda 7.24 อยู่ Fasti ทำงานบนฐานข้อมูลเดียวกันนั้นได้โดยไม่เปลี่ยน schema คุณสามารถ
 แทนที่ node เดิม รัน Fasti คู่กับ node เดิม และย้อนกลับไปใช้ Camunda 7.24 ได้ทุกเมื่อ
-image ของ Fasti ผ่านการทดสอบการรับช่วงต่อฐานข้อมูลที่ Camunda Run 7.24 สร้างไว้บน PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022 และ Oracle Database 23ai แล้ว ส่วน DB2 ยังไม่ได้ทดสอบ ทุก REST client รวมถึง
+image ของ Fasti ผ่านการทดสอบการรับช่วงต่อฐานข้อมูลที่ Camunda Run 7.24 สร้างไว้บน PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022 และ Oracle Database 23ai แล้ว และทดสอบการย้อนกลับไปใช้ Camunda Run บนฐานข้อมูลเดียวกันนี้แล้ว ยกเว้น MySQL ส่วน DB2 ยังไม่ได้ทดสอบ ทุก REST client รวมถึง
 external task worker ต้องส่งข้อมูลรับรองแบบ Basic หรือ bearer token
 
 แอปพลิเคชัน Spring Boot แบบ embedded ต้องย้ายไปใช้ Spring Boot 4.1 และ Java 17 ด้วย ส่วน schema รุ่นเก่าต้องอัปเกรดด้วยสคริปต์มาตรฐานก่อน plugin และ process application ที่สร้างสำหรับ Camunda 7 ต้อง build ใหม่กับ artifact ของ Fasti จึงจะทำงานภายใน Fasti ได้ การทำงานคู่กันและการย้อนกลับมีข้อจำกัด (การตั้งค่าเดียวกันทุกโหนด โหนดใดรัน job และ process ที่ใช้ฟีเจอร์เฉพาะของ Fasti) ดู [การทำงานแบบผสม](docs/migrate-from-camunda-7.th.md#mixed-operation-with-camunda-7-nodes) และ [การย้อนกลับ](docs/migrate-from-camunda-7.th.md#rollback-to-camunda-724)

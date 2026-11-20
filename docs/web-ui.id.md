@@ -21,7 +21,7 @@ forum Camunda dan GitHub, misalnya:
 | Delegasi, pengganti selama ketidakhadiran | forum [2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199), [9331](https://forum.camunda.io/t/9331) | Delegasi per tugas tersedia; pengganti saat tidak di kantor masuk dalam [peta jalan](https://fasti.dev/#timeline) |
 | Kunci bisnis dan variabel saat memulai proses tanpa formulir | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | Ya |
 | Mengunduh BPMN XML yang telah di-deploy | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Ya |
-| Label yang konsisten, beberapa bahasa | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 bahasa |
+| Label yang konsisten, beberapa bahasa | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 bahasa; di dalam editor BPMN, DMN, dan formulir, label bawaan editor hanya tersedia dalam bahasa Inggris dan Vietnam |
 
 <a id="web-application-path-fasti"></a>
 

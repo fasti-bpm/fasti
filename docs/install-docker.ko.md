@@ -32,8 +32,9 @@ docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
 docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-태그: `1.0.1`(해당 릴리스 지정) 및 `1.0`(1.0의 최신 패치 릴리스). 이미지는
-cosign으로 서명되며(키리스, GitHub OIDC), SBOM과 출처 증명을 포함합니다.
+태그: `1.0.1`(해당 릴리스 지정), `1.0`(1.0의 최신 패치 릴리스) 및 `latest`(가장 최근에 게시된 릴리스).
+이미지는 cosign으로 서명되며(키리스, GitHub OIDC), SBOM과 출처 증명을 포함합니다. 1.0.1부터 서명은
+cosign 3의 Sigstore 번들 형식이며, 1.0.0 이미지에는 이전 cosign 2 형식의 서명이 붙어 있습니다.
 
 소스에서 이미지를 빌드할 수도 있습니다(JDK 17+ 및 Maven
 Central, nodejs.org, npm 레지스트리에 대한 네트워크 접근 필요). 이 경우 아래의 모든 명령에서
@@ -98,7 +99,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -e FASTI_DB_SCHEMA_UPDATE=true \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD_FILE=/run/secrets/admin-password \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
   fastidev/fasti-bpm:1.0.1 --production
 ```
@@ -156,7 +157,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   fastidev/fasti-bpm:1.0.1 --production
 ```
 
@@ -283,3 +284,6 @@ Docker Compose 사용 시: `FASTI_IMAGE`(또는 `image:` 줄)를 변경한 다�
 - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
 압축을 풀기 전에 체크섬을 확인하세요. 예: `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
+이 번들은 아직 1.0.0 버전이며 1.0.1의 두 가지 보안 수정(템플릿 필터, LDAP 인증서)이 포함되어 있지
+않습니다. 이 수정이 필요하면 이미지를 사용하거나 `v1.0.1` 태그에서 Tomcat 배포판(`distro/tomcat`)을
+빌드하세요.

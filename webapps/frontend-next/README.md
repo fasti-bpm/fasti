@@ -288,6 +288,11 @@ Plurals follow `Intl.PluralRules`: the key without suffix is the general form, `
 `key.few`, `key.many`, ... are variants where the language has them. Dates and numbers use `Intl`
 with the chosen language.
 
+The texts that the BPMN, DMN and form editors (bpmn-js, dmn-js, form-js) show themselves, such as
+the palette, the context pad and the built-in property labels, are translated separately in
+`src/modeler/texts/`. Only Vietnamese exists so far; the other languages show these editor texts
+in English.
+
 Adding a language:
 
 1. `npm run i18n:new -- ar` creates the folder with a manifest and the English keys commented out.

@@ -44,7 +44,9 @@ Fasti 从 Camunda 7 保留了什么、与 7.24.0 有何不同、版本如何编�
 ## 版本规则
 
 Fasti BPM Platform 遵循[语义化版本](https://semver.org/)，从 `1.0.0` 开始。
-`1.x` 系列与为 Camunda 7.24 编写的应用兼容。
+`1.x` 系列保留 Camunda 7.24 的 Java API、`org.camunda.bpm.*` 包、`camunda.bpm.*` 配置前缀和数据库模式。
+嵌入引擎的应用需迁移到 Java 17 或更高版本，使用 Spring Boot starter 时还需迁移到 Spring Boot 4.1；插件和
+流程应用需基于 `dev.fasti.platform` 构件重新构建。
 
 <a id="maven-coordinates"></a>
 

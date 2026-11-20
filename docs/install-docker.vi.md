@@ -4,7 +4,7 @@
 
 Hướng dẫn từng bước: thử nhanh với H2, chạy production với PostgreSQL (`docker run` hoặc
 `docker compose`), nối vào cơ sở dữ liệu Camunda 7 có sẵn, chạy song song, health check, nâng cấp,
-quay lại, xử lý sự cố và giám sát (log JSON, metrics Prometheus, tracing). Tham chiếu đầy đủ của image: [distro/docker/README.vi.md](../distro/docker/README.vi.md).
+quay lại, xử lý sự cố và giám sát (log JSON, metrics Prometheus, tracing; có từ 1.1.0). Tham chiếu đầy đủ của image: [distro/docker/README.vi.md](../distro/docker/README.vi.md).
 Fasti BPM được xây dựng trên Camunda 7 CE 7.24.0 và là dự án độc lập, không liên kết với Camunda
 Services GmbH.
 
@@ -29,8 +29,10 @@ docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
 docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-Tag: `1.0.1` (đúng một bản) và `1.0` (bản vá mới nhất của 1.0). Image được ký bằng cosign
-(keyless, GitHub OIDC) và kèm SBOM và provenance.
+Tag: `1.0.1` (đúng một bản), `1.0` (bản vá mới nhất của 1.0) và `latest` (bản phát hành được
+công bố gần nhất). Image được ký bằng cosign (keyless, GitHub OIDC) và kèm SBOM và provenance.
+Từ 1.0.1, chữ ký dùng định dạng Sigstore bundle của cosign 3; image 1.0.0 mang chữ ký theo định
+dạng cũ của cosign 2.
 
 Cũng có thể build image từ mã nguồn (cần JDK 17+ và mạng tới Maven Central,
 nodejs.org, npm registry) rồi dùng tên `fasti-bpm:local` thay cho `fastidev/fasti-bpm:1.0.1` ở mọi
@@ -94,7 +96,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -e FASTI_DB_SCHEMA_UPDATE=true \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD_FILE=/run/secrets/admin-password \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
-  -e TZ=Asia/Ho_Chi_Minh \
+  -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
   fastidev/fasti-bpm:1.0.1 --production
 ```
@@ -149,7 +151,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /đường/dẫn/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
-  -e TZ=Asia/Ho_Chi_Minh \
+  -e TZ=UTC \
   fastidev/fasti-bpm:1.0.1 --production
 ```
 
@@ -278,11 +280,19 @@ Gói Tomcat 1.0.0 dựng sẵn (trang tải: https://fasti.dev/download):
 - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
 Kiểm tra checksum trước khi giải nén, ví dụ `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
+Gói này vẫn là bản 1.0.0 và chưa có hai bản vá bảo mật của 1.0.1 (template filter, chứng chỉ
+LDAP); để có chúng, hãy dùng image hoặc build bản phân phối Tomcat (`distro/tomcat`) từ tag
+`v1.0.1`.
 
 
 <a id="13-observability"></a>
 
 ## 13. Giám sát: log JSON, metrics, tracing
+
+> **Có từ 1.1.0, chưa có trong image 1.0.1.** Các thiết lập trong mục này đã có trên nhánh
+> `main` và sẽ được phát hành cùng Fasti 1.1.0; image 1.0.1 đã công bố chưa có chúng. Trong lúc
+> chờ 1.1.0, hãy thử bằng image build từ mã nguồn (`fasti-bpm:local`, xem
+> [mục 2](#2-pull-the-image)) thay cho `fastidev/fasti-bpm:1.1.0`.
 
 Log JSON, metrics Prometheus và tracing OpenTelemetry đều **tắt theo mặc định**. Mỗi tính năng
 bật bằng một biến môi trường của image; cùng các thiết lập đó dùng được dưới dạng thuộc tính
@@ -301,11 +311,11 @@ Spring Boot cho Fasti BPM Run chạy ngoài Docker (`configuration/default.yml` 
 ### Log JSON
 
 ```bash
-docker run -d --name fasti -p 8080:8080 -e FASTI_LOG_FORMAT=json ... fastidev/fasti-bpm:1.0.1
+docker run -d --name fasti -p 8080:8080 -e FASTI_LOG_FORMAT=json ... fastidev/fasti-bpm:1.1.0
 docker logs fasti | head -1
 # {"@timestamp":"2026-11-21T09:12:03.120Z","log":{"level":"INFO","logger":"org.camunda.bpm.run.CamundaBpmRun"},
-#  "process":{"pid":1,"thread":{"name":"main"}},"service":{"name":"fasti-bpm","version":"1.0.1","node":{}},
-#  "message":"Starting CamundaBpmRun v1.0.1 using Java 21 ...","ecs":{"version":"8.11"}}
+#  "process":{"pid":1,"thread":{"name":"main"}},"service":{"name":"fasti-bpm","version":"1.1.0","node":{}},
+#  "message":"Starting CamundaBpmRun v1.1.0 using Java 21 ...","ecs":{"version":"8.11"}}
 ```
 
 Tên dịch vụ là `fasti-bpm`, trừ khi đặt `SPRING_APPLICATION_NAME`. Stack trace nằm trong chính
@@ -344,7 +354,7 @@ Metrics **không công khai**. Chọn một trong hai cách:
    docker run -d --name fasti -p 8080:8080 \
      -e FASTI_METRICS_PROMETHEUS_ENABLED=true \
      -e FASTI_METRICS_PROMETHEUS_TOKEN_FILE=/run/secrets/metrics-token \
-     -v "$PWD/metrics-token:/run/secrets/metrics-token:ro" ... fastidev/fasti-bpm:1.0.1
+     -v "$PWD/metrics-token:/run/secrets/metrics-token:ro" ... fastidev/fasti-bpm:1.1.0
    curl -s -H "Authorization: Bearer $(cat metrics-token)" http://localhost:8080/actuator/prometheus | head
    ```
 
@@ -376,7 +386,7 @@ endpoint của actuator (`management.endpoints.web.exposure.include: "*"`).
 docker run -d --name fasti -p 8080:8080 \
   -e FASTI_TRACING_ENABLED=true \
   -e OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 \
-  ... fastidev/fasti-bpm:1.0.1
+  ... fastidev/fasti-bpm:1.1.0
 ```
 
 Mỗi request HTTP thành một trace; các lệnh engine mà request chạy (ví dụ truy vấn process

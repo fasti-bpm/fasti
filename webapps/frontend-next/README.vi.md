@@ -279,6 +279,10 @@ dịch; khóa thiếu được `npm run i18n:check` báo (chạy trong `npm run 
 `Intl.PluralRules`: khóa không hậu tố là dạng chung, `khóa.one`, `khóa.few`, `khóa.many`, ... là
 biến thể khi ngôn ngữ có. Ngày giờ và số dùng `Intl` với ngôn ngữ đang chọn.
 
+Chữ do chính các trình soạn BPMN, DMN và biểu mẫu (bpmn-js, dmn-js, form-js) hiển thị, như bảng
+công cụ, menu ngữ cảnh và nhãn thuộc tính có sẵn, được dịch riêng trong `src/modeler/texts/`. Hiện
+mới có tiếng Việt; các ngôn ngữ khác hiển thị phần chữ này bằng tiếng Anh.
+
 Thêm một ngôn ngữ:
 
 1. `npm run i18n:new -- ar` tạo thư mục với manifest và các khóa tiếng Anh ở dạng chú thích.

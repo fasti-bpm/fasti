@@ -21,7 +21,7 @@
 | 위임, 부재 중 대리 담당자 | 포럼 [2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199), [9331](https://forum.camunda.io/t/9331) | 작업별 위임 지원; 부재 중 대리 담당자는 [로드맵](https://fasti.dev/#timeline)에 포함 |
 | 폼 없이 프로세스를 시작할 때 비즈니스 키와 변수 지정 | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | 지원 |
 | 배포된 BPMN XML 다운로드 | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | 지원 |
-| 일관된 레이블, 다국어 지원 | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13개 언어 |
+| 일관된 레이블, 다국어 지원 | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13개 언어. BPMN, DMN, 폼 편집기 안의 기본 제공 레이블은 영어와 베트남어만 지원 |
 
 <a id="web-application-path-fasti"></a>
 

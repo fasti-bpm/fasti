@@ -21,7 +21,7 @@ forum Camunda et sur GitHub, par exemple :
 | Délégation, remplaçants pendant les absences | forum [2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199), [9331](https://forum.camunda.io/t/9331) | La délégation par tâche existe ; les remplaçants en cas d’absence figurent dans la [feuille de route](https://fasti.dev/#timeline) |
 | Clé métier et variables lors du démarrage d’un processus sans formulaire | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | Oui |
 | Télécharger le XML BPMN déployé | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Oui |
-| Libellés cohérents, plusieurs langues | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 langues |
+| Libellés cohérents, plusieurs langues | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 langues ; dans les éditeurs BPMN, DMN et de formulaires, les libellés intégrés ne sont qu’en anglais et en vietnamien |
 
 <a id="web-application-path-fasti"></a>
 

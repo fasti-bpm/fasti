@@ -97,7 +97,7 @@ PI=$(curl -s -u "$AUTH" -H 'Content-Type: application/json' \
   "$BASE/process-definition/key/order/start" \
   -d '{"businessKey":"ORD-1001",
        "variables":{"amount":{"value":250,"type":"Integer"},
-                    "customer":{"value":"Nguyen Van A","type":"String"}}}' \
+                    "customer":{"value":"Jane Doe","type":"String"}}}' \
   | jq -r .id)
 echo "$PI"
 ```
@@ -143,7 +143,7 @@ curl -s -u "$AUTH" -H 'Content-Type: application/json' "$BASE/process-instance" 
 ```
 
 Kiểu hay dùng: `String`, `Integer`, `Long`, `Double`, `Boolean`, `Date`
-(`2026-11-19T10:00:00.000+0700`), `Json`. Nội dung JSON phải là UTF-8; trên Windows (Git Bash,
+(`2026-11-19T10:00:00.000+0000`), `Json`. Nội dung JSON phải là UTF-8; trên Windows (Git Bash,
 PowerShell) dữ liệu có dấu nên đặt trong tệp UTF-8 (không BOM) và gửi bằng
 `--data-binary @body.json`; trong PowerShell gọi `curl.exe` (không phải bí danh `curl`) và đặt
 `'@body.json'` trong dấu nháy.
@@ -195,7 +195,7 @@ tài liệu tham chiếu để biết nội dung yêu cầu.
 ```bash
 curl -s -u "$AUTH" -H 'Content-Type: application/json' "$BASE/message" \
   -d '{"messageName":"PaymentConfirmed","businessKey":"ORD-1001",
-       "processVariables":{"paidAt":{"value":"2026-11-19T10:00:00.000+0700","type":"Date"}},
+       "processVariables":{"paidAt":{"value":"2026-11-19T10:00:00.000+0000","type":"Date"}},
        "resultEnabled":true}'
 ```
 
@@ -302,8 +302,9 @@ Với bearer token, truyền một interceptor tự thêm header `Authorization`
 | Xác thực `/engine-rest` | tắt | **bật** (Basic, hoặc bearer khi bật OIDC); phân quyền bật |
 | Endpoint mới | — | `POST /process-instance/{id}/comment/create` (bình luận cho cả instance); `GET /process-instance/{id}/comment` có sẵn trả về các bình luận đó |
 | Đường dẫn web app | `/camunda/...` | `/fasti/...` (`/camunda/...` chuyển hướng). REST của engine vẫn ở `/engine-rest` |
-| Expression trong query | mọi expression | allow-list (hàm thời gian, người dùng hiện tại); xem [hướng dẫn chuyển đổi](../migrate-from-camunda-7.vi.md#cái-gì-khác) |
+| Expression trong query | mọi expression | allow-list (hàm thời gian, người dùng hiện tại); expression khác bị từ chối với `400`; xem [hướng dẫn chuyển đổi](../migrate-from-camunda-7.vi.md#cái-gì-khác) |
 | Attachment, comment của task | một số endpoint không kiểm quyền | luôn kiểm quyền: có thể nhận `403` |
+| Request không hợp lệ | một số trả `500` | `400` cho tài nguyên deploy không parse được, biến ở định dạng Java serialization bị cấm, tham số query sai kiểu và mật khẩu vi phạm chính sách mật khẩu |
 | OpenAPI | Swagger UI (`--swaggerui`) | không có Swagger UI; xem bên dưới |
 
 **OpenAPI.** Image không phục vụ tài liệu OpenAPI (`/engine-rest/openapi.json` trả `404`).

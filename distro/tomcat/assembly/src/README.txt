@@ -137,9 +137,10 @@ Database:
   set jobExecutorDeploymentAware to false in conf/bpm-platform.xml, otherwise
   timers and async jobs of those deployments do not run (see IMPORTANT at
   the top of this file).
-  If PostgreSQL reports invalid value for parameter "TimeZone": "Asia/Saigon"
-  (Windows), set the environment variable
-  CATALINA_OPTS=-Duser.timezone=Asia/Ho_Chi_Minh.
+  If PostgreSQL reports invalid value for parameter "TimeZone" (on Windows
+  the JVM can pass an outdated zone name such as "Asia/Saigon"), set the
+  environment variable CATALINA_OPTS=-Duser.timezone=<zone> with the current
+  IANA name of the zone used by your other nodes (for example UTC).
 
 ==================
 
@@ -222,8 +223,10 @@ Co so du lieu:
   jobExecutorDeploymentAware thanh false trong conf/bpm-platform.xml, neu
   khong timer va job async cua cac deployment do se khong chay (xem muc
   QUAN TRONG o dau tep).
-  Neu PostgreSQL bao invalid value for parameter "TimeZone": "Asia/Saigon"
-  (Windows), dat bien moi truong CATALINA_OPTS=-Duser.timezone=Asia/Ho_Chi_Minh.
+  Neu PostgreSQL bao invalid value for parameter "TimeZone" (tren Windows JVM
+  co the gui ten mui gio cu nhu "Asia/Saigon"), dat bien moi truong
+  CATALINA_OPTS=-Duser.timezone=<mui gio> voi ten IANA hien hanh cua mui gio
+  ma cac node khac dang dung (vi du UTC).
 
 Bao mat:
 

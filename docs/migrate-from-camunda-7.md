@@ -12,7 +12,8 @@ databases. It is an independent project, not affiliated with Camunda Services Gm
 If you run Camunda 7 **7.24** (Run, the container image, the Spring Boot starter, Tomcat or
 WildFly), Fasti runs on **that same database without changing its schema**: it uses the 7.24
 schema unchanged and writes no tables, columns or schema versions of its own. You can replace
-the old nodes, run Fasti next to them, and go back to Camunda 7.24 at any time.
+the old nodes, run Fasti next to them, and go back to Camunda 7.24 (see
+[Rollback](#rollback-to-camunda-724) and the tested databases under [Limits](#limits)).
 
 Databases of Camunda 7.23 and earlier must first be upgraded to 7.24 with the SQL scripts (see
 [Older versions](#older-versions-717723)). Fasti never upgrades a schema itself; it refuses to
@@ -31,7 +32,8 @@ start on an older schema and names the scripts to run.
    (`camunda.bpm.run.auth.enabled`), authorizations (`camunda.bpm.authorization.enabled`),
    plugins, LDAP/SSO, JVM time zone, password hashing (`passwordEncryptor`, `saltGenerator`),
    table prefix/schema.
-4. **Build the image** as described in [distro/docker/README.md](../distro/docker/README.md).
+4. **Pull the image** `fastidev/fasti-bpm:1.0.1` (or build it from source as described in
+   [distro/docker/README.md](../distro/docker/README.md)).
 5. **Start Fasti with the same `DB_*` variables** (and the same `TZ`). Unlike Camunda Run, the
    Fasti image **requires REST authentication and enforces authorizations by default**: database
    accounts keep working, but every REST client must send Basic credentials or a bearer token,
@@ -96,7 +98,8 @@ Compared with the Tomcat/WildFly distributions of Camunda 7.24:
   default `DbIdGenerator`).
 - Passwords: SHA-512 with a 16-byte salt like Camunda 7; existing users can sign in, and
   passwords changed on Fasti work on Camunda 7.
-- The REST API at `/engine-rest` (unchanged behavior plus additional endpoints), external tasks
+- The REST API at `/engine-rest`: the same endpoints, parameters and payloads, plus additional
+  endpoints (authentication and some status codes differ, see [What differs](#what-differs)); external tasks
   (`fetchAndLock`, long polling), the Java and JS clients, `JSESSIONID`, `XSRF-TOKEN`/`X-XSRF-TOKEN`, `camunda.bpm.*`
   properties, the `camunda:` BPMN namespace.
 - Filters from the classic Tasklist (`color`, `description`, `priority`, `refresh`, `variables`,
@@ -124,6 +127,16 @@ Compared with the Tomcat/WildFly distributions of Camunda 7.24:
   user); filters using custom beans or functions need them declared in the engine configuration
   properties `allowedExpressionFunctionsInQueries`, `allowedExpressionBeansInQueries` and
   `allowedExpressionPropertiesInQueries`.
+- REST API behaviour: in the container image and the Tomcat and WildFly distributions every
+  request except the list of engines (`/engine`) needs Basic credentials or a bearer token, so
+  REST clients and external task workers must be configured to send them (their code does not
+  change). In every distribution, query
+  expressions outside the allow-list are rejected with `400`; reading or changing task
+  attachments and comments without permission is answered with `403` (with authorization
+  checks on); some invalid requests that were answered with `500` are answered with `400`
+  (unparsable deployment resources, variables in the prohibited Java serialization format,
+  query parameters of the wrong type, passwords that violate the password policy). See
+  [Differences from Camunda 7](api/README.md#differences-from-camunda-7).
 - Image defaults: schema update `false` (`FASTI_DB_SCHEMA_UPDATE=true` for a new database); no
   demo user, invoice example or "All tasks" filter; CORS off (`FASTI_CORS_ALLOWED_ORIGINS=*`
   restores it); `/actuator/health` added; files below `/fasti` (files mounted at
@@ -133,7 +146,7 @@ Compared with the Tomcat/WildFly distributions of Camunda 7.24:
   logout needs a same-origin POST.
 - New Tasklist: a filter without `refresh` refreshes automatically.
 - The Run jar is `fasti-bpm-run-core.jar`.
-- Security fixes relative to 7.24.0 (attachment/comment authorization, initial setup, ...) can make some previously successful calls return 403; see the [README](../README.md).
+- Security fixes relative to 7.24.0 (attachment/comment authorization, initial setup, ...) can make some previously successful calls return 403; see the *Security* sections of the [CHANGELOG](../CHANGELOG.md) and <https://fasti.dev/security>.
 
 <a id="rollback-to-camunda-724"></a>
 
@@ -210,5 +223,7 @@ The image defaults (10 pooled connections, job executor core 3/max 10) match Cam
   give each engine its own database: the engine (Camunda Run and Fasti alike) looks for tables
   in every database the account can see.
 - Plugins and process applications built for Camunda 7 must be rebuilt against the Fasti
-  artifacts to run inside Fasti; REST clients and external task clients need no changes.
+  artifacts to run inside Fasti. REST clients and external task clients need no code changes;
+  with the container image, Tomcat or WildFly they must be configured to send Basic credentials
+  or a bearer token.
 - The schema check reads `ACT_GE_SCHEMA_LOG` only; it does not compare columns.

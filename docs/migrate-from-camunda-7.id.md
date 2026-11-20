@@ -14,7 +14,8 @@ Ini adalah proyek independen yang tidak berafiliasi dengan Camunda Services GmbH
 Jika Anda menjalankan Camunda 7 **7.24** (Run, image kontainer, Spring Boot starter, Tomcat atau
 WildFly), Fasti berjalan pada **basis data yang sama tanpa mengubah skemanya**: Fasti menggunakan skema 7.24
 tanpa perubahan dan tidak menambahkan tabel, kolom, atau versi skemanya sendiri. Anda dapat mengganti
-node lama, menjalankan Fasti berdampingan dengannya, dan kembali ke Camunda 7.24 kapan saja.
+node lama, menjalankan Fasti berdampingan dengannya, dan kembali ke Camunda 7.24 (lihat
+[Kembali ke Camunda 7.24](#rollback-to-camunda-724) dan basis data yang telah diuji di [Batasan](#limits)).
 
 Basis data Camunda 7.23 dan versi sebelumnya harus terlebih dahulu ditingkatkan ke 7.24 menggunakan skrip SQL (lihat
 [Versi lama](#older-versions-717723)). Fasti tidak pernah meningkatkan skema sendiri; Fasti menolak
@@ -33,7 +34,8 @@ memulai pada skema lama dan menyebutkan skrip yang perlu dijalankan.
    (`camunda.bpm.run.auth.enabled`), otorisasi (`camunda.bpm.authorization.enabled`),
    plugin, LDAP/SSO, zona waktu JVM, hashing kata sandi (`passwordEncryptor`, `saltGenerator`),
    prefiks tabel/skema.
-4. **Bangun image** seperti yang dijelaskan dalam [distro/docker/README.md](../distro/docker/README.md).
+4. **Tarik image** `fastidev/fasti-bpm:1.0.1` (atau bangun dari kode sumber seperti yang dijelaskan dalam
+   [distro/docker/README.md](../distro/docker/README.md)).
 5. **Jalankan Fasti dengan variabel `DB_*` yang sama** (dan `TZ` yang sama). Berbeda dengan Camunda Run,
    image Fasti **mewajibkan autentikasi REST dan menerapkan otorisasi secara default**: akun basis data
    tetap berfungsi, tetapi setiap klien REST harus mengirim kredensial Basic atau token bearer,
@@ -98,7 +100,8 @@ Dibandingkan dengan distribusi Tomcat/WildFly Camunda 7.24:
   `DbIdGenerator` default engine).
 - Kata sandi: SHA-512 dengan salt 16 byte seperti Camunda 7; pengguna yang sudah ada dapat masuk, dan
   kata sandi yang diubah pada Fasti berfungsi pada Camunda 7.
-- REST API di `/engine-rest` (perilaku tidak berubah dengan tambahan endpoint), tugas eksternal
+- REST API di `/engine-rest`: endpoint, parameter, dan payload yang sama, dengan tambahan endpoint
+  (autentikasi dan beberapa kode status berbeda, lihat [Apa yang berbeda](#what-differs)), tugas eksternal
   (`fetchAndLock`, long polling), klien Java dan JS, `JSESSIONID`, `XSRF-TOKEN`/`X-XSRF-TOKEN`, properti `camunda.bpm.*`
   , namespace BPMN `camunda:`.
 - Filter dari Tasklist klasik (`color`, `description`, `priority`, `refresh`, `variables`,
@@ -126,6 +129,15 @@ Dibandingkan dengan distribusi Tomcat/WildFly Camunda 7.24:
   saat ini); filter yang menggunakan bean atau fungsi kustom memerlukan deklarasi pada properti konfigurasi engine
   `allowedExpressionFunctionsInQueries`, `allowedExpressionBeansInQueries`, dan
   `allowedExpressionPropertiesInQueries`.
+- Perilaku REST API: pada image container serta distribusi Tomcat dan WildFly, setiap permintaan
+  kecuali daftar engine (`/engine`) memerlukan kredensial Basic atau bearer token, sehingga klien
+  REST dan worker tugas eksternal harus dikonfigurasi untuk mengirimnya (kodenya tidak berubah).
+  Di semua distribusi, ekspresi kueri di luar daftar yang diizinkan ditolak dengan `400`; membaca
+  atau mengubah lampiran dan komentar tugas tanpa izin dijawab dengan `403` (saat pemeriksaan
+  otorisasi aktif); beberapa permintaan tidak valid yang sebelumnya dijawab `500` kini dijawab
+  `400` (sumber deployment yang tidak dapat diurai, variabel dalam format serialisasi Java yang
+  dilarang, parameter kueri dengan tipe yang salah, kata sandi yang melanggar kebijakan kata
+  sandi). Lihat [Differences from Camunda 7](api/README.md#differences-from-camunda-7) (bahasa Inggris).
 - Pengaturan default image: pembaruan skema `false` (`FASTI_DB_SCHEMA_UPDATE=true` untuk basis data baru); tanpa
   pengguna demo, contoh invoice, atau filter "Semua tugas"; CORS nonaktif (`FASTI_CORS_ALLOWED_ORIGINS=*`
   mengaktifkannya kembali); `/actuator/health` ditambahkan; berkas berada di bawah `/fasti` (berkas yang dipasang di
@@ -135,7 +147,7 @@ Dibandingkan dengan distribusi Tomcat/WildFly Camunda 7.24:
   logout memerlukan POST dari origin yang sama.
 - Tasklist baru: filter tanpa `refresh` diperbarui secara otomatis.
 - JAR Run adalah `fasti-bpm-run-core.jar`.
-- Perbaikan keamanan dibandingkan dengan 7.24.0 (otorisasi lampiran/komentar, penyiapan awal, ...) dapat menyebabkan beberapa panggilan yang sebelumnya berhasil mengembalikan 403; lihat [README](../README.id.md).
+- Perbaikan keamanan dibandingkan dengan 7.24.0 (otorisasi lampiran/komentar, penyiapan awal, ...) dapat menyebabkan beberapa panggilan yang sebelumnya berhasil mengembalikan 403; lihat bagian *Security* di [CHANGELOG](../CHANGELOG.md) dan <https://fasti.dev/security>.
 
 <a id="rollback-to-camunda-724"></a>
 
@@ -212,5 +224,7 @@ Pengaturan default image (10 koneksi dalam pool, eksekutor job dengan inti 3/mak
   berikan basis data tersendiri untuk setiap engine: engine (baik Camunda Run maupun Fasti) mencari tabel
   di setiap basis data yang dapat dilihat akun tersebut.
 - Plugin dan aplikasi proses yang dibangun untuk Camunda 7 harus dibangun ulang menggunakan artefak
-  Fasti agar dapat berjalan di dalam Fasti; klien REST dan klien tugas eksternal tidak memerlukan perubahan.
+  Fasti agar dapat berjalan di dalam Fasti. Klien REST dan klien tugas eksternal tidak memerlukan perubahan kode;
+  dengan image container, Tomcat, atau WildFly, keduanya harus dikonfigurasi untuk mengirim kredensial Basic atau
+  bearer token.
 - Pemeriksaan skema hanya membaca `ACT_GE_SCHEMA_LOG`; pemeriksaan ini tidak membandingkan kolom.

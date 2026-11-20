@@ -21,7 +21,7 @@
 | प्रत्यायोजन, अनुपस्थिति के दौरान स्थानापन्न | फ़ोरम [2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199), [9331](https://forum.camunda.io/t/9331) | प्रत्येक टास्क का प्रत्यायोजन उपलब्ध है; कार्यालय से अनुपस्थिति के दौरान स्थानापन्न [रोडमैप](https://fasti.dev/#timeline) में हैं |
 | फ़ॉर्म के बिना प्रोसेस शुरू करते समय बिज़नेस की और वेरिएबल | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | हाँ |
 | डिप्लॉय किया गया BPMN XML डाउनलोड करें | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | हाँ |
-| एकरूप लेबल, कई भाषाएँ | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 भाषाएँ |
+| एकरूप लेबल, कई भाषाएँ | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 भाषाएँ; BPMN, DMN और फ़ॉर्म एडिटर के भीतर बिल्ट-इन लेबल केवल अंग्रेज़ी और वियतनामी में हैं |
 
 <a id="web-application-path-fasti"></a>
 

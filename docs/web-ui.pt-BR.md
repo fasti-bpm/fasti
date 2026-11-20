@@ -21,7 +21,7 @@ fórum do Camunda e no GitHub, por exemplo:
 | Delegação, substitutos durante ausências | fórum [2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199), [9331](https://forum.camunda.io/t/9331) | Já existe delegação por tarefa; substitutos durante ausências estão no [plano de evolução](https://fasti.dev/#timeline) |
 | Chave de negócio e variáveis ao iniciar um processo sem formulário | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | Sim |
 | Baixar o XML BPMN implantado | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Sim |
-| Rótulos consistentes, vários idiomas | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 idiomas |
+| Rótulos consistentes, vários idiomas | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 idiomas; dentro dos editores de BPMN, DMN e formulários, os rótulos próprios dos editores estão apenas em inglês e vietnamita |
 
 <a id="web-application-path-fasti"></a>
 

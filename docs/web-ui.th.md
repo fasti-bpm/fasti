@@ -21,7 +21,7 @@
 | มอบหมายงานต่อและกำหนดผู้ปฏิบัติงานแทนระหว่างไม่อยู่ | ฟอรัม [2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199), [9331](https://forum.camunda.io/t/9331) | รองรับการมอบหมายต่อสำหรับแต่ละงานแล้ว; ผู้ปฏิบัติงานแทนระหว่างไม่อยู่ยังอยู่ใน[แผนงาน](https://fasti.dev/#timeline) |
 | ระบุคีย์ธุรกิจและตัวแปรเมื่อเริ่มกระบวนการโดยไม่มีฟอร์ม | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | รองรับ |
 | ดาวน์โหลด BPMN XML ที่ปรับใช้แล้ว | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | รองรับ |
-| ข้อความกำกับที่สอดคล้องกันและรองรับหลายภาษา | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 ภาษา |
+| ข้อความกำกับที่สอดคล้องกันและรองรับหลายภาษา | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 ภาษา; ภายในตัวแก้ไข BPMN, DMN และฟอร์ม ข้อความกำกับในตัวของตัวแก้ไขมีเฉพาะภาษาอังกฤษและภาษาเวียดนาม |
 
 <a id="web-application-path-fasti"></a>
 

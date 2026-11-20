@@ -19,7 +19,7 @@ Camunda forum and on GitHub, for example:
 | Delegation, substitutes during absence | forum [2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199), [9331](https://forum.camunda.io/t/9331) | Per-task delegation exists; out-of-office substitutes are on the [roadmap](https://fasti.dev/#timeline) |
 | Business key and variables when starting a process without a form | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | Yes |
 | Download the deployed BPMN XML | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Yes |
-| Consistent labels, several languages | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 languages |
+| Consistent labels, several languages | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 languages; inside the BPMN, DMN and form editors the built-in labels are in English and Vietnamese only |
 
 <a id="web-application-path-fasti"></a>
 

@@ -19,7 +19,7 @@ trên diễn đàn Camunda và GitHub, ví dụ:
 | Ủy quyền, người thay thế khi vắng | diễn đàn [2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199), [9331](https://forum.camunda.io/t/9331) | Ủy quyền từng việc đã có; người thay thế khi vắng nằm trong [lộ trình](https://fasti.dev/#timeline) |
 | Bắt đầu quy trình không có form vẫn nhập business key và biến | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | Có |
 | Tải XML BPMN đã triển khai | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Có |
-| Nhãn nhất quán, nhiều ngôn ngữ | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 ngôn ngữ |
+| Nhãn nhất quán, nhiều ngôn ngữ | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 ngôn ngữ; bên trong trình soạn BPMN, DMN và biểu mẫu, nhãn có sẵn của trình soạn chỉ có tiếng Anh và tiếng Việt |
 
 <a id="web-application-path-fasti"></a>
 

@@ -21,7 +21,7 @@
 | Делегирование, замещение на время отсутствия | форум [2788](https://forum.camunda.io/t/2788), [38199](https://forum.camunda.io/t/38199), [9331](https://forum.camunda.io/t/9331) | Делегирование отдельных задач доступно; замещение на время отсутствия включено в [план развития](https://fasti.dev/#timeline) |
 | Бизнес-ключ и переменные при запуске процесса без формы | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | Да |
 | Загрузка развёрнутого BPMN XML | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Да |
-| Единообразные подписи, несколько языков | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 языков |
+| Единообразные подписи, несколько языков | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 языков; внутри редакторов BPMN, DMN и форм встроенные подписи редакторов есть только на английском и вьетнамском |
 
 <a id="web-application-path-fasti"></a>
 

@@ -48,8 +48,10 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 - **在浏览器中建模和部署**：BPMN、DMN 和表单（[建模器](https://fasti.dev/#modeler)）。
 - **运维所需的工具，开箱即有**：历史、实例修复、批量重试、操作日志
   （[运维](https://fasti.dev/#operate)）。
-- **默认关闭**：首次启动即要求登录，无默认用户，已知漏洞已修补，Java4Shell 已缓解
-  （[安全](https://fasti.dev/security)）。
+- **容器镜像默认关闭**：首次启动即要求登录，无默认用户，拒绝关闭 REST 身份验证或授权的设置，
+  Java4Shell 已缓解。Tomcat 和 WildFly 的 REST API 要求凭据，且不创建任何用户（第一个管理员在设置页面上
+  创建）；Run zip 和 Spring Boot starter 保留 Camunda 7 的默认设置。所有发行版都包含安全修复，并会在启动时
+  对受 Java4Shell 影响的 JVM 发出警告（[安全](https://fasti.dev/security)）。
 - **单点登录**：OpenID Connect 和 JWT bearer token（[指南](docs/single-sign-on.zh-CN.md)）。
 - **现代平台**：Java 17 或更高版本、Spring Boot 4.1、GraalJS 25、Jackson 2.21
   （[性能](https://fasti.dev/#performance)）。
@@ -66,7 +68,8 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
   - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz)（[SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256)）
 
   解压前请验证校验和，例如执行 `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`。启动前请阅读
-  捆绑包中的 `README.txt`。
+  捆绑包中的 `README.txt`。该捆绑包仍是 1.0.0 版本，不包含 1.0.1 的两项安全修复（模板过滤器、LDAP
+  证书）；如需这些修复，请使用镜像，或从 `v1.0.1` 标签构建 Tomcat 发行版（`distro/tomcat`）。
 - **嵌入式**，用于 Spring Boot 或其他 Java 应用：新的 Maven 坐标（`dev.fasti.platform:fasti-*`），
   相同的 `org.camunda.bpm.*` 包；参见 [docs/embedding.zh-CN.md](docs/embedding.zh-CN.md)。
 
@@ -75,7 +78,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 ## 从 Camunda 7 迁移
 
 如果你运行的是 Camunda 7.24，Fasti 可以在同一个数据库上运行，且不改动其 schema。你可以替换旧节点，
-让 Fasti 与它们并行运行，也可以随时回退到 Camunda 7.24。Fasti 镜像已在 PostgreSQL 16、MariaDB 11.8、MySQL 8.4、SQL Server 2022 和 Oracle Database 23ai 上测试过接管由 Camunda Run 7.24 创建的数据库。DB2 尚未测试。
+让 Fasti 与它们并行运行，也可以随时回退到 Camunda 7.24。Fasti 镜像已在 PostgreSQL 16、MariaDB 11.8、MySQL 8.4、SQL Server 2022 和 Oracle Database 23ai 上测试过接管由 Camunda Run 7.24 创建的数据库；回退到 Camunda Run 已在除 MySQL 外的相同数据库上测试。DB2 尚未测试。
 每个 REST 客户端（包括外部任务 worker）现在都必须发送 Basic 凭据或 bearer token。
 
 嵌入式 Spring Boot 应用还需迁移到 Spring Boot 4.1 和 Java 17；更早的 schema 需先用标准脚本升级。为 Camunda 7 构建的插件和流程应用必须基于 Fasti 制品重新构建，才能在 Fasti 内运行。并行运行和回退都有限制（所有节点配置相同、由哪个节点运行作业、使用 Fasti 独有功能的流程）：参见[混合运行](docs/migrate-from-camunda-7.zh-CN.md#mixed-operation-with-camunda-7-nodes)和[回退](docs/migrate-from-camunda-7.zh-CN.md#rollback-to-camunda-724)。

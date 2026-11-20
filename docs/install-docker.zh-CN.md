@@ -32,8 +32,9 @@ docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
 docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-标签：`1.0.1`（指定的确切发行版本）和 `1.0`（1.0 的最新补丁版本）。镜像使用
-cosign 签名（无密钥，GitHub OIDC），并附带 SBOM 和来源证明。
+标签：`1.0.1`（指定的确切发行版本）、`1.0`（1.0 的最新补丁版本）和 `latest`（最近发布的版本）。镜像使用
+cosign 签名（无密钥，GitHub OIDC），并附带 SBOM 和来源证明。从 1.0.1 起，签名采用 cosign 3 的 Sigstore
+bundle 格式；1.0.0 镜像带有旧版 cosign 2 格式的签名。
 
 也可以从源代码构建镜像（需要 JDK 17+，并能够通过网络访问 Maven
 Central、nodejs.org 和 npm registry），然后在下方所有命令中使用 `fasti-bpm:local` 替换
@@ -98,7 +99,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -e FASTI_DB_SCHEMA_UPDATE=true \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD_FILE=/run/secrets/admin-password \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
   fastidev/fasti-bpm:1.0.1 --production
 ```
@@ -156,7 +157,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   fastidev/fasti-bpm:1.0.1 --production
 ```
 
@@ -283,3 +284,5 @@ docker run -d --name fasti ... fastidev/fasti-bpm:1.0.1 --production   # same op
 - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
 解压前请验证校验和，例如 `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`。
+该捆绑包仍是 1.0.0 版本，不包含 1.0.1 的两项安全修复（模板过滤器、LDAP 证书）；如需这些修复，请使用镜像，
+或从 `v1.0.1` 标签构建 Tomcat 发行版（`distro/tomcat`）。

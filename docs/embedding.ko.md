@@ -44,7 +44,10 @@ Camunda 7 CE의 `7.24.0` 태그를 시작점으로 버그 수정과 라이브러
 ## 버전 관리
 
 Fasti BPM Platform은 `1.0.0`부터 [유의적 버전](https://semver.org/)을 따릅니다.
-`1.x` 계열은 Camunda 7.24용으로 작성된 애플리케이션과 호환됩니다.
+`1.x` 계열은 Camunda 7.24의 Java API, `org.camunda.bpm.*` 패키지, `camunda.bpm.*` 설정 접두사 및
+데이터베이스 스키마를 유지합니다. 엔진을 내장하는 애플리케이션은 Java 17 이상으로, Spring Boot 스타터를
+사용하는 경우 Spring Boot 4.1로 이전합니다. 플러그인과 프로세스 애플리케이션은 `dev.fasti.platform`
+아티팩트를 대상으로 다시 빌드합니다.
 
 <a id="maven-coordinates"></a>
 

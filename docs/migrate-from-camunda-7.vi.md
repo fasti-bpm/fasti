@@ -12,7 +12,8 @@ liệu của Camunda 7. Fasti BPM là dự án độc lập, không liên kết 
 Nếu hệ của bạn chạy Camunda 7 **7.24** (Run, image container, Spring Boot starter, Tomcat hay
 WildFly), Fasti chạy được trên **chính cơ sở dữ liệu đó, không đổi gì trong schema**: Fasti
 dùng nguyên schema của 7.24 và không ghi thêm bảng, cột hay phiên bản schema nào. Bạn có thể
-thay hẳn các node cũ, chạy Fasti song song với chúng, và quay lại Camunda 7.24 bất cứ lúc nào.
+thay hẳn các node cũ, chạy Fasti song song với chúng, và quay lại Camunda 7.24 (xem
+[Quay lại](#rollback-to-camunda-724) và các cơ sở dữ liệu đã kiểm thử ở [Giới hạn](#limits)).
 
 Cơ sở dữ liệu của 7.23 trở về trước phải được nâng cấp lên 7.24 bằng script SQL trước (xem
 [Phiên bản cũ hơn](#phiên-bản-cũ-hơn-717723)). Fasti không tự nâng cấp schema, và từ chối
@@ -31,7 +32,8 @@ khởi động trên schema cũ với thông báo nêu rõ script cần chạy.
    (`camunda.bpm.run.auth.enabled`), phân quyền (`camunda.bpm.authorization.enabled`), plugin,
    LDAP/SSO, múi giờ JVM, cấu hình mật khẩu (`passwordEncryptor`, `saltGenerator`), tiền tố
    bảng/schema.
-4. **Build image** theo [distro/docker/README.vi.md](../distro/docker/README.vi.md).
+4. **Kéo image** `fastidev/fasti-bpm:1.0.1` (hoặc build từ mã nguồn theo
+   [distro/docker/README.vi.md](../distro/docker/README.vi.md)).
 5. **Chạy Fasti với cùng biến `DB_*`** (và `TZ` giống node cũ). Khác Camunda Run, image Fasti
    **bật sẵn xác thực REST và phân quyền**: tài khoản trong cơ sở dữ liệu đăng nhập được,
    nhưng mọi client REST phải gửi Basic auth hoặc bearer token, và user không thuộc
@@ -97,7 +99,8 @@ Khác với bản Tomcat/WildFly của Camunda 7.24:
   `DbIdGenerator` mặc định của engine).
 - Mật khẩu: SHA-512 + salt 16 byte như Camunda 7 — người dùng cũ đăng nhập được, mật khẩu đổi
   trên Fasti dùng được trên Camunda 7.
-- REST API `/engine-rest` (hành vi giữ nguyên, chỉ thêm endpoint mới), external task
+- REST API `/engine-rest`: cùng endpoint, tham số và payload, chỉ thêm endpoint mới (xác thực và
+  một số mã trạng thái khác, xem [Cái gì khác](#what-differs)), external task
   (`fetchAndLock`, long polling), client Java/JS; cookie `JSESSIONID`, CSRF `XSRF-TOKEN` /
   `X-XSRF-TOKEN`; thuộc tính `camunda.bpm.*`; namespace BPMN `camunda:`.
 - Filter của Tasklist cổ điển (`color`, `description`, `priority`, `refresh`, `variables`,
@@ -116,6 +119,8 @@ Khác với bản Tomcat/WildFly của Camunda 7.24:
 | Run zip, Spring Boot starter: ứng dụng cổ điển | có | vẫn có, nhưng **lỗi thời (deprecated)** | lên kế hoạch chuyển sang giao diện mới; tắt sớm bằng `fasti.webapp.classic.enabled: false` |
 | Schema cũ | khởi động, lỗi về sau | dừng với `ENGINE-03111` | nâng cấp schema; tạm thời `FASTI_SCHEMA_VERSION_CHECK=warn` |
 | Expression trong query/filter | mọi expression | allow-list (hàm thời gian, user hiện tại) | filter dùng bean/hàm riêng: khai báo trong `allowedExpressionFunctionsInQueries`, `allowedExpressionBeansInQueries`, `allowedExpressionPropertiesInQueries` của cấu hình engine |
+| REST API: xác thực | Run: tắt | image, Tomcat, WildFly: mọi request, trừ danh sách engine (`/engine`), cần thông tin đăng nhập Basic hoặc bearer token | cấu hình thông tin đăng nhập cho REST client và external task worker (không phải sửa code) |
+| REST API: mã trạng thái | — | mọi bản phân phối: expression ngoài allow-list bị từ chối với `400`; đọc hoặc sửa attachment, comment của task khi không có quyền nhận `403` (khi bật phân quyền); một số request sai trước đây trả `500` nay trả `400` (tài nguyên deploy không parse được, biến ở định dạng Java serialization bị cấm, tham số query sai kiểu, mật khẩu vi phạm chính sách mật khẩu) | xem [Khác gì so với Camunda 7](api/README.vi.md#khác-gì-so-với-camunda-7) |
 | Image: tạo schema | `true` (Spring Boot) | `false` | `FASTI_DB_SCHEMA_UPDATE=true` cho cơ sở dữ liệu mới |
 | Image: demo user, ví dụ invoice, filter "All tasks" | có (`default.yml`) | không | `FASTI_ADMIN_USER`, `--example` |
 | Image: CORS | `*` | tắt | `FASTI_CORS_ALLOWED_ORIGINS=*` |
@@ -129,7 +134,8 @@ Khác với bản Tomcat/WildFly của Camunda 7.24:
 | Tên jar Run | `camunda-bpm-run-core.jar` | `fasti-bpm-run-core.jar` | sửa script/systemd riêng |
 
 Bảo mật và lỗi đã vá so với 7.24.0 (phân quyền attachment/comment, setup lần đầu, …) có thể
-làm một số lời gọi trước đây thành công nay trả 403; xem [README.vi.md](../README.vi.md) của kho mã.
+làm một số lời gọi trước đây thành công nay trả 403; xem các mục *Security* trong
+[CHANGELOG](../CHANGELOG.md) và <https://fasti.dev/security>.
 
 <a id="rollback-to-camunda-724"></a>
 
@@ -214,6 +220,7 @@ chỉnh hiệu năng". Fasti không thêm chỉ mục nào vào schema.
   Trên MySQL, mỗi engine nên có database riêng: engine (cả Camunda Run lẫn Fasti) dò bảng ở
   mọi database mà tài khoản thấy được.
 - Plugin/process application viết cho Camunda 7 cần build lại với artifact của Fasti nếu chạy
-  bên trong Fasti; process chỉ dùng REST/external task không cần.
+  bên trong Fasti. REST client và external task client không phải sửa code; với image container,
+  Tomcat hoặc WildFly, chúng phải được cấu hình để gửi thông tin đăng nhập Basic hoặc bearer token.
 - Kiểm tra phiên bản schema chỉ đọc `ACT_GE_SCHEMA_LOG`, không so từng cột.
 

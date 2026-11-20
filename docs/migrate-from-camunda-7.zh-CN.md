@@ -14,7 +14,8 @@ Fasti BPM 基于 Camunda 7 Community Edition 7.24.0 构建，兼容 Camunda 7
 如果您运行的是 Camunda 7 **7.24**（Run、容器镜像、Spring Boot starter、Tomcat 或
 WildFly），Fasti 可以**直接使用同一个数据库，无需更改其模式**：它原样使用 7.24
 模式，不会写入任何自身专用的表、列或模式版本。您可以替换
-旧节点，也可以让 Fasti 与旧节点并行运行，并随时切回 Camunda 7.24。
+旧节点，也可以让 Fasti 与旧节点并行运行，还可以切回 Camunda 7.24（参见
+[回滚](#rollback-to-camunda-724)以及[限制](#limits)中已测试的数据库）。
 
 Camunda 7.23 及更早版本的数据库必须先使用 SQL 脚本升级到 7.24（参见
 [旧版本](#older-versions-717723)）。Fasti 从不自行升级数据库模式；遇到旧模式时，它会拒绝
@@ -33,7 +34,8 @@ Camunda 7.23 及更早版本的数据库必须先使用 SQL 脚本升级到 7.24
    （`camunda.bpm.run.auth.enabled`）、授权（`camunda.bpm.authorization.enabled`）、
    插件、LDAP/SSO、JVM 时区、密码哈希配置（`passwordEncryptor`、`saltGenerator`）、
    表前缀/数据库模式。
-4. 按照 [distro/docker/README.md](../distro/docker/README.md) 中的说明**构建镜像**。
+4. **拉取镜像** `fastidev/fasti-bpm:1.0.1`（或按照
+   [distro/docker/README.md](../distro/docker/README.md) 中的说明从源代码构建）。
 5. **使用相同的 `DB_*` 变量启动 Fasti**（以及相同的 `TZ`）。与 Camunda Run 不同，
    Fasti 镜像**默认要求 REST 身份验证并强制执行授权检查**：数据库中的
    账号仍可使用，但每个 REST 客户端都必须发送 Basic 凭据或 Bearer 令牌，
@@ -98,7 +100,8 @@ Spring Boot starter / Tomcat / WildFly：将 `org.camunda.bpm:camunda-*` 构件�
   默认的 `DbIdGenerator`）。
 - 密码：与 Camunda 7 一样，使用 SHA-512 和 16 字节的盐值；现有用户可以登录，
   在 Fasti 上更改的密码也可用于 Camunda 7。
-- `/engine-rest` 下的 REST API（行为不变，并增加了额外端点）、外部任务
+- `/engine-rest` 下的 REST API：端点、参数和负载相同，并增加了额外端点（身份验证和部分状态码不同，
+  参见[有哪些不同](#what-differs)）；外部任务
   （`fetchAndLock`、长轮询）、Java 和 JS 客户端、`JSESSIONID`、`XSRF-TOKEN`/`X-XSRF-TOKEN`、`camunda.bpm.*`
   属性、`camunda:` BPMN 命名空间。
 - 新版 Tasklist 以相同格式读写经典版 Tasklist 的过滤器（`color`、`description`、`priority`、`refresh`、`variables`、
@@ -126,6 +129,12 @@ Spring Boot starter / Tomcat / WildFly：将 `org.camunda.bpm:camunda-*` 构件�
   用户）；使用自定义 Bean 或函数的过滤器需要在引擎配置
   属性 `allowedExpressionFunctionsInQueries`、`allowedExpressionBeansInQueries` 和
   `allowedExpressionPropertiesInQueries` 中声明它们。
+- REST API 行为：在容器镜像以及 Tomcat 和 WildFly 发行版中，除引擎列表（`/engine`）外的每个请求都需要
+  Basic 凭据或 bearer token，因此必须配置 REST 客户端和外部任务工作器发送这些凭据（其代码无需更改）。
+  在所有发行版中，允许列表之外的查询表达式会被拒绝并返回 `400`；无权限读取或修改任务附件和评论时返回
+  `403`（启用授权检查时）；部分此前返回 `500` 的无效请求现在返回 `400`（无法解析的部署资源、使用被禁止的
+  Java 序列化格式的变量、类型错误的查询参数、违反密码策略的密码）。参见
+  [与 Camunda 7 的差异](api/README.md#differences-from-camunda-7)。
 - 镜像默认设置：模式更新为 `false`（新数据库使用 `FASTI_DB_SCHEMA_UPDATE=true`）；不提供
   演示用户、发票示例或“所有任务”过滤器；关闭 CORS（`FASTI_CORS_ALLOWED_ORIGINS=*`
   可恢复）；新增 `/actuator/health`；文件位于 `/fasti` 下（也会读取挂载在
@@ -135,7 +144,7 @@ Spring Boot starter / Tomcat / WildFly：将 `org.camunda.bpm:camunda-*` 构件�
   注销需要同源 POST 请求。
 - 新版 Tasklist：未设置 `refresh` 的过滤器会自动刷新。
 - Run jar 为 `fasti-bpm-run-core.jar`。
-- 相较于 7.24.0 的安全修复（附件/评论授权、初始设置等）可能使某些此前成功的调用返回 403；参见 [README](../README.zh-CN.md)。
+- 相较于 7.24.0 的安全修复（附件/评论授权、初始设置等）可能使某些此前成功的调用返回 403；参见 [CHANGELOG](../CHANGELOG.md) 的 *Security* 部分和 <https://fasti.dev/security>。
 
 <a id="rollback-to-camunda-724"></a>
 
@@ -212,5 +221,6 @@ Fasti 和 Camunda 7.24 可以同时使用同一个数据库（已测试：双方
   请为每个引擎分配独立的数据库：引擎（Camunda Run 和 Fasti 均如此）会在
   账号可见的每个数据库中查找表。
 - 为 Camunda 7 构建的插件和流程应用必须基于 Fasti
-  构件重新构建，才能在 Fasti 内运行；REST 客户端和外部任务客户端无需更改。
+  构件重新构建，才能在 Fasti 内运行。REST 客户端和外部任务客户端无需更改代码；使用容器镜像、Tomcat 或
+  WildFly 时，必须将它们配置为发送 Basic 凭据或 bearer token。
 - 模式检查仅读取 `ACT_GE_SCHEMA_LOG`，不会比较列。

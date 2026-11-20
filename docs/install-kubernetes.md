@@ -7,6 +7,9 @@ database, either with the **Helm chart** (`distro/kubernetes/helm/fasti-bpm`) or
 **plain manifests** (`distro/kubernetes/manifests`, Kustomize). Fasti BPM is built on Camunda 7
 CE 7.24.0 and is an independent project, not affiliated with Camunda Services GmbH.
 
+> The Helm chart and the manifests are on the `main` branch and will be released with Fasti
+> 1.1.0; they are not part of the 1.0.1 release. They run the published 1.0.1 image.
+
 References: [chart README](../distro/kubernetes/helm/fasti-bpm/README.md) (all values),
 [image reference](../distro/docker/README.md) (all environment variables),
 [Docker guide](install-docker.md), [migration from Camunda 7](migrate-from-camunda-7.md).
@@ -69,7 +72,7 @@ admin:                             # new database only
   user: admin
   existingSecret: fasti-admin
 engine:
-  timezone: Europe/Berlin          # same on every node of the database
+  timezone: UTC                    # same on every node of the database
 ingress:
   enabled: true
   className: nginx
@@ -206,7 +209,7 @@ oidc:
 The provider must allow the redirect URI `https://fasti.example.com/login/oauth2/code/oidc`.
 The pods must reach the issuer over HTTPS (add it to `networkPolicy.egress` if you restrict
 egress). More options: [chart README](../distro/kubernetes/helm/fasti-bpm/README.md#single-sign-on-openid-connect)
-and the [project README](../README.md#single-sign-on-openid-connect).
+and the [single sign-on guide](single-sign-on.md).
 
 <a id="8-network-policy"></a>
 
@@ -242,8 +245,10 @@ servers and every service your processes call. Needs a CNI that enforces Network
 | `/actuator/health/readiness` | readiness probe; includes the database connection and the engine |
 
 No login is needed and nothing else of the actuator is exposed. The 1.0.x image has no metrics
-endpoint; `metrics.serviceMonitor` is therefore off by default and is meant for images that
-serve metrics (see the chart README).
+endpoint; `metrics.serviceMonitor` is therefore off by default. From 1.1.0, with metrics enabled
+(`FASTI_METRICS_PROMETHEUS_ENABLED=true` and a scrape token or a management port, see the
+[Docker guide](install-docker.md#13-observability)), the image serves Prometheus metrics at
+`/actuator/prometheus`; the chart does not configure this yet (see the chart README).
 
 <a id="10-upgrade-and-rollback"></a>
 
@@ -272,7 +277,7 @@ changed Secret needs `kubectl -n fasti rollout restart deployment/fasti-bpm`.
 |---|---|
 | `helm install` fails with `database.url … is required` | set `database.url` (or `urlKey`) and `database.existingSecret` |
 | Pod stays `Pending` | not enough CPU or memory for the requests, or `podAntiAffinityPreset: hard` with fewer nodes than replicas |
-| Crash with `Invalid value 'tcp://…' for configuration property 'server.port'` | a Service named `fasti` in the namespace and service links on: Kubernetes sets `FASTI_PORT=tcp://…`, which the image reads as its port. Keep `enableServiceLinks: false` (the default of the chart and the manifests) |
+| Crash with `Invalid value 'tcp://…' for configuration property 'server.port'` | a Service named `fasti` in the namespace and service links on: Kubernetes sets `FASTI_PORT=tcp://…`, which the 1.0.x image reads as its port (from 1.1.0 the image ignores such a value with a warning). Keep `enableServiceLinks: false` (the default of the chart and the manifests) |
 | `… cannot be read` for a `_FILE` variable | the Secret or key is missing; check `database.existingSecret` and the key names |
 | `password authentication failed` | the Secret does not match the database password |
 | Readiness stays down, log shows `ENGINE-03111` | the schema is older than 7.24: run the upgrade scripts (see the Docker guide) |

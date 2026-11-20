@@ -14,7 +14,8 @@ Camunda 7. Il s’agit d’un projet indépendant, non affilié à Camunda Servi
 Si vous utilisez Camunda 7 **7.24** (Run, l’image de conteneur, le starter Spring Boot, Tomcat ou
 WildFly), Fasti fonctionne sur **cette même base de données sans modifier son schéma** : il utilise le schéma 7.24
 sans modification et n’ajoute aucune table, colonne ou version de schéma propre. Vous pouvez remplacer
-les anciens nœuds, exécuter Fasti à leurs côtés et revenir à Camunda 7.24 à tout moment.
+les anciens nœuds, exécuter Fasti à leurs côtés et revenir à Camunda 7.24 (voir
+[Retour](#rollback-to-camunda-724) et les bases de données testées sous [Limites](#limits)).
 
 Les bases de données de Camunda 7.23 et des versions antérieures doivent d’abord être mises à niveau vers 7.24 à l’aide des scripts SQL (voir
 [Versions antérieures](#older-versions-717723)). Fasti ne met jamais lui-même un schéma à niveau ; il refuse de
@@ -33,7 +34,8 @@ démarrer sur un schéma antérieur et indique les scripts à exécuter.
    (`camunda.bpm.run.auth.enabled`), autorisations (`camunda.bpm.authorization.enabled`),
    plugins, LDAP/SSO, fuseau horaire de la JVM, hachage des mots de passe (`passwordEncryptor`, `saltGenerator`),
    préfixe des tables/schéma.
-4. **Construisez l’image** comme décrit dans [distro/docker/README.md](../distro/docker/README.md).
+4. **Récupérez l’image** `fastidev/fasti-bpm:1.0.1` (ou construisez-la à partir des sources comme
+   décrit dans [distro/docker/README.md](../distro/docker/README.md)).
 5. **Démarrez Fasti avec les mêmes variables `DB_*`** (et le même `TZ`). Contrairement à Camunda Run,
    l’image Fasti **exige l’authentification REST et applique les autorisations par défaut** : les comptes de la base de données
    continuent de fonctionner, mais chaque client REST doit envoyer des identifiants Basic ou un jeton Bearer,
@@ -98,7 +100,9 @@ Par rapport aux distributions Tomcat/WildFly de Camunda 7.24 :
   `DbIdGenerator` par défaut du moteur).
 - Les mots de passe : SHA-512 avec un sel de 16 octets, comme Camunda 7 ; les utilisateurs existants peuvent se connecter, et
   les mots de passe modifiés sur Fasti fonctionnent sur Camunda 7.
-- L’API REST à l’adresse `/engine-rest` (comportement inchangé avec des points de terminaison supplémentaires), les tâches externes
+- L’API REST à l’adresse `/engine-rest` : les mêmes points de terminaison, paramètres et contenus,
+  plus des points de terminaison supplémentaires (l’authentification et certains codes de statut
+  diffèrent, voir [Ce qui diffère](#what-differs)) ; les tâches externes
   (`fetchAndLock`, interrogation longue), les clients Java et JS, `JSESSIONID`, `XSRF-TOKEN`/`X-XSRF-TOKEN`, les propriétés
   `camunda.bpm.*`, l’espace de noms BPMN `camunda:`.
 - Les filtres de la Tasklist classique (`color`, `description`, `priority`, `refresh`, `variables`,
@@ -126,6 +130,16 @@ Par rapport aux distributions Tomcat/WildFly de Camunda 7.24 :
   courant) ; les filtres utilisant des beans ou des fonctions personnalisés nécessitent leur déclaration dans les propriétés
   de configuration du moteur `allowedExpressionFunctionsInQueries`, `allowedExpressionBeansInQueries` et
   `allowedExpressionPropertiesInQueries`.
+- Comportement de l’API REST : dans l’image conteneur et les distributions Tomcat et WildFly, chaque
+  requête, sauf la liste des moteurs (`/engine`), exige des identifiants Basic ou un bearer token ;
+  les clients REST et les workers de tâches externes doivent donc être configurés pour les envoyer
+  (leur code ne change pas). Dans toutes les distributions, les expressions de requête hors de la
+  liste autorisée sont refusées avec `400` ; la lecture ou la modification des pièces jointes et
+  commentaires de tâches sans autorisation reçoit `403` (lorsque les contrôles d’autorisation sont
+  actifs) ; certaines requêtes invalides qui recevaient `500` reçoivent désormais `400` (ressources
+  de déploiement non analysables, variables au format de sérialisation Java interdit, paramètres de
+  requête du mauvais type, mots de passe contraires à la politique de mots de passe). Voir
+  [Differences from Camunda 7](api/README.md#differences-from-camunda-7) (en anglais).
 - Valeurs par défaut de l’image : mise à jour du schéma à `false` (`FASTI_DB_SCHEMA_UPDATE=true` pour une nouvelle base de données) ; aucun
   utilisateur de démonstration, exemple de facturation ou filtre « Toutes les tâches » ; CORS désactivé (`FASTI_CORS_ALLOWED_ORIGINS=*`
   le réactive) ; ajout de `/actuator/health` ; fichiers sous `/fasti` (les fichiers montés dans
@@ -135,7 +149,7 @@ Par rapport aux distributions Tomcat/WildFly de Camunda 7.24 :
   la déconnexion nécessite une requête POST de même origine.
 - Nouvelle Tasklist : un filtre sans `refresh` s’actualise automatiquement.
 - Le JAR Run est `fasti-bpm-run-core.jar`.
-- Les correctifs de sécurité par rapport à 7.24.0 (autorisation des pièces jointes/commentaires, configuration initiale, ...) peuvent faire renvoyer 403 à certains appels qui aboutissaient auparavant ; consultez le [README](../README.fr.md).
+- Les correctifs de sécurité par rapport à 7.24.0 (autorisation des pièces jointes/commentaires, configuration initiale, ...) peuvent faire renvoyer 403 à certains appels qui aboutissaient auparavant ; consultez les sections *Security* du [CHANGELOG](../CHANGELOG.md) et <https://fasti.dev/security>.
 
 <a id="rollback-to-camunda-724"></a>
 
@@ -212,5 +226,7 @@ Les valeurs par défaut de l’image (10 connexions dans le pool, exécuteur de 
   attribuez à chaque moteur sa propre base de données : le moteur (Camunda Run comme Fasti) recherche les tables
   dans toutes les bases de données auxquelles le compte a accès.
 - Les plugins et applications de processus conçus pour Camunda 7 doivent être recompilés avec les artefacts
-  Fasti pour s’exécuter dans Fasti ; les clients REST et les clients de tâches externes ne nécessitent aucune modification.
+  Fasti pour s’exécuter dans Fasti. Les clients REST et les clients de tâches externes ne nécessitent aucune modification de code ;
+  avec l’image conteneur, Tomcat ou WildFly, ils doivent être configurés pour envoyer des identifiants Basic
+  ou un bearer token.
 - La vérification du schéma lit uniquement `ACT_GE_SCHEMA_LOG` ; elle ne compare pas les colonnes.

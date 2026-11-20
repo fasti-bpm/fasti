@@ -21,7 +21,7 @@
 | 委任や不在時の代理担当者を設定したい | フォーラム [2788](https://forum.camunda.io/t/2788)、[38199](https://forum.camunda.io/t/38199)、[9331](https://forum.camunda.io/t/9331) | タスク単位の委任に対応；不在時の代理担当者は [ロードマップ](https://fasti.dev/#timeline) に記載 |
 | フォームなしでプロセスを開始するときにビジネスキーと変数を指定したい | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | 対応済み |
 | デプロイ済みの BPMN XML をダウンロードしたい | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | 対応済み |
-| ラベルの一貫性と多言語対応がほしい | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 言語 |
+| ラベルの一貫性と多言語対応がほしい | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 言語。BPMN、DMN、フォームの各エディター内の組み込みラベルは英語とベトナム語のみ |
 
 <a id="web-application-path-fasti"></a>
 

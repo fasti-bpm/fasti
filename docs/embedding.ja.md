@@ -44,7 +44,10 @@ Camunda 7 CE の `7.24.0` タグを起点として、バグ修正とライブラ
 ## バージョニング
 
 Fasti BPM Platform は `1.0.0` から [セマンティックバージョニング](https://semver.org/) に従います。
-`1.x` 系列は、Camunda 7.24 向けに作成されたアプリケーションと互換性があります。
+`1.x` 系列は、Camunda 7.24 の Java API、`org.camunda.bpm.*` パッケージ、`camunda.bpm.*` 設定プレフィックス、
+データベーススキーマを維持します。エンジンを組み込むアプリケーションは Java 17 以降へ、Spring Boot starter を
+使う場合は Spring Boot 4.1 へ移行します。プラグインとプロセスアプリケーションは `dev.fasti.platform`
+アーティファクトを使用して再ビルドします。
 
 <a id="maven-coordinates"></a>
 

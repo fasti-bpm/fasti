@@ -32,8 +32,10 @@ docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
 docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-Теги: `1.0.1` (именно этот выпуск) и `1.0` (последний корректирующий выпуск ветки 1.0). Образ подписан с помощью
-cosign (без ключа, GitHub OIDC) и содержит SBOM и аттестацию происхождения.
+Теги: `1.0.1` (именно этот выпуск), `1.0` (последний корректирующий выпуск ветки 1.0) и `latest` (последний
+опубликованный выпуск). Образ подписан с помощью cosign (без ключа, GitHub OIDC) и содержит SBOM и аттестацию
+происхождения. Начиная с 1.0.1 подпись имеет формат Sigstore bundle из cosign 3; образ 1.0.0 подписан в более
+старом формате cosign 2.
 
 Также можно собрать образ из исходного кода (требуются JDK 17+ и сетевой доступ к Maven
 Central, nodejs.org и реестру npm) и использовать имя `fasti-bpm:local` вместо
@@ -98,7 +100,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -e FASTI_DB_SCHEMA_UPDATE=true \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD_FILE=/run/secrets/admin-password \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
   fastidev/fasti-bpm:1.0.1 --production
 ```
@@ -156,7 +158,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   fastidev/fasti-bpm:1.0.1 --production
 ```
 
@@ -283,3 +285,6 @@ docker run -d --name fasti ... fastidev/fasti-bpm:1.0.1 --production   # same op
 - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
 Проверьте контрольную сумму перед распаковкой, например с помощью `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
+Дистрибутив по-прежнему имеет версию 1.0.0 и не содержит двух исправлений безопасности 1.0.1 (фильтр шаблонов,
+сертификаты LDAP); чтобы получить их, используйте образ или соберите дистрибутив Tomcat (`distro/tomcat`) из
+тега `v1.0.1`.

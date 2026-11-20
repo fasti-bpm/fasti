@@ -14,7 +14,8 @@ Fasti BPM은 Camunda 7 Community Edition 7.24.0을 기반으로 구축되었으�
 Camunda 7 **7.24**(Run, 컨테이너 이미지, Spring Boot 스타터, Tomcat 또는
 WildFly)를 실행 중이라면 Fasti는 **스키마를 변경하지 않고 동일한 데이터베이스에서 실행됩니다**. 7.24
 스키마를 그대로 사용하며 자체 테이블, 열 또는 스키마 버전을 추가하지 않습니다. 기존
-노드를 교체하거나 기존 노드와 함께 Fasti를 실행할 수 있으며, 언제든지 Camunda 7.24로 돌아갈 수 있습니다.
+노드를 교체하거나 기존 노드와 함께 Fasti를 실행할 수 있으며, Camunda 7.24로 돌아갈 수도 있습니다
+([롤백](#rollback-to-camunda-724) 및 [제한 사항](#limits)의 테스트된 데이터베이스 참조).
 
 Camunda 7.23 이하의 데이터베이스는 먼저 SQL 스크립트로 7.24로 업그레이드해야 합니다(
 [이전 버전](#older-versions-717723) 참조). Fasti는 스키마를 직접 업그레이드하지 않습니다. 이전 스키마에서는
@@ -33,7 +34,8 @@ Camunda 7.23 이하의 데이터베이스는 먼저 SQL 스크립트로 7.24로 
    (`camunda.bpm.run.auth.enabled`), 권한 부여(`camunda.bpm.authorization.enabled`),
    플러그인, LDAP/SSO, JVM 시간대, 비밀번호 해싱(`passwordEncryptor`, `saltGenerator`),
    테이블 접두사/스키마.
-4. [distro/docker/README.md](../distro/docker/README.md)에 설명된 대로 **이미지를 빌드합니다**.
+4. **이미지** `fastidev/fasti-bpm:1.0.1`**을 가져옵니다**(또는
+   [distro/docker/README.md](../distro/docker/README.md)에 설명된 대로 소스에서 빌드합니다).
 5. **동일한 `DB_*` 변수**(및 동일한 `TZ`)로 **Fasti를 시작합니다**. Camunda Run과 달리
    Fasti 이미지는 **기본적으로 REST 인증을 요구하고 권한 검사를 적용합니다**. 데이터베이스
    계정은 계속 사용할 수 있지만, 모든 REST 클라이언트는 Basic 인증 정보 또는 Bearer 토큰을 전송해야 하며,
@@ -98,7 +100,8 @@ Camunda 7.24의 Tomcat/WildFly 배포판과 비교하면 다음과 같습니다:
   기본 `DbIdGenerator`).
 - 비밀번호: Camunda 7과 동일하게 16바이트 솔트를 사용하는 SHA-512입니다. 기존 사용자는 로그인할 수 있으며,
   Fasti에서 변경한 비밀번호는 Camunda 7에서도 사용할 수 있습니다.
-- `/engine-rest`의 REST API(기존 동작 유지 및 엔드포인트 추가), 외부 작업
+- `/engine-rest`의 REST API: 엔드포인트, 매개변수 및 페이로드는 같고 엔드포인트가 추가됨(인증과 일부
+  상태 코드는 다름, [달라지는 점](#what-differs) 참조), 외부 작업
   (`fetchAndLock`, 롱 폴링), Java 및 JS 클라이언트, `JSESSIONID`, `XSRF-TOKEN`/`X-XSRF-TOKEN`, `camunda.bpm.*`
   속성, `camunda:` BPMN 네임스페이스.
 - 새 Tasklist는 클래식 Tasklist의 필터(`color`, `description`, `priority`, `refresh`, `variables`,
@@ -126,6 +129,13 @@ Camunda 7.24의 Tomcat/WildFly 배포판과 비교하면 다음과 같습니다:
   사용자)으로 제한됩니다. 사용자 정의 빈이나 함수를 사용하는 필터는 엔진 설정
   속성 `allowedExpressionFunctionsInQueries`, `allowedExpressionBeansInQueries` 및
   `allowedExpressionPropertiesInQueries`에 이를 선언해야 합니다.
+- REST API 동작: 컨테이너 이미지와 Tomcat 및 WildFly 배포판에서는 엔진 목록(`/engine`)을 제외한 모든
+  요청에 Basic 자격 증명 또는 bearer token이 필요하므로, REST 클라이언트와 외부 작업 워커가 이를 보내도록
+  설정해야 합니다(코드는 바뀌지 않습니다). 모든 배포판에서 허용 목록에 없는 쿼리 표현식은 `400`으로
+  거부되고, 권한 없이 작업 첨부 파일과 댓글을 읽거나 변경하면 `403`이 반환되며(권한 검사가 켜진 경우),
+  이전에 `500`을 반환하던 일부 잘못된 요청은 `400`을 반환합니다(구문 분석할 수 없는 배포 리소스, 금지된
+  Java 직렬화 형식의 변수, 형식이 잘못된 쿼리 매개변수, 비밀번호 정책을 위반하는 비밀번호).
+  [Camunda 7과의 차이](api/README.md#differences-from-camunda-7)를 참조하십시오.
 - 이미지 기본값: 스키마 업데이트 `false`(새 데이터베이스는 `FASTI_DB_SCHEMA_UPDATE=true` 사용), 
   데모 사용자, 청구서 예제 및 "모든 작업" 필터 없음, CORS 꺼짐(`FASTI_CORS_ALLOWED_ORIGINS=*`로
   복원), `/actuator/health` 추가, `/fasti` 아래에 파일 배치(
@@ -135,7 +145,7 @@ Camunda 7.24의 Tomcat/WildFly 배포판과 비교하면 다음과 같습니다:
   로그아웃에는 동일 출처의 POST가 필요합니다.
 - 새 Tasklist: `refresh`가 없는 필터는 자동으로 새로 고침됩니다.
 - Run jar는 `fasti-bpm-run-core.jar`입니다.
-- 7.24.0 대비 보안 수정 사항(첨부 파일/댓글 권한 검사, 초기 설정 등)으로 인해 이전에 성공했던 일부 호출이 403을 반환할 수 있습니다. [README](../README.ko.md)를 참조하십시오.
+- 7.24.0 대비 보안 수정 사항(첨부 파일/댓글 권한 검사, 초기 설정 등)으로 인해 이전에 성공했던 일부 호출이 403을 반환할 수 있습니다. [CHANGELOG](../CHANGELOG.md)의 *Security* 섹션과 <https://fasti.dev/security>를 참조하십시오.
 
 <a id="rollback-to-camunda-724"></a>
 
@@ -212,5 +222,6 @@ Camunda의 롤링 업데이트 규칙이 허용하는 경우를 제외하고 업
   각 엔진에 별도의 데이터베이스를 할당하십시오. 엔진은(Camunda Run과 Fasti 모두) 계정에서 볼 수 있는
   모든 데이터베이스에서 테이블을 찾습니다.
 - Camunda 7용으로 빌드된 플러그인 및 프로세스 애플리케이션을 Fasti 내에서 실행하려면 Fasti
-  아티팩트를 대상으로 다시 빌드해야 합니다. REST 클라이언트 및 외부 작업 클라이언트는 변경할 필요가 없습니다.
+  아티팩트를 대상으로 다시 빌드해야 합니다. REST 클라이언트 및 외부 작업 클라이언트는 코드를 변경할 필요가
+  없지만, 컨테이너 이미지, Tomcat 또는 WildFly에서는 Basic 자격 증명 또는 bearer token을 보내도록 설정해야 합니다.
 - 스키마 검사는 `ACT_GE_SCHEMA_LOG`만 읽으며, 열을 비교하지 않습니다.

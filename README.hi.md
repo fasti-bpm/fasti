@@ -49,8 +49,12 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 - **Browser में model और deploy करें**: BPMN, DMN और forms ([मॉडलर](https://fasti.dev/#modeler))।
 - **इसे चलाने के tools साथ ही मिलते हैं**: history, instance की मरम्मत, bulk retry, operation log
   ([संचालन](https://fasti.dev/#operate))।
-- **Default रूप से बंद**: पहली शुरुआत से sign-in ज़रूरी, कोई डिफ़ॉल्ट यूज़र नहीं, ज्ञात ख़ामियाँ
-  बंद, Java4Shell का mitigation ([सुरक्षा](https://fasti.dev/security))।
+- **कंटेनर image में default रूप से बंद**: पहली शुरुआत से sign-in ज़रूरी, कोई डिफ़ॉल्ट यूज़र
+  नहीं, REST authentication या authorizations बंद करने वाली settings अस्वीकार की जाती हैं, और
+  Java4Shell का mitigation। Tomcat और WildFly REST API के लिए credentials माँगते हैं और कोई यूज़र
+  नहीं बनाते (पहला administrator setup page पर बनाया जाता है); Run zip और Spring Boot starter
+  Camunda 7 के defaults रखते हैं। हर distribution में security fixes हैं और Java4Shell से
+  प्रभावित JVM पर startup के समय चेतावनी दी जाती है ([सुरक्षा](https://fasti.dev/security))।
 - **Single sign-on**: OpenID Connect और JWT bearer tokens ([गाइड](docs/single-sign-on.hi.md))।
 - **वर्तमान प्लेटफ़ॉर्म**: Java 17 या बाद का संस्करण, Spring Boot 4.1, GraalJS 25, Jackson 2.21
   ([प्रदर्शन](https://fasti.dev/#performance))।
@@ -67,7 +71,9 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
   - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
   एक्सट्रैक्ट करने से पहले चेकसम सत्यापित करें, उदाहरण के लिए `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`,
-  और शुरू करने से पहले बंडल में `README.txt` पढ़ें।
+  और शुरू करने से पहले बंडल में `README.txt` पढ़ें। यह बंडल अभी भी संस्करण 1.0.0 है और इसमें
+  1.0.1 के दो security fixes (template filter, LDAP certificates) नहीं हैं; उन्हें पाने के लिए
+  image का उपयोग करें या `v1.0.1` tag से Tomcat distribution (`distro/tomcat`) बिल्ड करें।
 - **एम्बेडेड**, Spring Boot या किसी अन्य Java एप्लिकेशन में: नए Maven निर्देशांक
   (`dev.fasti.platform:fasti-*`), वही `org.camunda.bpm.*` पैकेज;
   [docs/embedding.hi.md](docs/embedding.hi.md) देखें।
@@ -79,8 +85,8 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 अगर आप Camunda 7.24 चलाते हैं, तो Fasti उसी database पर उसका schema बदले बिना चलता है। आप पुराने
 nodes को बदल सकते हैं, Fasti को उनके साथ चला सकते हैं, और किसी भी समय Camunda 7.24 पर वापस जा सकते
 हैं। Fasti image को PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022 और Oracle Database 23ai
-पर Camunda Run 7.24 द्वारा बनाए गए databases को take over करते हुए test किया गया है; DB2 अभी test
-नहीं हुआ है। हर REST client को, external task workers सहित, अब Basic credentials या bearer token
+पर Camunda Run 7.24 द्वारा बनाए गए databases को take over करते हुए test किया गया है; Camunda Run
+पर वापस जाना MySQL को छोड़कर इन्हीं databases पर test किया गया है। DB2 अभी test नहीं हुआ है। हर REST client को, external task workers सहित, अब Basic credentials या bearer token
 भेजना होगा।
 
 Embedded Spring Boot applications भी Spring Boot 4.1 और Java 17 पर जाती हैं; पुराने schemas को पहले

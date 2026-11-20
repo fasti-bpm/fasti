@@ -4,6 +4,9 @@ Runs the Fasti BPM container image (engine, REST API at `/engine-rest`, web UI a
 Kubernetes 1.29 or later against an **external database**. Fasti BPM is built on Camunda 7 CE
 7.24.0 and is an independent project, not affiliated with Camunda Services GmbH.
 
+The chart is on the `main` branch and will be released with Fasti 1.1.0; it is not part of the
+1.0.1 release. It runs the published 1.0.1 image (the default `appVersion`).
+
 Step-by-step guide (database, secrets, TLS, upgrades, troubleshooting):
 [docs/install-kubernetes.md](../../../../docs/install-kubernetes.md). Image reference and every
 environment variable: [distro/docker/README.md](../../../docker/README.md).
@@ -153,14 +156,19 @@ The chart adds `--oauth2`, renders the Spring Security client registration and t
 `fasti.security.oidc.*` settings into a mounted file and passes the client secret as an
 environment variable. The provider must allow the redirect URI
 `https://<host>/login/oauth2/code/<registrationId>` (default registration id `oidc`). Settings
-the values do not cover go into `config`. Details: "Single sign-on (OpenID Connect)" in the
-project README.
+the values do not cover go into `config`. Details: the
+[single sign-on guide](../../../../docs/single-sign-on.md).
 
 ## Metrics
 
 The 1.0.x image exposes no metrics endpoint (only `/actuator/health`), so
-`metrics.serviceMonitor.enabled` stays `false`. With an image that serves Prometheus metrics,
-enable it with the matching `path` and `port`; for the JMX exporter agent of the image
+`metrics.serviceMonitor.enabled` stays `false`. From 1.1.0, with metrics enabled
+(`FASTI_METRICS_PROMETHEUS_ENABLED=true` and a scrape token or a management port; see
+"Observability" in the Docker guide), the image serves Prometheus metrics at
+`/actuator/prometheus`. The chart has no values for this yet: the ServiceMonitor sends no scrape
+token, and a management port also moves the health endpoints that the probes use. Metrics that need
+neither work today: enable the ServiceMonitor with the matching `path` and `port`; for the JMX
+exporter agent of the image
 (`JMX_PROMETHEUS=true`, agent jar added to `/fasti/javaagent`) use `metrics.extraPort` and
 `port: metrics`. The ServiceMonitor needs the Prometheus Operator CRDs.
 

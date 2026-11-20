@@ -32,8 +32,9 @@ docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
 docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-タグ：`1.0.1`（そのリリースを厳密に指定）および `1.0`（1.0 の最新パッチリリース）。イメージは
-cosign（キーレス、GitHub OIDC）で署名されており、SBOM と来歴証明が付属しています。
+タグ：`1.0.1`（そのリリースを厳密に指定）、`1.0`（1.0 の最新パッチリリース）、`latest`（最後に公開された
+リリース）。イメージは cosign（キーレス、GitHub OIDC）で署名されており、SBOM と来歴証明が付属しています。
+1.0.1 以降の署名は cosign 3 の Sigstore バンドル形式です。1.0.0 のイメージには旧来の cosign 2 形式の署名が付いています。
 
 ソースからイメージをビルドすることもできます（JDK 17+ と、Maven
 Central、nodejs.org、npm レジストリへのネットワークアクセスが必要です）。その場合、以降のすべてのコマンドで
@@ -98,7 +99,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -e FASTI_DB_SCHEMA_UPDATE=true \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD_FILE=/run/secrets/admin-password \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
   fastidev/fasti-bpm:1.0.1 --production
 ```
@@ -156,7 +157,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   fastidev/fasti-bpm:1.0.1 --production
 ```
 
@@ -283,3 +284,6 @@ Docker Compose の場合：`FASTI_IMAGE`（または `image:` 行）を変更し
 - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
 展開する前に、たとえば `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256` でチェックサムを検証してください。
+このバンドルはまだバージョン 1.0.0 で、1.0.1 の 2 つのセキュリティ修正（テンプレートフィルター、LDAP 証明書）は
+含まれていません。それらが必要な場合は、イメージを使用するか、`v1.0.1` タグから Tomcat ディストリビューション
+（`distro/tomcat`）をビルドしてください。

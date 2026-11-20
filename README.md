@@ -47,8 +47,12 @@ Full guide, including your own database: <https://fasti.dev/install>
 - **Model and deploy in the browser**: BPMN, DMN and forms ([modeler](https://fasti.dev/#modeler)).
 - **The tools to run it are in the box**: history, instance repair, bulk retry, operation log
   ([operations](https://fasti.dev/#operate)).
-- **Closed by default**: sign-in required from the first start, no default user, known holes
-  closed, Java4Shell mitigated ([security](https://fasti.dev/security)).
+- **Closed by default in the container image**: sign-in required from the first start, no
+  default user, settings that turn REST authentication or authorizations off are refused, and
+  Java4Shell is mitigated. Tomcat and WildFly require credentials for the REST API and create no
+  users (the first administrator is created on the setup page); the Run zip and the Spring Boot
+  starter keep the Camunda 7 defaults. Every distribution has the security fixes and warns at
+  startup on a JVM exposed to Java4Shell ([security](https://fasti.dev/security)).
 - **Single sign-on**: OpenID Connect and JWT bearer tokens ([guide](docs/single-sign-on.md)).
 - **Current platform**: Java 17 or later, Spring Boot 4.1, GraalJS 25, Jackson 2.21
   ([performance](https://fasti.dev/#performance)).
@@ -65,7 +69,9 @@ Full guide, including your own database: <https://fasti.dev/install>
   - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
   Verify the checksum before extracting, for example `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`,
-  and read `README.txt` in the bundle before starting it.
+  and read `README.txt` in the bundle before starting it. The bundle is still version 1.0.0 and
+  does not contain the two security fixes of 1.0.1 (template filter, LDAP certificates); to get
+  them, use the image or build the Tomcat distribution (`distro/tomcat`) from the `v1.0.1` tag.
 - **Embedded** in Spring Boot or another Java application: new Maven coordinates
   (`dev.fasti.platform:fasti-*`), the same `org.camunda.bpm.*` packages; see
   [docs/embedding.md](docs/embedding.md).
@@ -77,8 +83,9 @@ Full guide, including your own database: <https://fasti.dev/install>
 If you run Camunda 7.24, Fasti runs on that same database without changing its schema. You can
 replace the old nodes, run Fasti next to them, and go back to Camunda 7.24 at any time. The Fasti
 image was tested taking over databases created by Camunda Run 7.24 on PostgreSQL 16, MariaDB 11.8,
-MySQL 8.4, SQL Server 2022 and Oracle Database 23ai; DB2 is not tested yet. Every REST client,
-external task workers included, must now send Basic credentials or a bearer token.
+MySQL 8.4, SQL Server 2022 and Oracle Database 23ai; going back to Camunda Run was tested on the
+same databases except MySQL. DB2 is not tested yet. Every REST client, external task workers
+included, must now send Basic credentials or a bearer token.
 
 Embedded Spring Boot applications also move to Spring Boot 4.1 and Java 17; older schemas are
 upgraded with the standard scripts first. Plugins and process applications built for Camunda 7 must

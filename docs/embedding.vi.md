@@ -40,7 +40,10 @@ của [hướng dẫn chuyển đổi](migrate-from-camunda-7.vi.md) trước kh
 ## Phiên bản
 
 Fasti BPM Platform đánh số theo [Semantic Versioning](https://semver.org/lang/vi/), bắt đầu
-từ `1.0.0`. Dòng `1.x` tương thích với ứng dụng viết cho Camunda 7.24.
+từ `1.0.0`. Dòng `1.x` giữ Java API, package `org.camunda.bpm.*`, tiền tố cấu hình
+`camunda.bpm.*` và schema cơ sở dữ liệu của Camunda 7.24. Ứng dụng nhúng engine chuyển lên Java 17
+trở lên và, nếu dùng Spring Boot starter, lên Spring Boot 4.1; plugin và process application được
+build lại với các artifact `dev.fasti.platform`.
 
 <a id="maven-coordinates"></a>
 

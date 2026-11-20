@@ -324,7 +324,9 @@ networkPolicy:
   #        protocol: TCP
 
 # Prometheus Operator ServiceMonitor. The 1.0.x image exposes no metrics endpoint (only
-# /actuator/health); enable it with an image that serves metrics at path on port.
+# /actuator/health). From 1.1.0 the image serves /actuator/prometheus with metrics enabled, but
+# behind a scrape token or on a management port, which this chart does not configure yet (see
+# the chart README). Enable it for an image that serves metrics at path on port.
 metrics:
   serviceMonitor:
     enabled: false

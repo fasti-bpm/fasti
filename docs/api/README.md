@@ -100,7 +100,7 @@ PI=$(curl -s -u "$AUTH" -H 'Content-Type: application/json' \
   "$BASE/process-definition/key/order/start" \
   -d '{"businessKey":"ORD-1001",
        "variables":{"amount":{"value":250,"type":"Integer"},
-                    "customer":{"value":"Nguyen Van A","type":"String"}}}' \
+                    "customer":{"value":"Jane Doe","type":"String"}}}' \
   | jq -r .id)
 echo "$PI"
 ```
@@ -146,7 +146,7 @@ curl -s -u "$AUTH" -H 'Content-Type: application/json' "$BASE/process-instance" 
 ```
 
 Common types: `String`, `Integer`, `Long`, `Double`, `Boolean`, `Date`
-(`2026-11-19T10:00:00.000+0700`), `Json`. JSON bodies must be UTF-8; on Windows (Git Bash,
+(`2026-11-19T10:00:00.000+0000`), `Json`. JSON bodies must be UTF-8; on Windows (Git Bash,
 PowerShell) put non-ASCII data into a UTF-8 file (without BOM) and send it with
 `--data-binary @body.json`; in PowerShell call `curl.exe` (not the `curl` alias) and quote
 `'@body.json'`.
@@ -199,7 +199,7 @@ See the reference for the request bodies.
 ```bash
 curl -s -u "$AUTH" -H 'Content-Type: application/json' "$BASE/message" \
   -d '{"messageName":"PaymentConfirmed","businessKey":"ORD-1001",
-       "processVariables":{"paidAt":{"value":"2026-11-19T10:00:00.000+0700","type":"Date"}},
+       "processVariables":{"paidAt":{"value":"2026-11-19T10:00:00.000+0000","type":"Date"}},
        "resultEnabled":true}'
 ```
 
@@ -308,8 +308,9 @@ For bearer tokens, pass an interceptor that adds the `Authorization` header.
 | Authentication on `/engine-rest` | off | **on** (Basic, or bearer with OIDC); authorizations on |
 | New endpoints | — | `POST /process-instance/{id}/comment/create` (comment on the instance itself); the existing `GET /process-instance/{id}/comment` returns those comments |
 | Web application path | `/camunda/...` | `/fasti/...` (`/camunda/...` redirects). The engine REST API stays at `/engine-rest` |
-| Expressions in queries | any expression | allow-list (date functions, current user); see the [migration guide](../migrate-from-camunda-7.md#what-differs) |
+| Expressions in queries | any expression | allow-list (date functions, current user); other expressions are rejected with `400`; see the [migration guide](../migrate-from-camunda-7.md#what-differs) |
 | Task attachments and comments | some endpoints unchecked | always authorized: expect `403` where access is missing |
+| Invalid requests | some answered with `500` | `400` for unparsable deployment resources, variables in the prohibited Java serialization format, query parameters of the wrong type and passwords that violate the password policy |
 | OpenAPI | Swagger UI (`--swaggerui`) | no Swagger UI; see below |
 
 **OpenAPI.** The image does not serve the OpenAPI document (`/engine-rest/openapi.json` answers

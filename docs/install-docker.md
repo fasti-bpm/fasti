@@ -5,7 +5,7 @@ English | [Tiếng Việt](install-docker.vi.md) | [Deutsch](install-docker.de.m
 A step-by-step guide: a quick trial with H2, production with PostgreSQL (`docker run` or
 `docker compose`), connecting to an existing Camunda 7 database, side-by-side mode, health
 checks, upgrade, rollback, troubleshooting and observability (JSON logs, Prometheus metrics,
-tracing). Full image reference:
+tracing; coming in 1.1.0). Full image reference:
 [distro/docker/README.md](../distro/docker/README.md). Fasti BPM is built on Camunda 7 CE
 7.24.0 and is an independent project, not affiliated with Camunda Services GmbH.
 
@@ -31,8 +31,10 @@ docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
 docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-Tags: `1.0.1` (exactly that release) and `1.0` (latest patch release of 1.0). The image is signed with
-cosign (keyless, GitHub OIDC) and carries an SBOM and a provenance attestation.
+Tags: `1.0.1` (exactly that release), `1.0` (latest patch release of 1.0) and `latest` (the most
+recently published release). The image is signed with cosign (keyless, GitHub OIDC) and carries
+an SBOM and a provenance attestation. From 1.0.1 on the signature is in the Sigstore bundle
+format of cosign 3; the 1.0.0 image carries a signature in the older cosign 2 format.
 
 You can also build the image from source (needs JDK 17+ and network access to Maven
 Central, nodejs.org and the npm registry) and use the name `fasti-bpm:local` instead of
@@ -97,7 +99,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -e FASTI_DB_SCHEMA_UPDATE=true \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD_FILE=/run/secrets/admin-password \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
   fastidev/fasti-bpm:1.0.1 --production
 ```
@@ -155,7 +157,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   fastidev/fasti-bpm:1.0.1 --production
 ```
 
@@ -283,10 +285,18 @@ Ready-made Tomcat 1.0.0 bundle (download page: https://fasti.dev/download):
 - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
 Verify the checksum before extracting, for example `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
+The bundle is still version 1.0.0 and does not contain the two security fixes of 1.0.1 (template
+filter, LDAP certificates); to get them, use the image or build the Tomcat distribution
+(`distro/tomcat`) from the `v1.0.1` tag.
 
 <a id="13-observability"></a>
 
 ## 13. Observability
+
+> **Coming in 1.1.0, not in the 1.0.1 image.** The settings in this section are on the `main`
+> branch and will be released with Fasti 1.1.0; the published 1.0.1 image does not have them.
+> Until 1.1.0 is published, try them with an image built from source (`fasti-bpm:local`, see
+> [section 2](#2-pull-the-image)) instead of `fastidev/fasti-bpm:1.1.0`.
 
 JSON logs, Prometheus metrics and OpenTelemetry tracing are all **off by default**. Each one is
 switched on by an environment variable of the image; the same settings work as Spring Boot
@@ -305,11 +315,11 @@ properties for Fasti BPM Run outside Docker (`configuration/default.yml` or
 ### JSON logs
 
 ```bash
-docker run -d --name fasti -p 8080:8080 -e FASTI_LOG_FORMAT=json ... fastidev/fasti-bpm:1.0.1
+docker run -d --name fasti -p 8080:8080 -e FASTI_LOG_FORMAT=json ... fastidev/fasti-bpm:1.1.0
 docker logs fasti | head -1
 # {"@timestamp":"2026-11-21T09:12:03.120Z","log":{"level":"INFO","logger":"org.camunda.bpm.run.CamundaBpmRun"},
-#  "process":{"pid":1,"thread":{"name":"main"}},"service":{"name":"fasti-bpm","version":"1.0.1","node":{}},
-#  "message":"Starting CamundaBpmRun v1.0.1 using Java 21 ...","ecs":{"version":"8.11"}}
+#  "process":{"pid":1,"thread":{"name":"main"}},"service":{"name":"fasti-bpm","version":"1.1.0","node":{}},
+#  "message":"Starting CamundaBpmRun v1.1.0 using Java 21 ...","ecs":{"version":"8.11"}}
 ```
 
 The service name is `fasti-bpm` unless `SPRING_APPLICATION_NAME` is set. Stack traces are part
@@ -348,7 +358,7 @@ The metrics are **not public**. Pick one of two ways:
    docker run -d --name fasti -p 8080:8080 \
      -e FASTI_METRICS_PROMETHEUS_ENABLED=true \
      -e FASTI_METRICS_PROMETHEUS_TOKEN_FILE=/run/secrets/metrics-token \
-     -v "$PWD/metrics-token:/run/secrets/metrics-token:ro" ... fastidev/fasti-bpm:1.0.1
+     -v "$PWD/metrics-token:/run/secrets/metrics-token:ro" ... fastidev/fasti-bpm:1.1.0
    curl -s -H "Authorization: Bearer $(cat metrics-token)" http://localhost:8080/actuator/prometheus | head
    ```
 
@@ -380,7 +390,7 @@ actuator endpoint (`management.endpoints.web.exposure.include: "*"`).
 docker run -d --name fasti -p 8080:8080 \
   -e FASTI_TRACING_ENABLED=true \
   -e OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 \
-  ... fastidev/fasti-bpm:1.0.1
+  ... fastidev/fasti-bpm:1.1.0
 ```
 
 Each HTTP request becomes a trace; the engine commands it runs (for example a process

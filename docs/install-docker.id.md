@@ -32,8 +32,10 @@ docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
 docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-Tag: `1.0.1` (rilis tersebut secara spesifik) dan `1.0` (rilis patch terbaru dari 1.0). Image ditandatangani dengan
-cosign (tanpa kunci, GitHub OIDC) dan dilengkapi SBOM serta atestasi asal-usul.
+Tag: `1.0.1` (rilis tersebut secara spesifik), `1.0` (rilis patch terbaru dari 1.0), dan `latest` (rilis yang
+terakhir dipublikasikan). Image ditandatangani dengan cosign (tanpa kunci, GitHub OIDC) dan dilengkapi SBOM serta
+atestasi asal-usul. Sejak 1.0.1, tanda tangan menggunakan format Sigstore bundle dari cosign 3; image 1.0.0
+memiliki tanda tangan dalam format cosign 2 yang lebih lama.
 
 Anda juga dapat membangun image dari kode sumber (memerlukan JDK 17+ dan akses jaringan ke Maven
 Central, nodejs.org, dan registri npm), lalu menggunakan nama `fasti-bpm:local` sebagai pengganti
@@ -98,7 +100,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -e FASTI_DB_SCHEMA_UPDATE=true \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD_FILE=/run/secrets/admin-password \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
   fastidev/fasti-bpm:1.0.1 --production
 ```
@@ -156,7 +158,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   fastidev/fasti-bpm:1.0.1 --production
 ```
 
@@ -283,3 +285,5 @@ Paket Tomcat 1.0.0 siap pakai (halaman unduhan: https://fasti.dev/download):
 - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
 Verifikasi checksum sebelum mengekstrak, misalnya `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
+Paket ini masih versi 1.0.0 dan belum berisi dua perbaikan keamanan 1.0.1 (filter template, sertifikat LDAP);
+untuk mendapatkannya, gunakan image atau bangun distribusi Tomcat (`distro/tomcat`) dari tag `v1.0.1`.

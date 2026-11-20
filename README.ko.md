@@ -49,8 +49,11 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 - **브라우저에서 모델링하고 배포하기**: BPMN, DMN, 폼([모델러](https://fasti.dev/#modeler)).
 - **운영에 필요한 도구가 기본으로 들어 있습니다**: 이력, 인스턴스 복구, 일괄 재시도, 작업 로그
   ([운영](https://fasti.dev/#operate)).
-- **기본은 닫힌 상태**: 첫 시작부터 로그인 필요, 기본 사용자 없음, 알려진 취약점 차단,
-  Java4Shell 완화([보안](https://fasti.dev/security)).
+- **컨테이너 이미지는 기본이 닫힌 상태**: 첫 시작부터 로그인 필요, 기본 사용자 없음, REST 인증이나
+  권한 검사를 끄는 설정은 거부되며, Java4Shell도 완화되어 있습니다. Tomcat과 WildFly는 REST API에 자격
+  증명을 요구하고 사용자를 만들지 않습니다(첫 관리자는 설정 페이지에서 만듭니다). Run zip과 Spring Boot
+  스타터는 Camunda 7 기본값을 유지합니다. 모든 배포판에 보안 수정이 포함되어 있으며, Java4Shell에 노출된
+  JVM에서는 시작 시 경고합니다([보안](https://fasti.dev/security)).
 - **싱글 사인온**: OpenID Connect와 JWT bearer token([가이드](docs/single-sign-on.ko.md)).
 - **최신 플랫폼**: Java 17 이상, Spring Boot 4.1, GraalJS 25, Jackson 2.21
   ([성능](https://fasti.dev/#performance)).
@@ -67,7 +70,9 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
   - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
   압축을 풀기 전에 체크섬을 확인하세요. 예: `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
-  시작하기 전에 번들에 포함된 `README.txt`를 읽으세요.
+  시작하기 전에 번들에 포함된 `README.txt`를 읽으세요. 이 번들은 아직 1.0.0 버전이며 1.0.1의 두 가지
+  보안 수정(템플릿 필터, LDAP 인증서)이 포함되어 있지 않습니다. 이 수정이 필요하면 이미지를 사용하거나
+  `v1.0.1` 태그에서 Tomcat 배포판(`distro/tomcat`)을 빌드하세요.
 - **임베디드**(Spring Boot 또는 다른 Java 애플리케이션에 내장): 새로운 Maven 좌표
   (`dev.fasti.platform:fasti-*`), 동일한 `org.camunda.bpm.*` 패키지.
   [docs/embedding.ko.md](docs/embedding.ko.md)를 참조하세요.
@@ -78,7 +83,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 
 Camunda 7.24를 운영 중이라면 Fasti는 스키마를 변경하지 않고 같은 데이터베이스에서 실행됩니다. 기존 노드를
 교체할 수도, Fasti를 함께 실행할 수도, 언제든 Camunda 7.24로 되돌아갈 수도 있습니다.
-Fasti 이미지는 PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022, Oracle Database 23ai에서 Camunda Run 7.24가 만든 데이터베이스를 인계받는 테스트를 거쳤습니다. DB2는 아직 테스트되지 않았습니다. 외부 태스크
+Fasti 이미지는 PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022, Oracle Database 23ai에서 Camunda Run 7.24가 만든 데이터베이스를 인계받는 테스트를 거쳤습니다. Camunda Run으로 되돌아가는 것은 MySQL을 제외한 같은 데이터베이스에서 테스트했습니다. DB2는 아직 테스트되지 않았습니다. 외부 태스크
 워커를 포함한 모든 REST 클라이언트는 이제 Basic 자격 증명 또는 bearer token을 보내야 합니다.
 
 임베디드 Spring Boot 애플리케이션은 Spring Boot 4.1과 Java 17로도 옮겨야 합니다. 이전 스키마는 먼저 표준 스크립트로 업그레이드합니다. Camunda 7용으로 만든 플러그인과 프로세스 애플리케이션을 Fasti 안에서 실행하려면 Fasti 아티팩트를 대상으로 다시 빌드해야 합니다. 병행 운영과 되돌리기에는 제약이 있습니다(모든 노드의 동일한 설정, 어느 노드가 잡을 실행하는지, Fasti 전용 기능을 사용하는 프로세스). [혼합 운영](docs/migrate-from-camunda-7.ko.md#mixed-operation-with-camunda-7-nodes) 및 [롤백](docs/migrate-from-camunda-7.ko.md#rollback-to-camunda-724)을 참조하십시오.

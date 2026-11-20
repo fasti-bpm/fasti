@@ -32,8 +32,10 @@ docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
 docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
 ```
 
-टैग: `1.0.1` (ठीक वही रिलीज़) और `1.0` (1.0 की नवीनतम पैच रिलीज़)। इमेज पर
-cosign (बिना कुंजी के, GitHub OIDC) से हस्ताक्षर किए गए हैं और इसमें SBOM तथा उत्पत्ति का सत्यापन प्रमाण शामिल है।
+टैग: `1.0.1` (ठीक वही रिलीज़), `1.0` (1.0 की नवीनतम पैच रिलीज़) और `latest` (सबसे हाल में
+प्रकाशित रिलीज़)। इमेज पर cosign (बिना कुंजी के, GitHub OIDC) से हस्ताक्षर किए गए हैं और इसमें
+SBOM तथा उत्पत्ति का सत्यापन प्रमाण शामिल है। 1.0.1 से हस्ताक्षर cosign 3 के Sigstore bundle
+प्रारूप में है; 1.0.0 इमेज पर cosign 2 के पुराने प्रारूप वाला हस्ताक्षर है।
 
 आप स्रोत से भी इमेज बना सकते हैं (JDK 17+ और Maven
 Central, nodejs.org तथा npm रजिस्ट्री तक नेटवर्क पहुँच आवश्यक है) और नीचे दिए गए प्रत्येक कमांड में
@@ -98,7 +100,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -e FASTI_DB_SCHEMA_UPDATE=true \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD_FILE=/run/secrets/admin-password \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
   fastidev/fasti-bpm:1.0.1 --production
 ```
@@ -156,7 +158,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
-  -e TZ=Europe/Berlin \
+  -e TZ=UTC \
   fastidev/fasti-bpm:1.0.1 --production
 ```
 
@@ -283,3 +285,6 @@ Docker Compose के साथ: `FASTI_IMAGE` (या `image:` पंक्त�
 - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
 
 एक्सट्रैक्ट करने से पहले चेकसम सत्यापित करें, उदाहरण के लिए `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`।
+यह बंडल अभी भी संस्करण 1.0.0 है और इसमें 1.0.1 के दो सुरक्षा सुधार (template filter, LDAP
+प्रमाणपत्र) नहीं हैं; उन्हें पाने के लिए इमेज का उपयोग करें या `v1.0.1` टैग से Tomcat वितरण
+(`distro/tomcat`) बनाएँ।

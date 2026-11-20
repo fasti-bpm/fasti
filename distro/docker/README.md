@@ -171,6 +171,14 @@ licensed separately and not redistributed: add them in a derived image
 (`COPY ojdbc11.jar /fasti/configuration/userlib/`) or mount a directory and set
 `FASTI_EXTRA_LIB`.
 
+MySQL and MariaDB keep the times of the engine to the whole second (the Camunda 7.24 schema has
+no fractional seconds). **From 1.1.0** the engine binds every date truncated to whole seconds on
+these databases, so time filters such as `createdAfter`, `startedAfter` or a task's `dueDate`
+find a row stored in the same second with either driver; no URL option is needed. MariaDB
+Connector/J has no option to leave out fractional seconds, so the 1.0.1 image with that driver
+can miss such rows; with 1.0.1, connect through MySQL Connector/J instead
+(`DB_DRIVER=com.mysql.cj.jdbc.Driver`, `DB_URL=jdbc:mysql://host:3306/db?sendFractionalSeconds=false`).
+
 ## Operations
 
 - Health: `/actuator/health`, `/actuator/health/liveness`, `/actuator/health/readiness`

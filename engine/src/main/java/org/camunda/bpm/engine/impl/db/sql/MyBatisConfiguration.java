@@ -12,12 +12,16 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.sql.Timestamp;
+import java.util.Date;
 
 import org.apache.ibatis.executor.parameter.ParameterHandler;
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.type.DateTypeHandler;
 import org.apache.ibatis.type.JdbcType;
+import org.apache.ibatis.type.SqlTimestampTypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.apache.ibatis.type.UnknownTypeHandler;
 
@@ -43,6 +47,9 @@ import org.apache.ibatis.type.UnknownTypeHandler;
  *
  * <p>MyBatis plans a setting to turn the metadata lookup off and a fallback to the class of
  * the value; once released, they can replace this class.</p>
+ *
+ * <p>On MySQL and MariaDB, {@link #useDatabaseType(String)} binds dates truncated to whole
+ * seconds, see {@link WholeSecondDateTypeHandler}.</p>
  */
 public class MyBatisConfiguration extends Configuration {
 
@@ -56,6 +63,27 @@ public class MyBatisConfiguration extends Configuration {
         registry.register(Object.class, jdbcType, unknownTypeHandler);
       }
     }
+  }
+
+  /**
+   * Adapts the type handlers to the database type. Call it before the mappings are parsed:
+   * the parameter mappings of the statements resolve their type handler while parsing.
+   *
+   * @param databaseType the database type of the process engine, such as <code>mysql</code>
+   */
+  public void useDatabaseType(String databaseType) {
+    if (DbSqlSessionFactory.MYSQL.equals(databaseType)) {
+      TypeHandlerRegistry registry = getTypeHandlerRegistry();
+      registry.register(Date.class, null, new WholeSecondDateTypeHandler());
+      registry.register(Timestamp.class, null, new WholeSecondTimestampTypeHandler());
+    }
+  }
+
+  /**
+   * Truncates a point in time to the whole second before it (also before 1970).
+   */
+  public static long truncateToSeconds(long epochMillis) {
+    return Math.floorDiv(epochMillis, 1000L) * 1000L;
   }
 
   @Override
@@ -126,6 +154,60 @@ public class MyBatisConfiguration extends Configuration {
       } catch (InvocationTargetException e) {
         throw e.getCause();
       }
+    }
+  }
+
+  /**
+   * <p>Binds a {@link Date} as a timestamp truncated to whole seconds; reads it as
+   * {@link DateTypeHandler} does. Used for the database type <code>mysql</code> (MySQL and
+   * MariaDB).</p>
+   *
+   * <p>The MySQL schema of Camunda 7.24 declares the time columns as <code>DATETIME</code> and
+   * <code>TIMESTAMP</code> without fractional seconds. The server cuts off the milliseconds of
+   * a stored value (MariaDB truncates, MySQL rounds unless <code>TIME_TRUNCATE_FRACTIONAL</code>
+   * is set), but compares a query parameter with its milliseconds. MySQL Connector/J with
+   * <code>sendFractionalSeconds=false</code>, the setting Camunda tests MySQL with, truncates
+   * every value in the driver; MariaDB Connector/J has no such option. Without it, a row
+   * stored in the same second as the parameter is missed by <code>&gt;=</code> and
+   * <code>=</code> (<code>createdAfter</code>, <code>startedAfter</code>,
+   * <code>dueDate</code>, ...).</p>
+   *
+   * <p>Truncating every value the engine binds, stored or compared, does what
+   * <code>sendFractionalSeconds=false</code> does, with any driver. A column value
+   * <code>c</code> is a whole second, so comparing it with the truncated parameter
+   * <code>p</code>:</p>
+   * <ul>
+   *   <li><code>c &gt; p</code> and <code>c &lt;= p</code> give the same result as before;</li>
+   *   <li><code>c &gt;= p</code> and <code>c = p</code> now also match a row stored in the second
+   *   of <code>p</code> (the fix);</li>
+   *   <li><code>c &lt; p</code> no longer matches a row stored in the second of <code>p</code>
+   *   (<code>dueBefore</code>, <code>createdBefore</code> of tasks, an expired lock in the job
+   *   and external task acquisition, ...): it is complementary to <code>&gt;=</code>, and a
+   *   half-open interval <code>[from, to)</code> still divides the rows without gap or
+   *   overlap.</li>
+   * </ul>
+   * <p>All comparisons therefore work on whole seconds, as the stored values do. A stored
+   * value is never later than the instant the engine wrote (MySQL no longer rounds it up).</p>
+   */
+  public static class WholeSecondDateTypeHandler extends DateTypeHandler {
+
+    @Override
+    public void setNonNullParameter(PreparedStatement ps, int i, Date parameter, JdbcType jdbcType)
+        throws SQLException {
+      ps.setTimestamp(i, new Timestamp(truncateToSeconds(parameter.getTime())));
+    }
+  }
+
+  /**
+   * Binds a {@link Timestamp} truncated to whole seconds, see
+   * {@link WholeSecondDateTypeHandler}; reads it as {@link SqlTimestampTypeHandler} does.
+   */
+  public static class WholeSecondTimestampTypeHandler extends SqlTimestampTypeHandler {
+
+    @Override
+    public void setNonNullParameter(PreparedStatement ps, int i, Timestamp parameter, JdbcType jdbcType)
+        throws SQLException {
+      ps.setTimestamp(i, new Timestamp(truncateToSeconds(parameter.getTime())));
     }
   }
 

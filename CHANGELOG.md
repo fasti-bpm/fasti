@@ -151,6 +151,18 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
 - The container image ignores a `FASTI_PORT` that is not a port number, with a warning, in the
   entrypoint and the `HEALTHCHECK`: Kubernetes sets `FASTI_PORT=tcp://<ip>:<port>` for a Service
   named `fasti`, and the server then failed to start.
+- MySQL and MariaDB: time filters of queries (for example `createdAfter` of historic variable
+  instances, `startedAfter`, `executedActivityAfter`, `executedJobAfter`, a task's `dueDate`, also
+  in saved filters) missed rows stored in the same second as the given time when the engine was
+  connected through MariaDB Connector/J (the driver of the container image) or through MySQL
+  Connector/J without `sendFractionalSeconds=false`. The Camunda 7.24 schema stores these times
+  to the whole second, but the driver sent the milliseconds of the parameter. On these databases
+  the engine now binds every date truncated to whole seconds, stored values and query parameters
+  alike, as `sendFractionalSeconds=false` does, so the result no longer depends on the driver.
+  Comparisons work on whole seconds: `>=` and `=` now find a row of the same second, `>` and
+  `<=` are unchanged, and `<` (`dueBefore`, a task's `createdBefore`, expired locks) no longer
+  matches a row of the same second. MySQL no longer rounds a stored time up to the next second.
+  Other databases are unchanged.
 
 ### Security
 

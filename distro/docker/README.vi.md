@@ -180,6 +180,14 @@ deployment ở `/camunda/configuration/resources`. Đường dẫn riêng của 
 Thêm driver: image con (`FROM fasti-bpm:1.0.1` + `COPY ojdbc11.jar /fasti/configuration/userlib/`)
 hoặc gắn thư mục và đặt `FASTI_EXTRA_LIB=/drivers`.
 
+MySQL và MariaDB lưu thời gian của engine đến từng giây (schema Camunda 7.24 không có phần lẻ của
+giây). **Từ 1.1.0** engine gửi mọi giá trị ngày giờ đã cắt về nguyên giây trên hai cơ sở dữ liệu
+này, nên bộ lọc thời gian như `createdAfter`, `startedAfter` hay `dueDate` của task tìm thấy cả
+dòng được lưu trong cùng giây, với driver nào cũng vậy; không cần tham số URL. MariaDB
+Connector/J không có tùy chọn bỏ phần lẻ của giây, nên image 1.0.1 dùng driver đó có thể bỏ sót
+các dòng như vậy; với 1.0.1, hãy kết nối qua MySQL Connector/J
+(`DB_DRIVER=com.mysql.cj.jdbc.Driver`, `DB_URL=jdbc:mysql://host:3306/db?sendFractionalSeconds=false`).
+
 ## Vận hành
 
 - **Health:** `/actuator/health`, `/actuator/health/liveness`, `/actuator/health/readiness`

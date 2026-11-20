@@ -1898,6 +1898,7 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
           XMLConfigBuilder parser = new XMLConfigBuilder(MyBatisConfiguration.class, reader, "", properties);
           Configuration configuration = parser.getConfiguration();
           configuration.setEnvironment(environment);
+          ((MyBatisConfiguration) configuration).useDatabaseType(databaseType);
           configuration = parser.parse();
 
           configuration.setDefaultStatementTimeout(jdbcStatementTimeout);

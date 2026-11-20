@@ -12,6 +12,9 @@ entries below describe the differences from that release.
 
 ## [Unreleased]
 
+Planned for release as 1.1.0, because it adds features. None of these changes is part of the
+1.0.1 release or of the published 1.0.1 image.
+
 ### Added
 
 - Helm chart (`distro/kubernetes/helm/fasti-bpm`) and plain Kubernetes manifests with Kustomize
@@ -101,8 +104,9 @@ entries below describe the differences from that release.
   web applications moves to webpack-dev-server 5.2.7. The remaining advisories concern
   AngularJS 1.8 and Bootstrap 3 of the deprecated classic web applications, for which no fixed
   release exists; those applications stay off by default.
-- The container image of each release is signed with cosign 3 in the Sigstore bundle format.
-  Verify it with cosign 3, or with cosign 2.6 and `--new-bundle-format`.
+- From this release on, the container image is signed with cosign 3 in the Sigstore bundle
+  format (the 1.0.0 image carries a signature in the older cosign 2 format). Verify it with
+  cosign 3, or with cosign 2.6 and `--new-bundle-format`.
 
 ### Changed
 
@@ -123,7 +127,8 @@ entries below describe the differences from that release.
 ### Added
 
 - New web UI below `/fasti/`: application shell and Tasklist, monitoring and modelling,
-  administration, translations into eleven more languages, unit and end-to-end tests.
+  administration, in English and twelve more languages (13 in total), unit and end-to-end
+  tests.
 - OpenID Connect single sign-on and JWT bearer tokens for the REST API; single sign-on for
   Tomcat and WildFly.
 - Comments on a process instance as a whole (REST API).
@@ -164,9 +169,53 @@ entries below describe the differences from that release.
 
 ### Fixed
 
-- Query, job, call activity and database defects of the engine.
-- GraalJS contexts are closed; script variable handling.
-- Open redirect in `AppendTrailingSlashFilter`.
+- Or queries of tasks did not combine candidate user and candidate groups correctly; they do
+  now.
+- Or queries of historic process instances ignored incident criteria, and or queries of process
+  instances ignored `withIncident`; both are applied now.
+- A task filter whose candidate group expression yields no group (for example
+  `${currentUserGroups()}` for a user without groups) failed with "Candidate group list is
+  empty"; it now matches no task, also inside an or query.
+- Jobs that suspend or activate a process with a delay were created without the configured
+  default number of retries; they get it now.
+- Job declarations were linked to their job definitions only after the process definition had
+  been added to the deployment cache, so a job created at that moment by another thread could
+  lack its job definition and process definition reference; they are linked before now.
+- A failed job without a process definition id (as created by former engine versions) could not
+  be handled by the retry logic; the default retry strategy applies to it now.
+- When the history cleanup job had been removed while it ran (for example because another engine
+  changed the degree of parallelism), rescheduling it failed; it is skipped now.
+- Process instances that call each other through call activities without a wait state were
+  started until the memory was exhausted; the engine now stops after 1,000 nested instances
+  within one command (`maxCallActivityNestingDepth`, 0 switches the limit off).
+- Date form fields shared one date format between threads, which is not safe for concurrent
+  use, and failed for values that already are dates (for example the result of an expression);
+  each conversion uses its own format and accepts dates now.
+- The id of the root process instance can be added to the logging context (MDC) with the
+  `loggingContextRootProcessInstanceId` setting (off by default).
+- MariaDB Connector/J was not recognised as a known database; it is now detected and uses the
+  MySQL database type, as with MySQL Connector/J.
+- Completing a task whose execution had been removed by a concurrent transaction failed with a
+  `NullPointerException`; it is reported as an optimistic locking failure now.
+- The `collectEntries` result mapping of a business rule task returned an unmodifiable list
+  when the decision had no result; it returns a modifiable list now, as for a result with
+  entries.
+- Service task connectors did not release the connector response (for example the HTTP
+  connection) after the output mapping; it is released exactly once now, and a failure to
+  release it is logged without failing the activity.
+- Unparsable deployment resources, variables in the prohibited Java serialization format and
+  query parameters of the wrong type were answered with `500`; they are answered with `400`
+  now.
+- GraalJS: every script evaluation created a polyglot context that was never closed, which
+  leaked memory in long-running engines, and values could escape a closed context. Scripts in
+  the engine and in DMN now use one context per evaluation, close it and detach the returned
+  values; a shared script engine factory no longer keeps a polyglot engine, and the contexts of
+  a shared engine are created one after the other.
+- GraalJS scripts did not store their variables when `autoStoreScriptVariables` was enabled;
+  they do again.
+- `AppendTrailingSlashFilter` (Spring Boot web applications) built its redirect target from the
+  request URI, so a crafted path could redirect users to another host (open redirect); the
+  target now always stays within the application.
 - A comment created through a task can no longer be attached to an unrelated process
   instance.
 
@@ -185,10 +234,36 @@ entries below describe the differences from that release.
 - The Tomcat distribution leaves out the documentation, manager and host-manager applications
   and the default page of Tomcat; `/` leads to the Fasti welcome page, and error pages written
   by Tomcat itself no longer show the exception or the server version.
-- **BREAKING:** expressions in queries are restricted to an allow-list.
-- Task attachments and comments are authorized.
-- Initial setup and Cockpit/Admin permission checks hardened.
-- Web app headers, cookies, CSP and path authorization hardened.
-- Vulnerable libraries upgraded.
+- **BREAKING:** expressions in queries are restricted to an allow-list. Stored queries such as
+  task filters may carry expressions, and the validation of 7.24 missed expressions in nested or
+  queries and in or queries of other query types, so an authenticated user could have arbitrary
+  expressions evaluated. Every or query is validated now, expressions are limited to criteria
+  that support them, and only allow-listed functions, beans and properties are accepted (the
+  REST API answers `400` otherwise). Filters that need more declare it in
+  `allowedExpressionFunctionsInQueries`, `allowedExpressionBeansInQueries` and
+  `allowedExpressionPropertiesInQueries`.
+- Task attachments and comments are authorized: reading a single attachment or comment, adding
+  comments and changing attachments did not check the authorizations of the related task or
+  process instance. The engine and the REST API check read and write access now and answer
+  `403` instead of `500` when it is denied.
+- Initial setup and Cockpit/Admin permission checks hardened: the initial setup stayed open
+  until a user existed in the `camunda-admin` group and could be raced by concurrent requests;
+  it now closes once any administrator or any principal able to manage authorizations exists,
+  creates at most one user and can be switched off. Cockpit plugin queries skipped permission
+  checks too broadly and now skip only the disabled permissions; Admin requires permission to
+  read the aggregated metrics; saving a user checks the permission before the password policy,
+  and a policy violation is answered with `400` instead of `500`.
+- Web app headers, cookies, CSP and path authorization hardened: activity names in the Cockpit
+  variables tab are bound safely, the HTML preview of deployment resources is sanitized and
+  task ids are encoded in Tasklist notifications; session tokens and API headers are no longer
+  sent to other origins; the security filter denies secured paths that no rule allows and
+  authorizes the path the container resolved; the CSP nonce is bound to its request and
+  generated securely; security headers and cookie attributes are also set on rejected requests
+  and on responses without a body, and SameSite is set on WildFly; the REST API warns at
+  startup when it is not authenticated.
+- Libraries with known vulnerabilities moved to fixed releases, among them Jackson 2.21.8,
+  Guava 33.8.0, commons-lang3 3.20.0, Jython 2.7.4, Ant 1.10.18, FreeMarker 2.3.35, the
+  PostgreSQL and SQL Server JDBC drivers, WildFly 37.0.1 and, in the classic web applications,
+  DOMPurify, fast-xml-parser, lodash and moment.
 - CVE-2026-114938 ("Java4Shell"): the amd64 image ships the fixed Temurin JRE 21.0.13.1+2 and
   turns off the Base64 intrinsic; the engine warns at startup on an exposed JVM.

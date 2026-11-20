@@ -369,7 +369,8 @@
       ${camunda.artifact},
       ${camunda.artifact}.application.*,
       ${camunda.artifact}.container.*,
-      ${camunda.artifact}.engine.*
+      ${camunda.artifact}.engine.*,
+      dev.fasti.engine.*
     </camunda.osgi.export.pkg>
     <camunda.osgi.import.additional>
       !com.google.gson.*,

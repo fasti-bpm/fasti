@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="absentAssigneeCaseDefinitions"
+             xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL"
+             xmlns:camunda="http://camunda.org/schema/1.0/cmmn"
+             targetNamespace="Examples">
+  <case id="absentAssigneeCase" name="Absent assignee case">
+    <casePlanModel id="CasePlanModel_1">
+      <planItem id="PI_HumanTask_1" definitionRef="HumanTask_1" />
+      <humanTask id="HumanTask_1" name="Review" camunda:assignee="alice" />
+    </casePlanModel>
+  </case>
+</definitions>

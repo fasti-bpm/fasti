@@ -140,6 +140,14 @@
     select * from ${prefix}ACT_ID_INFO where USER_ID_ = #{parameter,jdbcType=VARCHAR}
   </select>
 
+  <!-- Fasti: users with a user info key (absences of dev.fasti.engine.absence); reads only, no schema change -->
+  <select id="selectFastiUserIdsByIdentityInfoKey" parameterType="org.camunda.bpm.engine.impl.db.ListQueryParameterObject" resultType="string">
+    select distinct USER_ID_ from ${prefix}ACT_ID_INFO
+    where KEY_ = #{parameter,jdbcType=VARCHAR}
+      and TYPE_ = 'userinfo'
+      and PARENT_ID_ is null
+  </select>
+
   <select id="selectIdentityInfoDetails" parameterType="string" resultMap="identityInfoResultMap">
     select * from ${prefix}ACT_ID_INFO where PARENT_ID_ = #{parameter,jdbcType=VARCHAR}
   </select>

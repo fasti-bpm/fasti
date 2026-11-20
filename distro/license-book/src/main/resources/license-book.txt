@@ -2022,6 +2022,57 @@ The Apache Software Foundation (https://www.apache.org/).
 Licensed under Apache 2.0
 
 ===========================================================================================
+io.micrometer:context-propagation:jar:1.2.1
+https://github.com/micrometer-metrics/context-propagation
+Notice file (META-INF/NOTICE):
+Micrometer Context Propagation
+
+Copyright (c) 2017-Present VMware, Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-------------------------------------------------------------------------------
+
+This product contains a modified portion of 'io.netty.util.internal.logging',
+in the Netty/Common library distributed by The Netty Project:
+
+  * Copyright 2013 The Netty Project
+  * License: Apache License v2.0
+  * Homepage: https://netty.io
+
+This product contains a modified portion of 'StringUtils.isBlank()',
+in the Commons Lang library distributed by The Apache Software Foundation:
+
+  * Copyright 2001-2019 The Apache Software Foundation
+  * License: Apache License v2.0
+  * Homepage: https://commons.apache.org/proper/commons-lang/
+
+This product contains a modified portion of 'JsonUtf8Writer',
+in the Moshi library distributed by Square, Inc:
+
+  * Copyright 2010 Google Inc.
+  * License: Apache License v2.0
+  * Homepage: https://github.com/square/moshi
+
+This product contains a modified portion of the 'org.springframework.lang'
+package in the Spring Framework library, distributed by VMware, Inc:
+
+  * Copyright 2002-2019 the original author or authors.
+  * License: Apache License v2.0
+  * Homepage: https://spring.io/projects/spring-framework
+Licensed under Apache 2.0
+
+===========================================================================================
 io.micrometer:micrometer-commons:jar:1.17.2
 https://github.com/micrometer-metrics/micrometer
 Copyright (c) 2017-Present VMware, Inc. All Rights Reserved.
@@ -2123,6 +2174,264 @@ package in the Spring Framework library, distributed by VMware, Inc:
   * Copyright 2002-2019 the original author or authors.
   * License: Apache License v2.0
   * Homepage: https://spring.io/projects/spring-framework
+Licensed under Apache 2.0
+
+===========================================================================================
+io.micrometer:micrometer-registry-prometheus:jar:1.17.2
+https://github.com/micrometer-metrics/micrometer
+Notice file (META-INF/NOTICE):
+Micrometer
+
+Copyright (c) 2017-Present VMware, Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-------------------------------------------------------------------------------
+
+This product contains a modified portion of 'io.netty.util.internal.logging',
+in the Netty/Common library distributed by The Netty Project:
+
+  * Copyright 2013 The Netty Project
+  * License: Apache License v2.0
+  * Homepage: https://netty.io
+
+This product contains a modified portion of 'StringUtils.isBlank()',
+in the Commons Lang library distributed by The Apache Software Foundation:
+
+  * Copyright 2001-2019 The Apache Software Foundation
+  * License: Apache License v2.0
+  * Homepage: https://commons.apache.org/proper/commons-lang/
+
+This product contains a modified portion of 'JsonUtf8Writer',
+in the Moshi library distributed by Square, Inc:
+
+  * Copyright 2010 Google Inc.
+  * License: Apache License v2.0
+  * Homepage: https://github.com/square/moshi
+
+This product contains a modified portion of the 'org.springframework.lang'
+package in the Spring Framework library, distributed by VMware, Inc:
+
+  * Copyright 2002-2019 the original author or authors.
+  * License: Apache License v2.0
+  * Homepage: https://spring.io/projects/spring-framework
+Licensed under Apache 2.0
+
+===========================================================================================
+io.micrometer:micrometer-tracing-bridge-otel:jar:1.7.2
+https://github.com/micrometer-metrics/tracing
+Notice file (META-INF/NOTICE):
+Micrometer Tracing
+
+Copyright (c) 2017-Present VMware, Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-------------------------------------------------------------------------------
+
+This product contains a modified portion of 'io.netty.util.internal.logging',
+in the Netty/Common library distributed by The Netty Project:
+
+  * Copyright 2013 The Netty Project
+  * License: Apache License v2.0
+  * Homepage: https://netty.io
+
+This product contains a modified portion of 'StringUtils.isBlank()',
+in the Commons Lang library distributed by The Apache Software Foundation:
+
+  * Copyright 2001-2019 The Apache Software Foundation
+  * License: Apache License v2.0
+  * Homepage: https://commons.apache.org/proper/commons-lang/
+
+This product contains a modified portion of 'JsonUtf8Writer',
+in the Moshi library distributed by Square, Inc:
+
+  * Copyright 2010 Google Inc.
+  * License: Apache License v2.0
+  * Homepage: https://github.com/square/moshi
+
+This product contains a modified portion of the 'org.springframework.lang'
+package in the Spring Framework library, distributed by VMware, Inc:
+
+  * Copyright 2002-2019 the original author or authors.
+  * License: Apache License v2.0
+  * Homepage: https://spring.io/projects/spring-framework
+Licensed under Apache 2.0
+
+===========================================================================================
+io.micrometer:micrometer-tracing:jar:1.7.2
+https://github.com/micrometer-metrics/tracing
+Notice file (META-INF/NOTICE):
+Micrometer Tracing
+
+Copyright (c) 2017-Present VMware, Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-------------------------------------------------------------------------------
+
+This product contains a modified portion of 'io.netty.util.internal.logging',
+in the Netty/Common library distributed by The Netty Project:
+
+  * Copyright 2013 The Netty Project
+  * License: Apache License v2.0
+  * Homepage: https://netty.io
+
+This product contains a modified portion of 'StringUtils.isBlank()',
+in the Commons Lang library distributed by The Apache Software Foundation:
+
+  * Copyright 2001-2019 The Apache Software Foundation
+  * License: Apache License v2.0
+  * Homepage: https://commons.apache.org/proper/commons-lang/
+
+This product contains a modified portion of 'JsonUtf8Writer',
+in the Moshi library distributed by Square, Inc:
+
+  * Copyright 2010 Google Inc.
+  * License: Apache License v2.0
+  * Homepage: https://github.com/square/moshi
+
+This product contains a modified portion of the 'org.springframework.lang'
+package in the Spring Framework library, distributed by VMware, Inc:
+
+  * Copyright 2002-2019 the original author or authors.
+  * License: Apache License v2.0
+  * Homepage: https://spring.io/projects/spring-framework
+Licensed under Apache 2.0
+
+===========================================================================================
+io.opentelemetry.semconv:opentelemetry-semconv:jar:1.41.1
+https://github.com/open-telemetry/semantic-conventions-java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.opentelemetry:opentelemetry-api:jar:1.62.0
+https://github.com/open-telemetry/opentelemetry-java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.opentelemetry:opentelemetry-common:jar:1.62.0
+https://github.com/open-telemetry/opentelemetry-java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.opentelemetry:opentelemetry-context:jar:1.62.0
+https://github.com/open-telemetry/opentelemetry-java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.opentelemetry:opentelemetry-exporter-common:jar:1.62.0
+https://github.com/open-telemetry/opentelemetry-java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.opentelemetry:opentelemetry-exporter-otlp-common:jar:1.62.0
+https://github.com/open-telemetry/opentelemetry-java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.opentelemetry:opentelemetry-exporter-otlp:jar:1.62.0
+https://github.com/open-telemetry/opentelemetry-java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.opentelemetry:opentelemetry-exporter-sender-jdk:jar:1.62.0
+https://github.com/open-telemetry/opentelemetry-java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.opentelemetry:opentelemetry-extension-trace-propagators:jar:1.62.0
+https://github.com/open-telemetry/opentelemetry-java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.opentelemetry:opentelemetry-sdk-common:jar:1.62.0
+https://github.com/open-telemetry/opentelemetry-java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:jar:1.62.0
+https://github.com/open-telemetry/opentelemetry-java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.opentelemetry:opentelemetry-sdk-logs:jar:1.62.0
+https://github.com/open-telemetry/opentelemetry-java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.opentelemetry:opentelemetry-sdk-metrics:jar:1.62.0
+https://github.com/open-telemetry/opentelemetry-java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.opentelemetry:opentelemetry-sdk-trace:jar:1.62.0
+https://github.com/open-telemetry/opentelemetry-java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.opentelemetry:opentelemetry-sdk:jar:1.62.0
+https://github.com/open-telemetry/opentelemetry-java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.prometheus:prometheus-metrics-config:jar:1.7.0
+https://github.com/prometheus/client_java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.prometheus:prometheus-metrics-core:jar:1.7.0
+https://github.com/prometheus/client_java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.prometheus:prometheus-metrics-exposition-formats:jar:1.7.0
+https://github.com/prometheus/client_java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.prometheus:prometheus-metrics-exposition-textformats:jar:1.7.0
+https://github.com/prometheus/client_java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.prometheus:prometheus-metrics-model:jar:1.7.0
+https://github.com/prometheus/client_java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.prometheus:prometheus-metrics-tracer-common:jar:1.7.0
+https://github.com/prometheus/client_java
 Licensed under Apache 2.0
 
 ===========================================================================================
@@ -5929,6 +6238,42 @@ Licensed under Apache 2.0
 
 ===========================================================================================
 org.springframework.boot:spring-boot-jersey:jar:4.1.2
+https://github.com/spring-projects/spring-boot
+Notice file (META-INF/NOTICE.txt):
+Spring Boot 4.1.2
+Copyright (c) 2012-2026 VMware, Inc.
+
+This product is licensed to you under the Apache License, Version 2.0
+(the "License"). You may not use this product except in compliance with
+the License.
+Licensed under Apache 2.0
+
+===========================================================================================
+org.springframework.boot:spring-boot-micrometer-tracing-opentelemetry:jar:4.1.2
+https://github.com/spring-projects/spring-boot
+Notice file (META-INF/NOTICE.txt):
+Spring Boot 4.1.2
+Copyright (c) 2012-2026 VMware, Inc.
+
+This product is licensed to you under the Apache License, Version 2.0
+(the "License"). You may not use this product except in compliance with
+the License.
+Licensed under Apache 2.0
+
+===========================================================================================
+org.springframework.boot:spring-boot-micrometer-tracing:jar:4.1.2
+https://github.com/spring-projects/spring-boot
+Notice file (META-INF/NOTICE.txt):
+Spring Boot 4.1.2
+Copyright (c) 2012-2026 VMware, Inc.
+
+This product is licensed to you under the Apache License, Version 2.0
+(the "License"). You may not use this product except in compliance with
+the License.
+Licensed under Apache 2.0
+
+===========================================================================================
+org.springframework.boot:spring-boot-opentelemetry:jar:4.1.2
 https://github.com/spring-projects/spring-boot
 Notice file (META-INF/NOTICE.txt):
 Spring Boot 4.1.2

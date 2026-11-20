@@ -58,8 +58,20 @@ public class FastiObservabilityAutoConfiguration {
       String actuatorPath = servletPath.endsWith("/")
           ? servletPath.substring(0, servletPath.length() - 1) + basePath
           : servletPath + basePath;
-      return (name, context) -> !(context instanceof ServerRequestObservationContext serverContext)
-          || !isBelow(pathWithinApplication(serverContext.getCarrier()), actuatorPath);
+      Integer managementPort = environment.getProperty("management.server.port", Integer.class);
+      boolean fixedManagementPort = FastiPrometheusAccessGuard.hasSeparateManagementPort(environment)
+          && managementPort != null && managementPort > 0;
+      return (name, context) -> {
+        if (!(context instanceof ServerRequestObservationContext serverContext)) {
+          return true;
+        }
+        HttpServletRequest request = serverContext.getCarrier();
+        if (fixedManagementPort) {
+          // everything on the management port is the actuator, nothing on the application port
+          return request.getLocalPort() != managementPort;
+        }
+        return !isBelow(pathWithinApplication(request), actuatorPath);
+      };
     }
 
     static String pathWithinApplication(HttpServletRequest request) {

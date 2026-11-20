@@ -25,31 +25,38 @@ import org.springframework.boot.actuate.autoconfigure.web.ManagementContextType;
 import org.springframework.boot.actuate.endpoint.EndpointId;
 import org.springframework.boot.actuate.endpoint.web.PathMappedEndpoints;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.webmvc.autoconfigure.DispatcherServletPath;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
+import org.springframework.util.StringUtils;
 
 /**
  * Requires the scrape token on the Prometheus endpoint, wherever the actuator is served: on the
- * port of the application or, with {@code management.server.port}, on the management port.
+ * port of the application or, with {@code management.server.port}, on the management port. Any
+ * non-blank value is a token (also "false"); without one the endpoint is only served on a
+ * management port of its own.
  */
 @ManagementContextConfiguration(value = ManagementContextType.ANY, proxyBeanMethods = false)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnBooleanProperty(FastiObservabilityEnvironmentPostProcessor.PROMETHEUS_ENABLED)
-@ConditionalOnProperty(FastiPrometheusAccessGuard.TOKEN)
 public class FastiPrometheusManagementContextConfiguration {
 
   @Bean
   public FilterRegistrationBean<FastiPrometheusTokenFilter> fastiPrometheusTokenFilter(
       Environment environment, ObjectProvider<PathMappedEndpoints> pathMappedEndpoints,
       ObjectProvider<DispatcherServletPath> dispatcherServletPath) {
+    String token = environment.getProperty(FastiPrometheusAccessGuard.TOKEN);
     FilterRegistrationBean<FastiPrometheusTokenFilter> registration = new FilterRegistrationBean<>(
-        new FastiPrometheusTokenFilter(environment.getProperty(FastiPrometheusAccessGuard.TOKEN)));
+        new FastiPrometheusTokenFilter(token));
     registration.setName("FastiPrometheusToken");
+    if (!StringUtils.hasText(token)) {
+      // only possible on a management port of its own (FastiPrometheusAccessGuard)
+      registration.setEnabled(false);
+      return registration;
+    }
     PathMappedEndpoints endpoints = pathMappedEndpoints.getIfAvailable();
     String path = endpoints == null ? null : endpoints.getPath(EndpointId.of("prometheus"));
     if (path == null) {

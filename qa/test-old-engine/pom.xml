@@ -202,6 +202,9 @@
           <scope>test</scope>
         </dependency>
 
+        <!-- Must match the version the old engine's test-jar was compiled against (2.9.1 for
+             7.23.0): assertj 3.x changed method return types, so the precompiled tests would fail
+             with NoSuchMethodError. Do not align with ${version.assertj}. -->
         <dependency>
           <groupId>org.assertj</groupId>
           <artifactId>assertj-core</artifactId>

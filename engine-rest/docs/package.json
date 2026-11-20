@@ -9,5 +9,10 @@
     "redoc": "2.5.0",
     "react": "19.1.0",
     "react-dom": "19.1.0"
+  },
+  "overrides": {
+    "styled-components": {
+      "postcss": "^8.5.33"
+    }
   }
 }

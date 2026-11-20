@@ -53,7 +53,6 @@ updates:
       - dependency-name: "org.apache.httpcomponents:httpcore"
       - dependency-name: "org.jboss:jboss-vfs"
       - dependency-name: "com.networknt:json-schema-validator"
-      - dependency-name: "org.openapitools:openapi-generator-maven-plugin"
       - dependency-name: "org.jruby:jruby-complete"
       - dependency-name: "com.ibm.db2:jcc"
       # 2.7 and later drop the .gitignore placeholders that keep empty webapp folders

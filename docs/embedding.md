@@ -62,8 +62,10 @@ change (the web application path changes separately, see
 - **version:** the version of Fasti BPM Platform (see [Versioning](#versioning)) instead of
   `7.24.0`.
 
-No release of these artifacts has been published to Maven Central yet. Until then, build
-from source and make the artifacts available in the Maven repository your project uses.
+No release of these artifacts has been published to Maven Central yet; the build is prepared
+for it (see [Publishing to Maven Central](publishing-maven-central.md)) and the first
+published version will be announced in the changelog. Until then, build from source and make
+the artifacts available in the Maven repository your project uses.
 
 Manage the versions with the BOM:
 

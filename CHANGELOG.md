@@ -45,9 +45,25 @@ entries below describe the differences from that release.
     engine commands they run and each job execution, exported over OTLP/HTTP to
     `management.opentelemetry.tracing.export.otlp.endpoint` or `OTEL_EXPORTER_OTLP_ENDPOINT`.
     Nothing is sent while no endpoint is set.
+- Publishing to Maven Central prepared: the root POM profile `central` builds the published
+  libraries, starters, BOMs and parent POMs (QA modules, distributions and build helpers are
+  left out), attaches sources and javadoc jars, signs with GPG and uploads through the Central
+  Portal (`central-publishing-maven-plugin`, deployment left for a manual "Publish"). The manual
+  workflow `publish-maven` runs it for a version tag once the secrets `MAVEN_CENTRAL_USERNAME`,
+  `MAVEN_CENTRAL_PASSWORD`, `MAVEN_GPG_PRIVATE_KEY` and `MAVEN_GPG_PASSPHRASE` exist (it skips
+  with a notice otherwise; a dry run needs none). Guide: `docs/publishing-maven-central.md`. No
+  version has been published yet.
 
 ### Changed
 
+- POMs: `fasti-root` no longer inherits `org.camunda:camunda-bpm-release-parent`; the parts the
+  build used are part of `fasti-root` now. The POMs no longer declare Camunda's Artifactory
+  (`artifacts.camunda.com`) as repository or deployment target, and carry the metadata of
+  Fasti BPM (URL https://fasti.dev, organisation, SCM and issue tracker on GitHub, licence
+  Apache-2.0) instead of Camunda's. The `javadocs` profile no longer adds Camunda's Google Tag Manager script to the
+  generated pages. Plugin updates: maven-source-plugin 3.3.1, maven-javadoc-plugin 3.12.0,
+  maven-gpg-plugin 3.2.8, maven-deploy-plugin 3.1.4. The integration tests of the Java external
+  task client need the Tomcat distribution only when tests run (profile `tomcat-runtime`).
 - New web UI: one consistent look across the Tasklist, monitoring, modeler, administration,
   preferences and welcome pages. Page headers, cards, tables, tabs, confirmations and options
   are styled with the application instead of with the monitoring section, so a page no longer

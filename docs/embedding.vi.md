@@ -59,8 +59,10 @@ nguyên. Về mặt Maven, chỉ phần khai báo dependency thay đổi (đư�
 - **version:** phiên bản của Fasti BPM Platform (xem [Phiên bản](#versioning)), không còn là
   `7.24.0`.
 
-Chưa có bản phát hành nào của các artifact này trên Maven Central. Cho tới khi có, hãy build
-từ mã nguồn và đưa artifact vào kho Maven mà dự án của bạn sử dụng.
+Chưa có bản phát hành nào của các artifact này trên Maven Central; bản build đã được chuẩn bị
+sẵn cho việc đó (xem [Publishing to Maven Central](publishing-maven-central.md), tiếng Anh) và
+phiên bản đầu tiên được phát hành sẽ được ghi trong changelog. Cho tới khi có, hãy build từ mã
+nguồn và đưa artifact vào kho Maven mà dự án của bạn sử dụng.
 
 Nên quản lý phiên bản bằng BOM:
 

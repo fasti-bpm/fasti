@@ -1,3 +1,4 @@
 org.camunda.bpm.spring.boot.starter.CamundaBpmAutoConfiguration
 dev.fasti.spring.boot.observability.FastiObservabilityAutoConfiguration
 dev.fasti.spring.boot.absence.FastiAbsenceAutoConfiguration
+dev.fasti.spring.boot.foureyes.FastiFourEyesAutoConfiguration

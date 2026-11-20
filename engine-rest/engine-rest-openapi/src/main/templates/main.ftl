@@ -36,6 +36,7 @@
 
   ],
   "tags": [
+    {"name": "Audit Trail"},
     {"name": "Authorization"},
     {"name": "Batch"},
     {"name": "Condition"},

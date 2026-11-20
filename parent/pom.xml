@@ -34,7 +34,7 @@
     <!-- use minimum version of resteasy and jersey -->
     <version.jaxrs.api>2.0.2.Final</version.jaxrs.api>
     <version.groovy>4.0.33</version.groovy>
-    <version.graal.js>25.0.5.0.3</version.graal.js>
+    <version.graal.js>25.0.5.1</version.graal.js>
     <!-- json-smart and accessors-smart are runtime dependencies of json-path -->
     <version.json-path>2.10.0</version.json-path>
     <version.json-smart>2.6.1</version.json-smart>

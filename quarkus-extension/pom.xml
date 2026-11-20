@@ -42,6 +42,13 @@
             <skipTests>true</skipTests>
             <systemPropertyVariables>
               <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+              <!-- In a source checkout, the Quarkus test bootstrap finds the juel module in the
+                Maven workspace and loads its target/classes, which still use jakarta.el; the
+                engine is compiled against the relocated org.camunda.bpm.impl.juel.jakarta.el of
+                the shaded fasti-juel jar (VerifyError in JuelExpressionManager). Loading
+                fasti-juel parent-first takes it from the test classpath, the shaded jar, as an
+                application does. -->
+              <quarkus.class-loading.parent-first-artifacts>dev.fasti.platform.juel:fasti-juel</quarkus.class-loading.parent-first-artifacts>
             </systemPropertyVariables>
           </configuration>
         </plugin>

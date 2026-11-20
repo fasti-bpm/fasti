@@ -50,15 +50,26 @@ quarkus.camunda.datasource=my-datasource
 ### Local Build
 
 #### Executing the Tests
-```mvn clean install -Pquarkus-tests```
+```
+./mvnw -B -ntp install -DskipTests -am -pl quarkus-extension/engine/deployment,quarkus-extension/engine/qa
+./mvnw -B -ntp verify -Pquarkus-tests -f quarkus-extension/pom.xml
+```
 
 
 ---------
 #### Quarkus and JUEL bytecode incompatibilities
 
-**Context**: JUEL was built with a different Java version. Quarkus won't pick up new build changes. For more information, check #3419 ([comment](https://github.com/camunda/camunda-bpm-platform/issues/3419#issuecomment-1720916174))
+**Context**: in a source checkout, the Quarkus test bootstrap finds the `juel` module in the Maven
+workspace and loads `juel/target/classes`. Those classes still use `jakarta.el`, while the engine is
+compiled against the relocated `org.camunda.bpm.impl.juel.jakarta.el` of the shaded `fasti-juel`
+jar, so the tests failed with the `VerifyError` below. For more information, check #3419
+([comment](https://github.com/camunda/camunda-bpm-platform/issues/3419#issuecomment-1720916174)).
 
-**Solution**: If you notice juel exceptions like below, delete `/juel/target` folder and run the Quarkus build again.
+**Solution**: the surefire configuration in `quarkus-extension/pom.xml` sets
+`quarkus.class-loading.parent-first-artifacts=dev.fasti.platform.juel:fasti-juel`, so the tests
+load `fasti-juel` from the test classpath (the shaded jar), as an application does. Deleting
+`juel/target` is no longer needed. The shaded jar must exist, so build `juel` with `install` or
+`verify` (not just `test`) before the Quarkus tests.
 
 <details>
 

@@ -12,6 +12,33 @@ các mục dưới đây là khác biệt so với bản đó.
 
 ## [Unreleased]
 
+### Added
+
+- REST: `GET` and `POST /task/workload` count the open tasks the caller may read in one request:
+  in total, per candidate group and per assignee asked for (at most 200 of each), with the
+  unclaimed and overdue ones and the oldest. The grouped statements wrap the task query of the
+  engine, so its authorization check (revoked permissions included), tenant check and CMMN
+  handling apply unchanged. Java: `dev.fasti.engine.workload.TaskWorkloads.query(engine)`.
+  Documented in the OpenAPI document and the [REST guide](docs/api/README.md).
+
+### Changed
+
+- Web UI: far fewer requests while pages are open ([measurements](docs/performance-web-ui.md)).
+  The workload board reads its totals and rows with one `POST /task/workload` instead of three
+  or four task queries per group and person (344 API requests at load and about 510 per minute
+  before, 11 and 2 now; a server without the endpoint is asked per row as before). The
+  dashboard drops two unused statistics counts, takes the task totals from one request and
+  reads slow-moving numbers every five minutes (52 to 18 requests per minute). The task list
+  reads filter counts only while they are shown, every two minutes and once after a burst of
+  task actions (claim 10 to 8 requests, unclaim 7 to 4), and a business key once instead of
+  with every refresh. Pages refresh every 60 s after two minutes without input and every five
+  minutes after ten. The activity tree of an instance keeps the parts that did not change and
+  is read less often when large or unchanged.
+- Web UI: `config.json` is read with a three-second limit, after which the page starts with the
+  defaults; a stored language loads beside it. React and the router are a chunk of their own
+  (entry chunk 397 kB to 92 kB), icons used by several pages one chunk (54 files under 1.5 kB
+  to 13), and the case timeline of the task detail is loaded when its tab is opened.
+
 ## [1.1.0] - 2026-11-21
 
 ### Added

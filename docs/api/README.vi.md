@@ -126,6 +126,24 @@ curl -s -u "$AUTH" -H 'Content-Type: application/json' \
 
 Đếm thay vì lấy danh sách: `GET $BASE/task/count?...` trả `{"count":n}`.
 
+### Khối lượng việc theo nhóm và theo người (Fasti)
+
+`GET /task/workload` đếm trong một request các task đang mở mà người gọi được đọc: tổng cộng,
+theo từng candidate group và từng assignee được hỏi (tối đa 200 mỗi loại), kèm số task chưa ai
+nhận, số task quá hạn và thời điểm tạo của task cũ nhất. Kiểm tra quyền và tenant giống hệt
+`GET /task`. `POST /task/workload` nhận cùng tham số dưới dạng JSON body.
+
+```bash
+curl -s -u "$AUTH" "$BASE/task/workload?groupIdIn=accounting,sales&userIdIn=demo"
+# {"totals":{"id":null,"open":16,"unassigned":7,"overdue":0,"oldest":"..."},"orphaned":3,
+#  "groups":[{"id":"accounting","open":4,"unassigned":4,"overdue":0,"oldest":"..."},...],
+#  "users":[{"id":"demo","open":9,"unassigned":0,"overdue":0,"oldest":"..."}]}
+```
+
+`orphaned` là số task chưa ai nhận và không giao cho nhóm nào. Tham số: `groupIdIn`,
+`userIdIn`, `tenantIdIn` (phân cách bằng dấu phẩy) và `overdueBefore` (một thời điểm; mặc định
+là thời điểm hiện tại).
+
 ## Biến
 
 ```bash
@@ -300,7 +318,7 @@ Với bearer token, truyền một interceptor tự thêm header `Authorization`
 | Chủ đề | Camunda 7.24 (Run, image cũ) | Fasti |
 |---|---|---|
 | Xác thực `/engine-rest` | tắt | **bật** (Basic, hoặc bearer khi bật OIDC); phân quyền bật |
-| Endpoint mới | — | `POST /process-instance/{id}/comment/create` (bình luận cho cả instance); `GET /process-instance/{id}/comment` có sẵn trả về các bình luận đó |
+| Endpoint mới | — | `POST /process-instance/{id}/comment/create` (bình luận cho cả instance); `GET /process-instance/{id}/comment` có sẵn trả về các bình luận đó; `GET`/`POST /task/workload` (task đang mở theo nhóm và assignee) |
 | Đường dẫn web app | `/camunda/...` | `/fasti/...` (`/camunda/...` chuyển hướng). REST của engine vẫn ở `/engine-rest` |
 | Expression trong query | mọi expression | allow-list (hàm thời gian, người dùng hiện tại); expression khác bị từ chối với `400`; xem [hướng dẫn chuyển đổi](../migrate-from-camunda-7.vi.md#cái-gì-khác) |
 | Attachment, comment của task | một số endpoint không kiểm quyền | luôn kiểm quyền: có thể nhận `403` |

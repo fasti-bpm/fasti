@@ -129,6 +129,23 @@ curl -s -u "$AUTH" -H 'Content-Type: application/json' \
 
 To count instead of listing: `GET $BASE/task/count?...` returns `{"count":n}`.
 
+### Workload per group and per person (Fasti)
+
+`GET /task/workload` counts the open tasks the caller may read in one request: in total, per
+candidate group and per assignee asked for (at most 200 of each), with the unclaimed and
+overdue ones and the creation time of the oldest. The same authorization and tenant checks as
+`GET /task` apply. `POST /task/workload` takes the same parameters as a JSON body.
+
+```bash
+curl -s -u "$AUTH" "$BASE/task/workload?groupIdIn=accounting,sales&userIdIn=demo"
+# {"totals":{"id":null,"open":16,"unassigned":7,"overdue":0,"oldest":"..."},"orphaned":3,
+#  "groups":[{"id":"accounting","open":4,"unassigned":4,"overdue":0,"oldest":"..."},...],
+#  "users":[{"id":"demo","open":9,"unassigned":0,"overdue":0,"oldest":"..."}]}
+```
+
+`orphaned` counts unclaimed tasks offered to no group. Parameters: `groupIdIn`, `userIdIn`,
+`tenantIdIn` (comma separated) and `overdueBefore` (a date; the current time by default).
+
 ## Variables
 
 ```bash
@@ -306,7 +323,7 @@ For bearer tokens, pass an interceptor that adds the `Authorization` header.
 | Topic | Camunda 7.24 (Run, former image) | Fasti |
 |---|---|---|
 | Authentication on `/engine-rest` | off | **on** (Basic, or bearer with OIDC); authorizations on |
-| New endpoints | — | `POST /process-instance/{id}/comment/create` (comment on the instance itself); the existing `GET /process-instance/{id}/comment` returns those comments |
+| New endpoints | — | `POST /process-instance/{id}/comment/create` (comment on the instance itself); the existing `GET /process-instance/{id}/comment` returns those comments; `GET`/`POST /task/workload` (open tasks per group and assignee) |
 | Web application path | `/camunda/...` | `/fasti/...` (`/camunda/...` redirects). The engine REST API stays at `/engine-rest` |
 | Expressions in queries | any expression | allow-list (date functions, current user); other expressions are rejected with `400`; see the [migration guide](../migrate-from-camunda-7.md#what-differs) |
 | Task attachments and comments | some endpoints unchecked | always authorized: expect `403` where access is missing |

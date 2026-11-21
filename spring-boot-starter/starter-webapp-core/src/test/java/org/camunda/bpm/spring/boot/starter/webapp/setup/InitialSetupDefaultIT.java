@@ -28,7 +28,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { FilterTestApp.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@DirtiesContext
+// a fresh context: a cached one may have lost the static Cockpit runtime delegate when another
+// test class closed its own context
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_AND_AFTER_CLASS)
 public class InitialSetupDefaultIT extends AbstractInitialSetupIT {
 
   @Test

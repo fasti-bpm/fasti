@@ -43,7 +43,12 @@ public class FetchAndLockContextListener implements ServletContextListener {
 
   @Override
   public void contextDestroyed(ServletContextEvent sce) {
-    fetchAndLockHandler.shutdown();
+    if (fetchAndLockHandler != null) {
+      fetchAndLockHandler.shutdown();
+      // a context started again in the same class loader (a redeployment) needs a new handler:
+      // the stopped one no longer answers long polling requests
+      fetchAndLockHandler = null;
+    }
   }
 
   public static FetchAndLockHandler getFetchAndLockHandler() {

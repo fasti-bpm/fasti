@@ -31,16 +31,17 @@ import org.camunda.bpm.engine.test.util.ProvidedProcessEngineRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.runners.Enclosed;
 import org.junit.rules.RuleChain;
-import org.junit.runner.RunWith;
 
 /**
  * The control rests on the variable it records, so it works at every history level; the
  * history adds to it where it is kept.
+ *
+ * <p>Each history level is a nested test class of its own. Surefire runs the nested classes
+ * directly, so this class is abstract and has no runner of its own: running a nested class a
+ * second time through {@code Enclosed} would find the engine of its class rule already closed.
  */
-@RunWith(Enclosed.class)
-public class FourEyesHistoryLevelTest {
+public abstract class FourEyesHistoryLevelTest {
 
   static ProcessEngineBootstrapRule engine(String name, String historyLevel) {
     return new ProcessEngineBootstrapRule(configuration -> {

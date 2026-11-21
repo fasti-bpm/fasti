@@ -92,9 +92,12 @@ describe('refreshing tasks', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['task-card-variables'] });
     // and what goes by the assignee: the four-eyes status and the absent users tasks are held for
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['substitution-marks'] });
-    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ['four-eyes'] }));
+    // without what belongs to a completed task, hence the predicate
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith(expect.objectContaining({ queryKey: ['four-eyes'] })));
     refreshTasks(client, 't1');
-    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ['four-eyes', 't1'] }));
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['substitution-mark', 't1'] });
+    await waitFor(() =>
+      expect(invalidate).toHaveBeenCalledWith(expect.objectContaining({ queryKey: ['four-eyes', 't1'] })),
+    );
+    expect(invalidate).toHaveBeenCalledWith(expect.objectContaining({ queryKey: ['substitution-mark', 't1'] }));
   });
 });

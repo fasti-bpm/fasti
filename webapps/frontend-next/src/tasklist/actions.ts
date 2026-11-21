@@ -4,7 +4,7 @@
  */
 import { useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import type { QueryClient } from '@tanstack/react-query';
+import type { Query, QueryClient } from '@tanstack/react-query';
 import * as api from '../api/engine';
 import type { Task, TaskPage } from '../api/types';
 import { useSession } from '../app/session';
@@ -33,15 +33,57 @@ function patchTask(queryClient: QueryClient, taskId: string, patch: Partial<Task
 }
 
 /**
- * Reads again what was read for an assignee. A read still under way may have asked the server
- * before the change and would be handed back as the new answer (a first read is not started
- * anew by an invalidation), so it is given up first.
+ * The tasks known to be completed, by query client. A completed task is gone for good (its id is
+ * not given again), and what is read per task answers with an error for it: a local variable of
+ * a task that no longer exists is an HTTP 500 of the REST API. So nothing is read for these.
  */
-function readAgain(queryClient: QueryClient, queryKey: unknown[]): void {
-  void queryClient.cancelQueries({ queryKey }).then(() => queryClient.invalidateQueries({ queryKey }));
+const completedTasks = new WeakMap<QueryClient, Set<string>>();
+
+/** What is read for one task and its assignee; the task id is the second part of the key. */
+const PER_TASK_QUERIES = ['four-eyes', 'substitution-mark'] as const;
+
+/** Whether the task was completed in this session, so that nothing is to be read for it any more. */
+export function isTaskCompleted(queryClient: QueryClient, taskId: string | null | undefined): boolean {
+  return !!taskId && (completedTasks.get(queryClient)?.has(taskId) ?? false);
 }
 
-export function refreshTasks(queryClient: QueryClient, taskId?: string): void {
+/** Gives up what is being read for the completed tasks and keeps it from being read again. */
+function forgetCompleted(queryClient: QueryClient, taskIds: string[]): void {
+  let known = completedTasks.get(queryClient);
+  if (!known) {
+    known = new Set();
+    completedTasks.set(queryClient, known);
+  }
+  for (const taskId of taskIds) {
+    known.add(taskId);
+    for (const name of PER_TASK_QUERIES) {
+      // a read under way would reach the server after the task is gone
+      void queryClient.cancelQueries({ queryKey: [name, taskId] });
+    }
+  }
+}
+
+/**
+ * Reads again what was read for an assignee. A read still under way may have asked the server
+ * before the change and would be handed back as the new answer (a first read is not started
+ * anew by an invalidation), so it is given up first. What belongs to a completed task is left out.
+ */
+function readAgain(queryClient: QueryClient, queryKey: unknown[]): void {
+  const predicate = (query: Query): boolean => !isTaskCompleted(queryClient, query.queryKey[1] as string | undefined);
+  void queryClient
+    .cancelQueries({ queryKey, predicate })
+    .then(() => queryClient.invalidateQueries({ queryKey, predicate }));
+}
+
+export interface RefreshOptions {
+  /** the tasks completed by the change: they are gone, so nothing is read for them again */
+  completed?: string[];
+}
+
+export function refreshTasks(queryClient: QueryClient, taskId?: string, options?: RefreshOptions): void {
+  if (options?.completed?.length) {
+    forgetCompleted(queryClient, options.completed);
+  }
   // a change of several tasks may concern the open one as well
   void queryClient.invalidateQueries({ queryKey: taskId ? ['task', taskId] : ['task'] });
   void queryClient.invalidateQueries({ queryKey: ['tasks'] });

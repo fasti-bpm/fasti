@@ -469,7 +469,8 @@ export function TaskDetail({
                   ? t('task.resolved', { name: task.name ?? task.id, owner: task.owner ?? '' })
                   : t('task.completed', { name: task.name ?? task.id }),
               });
-              refreshTasks(queryClient);
+              // a completed task is gone, and nothing is read for it again; a resolved one stays open
+              refreshTasks(queryClient, undefined, resolving ? undefined : { completed: [task.id] });
               onCompleted(task.id, resolving);
             }}
           />

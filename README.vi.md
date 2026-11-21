@@ -149,6 +149,7 @@ Trên [fasti.dev](https://fasti.dev): [Cài đặt bằng Docker](https://fasti.
 | [docs/absence.vi.md](docs/absence.vi.md) | Người thay thế khi vắng mặt (từ 1.1.0) |
 | [docs/four-eyes.vi.md](docs/four-eyes.vi.md) | Nguyên tắc bốn mắt khi phê duyệt (từ 1.1.0) |
 | [docs/audit-trail.vi.md](docs/audit-trail.vi.md) | Nhật ký kiểm toán không thể sửa đổi (từ 1.1.0) |
+| [docs/performance.vi.md](docs/performance.vi.md) | Hiệu năng cơ sở dữ liệu: chỉ mục tùy chọn, cảnh báo khi khởi động, cấu hình engine, số đo |
 | [docs/single-sign-on.vi.md](docs/single-sign-on.vi.md) | Đăng nhập một lần (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.vi.md](docs/api/README.vi.md) | Tích hợp qua REST API, client external task Java và JavaScript |
 | [distro/docker/README.vi.md](distro/docker/README.vi.md) | Image: biến môi trường, driver, vận hành, tinh chỉnh |

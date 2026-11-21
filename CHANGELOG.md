@@ -22,6 +22,28 @@ các mục dưới đây là khác biệt so với bản đó.
   Documented in the OpenAPI document and the [REST guide](docs/api/README.md).
 - [Runtime tuning](docs/tuning-runtime.md): job executor and pool sizing, the audit trail under
   load, the engine gauges, and the trade-off of the history removal time strategy `start`.
+- Optional performance indexes ([docs](docs/performance.md)): `sql/optional/<database>_fasti_perf_indexes_create.sql`
+  and `..._drop.sql` for PostgreSQL, MySQL/MariaDB, Oracle, SQL Server, Db2 and H2 (Run:
+  `configuration/sql/optional`, image: `/fasti/configuration/sql/optional`). They add four
+  non-unique indexes for job acquisition, overdue tasks, tasks of one assignee by due date and the
+  absence lookup, plus three commented ones for history and incident pages. Measured on
+  PostgreSQL 16 with 1,000,000 tasks and jobs: an idle job acquisition reads 6 instead of 40,009
+  pages, the overdue task list 36 instead of 27,417, the absence lookup 8 instead of 1,359, and no
+  throughput regression of the engine was detected; MariaDB 11.4 (half the data) shows the same
+  plans, from full table scans to index ranges. Candidates that did not pay off (a user-leading
+  authorization index made some task queries with authorization 86 to 128 times slower) are
+  listed with their numbers in the docs. The schema of Camunda 7.24 stays unchanged: the scripts
+  are run by an administrator, never by the engine, are not recorded in `ACT_GE_SCHEMA_LOG`, and
+  are safe next to 7.24 nodes; the drop script removes them. The Oracle, SQL Server and Db2
+  scripts are reviewed but not yet verified on those databases.
+- Performance hints at engine start: one warning listing the optional indexes the database does
+  not have (matched by columns, so an administrator's own index counts; INFO on H2), and warnings
+  for history without cleanup window, end-time based cleanup, a connection pool smaller than the
+  job executor needs, `ensureJobDueDateNotNull` with jobs that have no due date, and acquisition by
+  due date that allows jobs without one. They only read and never fail the start;
+  `fasti.performance.index-check` / `config-check` (`warn` or `off`; image
+  `FASTI_PERFORMANCE_INDEX_CHECK` / `FASTI_PERFORMANCE_CONFIG_CHECK`; Tomcat and WildFly plugin
+  `PerformanceAdvisorPlugin`).
 
 ### Changed
 

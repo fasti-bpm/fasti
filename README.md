@@ -149,6 +149,7 @@ On [fasti.dev](https://fasti.dev): [Install with Docker](https://fasti.dev/insta
 | [docs/absence.md](docs/absence.md) | Substitutes during absence (from 1.1.0) |
 | [docs/four-eyes.md](docs/four-eyes.md) | Four-eyes control for approvals (from 1.1.0) |
 | [docs/audit-trail.md](docs/audit-trail.md) | Immutable audit trail (from 1.1.0) |
+| [docs/performance.md](docs/performance.md) | Database performance: optional indexes, startup hints, engine settings, measurements |
 | [docs/single-sign-on.md](docs/single-sign-on.md) | Single sign-on (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.md](docs/api/README.md) | REST API integration, Java and JavaScript external task clients |
 | [distro/docker/README.md](distro/docker/README.md) | Image: environment variables, drivers, operations, tuning |

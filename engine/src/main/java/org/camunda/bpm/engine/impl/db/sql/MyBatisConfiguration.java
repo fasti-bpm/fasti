@@ -124,6 +124,37 @@ public class MyBatisConfiguration extends Configuration {
     }
   }
 
+  /**
+   * Answers every request for the parameter metadata. MyBatis asks once per statement execution
+   * and swallows the exception, so it is created once and carries no stack trace.
+   */
+  protected static final SQLFeatureNotSupportedException PARAMETER_METADATA_NOT_USED = new ParameterMetadataNotUsedException();
+
+  protected static class ParameterMetadataNotUsedException extends SQLFeatureNotSupportedException {
+
+    private static final long serialVersionUID = 1L;
+
+    protected ParameterMetadataNotUsedException() {
+      super("Parameter metadata is not used by the process engine");
+    }
+
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+      // shared by all statements: no stack trace
+      return this;
+    }
+
+    @Override
+    public void setStackTrace(StackTraceElement[] stackTrace) {
+      // shared by all statements: stays without stack trace
+    }
+
+    @Override
+    public void setNextException(SQLException next) {
+      // shared by all statements: nothing is chained to it
+    }
+  }
+
   protected static class StatementHandler implements InvocationHandler {
 
     protected final PreparedStatement statement;
@@ -135,7 +166,7 @@ public class MyBatisConfiguration extends Configuration {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       if ("getParameterMetaData".equals(method.getName()) && method.getParameterCount() == 0) {
-        throw new SQLFeatureNotSupportedException("Parameter metadata is not used by the process engine");
+        throw PARAMETER_METADATA_NOT_USED;
       }
       if (method.getDeclaringClass() == Object.class) {
         switch (method.getName()) {

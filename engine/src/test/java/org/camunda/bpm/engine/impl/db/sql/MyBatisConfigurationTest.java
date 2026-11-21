@@ -136,6 +136,39 @@ public class MyBatisConfigurationTest {
     assertThatThrownBy(() -> handler.setParameters(statement)).isSameAs(failure);
   }
 
+  @Test
+  public void shouldAnswerParameterMetadataWithOneExceptionWithoutStackTrace() throws SQLException {
+    List<SQLException> thrown = new ArrayList<>();
+    ParameterHandler handler = new MyBatisConfiguration.WithoutParameterMetadata(new ParameterHandler() {
+      @Override
+      public Object getParameterObject() {
+        return null;
+      }
+
+      @Override
+      public void setParameters(PreparedStatement ps) {
+        try {
+          ps.getParameterMetaData();
+        } catch (SQLException e) {
+          thrown.add(e);
+        }
+      }
+    });
+
+    handler.setParameters(mock(PreparedStatement.class));
+    handler.setParameters(mock(PreparedStatement.class));
+
+    assertThat(thrown.size()).isEqualTo(2);
+    SQLException exception = thrown.get(0);
+    assertThat((Throwable) exception).isInstanceOf(SQLFeatureNotSupportedException.class).isSameAs(thrown.get(1));
+    assertThat(exception.getStackTrace()).isEmpty();
+    // shared: stays as it is
+    exception.setStackTrace(new Throwable().getStackTrace());
+    exception.setNextException(new SQLException("next"));
+    assertThat(exception.getStackTrace()).isEmpty();
+    assertThat((Throwable) exception.getNextException()).isNull();
+  }
+
   // Dates on MySQL and MariaDB (database type mysql): bound truncated to whole seconds
 
   private static final long MILLIS = 1_700_000_000_789L;

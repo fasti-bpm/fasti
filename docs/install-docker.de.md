@@ -202,7 +202,7 @@ Details: [Mischbetrieb mit Camunda 7-Knoten](migrate-from-camunda-7.de.md#mixed-
 | `FASTI_ADMIN_USER`, `FASTI_ADMIN_PASSWORD` (`_FILE`) | den Administrator erstellen, falls er fehlt |
 | `FASTI_JOB_EXECUTOR_ENABLED`, `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | Job-Executor dieses Knotens |
 | `FASTI_EXTRA_LIB` | Verzeichnis mit zusätzlichen JAR-Dateien (Oracle-, DB2-Treiber) |
-| `FASTI_DB_CONN_MAXACTIVE` | Größe des Verbindungspools (Standard: 10) |
+| `FASTI_DB_CONN_MAXACTIVE` | Größe des Verbindungspools (Standard: 20) |
 | `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | JVM-Optionen, prozentualer Speicheranteil für den Heap (75) |
 
 Vollständige Tabelle: [distro/docker/README.md](../distro/docker/README.md#environment-variables).

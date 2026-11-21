@@ -77,7 +77,7 @@ existing Camunda 7.24 installation leave them out: tables and accounts already e
 | `database.schemaUpdate` | `false` | `true` creates missing tables in a new database; never upgrades a schema |
 | `database.schemaVersionCheck` | `enforce` | `warn` only logs a schema older than 7.24 (unsupported) |
 | `database.schema`, `.tablePrefix` | `""` | schema name / table prefix |
-| `database.pool.maxActive`, `.minIdle` | `""` | HikariCP pool per pod (default 10) |
+| `database.pool.maxActive`, `.minIdle` | `""` | HikariCP pool per pod (default of the image: 20, 10 up to 1.1) |
 | `database.waitFor`, `.waitForTimeout` | `""`, `60` | wait for `host:port` before starting the JVM |
 | `admin.user`, `admin.existingSecret`, `admin.passwordKey` | `""`, `""`, `password` | administrator created if missing |
 | `engine.timezone` | `UTC` | `TZ`; must match every node on the database |

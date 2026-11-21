@@ -202,7 +202,7 @@ Fasti и Camunda 7.24 могут одновременно работать с о
 | `FASTI_ADMIN_USER`, `FASTI_ADMIN_PASSWORD` (`_FILE`) | создать администратора, если он отсутствует |
 | `FASTI_JOB_EXECUTOR_ENABLED`, `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | исполнитель заданий этого узла |
 | `FASTI_EXTRA_LIB` | каталог дополнительных JAR-файлов (драйверы Oracle, DB2) |
-| `FASTI_DB_CONN_MAXACTIVE` | размер пула соединений (по умолчанию 10) |
+| `FASTI_DB_CONN_MAXACTIVE` | размер пула соединений (по умолчанию 20) |
 | `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | параметры JVM, доля памяти для кучи в процентах (75) |
 
 Полная таблица: [distro/docker/README.md](../distro/docker/README.md#environment-variables).

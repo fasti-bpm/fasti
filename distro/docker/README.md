@@ -229,13 +229,15 @@ about 50k process instances, 360k history rows, 10k open tasks):
   must be writable (mount a volume to keep it across re-created containers). An archive that
   does not match the JDK or class path is ignored; delete the file when upgrading the image so
   that it is created again.
-- **Connection pool (HikariCP):** 10 by default. Size it above the job executor threads plus the
-  expected concurrent REST requests with `FASTI_DB_CONN_MAXACTIVE` (for example 30). The pools of
-  all nodes together must stay below the database's `max_connections`.
-- **Job executor:** defaults as in Run (core 3, max 10, queue 3). For many async/timer jobs set
-  `CAMUNDA_BPM_JOB_EXECUTION_CORE_POOL_SIZE`, `..._MAX_POOL_SIZE`, `..._QUEUE_CAPACITY`,
-  `..._MAX_JOBS_PER_ACQUISITION`, and grow the connection pool with them. Switch it off on
-  nodes that only serve REST/UI: `FASTI_JOB_EXECUTOR_ENABLED=false`.
+- **Connection pool (HikariCP):** 20 by default (10 up to 1.1): the ten job executor threads
+  plus room for concurrent REST requests. Change it with `FASTI_DB_CONN_MAXACTIVE` (for example
+  30). The pools of all nodes together must stay below the database's `max_connections`.
+- **Job executor:** defaults as in Run: 10 threads, a queue of 10 and 10 jobs per acquisition
+  (up to 1.1: core 3, max 10, queue 3, 3 jobs per acquisition). For many async/timer jobs raise
+  `CAMUNDA_BPM_JOB_EXECUTION_CORE_POOL_SIZE`, `..._MAX_POOL_SIZE`, `..._QUEUE_CAPACITY` and
+  `..._MAX_JOBS_PER_ACQUISITION` together, and grow the connection pool by as many
+  ([runtime tuning](../../docs/tuning-runtime.md)). Switch it off on nodes that only serve
+  REST/UI: `FASTI_JOB_EXECUTOR_ENABLED=false`.
 - **Several nodes:** every node's job executor acquires from the same tables; more nodes raise
   job throughput and also optimistic locking conflicts (harmless, the job is retried). Keep
   `max-jobs-per-acquisition` moderate (≤ 16) with many nodes. The web UI needs sticky sessions.

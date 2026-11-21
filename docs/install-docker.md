@@ -201,7 +201,7 @@ Details: [Mixed operation with Camunda 7 nodes](migrate-from-camunda-7.md#mixed-
 | `FASTI_ADMIN_USER`, `FASTI_ADMIN_PASSWORD` (`_FILE`) | create the admin if missing |
 | `FASTI_JOB_EXECUTOR_ENABLED`, `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | job executor of this node |
 | `FASTI_EXTRA_LIB` | directory of additional jars (Oracle, DB2 drivers) |
-| `FASTI_DB_CONN_MAXACTIVE` | connection pool size (default 10) |
+| `FASTI_DB_CONN_MAXACTIVE` | connection pool size (default 20) |
 | `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | JVM options, percentage of memory for the heap (75) |
 
 Full table: [distro/docker/README.md](../distro/docker/README.md#environment-variables).

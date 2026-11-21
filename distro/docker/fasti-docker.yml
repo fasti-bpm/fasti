@@ -28,6 +28,13 @@ camunda.bpm:
     # every deployment. Set FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE=true (or disable the job
     # executor) when other nodes run process applications whose classes this node lacks.
     deployment-aware: false
+    # an acquisition fetches up to max-jobs-per-acquisition due jobs, the queue holds one
+    # acquisition and max-pool-size threads execute them (docs/tuning-runtime.md). In Spring Boot
+    # notation: CAMUNDA_BPM_JOB_EXECUTION_MAX_POOL_SIZE and so on.
+    core-pool-size: 10
+    max-pool-size: 10
+    queue-capacity: 10
+    max-jobs-per-acquisition: 10
   run:
     auth:
       enabled: true
@@ -108,6 +115,13 @@ server:
   forward-headers-strategy: native
 
 spring:
+  # room for every job executor thread plus the requests that use the database at the same time
+  # (HikariCP alone defaults to 10, as many as there are job threads). DB_CONN_MAXACTIVE or
+  # SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE change it; all nodes together must stay below the
+  # connection limit of the database.
+  datasource:
+    hikari:
+      maximum-pool-size: 20
   lifecycle:
     timeout-per-shutdown-phase: 30s
   web.resources:

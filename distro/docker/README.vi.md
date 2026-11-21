@@ -240,13 +240,15 @@ Số đo tham khảo (image này, PostgreSQL 16 cùng máy, 16 nhân, container 
   `/fasti/data/fasti-appcds.jsa` khi container dừng êm; các lần chạy sau dùng lại. Cần
   `/fasti/data` ghi được (gắn volume để giữ qua các lần tạo lại container). Archive không khớp
   với JDK hoặc classpath thì JVM bỏ qua; khi nâng cấp image nên xóa file này để nó được tạo lại.
-- **Pool kết nối (HikariCP):** mặc định 10. Cần lớn hơn số luồng job executor cộng số request
-  REST đồng thời mong đợi: `FASTI_DB_CONN_MAXACTIVE` (ví dụ 30). Tổng pool của mọi node phải
-  nằm dưới `max_connections` của cơ sở dữ liệu.
-- **Job executor:** mặc định giống Run (core 3, max 10, queue 3). Khi có nhiều job async/timer:
-  `CAMUNDA_BPM_JOB_EXECUTION_CORE_POOL_SIZE`, `..._MAX_POOL_SIZE`, `..._QUEUE_CAPACITY`,
-  `..._MAX_JOBS_PER_ACQUISITION`; tăng pool kết nối theo. Tắt hẳn trên node chỉ phục vụ REST/UI:
-  `FASTI_JOB_EXECUTOR_ENABLED=false`.
+- **Pool kết nối (HikariCP):** mặc định 20 (đến 1.1 là 10): mười luồng job executor cộng chỗ
+  cho các request REST đồng thời. Đổi bằng `FASTI_DB_CONN_MAXACTIVE` (ví dụ 30). Tổng pool của
+  mọi node phải nằm dưới `max_connections` của cơ sở dữ liệu.
+- **Job executor:** mặc định giống Run: 10 luồng, hàng đợi 10 và 10 job mỗi lần lấy (đến 1.1:
+  core 3, max 10, queue 3, 3 job mỗi lần lấy). Khi có nhiều job async/timer, tăng cùng lúc
+  `CAMUNDA_BPM_JOB_EXECUTION_CORE_POOL_SIZE`, `..._MAX_POOL_SIZE`, `..._QUEUE_CAPACITY` và
+  `..._MAX_JOBS_PER_ACQUISITION`, và tăng pool kết nối thêm từng đó
+  ([tinh chỉnh khi chạy](../../docs/tuning-runtime.vi.md)). Tắt hẳn trên node chỉ phục vụ
+  REST/UI: `FASTI_JOB_EXECUTOR_ENABLED=false`.
 - **Nhiều node:** mỗi node có job executor riêng lấy job từ cùng bảng; thêm node tăng thông
   lượng job nhưng cũng tăng xung đột khóa lạc quan (vô hại, job được thử lại). Giữ
   `max-jobs-per-acquisition` vừa phải (≤ 16) khi có nhiều node. Web UI cần sticky session.

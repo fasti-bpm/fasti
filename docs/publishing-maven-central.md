@@ -34,6 +34,17 @@ Every published artifact gets a sources jar, a javadoc jar and a GPG signature; 
 the project metadata (URL, Apache-2.0 licence, SCM, developers, issue tracker) inherited from
 `fasti-root`, which has no parent of its own.
 
+### Size of a release and the Central limits
+
+A local dry run of the `central` profile (without the web UI build, so the web application
+artifacts were smaller than in a release) produced a bundle of 83 components, 1,410 files
+(artifacts, POMs, `.md5` and `.sha1`) and about 139 MB, before signing; signing adds one `.asc`
+file per artifact and POM. Since October 2026 Central applies monthly limits per organisation
+(files, size and releases). Check the values for your organisation in the portal's *Usage*
+page before the first release: a release of this size may exceed them. If it does, publish a
+smaller set (for example leave the WARs and the test-support modules out by adding
+`<skip.central.release>true</skip.central.release>` to them) or ask Sonatype for higher limits.
+
 ## One-time setup (owner)
 
 1. **Central Portal account.** Sign in at <https://central.sonatype.com> (a GitHub login works)
@@ -41,22 +52,25 @@ the project metadata (URL, Apache-2.0 licence, SCM, developers, issue tracker) i
 2. **Namespace `dev.fasti`.** Under *Namespaces*, add `dev.fasti`. The portal shows a
    verification key; add it as a DNS `TXT` record on `fasti.dev` and press *Verify*. Once
    `dev.fasti` is verified, all subgroups (`dev.fasti.platform`, `dev.fasti.platform.run`, ...)
-   can be published. The record can be removed after verification.
+   can be published. Keep the record in place; Central does not say it may be removed.
 3. **GPG key.** Create a signing key for the project (not a personal key), for example:
 
    ```sh
-   gpg --full-generate-key            # RSA 4096 or ed25519, name "Fasti BPM", email dev@fasti.dev
+   gpg --full-generate-key            # "RSA (sign only)", 4096 bits, name "Fasti BPM", email dev@fasti.dev
    gpg --list-secret-keys --keyid-format long
    gpg --keyserver keys.openpgp.org --send-keys <KEY_ID>
    gpg --keyserver keyserver.ubuntu.com --send-keys <KEY_ID>
    gpg --armor --export-secret-keys <KEY_ID> > fasti-signing-key.asc   # for the secret below
    ```
 
-   The public key must be on a public key server: Central checks the signatures against it.
+   Central's documentation shows RSA keys and checks the primary key only, so sign with the
+   primary key and add no signing subkey. The public key must be on a public key server:
+   Central checks the signatures against it.
    Keep a backup of the key and its passphrase outside GitHub, and delete the exported file
    after adding the secret.
-4. **Portal token.** In the portal, *View Account* → *Generate User Token*. It shows a
-   username and a password for the token (not your login).
+4. **Portal token.** Open <https://central.sonatype.com/usertoken> → *Generate User Token*,
+   give it a name and an expiration. It shows a username and a password for the token (not
+   your login) once only; copy them straight into the GitHub secrets below.
 5. **GitHub environment `maven-central`** (repository *Settings* → *Environments* → *New
    environment*). The `publish` job of the workflow runs in this environment and is the only
    job that can read its secrets.

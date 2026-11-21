@@ -398,6 +398,16 @@
   color: var(--success);
 }
 
+.badge--info {
+  background: var(--accent-soft);
+  color: var(--accent-soft-text, var(--accent));
+}
+
+.badge--muted {
+  background: var(--surface-subtle);
+  color: var(--text-subtle);
+}
+
 .badge--button {
   border: 0;
   font-family: inherit;

@@ -1,0 +1,131 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Fasti BPM contributors
+ */
+/** English messages of the pages of cases (CMMN). */
+const messages = {
+  'cmmn.nav': 'Cases (CMMN)',
+  'cmmn.nav.history': 'Case history',
+
+  'cmmn.definitions.title': 'Case definitions',
+  'cmmn.definitions.count': '{count} case definitions',
+  'cmmn.definitions.count.one': '1 case definition',
+  'cmmn.definitions.search': 'Search case definitions',
+  'cmmn.definitions.noMatch': 'No case definition matches the search',
+  'cmmn.definitions.empty': 'No case definitions deployed',
+  'cmmn.definitions.emptyHint': 'Cases are modelled in CMMN and deployed as .cmmn files, for example on the page',
+  'cmmn.definitions.open': 'Open instances',
+
+  'cmmn.definition.title': 'Case definition',
+  'cmmn.definition.notFound': 'This case definition does not exist',
+  'cmmn.definition.instances': 'Open instances of this version',
+  'cmmn.definition.instancesEmpty': 'This version has no open instances',
+  'cmmn.definition.businessKeySearch': 'Business key (exact)',
+  'cmmn.definition.noMatch': 'No open instance has this business key',
+  'cmmn.definition.diagramLabel': 'Case diagram with the number of open plan items',
+  'cmmn.definition.diagramHint': 'The numbers show how many plan items of open instances are active or wait to be started.',
+  'cmmn.definition.truncated': 'The numbers on the diagram count the first {count} plan items only.',
+
+  'cmmn.create.action': 'Create case instance',
+  'cmmn.create.title': 'Create a case instance',
+  'cmmn.create.text': 'Creates an instance of “{name}”, version {version}. Its plan items start at once.',
+  'cmmn.create.done': 'Case instance created',
+  'cmmn.create.failed': 'The case instance could not be created',
+
+  'cmmn.instance': 'Case instance',
+  'cmmn.instance.gone': 'This case instance does not exist',
+  'cmmn.instance.goneHint': 'The ID may be wrong, or the instance was closed and its history removed.',
+  'cmmn.instance.closedNote': 'This case instance is closed. It is shown as the history kept it and cannot be changed.',
+  'cmmn.instance.created': 'Created',
+  'cmmn.instance.closedAt': 'Closed',
+  'cmmn.instance.backToDefinition': 'Back to the case definition',
+  'cmmn.instance.parentProcess': 'Started by a process instance',
+  'cmmn.instance.parentCase': 'Started by a case instance',
+  'cmmn.instance.diagramLabel': 'Case diagram with the state of each plan item',
+  'cmmn.instance.diagramHint': 'Choose a plan item in the diagram to see only it in the list of plan items.',
+  'cmmn.instance.tabs': 'Data of the case instance',
+  'cmmn.instance.tab.items': 'Plan items',
+  'cmmn.instance.tab.history': 'History',
+  'cmmn.instance.complete': 'Complete case',
+  'cmmn.instance.terminate': 'Terminate case',
+  'cmmn.instance.close': 'Close case',
+  'cmmn.instance.completeTitle': 'Complete the case instance',
+  'cmmn.instance.completeText':
+    'The instance of “{name}” is completed. This is possible only when no plan item is active any more, and it cannot be undone.',
+  'cmmn.instance.terminateTitle': 'Terminate the case instance',
+  'cmmn.instance.terminateText':
+    'The instance of “{name}” and all its plan items that are not finished are terminated; open tasks are removed. This cannot be undone.',
+  'cmmn.instance.closeTitle': 'Close the case instance',
+  'cmmn.instance.closeText':
+    'The instance of “{name}” is closed: it leaves the running instances and only the history keeps it. This cannot be undone.',
+  'cmmn.instance.done.complete': 'Case instance completed',
+  'cmmn.instance.done.terminate': 'Case instance terminated',
+  'cmmn.instance.done.close': 'Case instance closed',
+  'cmmn.instance.failed': 'The case instance could not be changed',
+
+  'cmmn.state.active': 'Active',
+  'cmmn.state.enabled': 'Enabled',
+  'cmmn.state.disabled': 'Disabled',
+  'cmmn.state.available': 'Available',
+  'cmmn.state.completed': 'Completed',
+  'cmmn.state.terminated': 'Terminated',
+  'cmmn.state.closed': 'Closed',
+
+  'cmmn.type.casePlanModel': 'Case plan model',
+  'cmmn.type.stage': 'Stage',
+  'cmmn.type.humanTask': 'Human task',
+  'cmmn.type.processTask': 'Process task',
+  'cmmn.type.caseTask': 'Case task',
+  'cmmn.type.decisionTask': 'Decision task',
+  'cmmn.type.task': 'Task',
+  'cmmn.type.milestone': 'Milestone',
+
+  'cmmn.action.manualStart': 'Start',
+  'cmmn.action.complete': 'Complete',
+  'cmmn.action.disable': 'Disable',
+  'cmmn.action.reenable': 'Enable again',
+  'cmmn.action.terminate': 'Terminate',
+  'cmmn.action.of': '{action}: {name}',
+
+  'cmmn.item.name': 'Plan item',
+  'cmmn.item.type': 'Type',
+  'cmmn.item.required': 'Required',
+  'cmmn.item.failed': '“{name}” could not be changed',
+  'cmmn.item.done.manualStart': '“{name}” started',
+  'cmmn.item.done.complete': '“{name}” completed',
+  'cmmn.item.done.disable': '“{name}” disabled',
+  'cmmn.item.done.reenable': '“{name}” enabled again',
+  'cmmn.item.done.terminate': '“{name}” terminated',
+  'cmmn.item.completeTitle': 'Complete the plan item',
+  'cmmn.item.completeText':
+    '“{name}” is completed without a form; an open task of it is completed as well. This cannot be undone.',
+  'cmmn.item.terminateTitle': 'Terminate the plan item',
+  'cmmn.item.terminateText':
+    '“{name}” and everything it contains is terminated; open tasks of it are removed. This cannot be undone.',
+  'cmmn.items.empty': 'No plan item is open',
+  'cmmn.items.closed': 'A closed case has no open plan items. The history shows what happened.',
+  'cmmn.tasks.empty': 'This case instance has no open task',
+
+  'cmmn.history.title': 'Case history',
+  'cmmn.history.count': '{count} case instances',
+  'cmmn.history.count.one': '1 case instance',
+  'cmmn.history.search': 'Search by business key',
+  'cmmn.history.case': 'Case',
+  'cmmn.history.filter.all': 'All',
+  'cmmn.history.filter.open': 'Not closed',
+  'cmmn.history.filter.closed': 'Closed',
+  'cmmn.history.empty': 'The history has no case instances yet',
+  'cmmn.history.noMatch': 'No case instance matches',
+  'cmmn.history.itemsEmpty': 'The history has no plan items of this case instance',
+  'cmmn.variables.fromHistory': 'The values as the history kept them; a closed case cannot be changed.',
+
+  'cmmn.legend': 'States on the diagram',
+  'cmmn.diagram.label': 'Case diagram',
+  'cmmn.diagram.noLayout': 'This model has no diagram layout, so only its plan items are listed.',
+  'cmmn.task.diagramLabel': 'Case diagram, the plan item of the task is highlighted',
+  'cmmn.task.openCase': 'Open the case in Cockpit',
+
+  'palette.kind.case': 'Case instance',
+};
+
+export default messages;

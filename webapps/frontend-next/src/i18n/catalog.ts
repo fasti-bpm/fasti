@@ -11,11 +11,12 @@
  * merged; how the keys are split among the files does not matter.
  */
 import type audit from './locales/en/audit';
+import type cmmn from './locales/en/cmmn';
 import type core from './locales/en/core';
 import type ops from './locales/en/ops';
 import type tools from './locales/en/tools';
 
-type English = typeof core & typeof ops & typeof tools & typeof audit;
+type English = typeof core & typeof ops & typeof tools & typeof audit & typeof cmmn;
 
 /**
  * Plural categories of `Intl.PluralRules` that a message may have as a

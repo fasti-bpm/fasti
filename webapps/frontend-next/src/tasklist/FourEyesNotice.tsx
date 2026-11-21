@@ -12,12 +12,16 @@ import { Notice } from '../ui';
 
 /**
  * The four-eyes status of a task for the signed-in user. Read again when the assignee changes,
- * since the assignee counts as well.
+ * since the assignee counts as well. An assignment is shown before the server confirmed it, so a
+ * status read meanwhile may still be the one of the former assignee: such a status is not used,
+ * and the status is read again once the change is through (`refreshTasks`).
  */
 export function useFourEyes(task: Pick<Task, 'id' | 'assignee' | 'processInstanceId'> | undefined) {
+  const assignee = task?.assignee ?? null;
   return useQuery({
-    queryKey: ['four-eyes', task?.id, task?.assignee ?? null],
+    queryKey: ['four-eyes', task?.id, assignee],
     queryFn: ({ signal }) => getFourEyesStatus(task?.id ?? '', signal),
+    select: (status) => (status && (status.assignee ?? null) !== assignee ? null : status),
     enabled: !!task?.processInstanceId,
     staleTime: 30_000,
   });

@@ -39,6 +39,8 @@ export function refreshTasks(queryClient: QueryClient, taskId?: string): void {
   // the variables shown on the cards change with the tasks, not with their key
   void queryClient.invalidateQueries({ queryKey: ['task-card-variables'] });
   void queryClient.invalidateQueries({ queryKey: ['filters'] });
+  // who may complete a task depends on its assignee and on the steps completed meanwhile
+  void queryClient.invalidateQueries({ queryKey: taskId ? ['four-eyes', taskId] : ['four-eyes'] });
 }
 
 export interface TaskActions {

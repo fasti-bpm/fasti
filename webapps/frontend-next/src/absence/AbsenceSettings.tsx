@@ -60,10 +60,14 @@ export function draftProblems(draft: AbsenceDraft, userId: string, now: Date = n
   return problems;
 }
 
-function draftOf(absence: Absence | undefined): AbsenceDraft {
+/**
+ * The form for an absence. One that is under way keeps its start: an empty "From" means now to
+ * the server, which would move the recorded start of an absence that is only extended.
+ */
+export function draftOf(absence: Absence | undefined): AbsenceDraft {
   const live = absence && (absence.status === 'active' || absence.status === 'upcoming');
   return {
-    from: live && absence.status === 'upcoming' ? toDateTimeInput(parseEngineDate(absence.from)) : '',
+    from: live ? toDateTimeInput(parseEngineDate(absence.from)) : '',
     until: live ? toDateTimeInput(parseEngineDate(absence.until)) : '',
     substituteId: live ? (absence.substituteId ?? '') : '',
     note: live ? (absence.note ?? '') : '',
@@ -95,7 +99,7 @@ export function AbsenceSettings({ userId, self }: { userId: string; self: boolea
         <Notice tone="info">{t('absence.unavailable')}</Notice>
       ) : (
         <AbsenceForm
-          key={`${query.data.status}|${query.data.from}|${query.data.until}|${query.data.substituteId}|${query.data.note}`}
+          key={`${userId}|${query.data.status}|${query.data.from}|${query.data.until}|${query.data.substituteId}|${query.data.note}`}
           absence={query.data}
           userId={userId}
           self={self}
@@ -182,8 +186,10 @@ function AbsenceForm({ absence, userId, self }: { absence: Absence; userId: stri
     try {
       const from = fromDateTimeInput(draft.from);
       const until = fromDateTimeInput(draft.until) as Date;
+      // a start left as it was is sent as stored: the field only knows minutes
+      const kept = live && !!draft.from && draft.from === draftOf(absence).from;
       await setAbsence(userId, {
-        from: from ? toEngineDate(from) : null,
+        from: kept ? absence.from : from ? toEngineDate(from) : null,
         until: toEngineDate(until),
         substituteId: draft.substituteId.trim(),
         note: draft.note.trim() || null,

@@ -25,7 +25,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongSupplier;
 import java.util.function.ToLongFunction;
 
@@ -43,22 +43,34 @@ import org.slf4j.LoggerFactory;
  * Each value is a count query on the database. Reading a gauge never runs a query: it returns
  * the values read last. When they are older than the refresh interval, reading a gauge starts
  * one round of queries on a background thread, and the following reads get its result; so a
- * scrape does not wait for the database, frequent scrapes or several registries cause at most
- * one round of queries per interval, and an engine nobody scrapes is not queried. A value is
- * therefore up to one refresh interval plus one scrape interval old, and {@code NaN} until the
- * first round has finished (it is started when the gauges are registered). With a refresh
- * interval of zero the values are read on every read of a gauge, in the reading thread (for
- * tests). The queries run without an authenticated user and therefore see the whole engine.
+ * scrape does not wait for the database, and frequent scrapes or several registries cause at
+ * most one round of queries per interval. The first round starts when the gauges are
+ * registered; after it, an engine nobody scrapes is not queried. A value is therefore up to one
+ * refresh interval plus one scrape interval old, and {@code NaN} until the first round has
+ * finished. A round that has been running for more than {@value #HUNG_ROUND_INTERVALS} refresh
+ * intervals (a count query that waits for a lock or on a dead connection) turns every value
+ * into {@code NaN} until it ends, so that stale values do not pass for current ones. With a
+ * refresh interval of zero the values are read on every read of a gauge, in the reading thread
+ * (for tests). The queries run without an authenticated user and therefore see the whole engine.
  */
 public class EngineGauges {
 
   private static final Logger LOG = LoggerFactory.getLogger(EngineGauges.class);
 
+  /** After how many refresh intervals a running round counts as hung and the values as unknown. */
+  static final int HUNG_ROUND_INTERVALS = 3;
+
+  /** How long {@link #close()} waits for a running round to end before it interrupts it. */
+  static final Duration CLOSE_TIMEOUT = Duration.ofSeconds(5);
+
+  static final long NOT_RUNNING = Long.MIN_VALUE;
+
   protected final ProcessEngine processEngine;
   protected final long refreshNanos;
   protected final LongSupplier clock;
   protected final Executor executor;
-  protected final AtomicBoolean refreshing = new AtomicBoolean();
+  /** When the running round was started (clock value), or {@link #NOT_RUNNING}; at most one round runs. */
+  protected final AtomicLong roundStartedAt = new AtomicLong(NOT_RUNNING);
   protected volatile boolean closed;
 
   protected final Map<String, ToLongFunction<ProcessEngine>> queries = new LinkedHashMap<>();
@@ -69,7 +81,8 @@ public class EngineGauges {
   protected volatile boolean refreshed;
 
   public EngineGauges(ProcessEngine processEngine, Duration refreshInterval) {
-    this(processEngine, refreshInterval, System::nanoTime, backgroundExecutor(processEngine.getName()));
+    this(processEngine, refreshInterval, System::nanoTime,
+        backgroundExecutor(processEngine.getName(), keepAlive(refreshInterval)));
   }
 
   EngineGauges(ProcessEngine processEngine, Duration refreshInterval, LongSupplier clock, Executor executor) {
@@ -98,11 +111,21 @@ public class EngineGauges {
   }
 
   /**
-   * One daemon thread that exists only while a round of queries runs (and a few seconds after),
-   * so nothing is left behind when the engine is closed.
+   * Twice the refresh interval, at least ten seconds: while the gauges are scraped, one thread
+   * serves every round instead of a new thread per round.
    */
-  static Executor backgroundExecutor(String engineName) {
-    ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), task -> {
+  static Duration keepAlive(Duration refreshInterval) {
+    Duration twice = refreshInterval == null ? Duration.ZERO : refreshInterval.multipliedBy(2);
+    return twice.compareTo(Duration.ofSeconds(10)) > 0 ? twice : Duration.ofSeconds(10);
+  }
+
+  /**
+   * One daemon thread that ends when no round has run for the keep-alive time, or when the
+   * gauges are closed, so nothing is left behind when the engine is closed.
+   */
+  static Executor backgroundExecutor(String engineName, Duration keepAlive) {
+    ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, keepAlive.toMillis(), TimeUnit.MILLISECONDS,
+        new LinkedBlockingQueue<>(), task -> {
       Thread thread = new Thread(task, "fasti-engine-gauges-" + engineName);
       thread.setDaemon(true);
       return thread;
@@ -129,12 +152,17 @@ public class EngineGauges {
     return queries.keySet();
   }
 
-  /** The value read last, or {@code NaN} if it was not read yet or could not be read. Does not wait for the database. */
+  /**
+   * The value read last, or {@code NaN} if it was not read yet, could not be read, or the round
+   * that reads it again hangs. Does not wait for the database.
+   */
   public double value(String name) {
     if (closed) {
       // the values read last
     } else if (refreshNanos == 0) {
       refresh();
+    } else if (isHung()) {
+      return Double.NaN;
     } else if (isStale()) {
       refreshInBackground();
     }
@@ -144,9 +172,10 @@ public class EngineGauges {
 
   /** Starts a round of queries on the background thread, unless one is running or the gauges are closed. */
   protected void refreshInBackground() {
-    if (closed || !refreshing.compareAndSet(false, true)) {
+    if (closed || !roundStartedAt.compareAndSet(NOT_RUNNING, clock.getAsLong())) {
       return;
     }
+    boolean submitted = false;
     try {
       executor.execute(() -> {
         try {
@@ -155,22 +184,40 @@ public class EngineGauges {
             refresh();
           }
         } finally {
-          refreshing.set(false);
+          roundStartedAt.set(NOT_RUNNING);
         }
       });
+      submitted = true;
     } catch (RejectedExecutionException e) {
-      refreshing.set(false);
+      LOG.debug("Could not start reading the gauges of engine {}", processEngine.getName(), e);
+    } finally {
+      // whatever the executor threw (no thread could be created, for example), the next stale
+      // read tries again
+      if (!submitted) {
+        roundStartedAt.set(NOT_RUNNING);
+      }
     }
   }
 
   /**
    * Ends the reading: the gauges keep the values read last and the background thread is released.
-   * Called when the application context closes, so that an engine that was closed is not queried.
+   * Called when the application context closes, before the engine is closed, so that an engine
+   * that was closed is not queried. Waits up to {@link #CLOSE_TIMEOUT} for a running round, then
+   * interrupts it.
    */
   public void close() {
     closed = true;
     if (executor instanceof ExecutorService) {
-      ((ExecutorService) executor).shutdown();
+      ExecutorService service = (ExecutorService) executor;
+      service.shutdown();
+      try {
+        if (!service.awaitTermination(CLOSE_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {
+          service.shutdownNow();
+        }
+      } catch (InterruptedException e) {
+        service.shutdownNow();
+        Thread.currentThread().interrupt();
+      }
     }
   }
 
@@ -188,6 +235,12 @@ public class EngineGauges {
     values = fresh;
     refreshedAt = clock.getAsLong();
     refreshed = true;
+  }
+
+  /** Whether a round has been running for more than {@value #HUNG_ROUND_INTERVALS} refresh intervals. */
+  protected boolean isHung() {
+    long started = roundStartedAt.get();
+    return started != NOT_RUNNING && clock.getAsLong() - started > HUNG_ROUND_INTERVALS * refreshNanos;
   }
 
   protected boolean isStale() {

@@ -39,6 +39,7 @@ import org.camunda.bpm.engine.impl.util.xml.Element;
 import org.camunda.bpm.engine.management.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.SmartLifecycle;
 
 /**
  * Publishes metrics of the process engine to Micrometer.
@@ -51,8 +52,12 @@ import org.slf4j.LoggerFactory;
  * <p>
  * The counters only move while the metrics of the engine are enabled
  * ({@code camunda.bpm.metrics.enabled}, on by default).
+ * <p>
+ * As a {@link SmartLifecycle} bean the plugin stops the gauges when the application context
+ * stops or closes, before any bean is destroyed: the engine is closed only after that, so no
+ * round of queries runs against a closed engine or connection pool.
  */
-public class FastiEngineMetricsPlugin extends AbstractProcessEnginePlugin implements AutoCloseable {
+public class FastiEngineMetricsPlugin extends AbstractProcessEnginePlugin implements AutoCloseable, SmartLifecycle {
 
   private static final Logger LOG = LoggerFactory.getLogger(FastiEngineMetricsPlugin.class);
 
@@ -63,6 +68,8 @@ public class FastiEngineMetricsPlugin extends AbstractProcessEnginePlugin implem
   protected final Duration gaugeRefreshInterval;
 
   protected final Map<String, EngineGauges> gauges = new LinkedHashMap<>();
+
+  protected volatile boolean running;
 
   public FastiEngineMetricsPlugin(Supplier<MeterRegistry> meterRegistry, boolean gaugesEnabled,
                                   Duration gaugeRefreshInterval) {
@@ -110,10 +117,30 @@ public class FastiEngineMetricsPlugin extends AbstractProcessEnginePlugin implem
     return gauges;
   }
 
-  /** Stops the gauges from reading the database; the application context calls it when it closes. */
+  /**
+   * Stops the gauges from reading the database; they keep the values read last. Called by
+   * {@link #stop()} and again when the bean is destroyed; a second call does nothing.
+   */
   @Override
   public void close() {
     gauges.values().forEach(EngineGauges::close);
+  }
+
+  @Override
+  public void start() {
+    running = true;
+  }
+
+  /** The gauges stay closed after the context was stopped, also if it is started again. */
+  @Override
+  public void stop() {
+    running = false;
+    close();
+  }
+
+  @Override
+  public boolean isRunning() {
+    return running;
   }
 
   /** The counters per metric name of the engine. */

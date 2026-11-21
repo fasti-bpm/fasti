@@ -17,6 +17,7 @@
 package dev.fasti.spring.boot.observability;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -24,7 +25,10 @@ import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -117,7 +121,7 @@ public class EngineGaugesTest {
   public void shouldNotWaitForASlowQuery() throws Exception {
     CountDownLatch started = new CountDownLatch(1);
     CountDownLatch release = new CountDownLatch(1);
-    EngineGauges gauges = new EngineGauges(engine, Duration.ofSeconds(30), now::get, EngineGauges.backgroundExecutor("gauges"));
+    EngineGauges gauges = new EngineGauges(engine, Duration.ofSeconds(30), now::get, EngineGauges.backgroundExecutor("gauges", Duration.ofSeconds(10)));
     gauges.queries.clear();
     gauges.add(NAME, "A slow value", processEngine -> {
       started.countDown();
@@ -195,5 +199,90 @@ public class EngineGaugesTest {
     assertThat(gauges.value(NAME)).isNaN();
     // the failed round counts: the next one starts after the interval
     assertThat(background).isEmpty();
+  }
+
+  @Test
+  public void shouldReportNaNWhileARoundHangs() {
+    EngineGauges gauges = gauges(Duration.ofSeconds(30), () -> { });
+    gauges.value(NAME);
+    runBackground();
+    assertThat(gauges.value(NAME)).isEqualTo(1);
+
+    // the next round starts and does not end (a count query waits for a lock)
+    now.addAndGet(Duration.ofSeconds(30).toNanos());
+    assertThat(gauges.value(NAME)).isEqualTo(1);
+    assertThat(background).hasSize(1);
+    now.addAndGet(Duration.ofSeconds(90).toNanos());
+    assertThat(gauges.value(NAME)).isEqualTo(1);
+
+    // more than three intervals: the last values are no longer passed off as current
+    now.addAndGet(1);
+    assertThat(gauges.value(NAME)).isNaN();
+    assertThat(background).hasSize(1);
+
+    runBackground();
+    assertThat(gauges.value(NAME)).isEqualTo(2);
+  }
+
+  @Test
+  public void shouldTryAgainWhenTheExecutorFails() {
+    AtomicBoolean fail = new AtomicBoolean(true);
+    Executor executor = task -> {
+      if (fail.getAndSet(false)) {
+        throw new OutOfMemoryError("unable to create native thread");
+      }
+      background.add(task);
+    };
+    EngineGauges gauges = new EngineGauges(engine, Duration.ofSeconds(30), now::get, executor);
+    gauges.queries.clear();
+    gauges.add(NAME, "A test value", processEngine -> rounds.incrementAndGet());
+
+    assertThat(catchThrowable(() -> gauges.value(NAME))).isInstanceOf(OutOfMemoryError.class);
+    // no round is left marked as running
+    assertThat(gauges.value(NAME)).isNaN();
+    assertThat(background).hasSize(1);
+    runBackground();
+    assertThat(gauges.value(NAME)).isEqualTo(1);
+  }
+
+  @Test
+  public void shouldKeepTheThreadLongerThanTheInterval() {
+    assertThat(EngineGauges.keepAlive(Duration.ofSeconds(30))).isEqualTo(Duration.ofSeconds(60));
+    assertThat(EngineGauges.keepAlive(Duration.ofSeconds(2))).isEqualTo(Duration.ofSeconds(10));
+    assertThat(EngineGauges.keepAlive(Duration.ZERO)).isEqualTo(Duration.ofSeconds(10));
+    ThreadPoolExecutor executor = (ThreadPoolExecutor) EngineGauges.backgroundExecutor("gauges", Duration.ofMinutes(1));
+    try {
+      assertThat(executor.getKeepAliveTime(TimeUnit.SECONDS)).isEqualTo(60);
+      assertThat(executor.allowsCoreThreadTimeOut()).isTrue();
+    } finally {
+      executor.shutdown();
+    }
+  }
+
+  @Test
+  public void shouldInterruptAHangingRoundWhenClosed() throws Exception {
+    CountDownLatch started = new CountDownLatch(1);
+    CountDownLatch interrupted = new CountDownLatch(1);
+    ThreadPoolExecutor executor = (ThreadPoolExecutor) EngineGauges.backgroundExecutor("gauges", Duration.ofSeconds(10));
+    EngineGauges gauges = new EngineGauges(engine, Duration.ofSeconds(30), now::get, executor);
+    gauges.queries.clear();
+    gauges.add(NAME, "A hanging value", processEngine -> {
+      started.countDown();
+      try {
+        new CountDownLatch(1).await(1, TimeUnit.MINUTES);
+      } catch (InterruptedException e) {
+        interrupted.countDown();
+        Thread.currentThread().interrupt();
+      }
+      return rounds.incrementAndGet();
+    });
+    gauges.value(NAME);
+    assertThat(started.await(10, TimeUnit.SECONDS)).isTrue();
+
+    long before = System.nanoTime();
+    gauges.close();
+    assertThat(Duration.ofNanos(System.nanoTime() - before)).isLessThan(Duration.ofSeconds(30));
+    assertThat(interrupted.await(10, TimeUnit.SECONDS)).isTrue();
+    assertThat(executor.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
   }
 }

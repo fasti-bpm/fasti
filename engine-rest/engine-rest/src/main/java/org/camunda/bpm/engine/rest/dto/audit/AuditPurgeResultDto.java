@@ -16,8 +16,10 @@
  */
 package org.camunda.bpm.engine.rest.dto.audit;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import dev.fasti.engine.audit.AuditPurgeResult;
 
@@ -27,12 +29,14 @@ public class AuditPurgeResultDto {
   protected Date before;
   protected long removed;
   protected Map<String, Long> purgedThrough;
+  protected List<String> failedChains;
 
   public static AuditPurgeResultDto fromResult(AuditPurgeResult result) {
     AuditPurgeResultDto dto = new AuditPurgeResultDto();
     dto.before = result.getBefore();
     dto.removed = result.getRemoved();
     dto.purgedThrough = new LinkedHashMap<>(result.getPurgedThrough());
+    dto.failedChains = new ArrayList<>(result.getFailedChains());
     return dto;
   }
 
@@ -58,5 +62,13 @@ public class AuditPurgeResultDto {
 
   public void setPurgedThrough(Map<String, Long> purgedThrough) {
     this.purgedThrough = purgedThrough;
+  }
+
+  public List<String> getFailedChains() {
+    return failedChains;
+  }
+
+  public void setFailedChains(List<String> failedChains) {
+    this.failedChains = failedChains;
   }
 }

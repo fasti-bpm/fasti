@@ -67,7 +67,7 @@
         name = "chainId"
         location = "query"
         type = "string"
-        desc = "Records of this chain (`<node id>/<slot>`)." />
+        desc = "Records of this chain (`<node id>/<slot>` or `<node id>/end-<slot>`)." />
 
     <@lib.parameter
         name = "from"

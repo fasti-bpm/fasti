@@ -62,7 +62,7 @@
         name = "chainId"
         location = "query"
         type = "string"
-        desc = "Records of this chain (`<node id>/<slot>`)." />
+        desc = "Records of this chain (`<node id>/<slot>` or `<node id>/end-<slot>`)." />
 
     <@lib.parameter
         name = "from"
@@ -74,8 +74,18 @@
         name = "to"
         location = "query"
         type = "string"
-        last = true
         desc = "Records before this time." />
+
+    <@lib.parameter
+        name = "maxCount"
+        location = "query"
+        type = "integer"
+        format = "int32"
+        last = true
+        desc = "Stop counting at this number (1 to 1000000): the result is then at most `maxCount`, and a result equal to
+                it means that many or more. It caps the records counted, not the rows the database examines to find
+                them: a filter that no index serves (an action without a type, a tenant restriction) may still read
+                many rows, or the whole table when fewer than `maxCount` records match." />
 
   ],
 
@@ -89,7 +99,8 @@
     <@lib.response
         code = "400"
         dto = "ExceptionDto"
-        desc = "The audit trail is not enabled on the engine, or a parameter is invalid. See the
+        desc = "The audit trail is not enabled on the engine, or a parameter is invalid (for example `maxCount` not
+                between 1 and 1000000). See the
                 [Introduction](${docsUrl}/reference/rest/overview/#error-handling)
                 for the error response format." />
 

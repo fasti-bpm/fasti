@@ -365,7 +365,7 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
         .statusCode(Status.OK.getStatusCode())
         .body("intact", equalTo(true))
         .body("authenticated", equalTo(true))
-        .body("chains[0].chainId", equalTo("rest/0"))
+        .body("chains[0].chainId", equalTo("rest/end-0"))
         .body("chains[0].authenticated", equalTo(true))
         .body("chains[0].authenticatedThrough", equalTo(0))
         .body("chains[0].purgeAttested", equalTo(false))
@@ -453,7 +453,7 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
     .then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).body("message", containsString("Export"))
     .when().post(PURGE_URL);
     given().contentType(ContentType.JSON).body(Map.of("before", "2000-01-01T00:00:00.000+0000", "exported", true))
-    .then().expect().statusCode(Status.OK.getStatusCode()).body("removed", equalTo(0))
+    .then().expect().statusCode(Status.OK.getStatusCode()).body("removed", equalTo(0)).body("failedChains", hasSize(0))
     .when().post(PURGE_URL);
   }
 

@@ -186,10 +186,12 @@ public class AuditRestServiceImpl extends AbstractRestProcessEngineAware impleme
     }
     MultivaluedMap<String, String> parameters = uriInfo.getQueryParameters();
     AuditEventQuery counting = query(parameters);
-    long count = counting.count();
+    // counted only up to one more than an export holds: a larger result is refused either way, and
+    // the exact count of an export that is accepted is still known
+    long count = counting.count(LIMIT_EXPORT + 1L);
     if (count > LIMIT_EXPORT) {
-      throw new InvalidRequestException(Status.BAD_REQUEST, "The filter selects " + count + " records; an export holds at most "
-          + LIMIT_EXPORT + ". Narrow the filter, for example by time.");
+      throw new InvalidRequestException(Status.BAD_REQUEST, "The filter selects more than " + LIMIT_EXPORT
+          + " records, the most an export holds. Narrow the filter, for example by time.");
     }
     AuditService audit = audit();
     audit.recordExport(kind, describe(parameters), count);

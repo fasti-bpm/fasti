@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryObserver } from '@tanstack/react-query';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getFilterTasks, getTaskFilterCounts, getTaskFilters } from '../api/engine';
+import { getFilterTasks, getTaskFilterCounts, getTaskFilters, resetBusinessKeys } from '../api/engine';
 import { Providers, createQueryClient, routes } from '../app/App';
 import { writePreference } from '../lib/storage';
 import { preloadRoutes } from '../test/routes';
@@ -230,5 +230,28 @@ describe('filters and their task counts', () => {
     const third = await getFilterTasks('f1', options);
     expect(third.tasks.map((task) => task.businessKey)).toEqual(['key-p1', 'key-p3']);
     expect(server.find('GET', `${ENGINE}/process-instance`)[1]?.query.get('processInstanceIds')).toBe('p3');
+  });
+
+  it('does not keep business keys answered after the session ended', async () => {
+    let answer: () => void = () => undefined;
+    const answered = new Promise<void>((resolve) => (answer = resolve));
+    const server = backend({
+      [`GET ${ENGINE}/process-instance`]: async (request) => {
+        await answered;
+        return json((request.query.get('processInstanceIds') ?? '').split(',').map((id) => ({ id, businessKey: `key-${id}` })));
+      },
+    });
+    const options = { firstResult: 0, maxResults: 25, sorting: [{ sortBy: 'created' as const, sortOrder: 'desc' as const }] };
+
+    const pending = getFilterTasks('f1', options);
+    await waitFor(() => expect(server.find('GET', `${ENGINE}/process-instance`)).toHaveLength(1));
+    resetBusinessKeys();
+    answer();
+    // the list asked for still shows the keys it read
+    expect((await pending).tasks.map((task) => task.businessKey)).toEqual(['key-p1', 'key-p1', 'key-p2']);
+
+    // but the next session asks for them anew
+    await getFilterTasks('f1', options);
+    expect(server.find('GET', `${ENGINE}/process-instance`)).toHaveLength(2);
   });
 });

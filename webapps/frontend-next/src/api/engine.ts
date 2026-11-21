@@ -323,6 +323,9 @@ export type TaskQuery = Record<string, unknown>;
 const BUSINESS_KEY_FRESH = 5 * 60_000;
 const BUSINESS_KEYS_KEPT = 1000;
 const businessKeys = new Map<string, { key: string | null; at: number }>();
+// raised whenever the keys are forgotten, so that an answer to a request sent before does not
+// bring them back
+let businessKeyGeneration = 0;
 
 function knownBusinessKey(instanceId: string): { key: string | null } | undefined {
   const known = businessKeys.get(instanceId);
@@ -334,9 +337,10 @@ function rememberBusinessKey(instanceId: string, key: string | null): void {
   businessKeys.set(instanceId, { key, at: Date.now() });
 }
 
-/** For tests: forget the business keys read so far. */
+/** Forgets the business keys read so far, e.g. when the session ends. */
 export function resetBusinessKeys(): void {
   businessKeys.clear();
+  businessKeyGeneration++;
 }
 
 export async function getFilterTasks(
@@ -381,8 +385,9 @@ export async function getFilterTasks(
   // those of cases (CMMN) are two requests, sent together
   const instanceIds = [...new Set(tasks.map((task) => task.processInstanceId).filter((id): id is string => !!id))];
   const caseIds = [...new Set(tasks.map((task) => task.caseInstanceId).filter((id): id is string => !!id))];
-  // an instance gets its business key when it starts, so a key read once is not asked for again
-  // with every refresh of the list
+  // the business key of an instance rarely changes after it starts, so a key read once is not
+  // asked for again with every refresh of the list (for a few minutes)
+  const generation = businessKeyGeneration;
   const unknownIds = instanceIds.filter((id) => !knownBusinessKey(id));
   const [instances, caseKeys] = await Promise.all([
     unknownIds.length > 0
@@ -396,9 +401,13 @@ export async function getFilterTasks(
       ? getCaseBusinessKeys(caseIds, options.signal).catch(() => new Map<string, string | null>())
       : null,
   ]);
-  for (const instance of instances) rememberBusinessKey(instance.id, instance.businessKey);
+  const read = new Map(instances.map((instance) => [instance.id, instance.businessKey]));
+  if (generation === businessKeyGeneration) {
+    for (const [id, key] of read) rememberBusinessKey(id, key);
+  }
   for (const task of tasks) {
-    task.businessKey = task.processInstanceId ? (knownBusinessKey(task.processInstanceId)?.key ?? null) : null;
+    const id = task.processInstanceId;
+    task.businessKey = id ? (read.has(id) ? (read.get(id) ?? null) : (knownBusinessKey(id)?.key ?? null)) : null;
   }
   if (caseKeys) {
     for (const task of tasks) {

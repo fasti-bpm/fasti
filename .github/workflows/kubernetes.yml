@@ -10,11 +10,17 @@ on:
   pull_request:
     paths:
       - distro/kubernetes/**
+      # the version check of validate.sh compares these with the chart and the manifests
+      - pom.xml
+      - distro/docker/Dockerfile
       - .github/workflows/kubernetes.yml
   push:
     branches: [main]
     paths:
       - distro/kubernetes/**
+      # the version check of validate.sh compares these with the chart and the manifests
+      - pom.xml
+      - distro/docker/Dockerfile
       - .github/workflows/kubernetes.yml
 
 permissions:

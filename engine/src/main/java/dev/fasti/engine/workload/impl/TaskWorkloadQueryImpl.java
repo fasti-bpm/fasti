@@ -16,17 +16,25 @@
  */
 package dev.fasti.engine.workload.impl;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 import dev.fasti.engine.workload.TaskLoad;
 import dev.fasti.engine.workload.TaskWorkload;
 import dev.fasti.engine.workload.TaskWorkloadQuery;
+import dev.fasti.engine.workload.WorkloadNotAvailableException;
+import org.apache.ibatis.session.Configuration;
 import org.camunda.bpm.engine.BadUserRequestException;
 import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
@@ -41,6 +49,9 @@ public class TaskWorkloadQueryImpl implements TaskWorkloadQuery {
   static final String SELECT_TOTALS = "selectFastiTaskLoadTotals";
   static final String SELECT_BY_ASSIGNEE = "selectFastiTaskLoadByAssignee";
   static final String SELECT_BY_GROUP = "selectFastiTaskLoadByCandidateGroup";
+
+  private static final Pattern MARKS = Pattern.compile("\\p{M}+");
+  private static final Pattern TRAILING_SPACES = Pattern.compile(" +$");
 
   protected final ProcessEngineConfigurationImpl configuration;
   protected List<String> groupIds = new ArrayList<>();
@@ -72,14 +83,12 @@ public class TaskWorkloadQueryImpl implements TaskWorkloadQuery {
 
   @Override
   public TaskWorkloadQuery tenantIdIn(String... tenantIds) {
-    if (tenantIds != null) {
-      for (String tenantId : tenantIds) {
-        if (tenantId == null) {
-          throw new BadUserRequestException("tenantIds contains null");
-        }
-      }
+    if (tenantIds == null || tenantIds.length == 0) {
+      this.tenantIds = null;
+    } else {
+      // every tenant id is bound in each of the statements: bounded like the other lists
+      this.tenantIds = distinct("tenantIds", Arrays.asList(tenantIds)).toArray(new String[0]);
     }
-    this.tenantIds = tenantIds == null || tenantIds.length == 0 ? null : tenantIds.clone();
     return this;
   }
 
@@ -91,6 +100,9 @@ public class TaskWorkloadQueryImpl implements TaskWorkloadQuery {
     for (String id : ids) {
       if (id == null || id.isEmpty()) {
         throw new BadUserRequestException(name + " contains an empty id");
+      }
+      if (id.length() > MAX_ID_LENGTH) {
+        throw new BadUserRequestException(name + " contains an id longer than " + MAX_ID_LENGTH + " characters");
       }
       distinct.add(id);
     }
@@ -106,6 +118,7 @@ public class TaskWorkloadQueryImpl implements TaskWorkloadQuery {
   }
 
   protected TaskWorkload read(CommandContext commandContext) {
+    ensureStatementsMapped();
     Date before = overdueBefore != null ? overdueBefore : ClockUtil.getCurrentTime();
 
     List<TaskLoadEntity> totalRows = select(commandContext, SELECT_TOTALS, base(before));
@@ -153,16 +166,60 @@ public class TaskWorkloadQueryImpl implements TaskWorkloadQuery {
         .selectListWithRawParameter(statement, query, 0, Integer.MAX_VALUE);
   }
 
+  /**
+   * The statements live in a mapping file of their own; an application that replaced the
+   * default {@code mappings.xml} with a copy that lacks it would otherwise get a MyBatis error
+   * that does not say what to do.
+   */
+  protected void ensureStatementsMapped() {
+    Configuration mybatis = configuration.getSqlSessionFactory().getConfiguration();
+    for (String statement : new String[] { SELECT_TOTALS, SELECT_BY_ASSIGNEE, SELECT_BY_GROUP }) {
+      String mapped = configuration.getDbSqlSessionFactory().mapStatement(statement);
+      if (!mybatis.hasStatement(mapped)) {
+        throw new WorkloadNotAvailableException("The workload statements are not mapped: the MyBatis mappings of "
+            + "the engine lack dev/fasti/engine/workload/TaskWorkload.xml. Add it to the custom mappings.xml.");
+      }
+    }
+  }
+
+  /**
+   * One entry per id asked for, in that order, each with the id that was asked for.
+   *
+   * <p>The database compares the ids with its collation: on a case- or accent-insensitive one
+   * (the defaults of SQL Server, MySQL and MariaDB) a request for {@code sales} also selects the
+   * tasks of {@code Sales}, and the row carries the stored {@code Sales}. A row whose key is no
+   * requested id can only come from such a comparison, so an id without a row of its own takes
+   * the row with the same key ignoring case, accents and trailing spaces. Under a binary or
+   * case-sensitive collation every row carries a requested id and this never applies.</p>
+   */
   protected static List<TaskLoad> inOrder(List<String> ids, List<TaskLoadEntity> rows) {
-    Map<String, TaskLoadEntity> byId = new HashMap<>();
+    Set<String> requested = new HashSet<>(ids);
+    Map<String, TaskLoadEntity> exact = new HashMap<>();
+    Map<String, TaskLoadEntity> loose = new HashMap<>();
     for (TaskLoadEntity row : rows) {
-      byId.put(row.getId(), row);
+      if (row.getId() == null) {
+        continue;
+      }
+      if (requested.contains(row.getId())) {
+        exact.put(row.getId(), row);
+      } else {
+        loose.merge(looseKey(row.getId()), row, TaskLoadEntity::sum);
+      }
     }
     List<TaskLoad> result = new ArrayList<>(ids.size());
     for (String id : ids) {
-      TaskLoadEntity row = byId.get(id);
-      result.add(row != null ? row : new TaskLoadEntity(id));
+      TaskLoadEntity row = exact.get(id);
+      if (row == null) {
+        row = loose.get(looseKey(id));
+      }
+      result.add(row != null ? row.withId(id) : new TaskLoadEntity(id));
     }
     return result;
+  }
+
+  /** The key two ids share when a case- and accent-insensitive collation takes them as equal. */
+  protected static String looseKey(String id) {
+    String withoutMarks = MARKS.matcher(Normalizer.normalize(id, Normalizer.Form.NFD)).replaceAll("");
+    return TRAILING_SPACES.matcher(withoutMarks).replaceAll("").toLowerCase(Locale.ROOT);
   }
 }

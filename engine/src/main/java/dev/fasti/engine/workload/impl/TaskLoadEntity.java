@@ -80,4 +80,24 @@ public class TaskLoadEntity implements TaskLoad {
   public void setOldest(Date oldest) {
     this.oldest = oldest;
   }
+
+  /** A copy of this row under another id. */
+  public TaskLoadEntity withId(String id) {
+    TaskLoadEntity copy = new TaskLoadEntity(id);
+    copy.open = open;
+    copy.unassigned = unassigned;
+    copy.overdue = overdue;
+    copy.oldest = oldest;
+    return copy;
+  }
+
+  /** The counts of two rows together, and the older of their oldest tasks. */
+  public static TaskLoadEntity sum(TaskLoadEntity a, TaskLoadEntity b) {
+    TaskLoadEntity sum = new TaskLoadEntity(a.id);
+    sum.open = a.getOpen() + b.getOpen();
+    sum.unassigned = a.getUnassigned() + b.getUnassigned();
+    sum.overdue = a.getOverdue() + b.getOverdue();
+    sum.oldest = a.oldest == null ? b.oldest : b.oldest == null || a.oldest.before(b.oldest) ? a.oldest : b.oldest;
+    return sum;
+  }
 }

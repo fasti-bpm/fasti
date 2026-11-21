@@ -29,20 +29,41 @@ import java.util.Date;
  */
 public interface TaskWorkloadQuery {
 
-  /** At most this many groups and this many users can be asked for at once. */
+  /** At most this many groups, this many users and this many tenants can be asked for at once. */
   int MAX_IDS = 200;
 
-  /** The candidate groups to count for. */
+  /** No id may be longer than this; the id columns of the engine are no longer. */
+  int MAX_ID_LENGTH = 255;
+
+  /**
+   * The candidate groups to count for. Repeated ids are asked for once; an empty, {@code null}
+   * or too long id, or more than {@link #MAX_IDS} distinct ids, is refused with a
+   * {@link org.camunda.bpm.engine.BadUserRequestException}.
+   *
+   * <p>An id is compared with the stored ones as the database compares them. On a database
+   * with a case- or accent-insensitive collation (the defaults of SQL Server, MySQL and
+   * MariaDB) {@code sales} therefore also counts the tasks offered to {@code Sales}, exactly as
+   * a task query for {@code sales} does, and the entry carries the id that was asked for.</p>
+   */
   TaskWorkloadQuery groupIdIn(Collection<String> groupIds);
 
-  /** The assignees to count for. */
+  /** The assignees to count for; the rules of {@link #groupIdIn(Collection)} apply. */
   TaskWorkloadQuery userIdIn(Collection<String> userIds);
 
   /** Tasks due before this moment count as overdue; the current time of the engine by default. */
   TaskWorkloadQuery overdueBefore(Date overdueBefore);
 
-  /** Only tasks of these tenants. */
+  /**
+   * Only tasks of these tenants; none means no restriction. An empty, {@code null} or too long
+   * id, or more than {@link #MAX_IDS} ids, is refused.
+   */
   TaskWorkloadQuery tenantIdIn(String... tenantIds);
 
+  /**
+   * Reads the workload.
+   *
+   * @throws WorkloadNotAvailableException if the mapping file of the workload statements is not
+   *         part of the MyBatis mappings of the engine
+   */
   TaskWorkload read();
 }

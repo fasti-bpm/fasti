@@ -384,6 +384,13 @@ public class TaskWorkloadQueryTest {
     testRule.deploy(Bpmn.createExecutableProcess("visible").camundaHistoryTimeToLive(180)
         .startEvent().userTask("task").camundaCandidateGroups("sales").endEvent().done());
     runtimeService.startProcessInstanceByKey("visible");
+    // a task of a case, left from before CMMN was turned off (or written by a node with CMMN on);
+    // no permission covers it, so a task query without CMMN does not select it
+    testRule.deploy("org/camunda/bpm/engine/test/api/cmmn/oneTaskCase.cmmn");
+    engineRule.getCaseService().createCaseInstanceByKey("oneTaskCase");
+    Task caseTask = query().caseDefinitionKey("oneTaskCase").singleResult();
+    taskService.setAssignee(caseTask.getId(), "alice");
+    taskService.addCandidateGroup(caseTask.getId(), "sales");
     grant("mary", Resources.TASK, taskIds.get(0), Permissions.READ);
     grant("mary", Resources.PROCESS_DEFINITION, "visible", Permissions.READ_TASK);
     boolean cmmnEnabled = configuration.isCmmnEnabled();
@@ -393,10 +400,88 @@ public class TaskWorkloadQueryTest {
     try {
       TaskWorkload workload = read(Arrays.asList("sales", "support"), Arrays.asList("alice", "bob"));
 
-      assertThat(workload.getTotals().getOpen()).isEqualTo(query().count());
+      assertThat(query().count()).isEqualTo(2);
+      assertThat(workload.getTotals().getOpen()).isEqualTo(2);
+      assertThat(workload.getGroups().get(0).getOpen()).isEqualTo(2);
+      assertThat(workload.getUsers().get(0).getOpen()).isZero();
       assertMatchesTaskQueries(workload);
     } finally {
+      identityService.clearAuthentication();
+      configuration.setAuthorizationEnabled(false);
       configuration.setCmmnEnabled(cmmnEnabled);
+    }
+  }
+
+  @Test
+  public void shouldSelectLikeATaskQueryWithoutCmmnAndStandaloneTasks() {
+    someTasks();
+    testRule.deploy(Bpmn.createExecutableProcess("process").camundaHistoryTimeToLive(180)
+        .startEvent().userTask("task").camundaCandidateGroups("sales").camundaAssignee("alice").endEvent().done());
+    runtimeService.startProcessInstanceByKey("process");
+    grant("mary", Resources.TASK, Authorization.ANY, Permissions.READ);
+    boolean cmmnEnabled = configuration.isCmmnEnabled();
+    boolean standaloneTasksEnabled = configuration.isStandaloneTasksEnabled();
+    configuration.setCmmnEnabled(false);
+    configuration.setStandaloneTasksEnabled(false);
+    configuration.setAuthorizationEnabled(true);
+    identityService.setAuthentication("mary", null);
+    try {
+      TaskWorkload workload = read(Arrays.asList("sales", "support"), Arrays.asList("alice", "bob"));
+
+      // with the authorization check, a task query joins the process definition and so leaves
+      // the standalone tasks out; the workload does the same
+      assertThat(query().count()).isEqualTo(1);
+      assertThat(workload.getTotals().getOpen()).isEqualTo(1);
+      assertThat(workload.getGroups().get(0).getOpen()).isEqualTo(1);
+      assertThat(workload.getUsers().get(0).getOpen()).isEqualTo(1);
+      assertMatchesTaskQueries(workload);
+    } finally {
+      identityService.clearAuthentication();
+      configuration.setAuthorizationEnabled(false);
+      configuration.setCmmnEnabled(cmmnEnabled);
+      configuration.setStandaloneTasksEnabled(standaloneTasksEnabled);
+    }
+  }
+
+  @Test
+  public void shouldCountSuspendedTasksLikeATaskQuery() {
+    testRule.deploy(Bpmn.createExecutableProcess("process").camundaHistoryTimeToLive(180)
+        .startEvent().userTask("task").camundaCandidateGroups("sales").camundaAssignee("alice").endEvent().done());
+    String suspended = runtimeService.startProcessInstanceByKey("process").getId();
+    runtimeService.startProcessInstanceByKey("process");
+    runtimeService.suspendProcessInstanceById(suspended);
+
+    TaskWorkload workload = read(Arrays.asList("sales"), Arrays.asList("alice"));
+
+    assertThat(workload.getTotals().getOpen()).isEqualTo(2);
+    assertThat(workload.getGroups().get(0).getOpen()).isEqualTo(2);
+    assertThat(workload.getUsers().get(0).getOpen()).isEqualTo(2);
+    assertMatchesTaskQueries(workload);
+  }
+
+  @Test
+  public void shouldHonourRevokedPermissionsWhenCheckedAutomatically() {
+    someTasks();
+    grant("mary", Resources.TASK, Authorization.ANY, Permissions.READ);
+    Authorization revoke = authorizationService.createNewAuthorization(Authorization.AUTH_TYPE_REVOKE);
+    revoke.setUserId("mary");
+    revoke.setResource(Resources.TASK);
+    revoke.setResourceId(taskIds.get(1));
+    revoke.removePermission(Permissions.READ);
+    authorizationService.saveAuthorization(revoke);
+    String mode = configuration.getAuthorizationCheckRevokes();
+    configuration.setAuthorizationCheckRevokes(ProcessEngineConfigurationImpl.AUTHORIZATION_CHECK_REVOKE_AUTO);
+    configuration.setAuthorizationEnabled(true);
+    identityService.setAuthentication("mary", null);
+    try {
+      TaskWorkload workload = read(Arrays.asList("sales", "support"), Arrays.asList("alice", "bob"));
+
+      assertThat(workload.getTotals().getOpen()).isEqualTo(6);
+      assertThat(workload.getGroups().get(0).getOpen()).isEqualTo(2);
+      assertThat(workload.getUsers().get(0).getOpen()).isEqualTo(1);
+      assertMatchesTaskQueries(workload);
+    } finally {
+      configuration.setAuthorizationCheckRevokes(mode);
     }
   }
 
@@ -415,6 +500,43 @@ public class TaskWorkloadQueryTest {
         .isInstanceOf(BadUserRequestException.class).hasMessageContaining("more than 200");
     assertThatThrownBy(() -> TaskWorkloads.query(engineRule.getProcessEngine()).userIdIn(Arrays.asList("a", "")))
         .isInstanceOf(BadUserRequestException.class);
+    assertThatThrownBy(() -> TaskWorkloads.query(engineRule.getProcessEngine()).userIdIn(Arrays.asList("a", null)))
+        .isInstanceOf(BadUserRequestException.class);
+    assertThatThrownBy(() -> TaskWorkloads.query(engineRule.getProcessEngine()).tenantIdIn(ids.toArray(new String[0])))
+        .isInstanceOf(BadUserRequestException.class).hasMessageContaining("more than 200");
+    assertThatThrownBy(() -> TaskWorkloads.query(engineRule.getProcessEngine()).tenantIdIn("tenant1", null))
+        .isInstanceOf(BadUserRequestException.class);
+    assertThatThrownBy(() -> TaskWorkloads.query(engineRule.getProcessEngine()).tenantIdIn(""))
+        .isInstanceOf(BadUserRequestException.class);
+  }
+
+  @Test
+  public void shouldRefuseTooLongIds() {
+    String tooLong = "g".repeat(TaskWorkloadQuery.MAX_ID_LENGTH + 1);
+    String longest = "g".repeat(TaskWorkloadQuery.MAX_ID_LENGTH);
+
+    assertThatThrownBy(() -> TaskWorkloads.query(engineRule.getProcessEngine()).groupIdIn(Arrays.asList(tooLong)))
+        .isInstanceOf(BadUserRequestException.class).hasMessageContaining("longer than 255");
+    assertThatThrownBy(() -> TaskWorkloads.query(engineRule.getProcessEngine()).userIdIn(Arrays.asList(tooLong)))
+        .isInstanceOf(BadUserRequestException.class);
+    assertThatThrownBy(() -> TaskWorkloads.query(engineRule.getProcessEngine()).tenantIdIn(tooLong))
+        .isInstanceOf(BadUserRequestException.class);
+    assertThat(read(Arrays.asList(longest), Arrays.asList(longest)).getGroups()).hasSize(1);
+  }
+
+  @Test
+  public void shouldAcceptTheMostTenantsAllowed() {
+    task("tenant1", Duration.ofDays(-1), null, "alice", "sales");
+    String[] tenants = new String[TaskWorkloadQuery.MAX_IDS];
+    for (int i = 0; i < tenants.length; i++) {
+      tenants[i] = "tenant" + (i + 1);
+    }
+
+    TaskWorkload workload = TaskWorkloads.query(engineRule.getProcessEngine())
+        .groupIdIn(Arrays.asList("sales")).userIdIn(Arrays.asList("alice")).tenantIdIn(tenants).read();
+
+    assertThat(workload.getTotals().getOpen()).isEqualTo(1);
+    assertThat(workload.getGroups().get(0).getOpen()).isEqualTo(1);
   }
 
   @Test

@@ -9,6 +9,7 @@ import { useIsFetching, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, CircleCheck, Pause, Play, RefreshCw } from 'lucide-react';
 import type { IncidentCount } from '../api/cockpit';
 import { useI18n } from '../i18n';
+import { usePacedInterval } from '../lib/activity';
 import { readPreference, writePreference } from '../lib/storage';
 import { tenantScope } from '../lib/userPrefs';
 import { IconButton, Tooltip, cx } from '../ui';
@@ -20,6 +21,7 @@ import { useToast } from '../ui/toast';
 export const COCKPIT = 'cockpit';
 
 const REFRESH_INTERVAL = 30_000;
+const SLOW_REFRESH_INTERVAL = 5 * 60_000;
 const FOLLOW_UP = 2_000;
 
 interface Refresh {
@@ -39,9 +41,15 @@ export function RefreshProvider({ children }: { children: ReactNode }) {
   return <RefreshContext.Provider value={value}>{children}</RefreshContext.Provider>;
 }
 
-/** The `refetchInterval` of a query that follows the automatic refresh. */
-export function useRefreshInterval(): number | false {
-  return useContext(RefreshContext).paused ? false : REFRESH_INTERVAL;
+/**
+ * The `refetchInterval` of a query that follows the automatic refresh: every
+ * 30 s, `slow` every 5 minutes for numbers that hardly move (counts of
+ * definitions, trends over days). Both stretch while nobody is at the screen
+ * (see `lib/activity`); a hidden tab does not refresh at all.
+ */
+export function useRefreshInterval(pace: 'live' | 'slow' = 'live'): number | false {
+  const paused = useContext(RefreshContext).paused;
+  return usePacedInterval(paused ? false : pace === 'slow' ? SLOW_REFRESH_INTERVAL : REFRESH_INTERVAL);
 }
 
 /**
@@ -73,6 +81,8 @@ export function RefreshControl() {
   const { paused, setPaused } = useContext(RefreshContext);
   const queryClient = useQueryClient();
   const fetching = useIsFetching({ queryKey: [COCKPIT] }) > 0;
+  // the interval in use: longer while nobody is at the screen
+  const current = usePacedInterval(REFRESH_INTERVAL);
   const staleSince = useStaleSince();
   return (
     <div className="refresh" role="group" aria-label={t('cockpit.refresh.title')}>
@@ -95,7 +105,7 @@ export function RefreshControl() {
           <span className="refresh__text">
             {paused
               ? t('cockpit.refresh.paused')
-              : t('cockpit.refresh.on', { seconds: REFRESH_INTERVAL / 1000 })}
+              : t('cockpit.refresh.on', { seconds: (current || REFRESH_INTERVAL) / 1000 })}
           </span>
           {paused ? <Play aria-hidden size={14} /> : <Pause aria-hidden size={14} />}
         </button>

@@ -20,6 +20,7 @@ import { Tooltip } from 'radix-ui';
 import { SearchX } from 'lucide-react';
 import { isApiError } from '../api/http';
 import { I18nProvider, useI18n, type Locale } from '../i18n';
+import { onReturn } from '../lib/activity';
 import { pluginsFor } from '../plugins/registry';
 import { ThemeProvider } from '../theme/theme';
 import { EmptyState, ErrorState, Loading } from '../ui';
@@ -393,6 +394,12 @@ export function Providers({
   queryClient: QueryClient;
   locale?: Locale;
 }) {
+  // pages refresh themselves less often while nobody is at the screen; back from that,
+  // the user sees current data at once instead of after the next interval
+  useEffect(
+    () => onReturn(() => void queryClient.refetchQueries({ type: 'active', stale: true })),
+    [queryClient],
+  );
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider initial={locale}>

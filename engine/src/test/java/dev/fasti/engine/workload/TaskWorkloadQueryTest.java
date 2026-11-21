@@ -378,6 +378,28 @@ public class TaskWorkloadQueryTest {
     }
   }
 
+  @Test
+  public void shouldSelectLikeATaskQueryWithoutCmmn() {
+    someTasks();
+    testRule.deploy(Bpmn.createExecutableProcess("visible").camundaHistoryTimeToLive(180)
+        .startEvent().userTask("task").camundaCandidateGroups("sales").endEvent().done());
+    runtimeService.startProcessInstanceByKey("visible");
+    grant("mary", Resources.TASK, taskIds.get(0), Permissions.READ);
+    grant("mary", Resources.PROCESS_DEFINITION, "visible", Permissions.READ_TASK);
+    boolean cmmnEnabled = configuration.isCmmnEnabled();
+    configuration.setCmmnEnabled(false);
+    configuration.setAuthorizationEnabled(true);
+    identityService.setAuthentication("mary", null);
+    try {
+      TaskWorkload workload = read(Arrays.asList("sales", "support"), Arrays.asList("alice", "bob"));
+
+      assertThat(workload.getTotals().getOpen()).isEqualTo(query().count());
+      assertMatchesTaskQueries(workload);
+    } finally {
+      configuration.setCmmnEnabled(cmmnEnabled);
+    }
+  }
+
   // limits ////////////////////////////////////////////////////////////////
 
   @Test

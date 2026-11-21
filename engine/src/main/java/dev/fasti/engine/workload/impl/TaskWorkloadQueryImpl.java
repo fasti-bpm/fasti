@@ -114,6 +114,7 @@ public class TaskWorkloadQueryImpl implements TaskWorkloadQuery {
     WorkloadTaskQuery orphans = base(before);
     orphans.taskUnassigned();
     orphans.withoutCandidateGroups();
+    orphans.prepare(commandContext);
     long orphaned = commandContext.getTaskManager().findTaskCountByQueryCriteria(orphans);
 
     List<TaskLoad> groups = new ArrayList<>();
@@ -145,6 +146,7 @@ public class TaskWorkloadQueryImpl implements TaskWorkloadQuery {
   /** Applies the checks of a task query, then runs the grouped statement around it. */
   @SuppressWarnings("unchecked")
   protected List<TaskLoadEntity> select(CommandContext commandContext, String statement, WorkloadTaskQuery query) {
+    query.prepare(commandContext);
     commandContext.getAuthorizationManager().configureTaskQuery(query);
     commandContext.getTenantManager().configureQuery(query);
     return (List<TaskLoadEntity>) commandContext.getDbEntityManager()

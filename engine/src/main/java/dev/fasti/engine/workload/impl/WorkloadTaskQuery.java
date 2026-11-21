@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.camunda.bpm.engine.impl.TaskQueryImpl;
+import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 
 /**
  * The task query the grouped statements are built around: its criteria, authorization check and
@@ -34,6 +35,14 @@ public class WorkloadTaskQuery extends TaskQueryImpl {
 
   public WorkloadTaskQuery(Date loadOverdueBefore) {
     this.loadOverdueBefore = loadOverdueBefore;
+  }
+
+  /**
+   * What a task query does before it runs: without CMMN the authorization join is an inner join,
+   * so that tasks of cases, which no process definition permission covers, are not selected.
+   */
+  public void prepare(CommandContext commandContext) {
+    decideAuthorizationJoinType(commandContext);
   }
 
   public Date getLoadOverdueBefore() {

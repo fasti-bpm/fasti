@@ -772,6 +772,9 @@ const messages = {
   'error.server': 'The server reported an error. Try again later.',
   'error.unauthorized': 'Your session has expired. Sign in again.',
   'error.unexpected': 'Something unexpected went wrong.',
+  'error.newVersion': 'A newer version is available.',
+  'error.hint.newVersion':
+    'The server was updated while this page was open, and a part of the page could not be loaded. Reload the page; copy anything you entered that is not saved yet first.',
 
   'filterEdit.addCriterion': 'Add criterion',
   'filterEdit.addVariable': 'Add variable',

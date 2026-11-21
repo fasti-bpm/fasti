@@ -700,6 +700,9 @@ const messages: Catalog = {
   'error.server': 'サーバーでエラーが発生しました。しばらくしてからもう一度お試しください。',
   'error.unauthorized': 'セッションの有効期限が切れました。もう一度サインインしてください。',
   'error.unexpected': '予期しないエラーが発生しました。',
+  'error.newVersion': '新しいバージョンが利用できます。',
+  'error.hint.newVersion':
+    'このページを開いている間にサーバーが更新されたため、ページの一部を読み込めませんでした。ページを再読み込みしてください。その前に、まだ保存していない入力内容をコピーしてください。',
   'filterEdit.addCriterion': '条件を追加',
   'filterEdit.addVariable': '変数を追加',
   'filterEdit.addVariableCriterion': '変数の条件を追加',

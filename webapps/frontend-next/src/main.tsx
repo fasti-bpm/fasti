@@ -7,6 +7,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
 import './plugins';
 import { prepare } from './startup';
+import { watchStaleBuild } from './lib/staleBuild';
 import { applyStoredTheme } from './theme/theme';
 import { applyDensity } from './lib/userPrefs';
 import { onPreferencesReplaced } from './lib/storage';
@@ -17,6 +18,8 @@ import './theme/shell.css';
 import './app/prefs.css';
 import './theme/components.css';
 
+// a part of an older build that is gone after an update is reported where it failed
+watchStaleBuild();
 applyStoredTheme();
 applyDensity();
 onPreferencesReplaced(() => applyDensity());

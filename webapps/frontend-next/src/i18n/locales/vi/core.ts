@@ -750,6 +750,9 @@ const messages: Catalog = {
   'error.server': 'Máy chủ gặp lỗi. Hãy thử lại sau.',
   'error.unauthorized': 'Phiên làm việc đã hết hạn. Hãy đăng nhập lại.',
   'error.unexpected': 'Đã xảy ra lỗi ngoài dự kiến.',
+  'error.newVersion': 'Đã có phiên bản mới hơn.',
+  'error.hint.newVersion':
+    'Máy chủ đã được cập nhật trong khi trang này đang mở nên một phần của trang không tải được. Hãy tải lại trang; trước đó hãy sao chép những gì bạn đã nhập mà chưa được lưu.',
 
   'filterEdit.addCriterion': 'Thêm tiêu chí',
   'filterEdit.addVariable': 'Thêm biến',

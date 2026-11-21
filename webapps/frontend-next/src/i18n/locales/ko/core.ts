@@ -715,6 +715,9 @@ const messages: Catalog = {
   'error.server': '서버에서 오류가 발생했습니다. 나중에 다시 시도하세요.',
   'error.unauthorized': '세션이 만료되었습니다. 다시 로그인하세요.',
   'error.unexpected': '예기치 않은 문제가 발생했습니다.',
+  'error.newVersion': '새 버전을 사용할 수 있습니다.',
+  'error.hint.newVersion':
+    '이 페이지가 열려 있는 동안 서버가 업데이트되어 페이지의 일부를 불러오지 못했습니다. 페이지를 새로 고치세요. 그 전에 아직 저장하지 않은 입력 내용을 복사해 두세요.',
 
   'filterEdit.addCriterion': '조건 추가',
   'filterEdit.addVariable': '변수 추가',

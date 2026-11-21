@@ -745,6 +745,9 @@ const messages: Catalog = {
   'error.server': 'Server melaporkan kesalahan. Coba lagi nanti.',
   'error.unauthorized': 'Sesi Anda telah berakhir. Silakan masuk lagi.',
   'error.unexpected': 'Terjadi kesalahan yang tidak terduga.',
+  'error.newVersion': 'Versi yang lebih baru tersedia.',
+  'error.hint.newVersion':
+    'Server diperbarui saat halaman ini terbuka, sehingga sebagian halaman tidak dapat dimuat. Muat ulang halaman; sebelumnya salin dulu isian Anda yang belum disimpan.',
 
   'filterEdit.addCriterion': 'Tambah kriteria',
   'filterEdit.addVariable': 'Tambah variabel',

@@ -766,6 +766,9 @@ const messages: Catalog = {
   'error.server': 'O servidor relatou um erro. Tente novamente mais tarde.',
   'error.unauthorized': 'Sua sessão expirou. Entre novamente.',
   'error.unexpected': 'Algo inesperado deu errado.',
+  'error.newVersion': 'Há uma versão mais recente disponível.',
+  'error.hint.newVersion':
+    'O servidor foi atualizado enquanto esta página estava aberta, e uma parte da página não pôde ser carregada. Recarregue a página; antes, copie o que você digitou e ainda não foi salvo.',
 
   'filterEdit.addCriterion': 'Adicionar critério',
   'filterEdit.addVariable': 'Adicionar variável',

@@ -2,13 +2,14 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright Fasti BPM contributors
  */
-import { forwardRef, useId, useLayoutEffect, useRef, useState } from 'react';
+import { Component, forwardRef, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { ButtonHTMLAttributes, ComponentType, ReactNode } from 'react';
 import { Dialog as RadixDialog, Tooltip as RadixTooltip } from 'radix-ui';
 import { AlertTriangle, Inbox, LoaderCircle, Lock, SearchX, WifiOff, X } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import { FOUR_EYES_VIOLATION } from '../api/fourEyes';
 import { isApiError } from '../api/http';
+import { isChunkLoadError } from '../lib/staleBuild';
 import { isQuietFocus, lastMenuTrigger } from './menu';
 import { useI18n, type MessageKey, type MessageParams, type Translate } from '../i18n';
 
@@ -237,6 +238,9 @@ export function describeError(error: unknown, t: Translate): { title: string; de
   if (error instanceof MessageError) {
     return { title: t('error.unexpected'), detail: t(error.key, error.params) };
   }
+  if (isChunkLoadError(error)) {
+    return { title: t('error.newVersion'), hint: t('error.hint.newVersion'), detail: (error as Error).message };
+  }
   if (isApiError(error)) {
     const detail = error.serverMessage;
     switch (error.kind) {
@@ -312,6 +316,32 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
       )}
     </div>
   );
+}
+
+/**
+ * Keeps a failure inside one part of a page, e.g. a tab: the rest of the page, and a form being
+ * filled in there, stays. A part of the build that could not be loaded (the server was updated
+ * meanwhile) is fixed by reloading the page; anything else is tried again in place.
+ */
+export class LocalErrorBoundary extends Component<{ children: ReactNode }, { error: unknown }> {
+  override state: { error: unknown } = { error: null };
+
+  static getDerivedStateFromError(error: unknown): { error: unknown } {
+    return { error: error ?? new Error('unknown') };
+  }
+
+  override render() {
+    const { error } = this.state;
+    if (error === null) {
+      return this.props.children;
+    }
+    return (
+      <ErrorState
+        error={error}
+        onRetry={() => (isChunkLoadError(error) ? window.location.reload() : this.setState({ error: null }))}
+      />
+    );
+  }
 }
 
 export function Notice({

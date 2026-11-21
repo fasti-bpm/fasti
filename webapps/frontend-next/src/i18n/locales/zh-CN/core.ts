@@ -700,6 +700,9 @@ const messages: Catalog = {
   'error.server': '服务器报告了错误。请稍后重试。',
   'error.unauthorized': '您的会话已过期。请重新登录。',
   'error.unexpected': '发生了意外错误。',
+  'error.newVersion': '有更新的版本可用。',
+  'error.hint.newVersion':
+    '此页面打开期间服务器已更新，页面的一部分无法加载。请重新加载页面；在此之前，请先复制尚未保存的输入内容。',
   'filterEdit.addCriterion': '添加条件',
   'filterEdit.addVariable': '添加变量',
   'filterEdit.addVariableCriterion': '添加变量条件',

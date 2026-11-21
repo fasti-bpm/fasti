@@ -766,6 +766,9 @@ const messages: Catalog = {
   'error.server': 'Der Server hat einen Fehler gemeldet. Versuchen Sie es später erneut.',
   'error.unauthorized': 'Ihre Sitzung ist abgelaufen. Melden Sie sich erneut an.',
   'error.unexpected': 'Etwas Unerwartetes ist schiefgegangen.',
+  'error.newVersion': 'Eine neuere Version ist verfügbar.',
+  'error.hint.newVersion':
+    'Der Server wurde aktualisiert, während diese Seite geöffnet war, und ein Teil der Seite konnte nicht geladen werden. Laden Sie die Seite neu; kopieren Sie vorher alle noch nicht gespeicherten Eingaben.',
 
   'filterEdit.addCriterion': 'Kriterium hinzufügen',
   'filterEdit.addVariable': 'Variable hinzufügen',

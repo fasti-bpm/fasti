@@ -721,6 +721,9 @@ const messages: Catalog = {
   'error.server': 'Le serveur a signalé une erreur. Réessayez plus tard.',
   'error.unauthorized': 'Votre session a expiré. Reconnectez-vous.',
   'error.unexpected': 'Une erreur inattendue s’est produite.',
+  'error.newVersion': 'Une version plus récente est disponible.',
+  'error.hint.newVersion':
+    'Le serveur a été mis à jour pendant que cette page était ouverte, et une partie de la page n’a pas pu être chargée. Rechargez la page ; copiez d’abord ce que vous avez saisi et qui n’est pas encore enregistré.',
   'filterEdit.addCriterion': 'Ajouter un critère',
   'filterEdit.addVariable': 'Ajouter une variable',
   'filterEdit.addVariableCriterion': 'Ajouter un critère de variable',

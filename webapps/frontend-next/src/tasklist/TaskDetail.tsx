@@ -19,7 +19,7 @@ import '../forms/registry';
 import { useI18n, type MessageKey } from '../i18n';
 import { parseEngineDate } from '../lib/dates';
 import { pluginsFor } from '../plugins/registry';
-import { Button, EmptyState, ErrorState, IconButton, Loading, Skeleton } from '../ui';
+import { Button, EmptyState, ErrorState, IconButton, LocalErrorBoundary, Loading, Skeleton } from '../ui';
 import { useToast } from '../ui/toast';
 import { refreshTasks, taskChangesSettled, useTaskChangePending, type TaskActions } from './actions';
 import { AttachmentsTab } from './Attachments';
@@ -202,9 +202,11 @@ function CaseDiagramTab({ task }: { task: Task }) {
     return <ErrorState error={xml.error} onRetry={() => void xml.refetch()} />;
   }
   return (
-    <Suspense fallback={<Loading label={t('diagram.loading')} />}>
-      <CmmnDiagram xml={xml.data} caseKey={keyOfDefinitionId(definitionId)} selected={selected} label={t('cmmn.task.diagramLabel')} />
-    </Suspense>
+    <LocalErrorBoundary>
+      <Suspense fallback={<Loading label={t('diagram.loading')} />}>
+        <CmmnDiagram xml={xml.data} caseKey={keyOfDefinitionId(definitionId)} selected={selected} label={t('cmmn.task.diagramLabel')} />
+      </Suspense>
+    </LocalErrorBoundary>
   );
 }
 
@@ -227,9 +229,11 @@ function DiagramTab({ task }: { task: Task }) {
     return <ErrorState error={xml.error} onRetry={() => void xml.refetch()} />;
   }
   return (
-    <Suspense fallback={<Loading label={t('diagram.loading')} />}>
-      <BpmnDiagram xml={xml.data} processKey={keyOfDefinitionId(definitionId)} highlight={task.taskDefinitionKey} />
-    </Suspense>
+    <LocalErrorBoundary>
+      <Suspense fallback={<Loading label={t('diagram.loading')} />}>
+        <BpmnDiagram xml={xml.data} processKey={keyOfDefinitionId(definitionId)} highlight={task.taskDefinitionKey} />
+      </Suspense>
+    </LocalErrorBoundary>
   );
 }
 
@@ -487,9 +491,11 @@ export function TaskDetail({
         </Tabs.Content>
         {task.processInstanceId && (
           <Tabs.Content className="tabs__panel" value="case">
-            <Suspense fallback={<Loading label={t('state.loading')} />}>
-              <CaseTimeline processInstanceId={task.processInstanceId} currentTaskId={task.id} />
-            </Suspense>
+            <LocalErrorBoundary>
+              <Suspense fallback={<Loading label={t('state.loading')} />}>
+                <CaseTimeline processInstanceId={task.processInstanceId} currentTaskId={task.id} />
+              </Suspense>
+            </LocalErrorBoundary>
           </Tabs.Content>
         )}
         <Tabs.Content className="tabs__panel" value="attachments">

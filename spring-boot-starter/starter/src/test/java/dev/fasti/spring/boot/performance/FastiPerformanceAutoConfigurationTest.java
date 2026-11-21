@@ -60,6 +60,28 @@ public class FastiPerformanceAutoConfigurationTest {
 
   @RunWith(SpringRunner.class)
   @SpringBootTest(classes = TestApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE, properties = {
+      "camunda.bpm.process-engine-name=typoPerformanceEngine",
+      // a typo is logged and the check stays on: the hints never keep the application from starting
+      "fasti.performance.index-check=warning"
+  })
+  public static class UnknownSwitchValue {
+
+    @Autowired
+    protected ProcessEngine processEngine;
+
+    @Autowired
+    protected PerformanceAdvisorPlugin plugin;
+
+    @Test
+    public void shouldStartAndKeepTheCheck() {
+      assertThat(processEngine).isNotNull();
+      assertThat(plugin.getIndexCheck()).isEqualTo("warn");
+      assertThat(plugin.getWarnings()).anySatisfy(warning -> assertThat(warning).startsWith("FASTI-PERF-001 "));
+    }
+  }
+
+  @RunWith(SpringRunner.class)
+  @SpringBootTest(classes = TestApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE, properties = {
       "camunda.bpm.process-engine-name=quietPerformanceEngine",
       "camunda.bpm.job-execution.enabled=false",
       "fasti.performance.index-check=off",

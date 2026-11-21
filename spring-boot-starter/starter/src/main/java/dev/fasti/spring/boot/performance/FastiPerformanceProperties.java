@@ -25,14 +25,14 @@ public class FastiPerformanceProperties {
 
   /**
    * Whether the engine logs one warning at start that lists the optional performance indexes
-   * (sql/optional of the distribution) missing in its database: warn or off.
+   * (sql/optional of the distribution) missing in its database: warn or off (another value is logged and read as warn).
    */
   private String indexCheck = "warn";
 
   /**
    * Whether the engine logs a warning at start for each setting that is known to cost performance
    * as the data grows (history without cleanup, connection pool smaller than the job executor
-   * needs, ...): warn or off.
+   * needs, ...): warn or off (another value is logged and read as warn).
    */
   private String configCheck = "warn";
 

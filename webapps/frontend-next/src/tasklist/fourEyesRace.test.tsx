@@ -105,6 +105,57 @@ describe('four-eyes status after an assignment', () => {
     expect(server.find('GET', `${ENGINE}/task/t1/four-eyes`).length).toBeGreaterThanOrEqual(3);
   });
 
+  it('does not take an answer that was asked for before the assignment and arrives after it', async () => {
+    const server = backend();
+    renderProbe();
+    await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('mary:blocked'));
+
+    // the status read for the new assignee is answered for mary, but only after the assignment
+    let answer: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      answer = resolve;
+    });
+    const fourEyes = (assignee: string) =>
+      json({
+        taskId: 't1',
+        enabled: true,
+        guarded: true,
+        earlierSteps: [{ id: 'prepare', name: 'Prepare' }],
+        userId: 'demo',
+        userExcluded: false,
+        userSteps: [],
+        assignee,
+        assigneeExcluded: assignee === 'mary',
+        assigneeSteps: assignee === 'mary' ? ['prepare'] : [],
+        blocked: assignee === 'mary',
+      });
+    let asked = 0;
+    server.on(`GET ${ENGINE}/task/t1/four-eyes`, async () => {
+      asked += 1;
+      if (asked === 1) {
+        await held;
+        return fourEyes('mary');
+      }
+      return fourEyes('demo');
+    });
+    let arrive: () => void = () => undefined;
+    const arrived = new Promise<void>((resolve) => {
+      arrive = resolve;
+    });
+    server.on(`POST ${ENGINE}/task/t1/assignee`, async () => {
+      await arrived;
+      server.state.assignee = 'demo';
+      return empty();
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Take over' }));
+    await waitFor(() => expect(asked).toBe(1));
+    arrive();
+    // the read under way is given up for one that asks the server after the change
+    await waitFor(() => expect(asked).toBe(2));
+    answer();
+    await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('demo:free'));
+  });
+
   it('reads the status again with the tasks, e.g. after a step of a parallel branch completed', async () => {
     const server = backend();
     const queryClient = renderProbe();

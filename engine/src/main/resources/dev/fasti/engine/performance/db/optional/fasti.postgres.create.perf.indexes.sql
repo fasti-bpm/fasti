@@ -25,20 +25,22 @@
 -- jobExecutorAcquireByDueDate=true (and ensureJobDueDateNotNull=false) an ascending index would
 -- let the planner walk the whole index whenever nothing is due (measured: 990,000 rows per
 -- acquisition); this order cannot serve that sort, so the planner takes the due jobs and sorts them.
--- Write cost: one entry per job that has retries left; changed again only when a job is
--- rescheduled, fails for the last time or is suspended. Locking and unlocking a job do not touch it.
+-- Write cost: one entry per executable job, and one more for each update of such a job that is
+-- not a HOT update (in the measurements no job update was, with or without this index: locking
+-- rewrites the row). Failed and suspended jobs cost nothing.
 create index concurrently if not exists FASTI_IDX_JOB_DUEDATE on ACT_RU_JOB (DUEDATE_ nulls first)
   where RETRIES_ > 0 and SUSPENSION_STATE_ = 1;
 
 -- Overdue tasks and tasks by due date (dueBefore/dueAfter, sorting by due date): task lists,
 -- the dashboard and the workload page.
--- Write cost: one entry per task; changed only when the due date changes.
+-- Write cost: one entry per task, and one more for each update of the task (task updates are no
+-- HOT updates already, because the stock schema indexes the assignee and the last update time).
 create index concurrently if not exists FASTI_IDX_TASK_DUE on ACT_RU_TASK (DUE_DATE_);
 
 -- Tasks of one assignee counted or sorted by due date ("my tasks", workload per user) and
 -- unassigned overdue tasks.
--- Write cost: one entry per task, rewritten at each claim, unclaim and reassignment (as the
--- stock index on ASSIGNEE_ is, so these updates are no HOT updates already).
+-- Write cost: one entry per task, and one more for each update of the task, as for
+-- FASTI_IDX_TASK_DUE.
 create index concurrently if not exists FASTI_IDX_TASK_ASSIGNEE_DUE on ACT_RU_TASK (ASSIGNEE_, DUE_DATE_);
 
 -- User info by user: absences (fasti.absence.enabled) are looked up at each task assignment,

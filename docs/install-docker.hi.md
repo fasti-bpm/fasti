@@ -280,11 +280,8 @@ Docker Compose के साथ: `FASTI_IMAGE` (या `image:` पंक्त�
 
 ## 12. Docker के बिना
 
-तैयार Tomcat 1.0.0 बंडल (डाउनलोड पृष्ठ: https://fasti.dev/download):
-- [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
-- [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
+तैयार Tomcat 1.0.1 बंडल (डाउनलोड पृष्ठ: https://fasti.dev/download):
+- [fasti-bpm-tomcat-1.0.1.zip](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip.sha256))
+- [fasti-bpm-tomcat-1.0.1.tar.gz](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz.sha256))
 
-एक्सट्रैक्ट करने से पहले चेकसम सत्यापित करें, उदाहरण के लिए `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`।
-यह बंडल अभी भी संस्करण 1.0.0 है और इसमें 1.0.1 के दो सुरक्षा सुधार (template filter, LDAP
-प्रमाणपत्र) नहीं हैं; उन्हें पाने के लिए इमेज का उपयोग करें या `v1.0.1` टैग से Tomcat वितरण
-(`distro/tomcat`) बनाएँ।
+एक्सट्रैक्ट करने से पहले चेकसम सत्यापित करें, उदाहरण के लिए `sha256sum -c fasti-bpm-tomcat-1.0.1.zip.sha256`।

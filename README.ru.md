@@ -67,15 +67,12 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**Образ Docker** (`fastidev/fasti-bpm`, amd64 и arm64): <https://fasti.dev/install>; пошаговая
   инструкция — в [docs/install-docker.ru.md](docs/install-docker.ru.md), все переменные — в
   [distro/docker/README.md](distro/docker/README.md#environment-variables).
-- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Дистрибутив Tomcat**, без Docker: <https://fasti.dev/download>. Готовый дистрибутив Tomcat 1.0.0:
-  - [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
-  - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
+- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Дистрибутив Tomcat**, без Docker: <https://fasti.dev/download>. Готовый дистрибутив Tomcat 1.0.1:
+  - [fasti-bpm-tomcat-1.0.1.zip](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip.sha256))
+  - [fasti-bpm-tomcat-1.0.1.tar.gz](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz.sha256))
 
-  Перед распаковкой проверьте контрольную сумму, например командой `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`,
-  а перед запуском прочитайте `README.txt` в дистрибутиве. Дистрибутив по-прежнему имеет версию
-  1.0.0 и не содержит двух исправлений безопасности 1.0.1 (фильтр шаблонов, сертификаты LDAP);
-  чтобы получить их, используйте образ или соберите дистрибутив Tomcat (`distro/tomcat`) из тега
-  `v1.0.1`.
+  Перед распаковкой проверьте контрольную сумму, например командой `sha256sum -c fasti-bpm-tomcat-1.0.1.zip.sha256`,
+  а перед запуском прочитайте `README.txt` в дистрибутиве.
 - **Встраивание** в Spring Boot или другое Java-приложение: новые координаты Maven
   (`dev.fasti.platform:fasti-*`), те же пакеты `org.camunda.bpm.*`; см.
   [docs/embedding.ru.md](docs/embedding.ru.md).

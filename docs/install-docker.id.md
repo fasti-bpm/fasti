@@ -280,10 +280,8 @@ Masih mengalami kendala? Buat issue GitHub dengan menyertakan log (hapus kata sa
 
 ## 12. Tanpa Docker
 
-Paket Tomcat 1.0.0 siap pakai (halaman unduhan: https://fasti.dev/download):
-- [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
-- [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
+Paket Tomcat 1.0.1 siap pakai (halaman unduhan: https://fasti.dev/download):
+- [fasti-bpm-tomcat-1.0.1.zip](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip.sha256))
+- [fasti-bpm-tomcat-1.0.1.tar.gz](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz.sha256))
 
-Verifikasi checksum sebelum mengekstrak, misalnya `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
-Paket ini masih versi 1.0.0 dan belum berisi dua perbaikan keamanan 1.0.1 (filter template, sertifikat LDAP);
-untuk mendapatkannya, gunakan image atau bangun distribusi Tomcat (`distro/tomcat`) dari tag `v1.0.1`.
+Verifikasi checksum sebelum mengekstrak, misalnya `sha256sum -c fasti-bpm-tomcat-1.0.1.zip.sha256`.

@@ -279,10 +279,8 @@ docker run -d --name fasti ... fastidev/fasti-bpm:1.0.1 --production   # same op
 
 ## 12. 不使用 Docker
 
-预构建的 Tomcat 1.0.0 软件包（下载页面：<https://fasti.dev/download>）：
-- [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
-- [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
+预构建的 Tomcat 1.0.1 软件包（下载页面：<https://fasti.dev/download>）：
+- [fasti-bpm-tomcat-1.0.1.zip](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip.sha256))
+- [fasti-bpm-tomcat-1.0.1.tar.gz](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz.sha256))
 
-解压前请验证校验和，例如 `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`。
-该捆绑包仍是 1.0.0 版本，不包含 1.0.1 的两项安全修复（模板过滤器、LDAP 证书）；如需这些修复，请使用镜像，
-或从 `v1.0.1` 标签构建 Tomcat 发行版（`distro/tomcat`）。
+解压前请验证校验和，例如 `sha256sum -c fasti-bpm-tomcat-1.0.1.zip.sha256`。

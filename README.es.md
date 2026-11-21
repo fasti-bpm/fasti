@@ -67,15 +67,13 @@ Guía completa, incluido el uso de su propia base de datos: <https://fasti.dev/i
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**Imagen de Docker** (`fastidev/fasti-bpm`, amd64 y arm64): <https://fasti.dev/install>;
   paso a paso en [docs/install-docker.es.md](docs/install-docker.es.md), todas las variables en
   [distro/docker/README.md](distro/docker/README.md#environment-variables).
-- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Paquete de Tomcat**, sin Docker: <https://fasti.dev/download>. Paquete de Tomcat 1.0.0 listo para usar:
-  - [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
-  - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
+- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Paquete de Tomcat**, sin Docker: <https://fasti.dev/download>. Paquete de Tomcat 1.0.1 listo para usar:
+  - [fasti-bpm-tomcat-1.0.1.zip](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip.sha256))
+  - [fasti-bpm-tomcat-1.0.1.tar.gz](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz.sha256))
 
   Verifique la suma de comprobación antes de extraerlo, por ejemplo con
-  `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`, y lea `README.txt` en el paquete antes de
-  iniciarlo. El paquete sigue siendo la versión 1.0.0 y no contiene las dos correcciones de seguridad
-  de 1.0.1 (filtro de plantillas, certificados LDAP); para obtenerlas, use la imagen o compile la
-  distribución de Tomcat (`distro/tomcat`) desde la etiqueta `v1.0.1`.
+  `sha256sum -c fasti-bpm-tomcat-1.0.1.zip.sha256`, y lea `README.txt` en el paquete antes de
+  iniciarlo.
 - **Integrado** en Spring Boot u otra aplicación Java: nuevas coordenadas de Maven
   (`dev.fasti.platform:fasti-*`), los mismos paquetes `org.camunda.bpm.*`; consulte
   [docs/embedding.es.md](docs/embedding.es.md).

@@ -64,14 +64,12 @@ Full guide, including your own database: <https://fasti.dev/install>
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**Docker image** (`fastidev/fasti-bpm`, amd64 and arm64): <https://fasti.dev/install>; step by
   step in [docs/install-docker.md](docs/install-docker.md), all variables in
   [distro/docker/README.md](distro/docker/README.md#environment-variables).
-- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Tomcat bundle**, without Docker: <https://fasti.dev/download>. Ready-made Tomcat 1.0.0 bundle:
-  - [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
-  - [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
+- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Tomcat bundle**, without Docker: <https://fasti.dev/download>. Ready-made Tomcat 1.0.1 bundle:
+  - [fasti-bpm-tomcat-1.0.1.zip](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip.sha256))
+  - [fasti-bpm-tomcat-1.0.1.tar.gz](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz.sha256))
 
-  Verify the checksum before extracting, for example `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`,
-  and read `README.txt` in the bundle before starting it. The bundle is still version 1.0.0 and
-  does not contain the two security fixes of 1.0.1 (template filter, LDAP certificates); to get
-  them, use the image or build the Tomcat distribution (`distro/tomcat`) from the `v1.0.1` tag.
+  Verify the checksum before extracting, for example `sha256sum -c fasti-bpm-tomcat-1.0.1.zip.sha256`,
+  and read `README.txt` in the bundle before starting it.
 - **Embedded** in Spring Boot or another Java application: new Maven coordinates
   (`dev.fasti.platform:fasti-*`), the same `org.camunda.bpm.*` packages; see
   [docs/embedding.md](docs/embedding.md).

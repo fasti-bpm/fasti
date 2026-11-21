@@ -275,14 +275,11 @@ Vẫn chưa được? Mở issue trên GitHub kèm log (bỏ mật khẩu). Lỗ
 
 ## 12. Không dùng Docker
 
-Gói Tomcat 1.0.0 dựng sẵn (trang tải: https://fasti.dev/download):
-- [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
-- [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
+Gói Tomcat 1.0.1 dựng sẵn (trang tải: https://fasti.dev/download):
+- [fasti-bpm-tomcat-1.0.1.zip](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip.sha256))
+- [fasti-bpm-tomcat-1.0.1.tar.gz](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz.sha256))
 
-Kiểm tra checksum trước khi giải nén, ví dụ `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
-Gói này vẫn là bản 1.0.0 và chưa có hai bản vá bảo mật của 1.0.1 (template filter, chứng chỉ
-LDAP); để có chúng, hãy dùng image hoặc build bản phân phối Tomcat (`distro/tomcat`) từ tag
-`v1.0.1`.
+Kiểm tra checksum trước khi giải nén, ví dụ `sha256sum -c fasti-bpm-tomcat-1.0.1.zip.sha256`.
 
 
 <a id="13-observability"></a>

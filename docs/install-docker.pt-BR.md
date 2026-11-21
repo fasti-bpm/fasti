@@ -280,11 +280,8 @@ Ainda não conseguiu resolver? Abra uma issue no GitHub com o log (sem as senhas
 
 ## 12. Sem Docker
 
-Pacote Tomcat 1.0.0 pronto para uso (página de download: https://fasti.dev/download):
-- [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
-- [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
+Pacote Tomcat 1.0.1 pronto para uso (página de download: https://fasti.dev/download):
+- [fasti-bpm-tomcat-1.0.1.zip](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip.sha256))
+- [fasti-bpm-tomcat-1.0.1.tar.gz](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz.sha256))
 
-Verifique a soma de verificação antes de extrair, por exemplo `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`.
-O pacote ainda é a versão 1.0.0 e não contém as duas correções de segurança da 1.0.1 (filtro de templates,
-certificados LDAP); para obtê-las, use a imagem ou compile a distribuição Tomcat (`distro/tomcat`) a partir da
-tag `v1.0.1`.
+Verifique a soma de verificação antes de extrair, por exemplo `sha256sum -c fasti-bpm-tomcat-1.0.1.zip.sha256`.

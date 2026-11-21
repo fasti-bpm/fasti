@@ -280,10 +280,8 @@ docker run -d --name fasti ... fastidev/fasti-bpm:1.0.1 --production   # same op
 
 ## 12. การใช้งานโดยไม่ใช้ Docker
 
-ชุด Tomcat 1.0.0 พร้อมใช้งาน (หน้าดาวน์โหลด: https://fasti.dev/download):
-- [fasti-bpm-tomcat-1.0.0.zip](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.zip.sha256))
-- [fasti-bpm-tomcat-1.0.0.tar.gz](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.0/fasti-bpm-tomcat-1.0.0.tar.gz.sha256))
+ชุด Tomcat 1.0.1 พร้อมใช้งาน (หน้าดาวน์โหลด: https://fasti.dev/download):
+- [fasti-bpm-tomcat-1.0.1.zip](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip.sha256))
+- [fasti-bpm-tomcat-1.0.1.tar.gz](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz.sha256))
 
-ตรวจสอบเช็กซัมก่อนแตกไฟล์ เช่น `sha256sum -c fasti-bpm-tomcat-1.0.0.zip.sha256`
-ชุดนี้ยังเป็นเวอร์ชัน 1.0.0 และยังไม่มีการแก้ไขด้านความปลอดภัยสองรายการของ 1.0.1 (template filter,
-ใบรับรอง LDAP) หากต้องการ ให้ใช้อิมเมจหรือสร้างชุดแจกจ่าย Tomcat (`distro/tomcat`) จากแท็ก `v1.0.1`
+ตรวจสอบเช็กซัมก่อนแตกไฟล์ เช่น `sha256sum -c fasti-bpm-tomcat-1.0.1.zip.sha256`

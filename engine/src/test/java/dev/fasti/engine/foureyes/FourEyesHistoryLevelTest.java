@@ -140,7 +140,7 @@ public abstract class FourEyesHistoryLevelTest {
       // without history the variable is the only record (documented limitation)
       String pi = draftedBy("alice");
       RuntimeService runtimeService = engineRule.getRuntimeService();
-      runtimeService.removeVariable(pi, FourEyesService.VARIABLE_PREFIX + "draft");
+      FourEyesModels.changeRecord(engineRule.getProcessEngine(), pi, "draft", null);
       completeAs("alice", task(pi));
       assertThat(runtimeService.createProcessInstanceQuery().processInstanceId(pi).count()).isZero();
     }
@@ -157,7 +157,7 @@ public abstract class FourEyesHistoryLevelTest {
     @Test
     public void shouldUseTheHistoricAssigneeOnceTheRecordIsRemoved() {
       String pi = draftedBy("alice");
-      engineRule.getRuntimeService().removeVariable(pi, FourEyesService.VARIABLE_PREFIX + "draft");
+      FourEyesModels.changeRecord(engineRule.getProcessEngine(), pi, "draft", null);
       assertAliceRefused(pi);
     }
   }

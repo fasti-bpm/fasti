@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import dev.fasti.engine.foureyes.impl.ReservedVariables;
 import org.camunda.bpm.dmn.engine.impl.el.ScriptValueDetacher;
 import org.camunda.bpm.engine.delegate.VariableScope;
 import org.camunda.bpm.engine.impl.ProcessEngineLogger;
@@ -282,11 +283,25 @@ public abstract class AbstractVariableScope implements Serializable, VariableSco
 
   @Override
   public void removeVariables() {
+    boolean keepsVariables = false;
     for (CoreVariableInstance variableInstance : getVariableStore().getVariables()) {
-      invokeVariableLifecycleListenersDelete(variableInstance, getSourceActivityVariableScope());
+      // Fasti: the records of the four-eyes control stay
+      if (ReservedVariables.isKept(this, variableInstance.getName())) {
+        keepsVariables = true;
+      } else {
+        invokeVariableLifecycleListenersDelete(variableInstance, getSourceActivityVariableScope());
+      }
     }
 
-    getVariableStore().removeVariables();
+    if (keepsVariables) {
+      for (CoreVariableInstance variableInstance : getVariableStore().getVariables()) {
+        if (!ReservedVariables.isKept(this, variableInstance.getName())) {
+          getVariableStore().removeVariable(variableInstance.getName());
+        }
+      }
+    } else {
+      getVariableStore().removeVariables();
+    }
   }
 
   @Override
@@ -369,6 +384,11 @@ public abstract class AbstractVariableScope implements Serializable, VariableSco
                                TypedValue value,
                                AbstractVariableScope sourceActivityExecution,
                                boolean skipJavaSerializationFormatCheck) {
+
+    // Fasti: only the four-eyes control writes its records
+    if (!ReservedVariables.beforeSet(this, variableName, value)) {
+      return;
+    }
 
     if (!skipJavaSerializationFormatCheck) {
       VariableUtil.checkJavaSerialization(variableName, value);
@@ -489,6 +509,8 @@ public abstract class AbstractVariableScope implements Serializable, VariableSco
   protected void removeVariableLocal(String variableName, AbstractVariableScope sourceActivityExecution) {
 
     if (getVariableStore().containsKey(variableName)) {
+      // Fasti: only the four-eyes control writes its records
+      ReservedVariables.beforeRemove(this, variableName);
       CoreVariableInstance variableInstance = getVariableStore().getVariable(variableName);
 
       invokeVariableLifecycleListenersDelete(variableInstance, sourceActivityExecution);

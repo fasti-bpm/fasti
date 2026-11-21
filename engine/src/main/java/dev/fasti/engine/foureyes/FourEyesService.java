@@ -30,7 +30,9 @@ public interface FourEyesService {
 
   /**
    * Prefix of the process instance variables in which the plugin records who completed a checked
-   * step: {@code fasti_completedBy_<id of the user task>}, a JSON array of user ids.
+   * step: {@code fasti_completedBy_<id of the user task>}, a JSON array of user ids. On an engine
+   * with the plugin the prefix is reserved in process instances: only the plugin sets or removes
+   * such a variable, any other attempt fails with a {@link ReservedVariableException}.
    */
   String VARIABLE_PREFIX = "fasti_completedBy_";
 

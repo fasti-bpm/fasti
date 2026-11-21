@@ -17,6 +17,7 @@
 package dev.fasti.engine.foureyes;
 
 import static dev.fasti.engine.foureyes.FourEyesModels.CANDIDATES;
+import static dev.fasti.engine.foureyes.FourEyesModels.changeRecord;
 import static dev.fasti.engine.foureyes.FourEyesModels.draftApprove;
 import static dev.fasti.engine.foureyes.FourEyesModels.draftReviewApprove;
 import static dev.fasti.engine.foureyes.FourEyesModels.rule;
@@ -547,7 +548,7 @@ public class FourEyesTest {
     testRule.deploy(draftApprove());
     String pi = start("fourEyes");
     completeAs("alice", task(pi, "draft"));
-    runtimeService.setVariable(pi, FourEyesService.VARIABLE_PREFIX + "draft", "[null, 1, {\"a\": 2}, \"carol\"]");
+    changeRecord(engineRule.getProcessEngine(), pi, "draft", "[null, 1, {\"a\": 2}, \"carol\"]");
 
     // carol counts; the rest is skipped instead of failing
     assertRefused("carol", task(pi, "approve"));
@@ -571,7 +572,7 @@ public class FourEyesTest {
     testRule.deploy(draftApprove());
     String pi = start("fourEyes");
     completeAs("alice", task(pi, "draft"));
-    runtimeService.removeVariable(pi, FourEyesService.VARIABLE_PREFIX + "draft");
+    changeRecord(engineRule.getProcessEngine(), pi, "draft", null);
 
     // the historic task instance of draft keeps alice as assignee
     assertRefused("alice", task(pi, "approve"));
@@ -585,7 +586,7 @@ public class FourEyesTest {
     identityService.setAuthenticatedUserId("alice");
     taskService.complete(task(pi, "draft").getId());
     identityService.clearAuthentication();
-    runtimeService.setVariable(pi, FourEyesService.VARIABLE_PREFIX + "draft", "not a list");
+    changeRecord(engineRule.getProcessEngine(), pi, "draft", "not a list");
 
     assertRefused("alice", task(pi, "approve"));
   }
@@ -716,7 +717,7 @@ public class FourEyesTest {
       completeAs("alice", task(pi, "draft"));
       // approve was created with authorization checks on: its candidate users may work on it
       configuration.setAuthorizationEnabled(false);
-      runtimeService.removeVariable(pi, FourEyesService.VARIABLE_PREFIX + "draft");
+      changeRecord(engineRule.getProcessEngine(), pi, "draft", null);
       Task approve = task(pi, "approve");
       configuration.setAuthorizationEnabled(true);
       assertRefused("alice", approve);

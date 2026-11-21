@@ -134,6 +134,7 @@ public class TaskFourEyesRestServiceTest extends AbstractRestServiceTest {
     when(processEngine.getTaskService()).thenReturn(target.getTaskService());
     when(processEngine.getFormService()).thenReturn(target.getFormService());
     when(processEngine.getIdentityService()).thenReturn(target.getIdentityService());
+    when(processEngine.getRuntimeService()).thenReturn(target.getRuntimeService());
   }
 
   protected static void as(String userId) {
@@ -349,6 +350,114 @@ public class TaskFourEyesRestServiceTest extends AbstractRestServiceTest {
         .statusCode(Status.FORBIDDEN.getStatusCode())
         .body("type", equalTo("AuthorizationException"))
     .when().get(FOUR_EYES_URL);
+  }
+
+  // the record of the control cannot be changed through the API
+
+  protected static final String RECORD = FourEyesService.VARIABLE_PREFIX + "draft";
+  protected static final String TASK_VARIABLES_URL = TASK_URL + "/variables";
+  protected static final String TASK_VARIABLE_URL = TASK_VARIABLES_URL + "/{name}";
+  protected static final String INSTANCE_VARIABLES_URL = TEST_RESOURCE_ROOT_PATH + "/process-instance/{id}/variables";
+  protected static final String INSTANCE_VARIABLE_URL = INSTANCE_VARIABLES_URL + "/{name}";
+  protected static final String EXECUTION_LOCAL_VARIABLE_URL = TEST_RESOURCE_ROOT_PATH
+      + "/execution/{id}/localVariables/{name}";
+  protected static final String EMPTY_RECORD = "{\"value\": \"[]\", \"type\": \"String\"}";
+  protected static final String SET_RECORD = "{\"modifications\": {\"" + RECORD + "\": " + EMPTY_RECORD + "}}";
+  protected static final String DELETE_RECORD = "{\"deletions\": [\"" + RECORD + "\"]}";
+  protected static final String WITH_RECORD = "{\"variables\": {\"" + RECORD + "\": " + EMPTY_RECORD + "}}";
+
+  protected void expectReserved(io.restassured.specification.RequestSpecification request, String method, String url) {
+    request
+    .then().expect()
+        .statusCode(Status.FORBIDDEN.getStatusCode())
+        .contentType(ContentType.JSON)
+        .body("type", equalTo("AuthorizationException"))
+        .body("message", containsString("Four-eyes control: variable '" + RECORD + "' records who completed a step "
+            + "and is written by the engine only; it cannot be set or removed."))
+    .when().request(method, url);
+  }
+
+  @Test
+  public void shouldRefuseChangesOfTheRecordThroughTheTaskVariables() {
+    // authorization on: as a candidate, alice may update the variables of the task
+    ((ProcessEngineConfigurationImpl) engine.getProcessEngineConfiguration()).setAuthorizationEnabled(true);
+    Task approve = draftedByAlice(engine);
+    as("alice");
+
+    expectReserved(given().pathParam("id", approve.getId()).pathParam("name", RECORD)
+        .contentType(ContentType.JSON).body(EMPTY_RECORD), "PUT", TASK_VARIABLE_URL);
+    expectReserved(given().pathParam("id", approve.getId()).pathParam("name", RECORD), "DELETE", TASK_VARIABLE_URL);
+    expectReserved(given().pathParam("id", approve.getId())
+        .contentType(ContentType.JSON).body(SET_RECORD), "POST", TASK_VARIABLES_URL);
+    expectReserved(given().pathParam("id", approve.getId())
+        .contentType(ContentType.JSON).body(DELETE_RECORD), "POST", TASK_VARIABLES_URL);
+
+    // a variable of her own she may set
+    given().pathParam("id", approve.getId()).pathParam("name", "amount")
+        .contentType(ContentType.JSON).body("{\"value\": 10, \"type\": \"Integer\"}")
+    .then().expect().statusCode(Status.NO_CONTENT.getStatusCode())
+    .when().put(TASK_VARIABLE_URL);
+
+    // and she is still refused
+    given().pathParam("id", approve.getId()).contentType(ContentType.JSON).body(EMPTY_JSON_OBJECT)
+    .then().expect()
+        .statusCode(Status.FORBIDDEN.getStatusCode())
+        .body("type", equalTo("FourEyesViolationException"))
+    .when().post(TASK_URL + "/complete");
+    as(null);
+    ((ProcessEngineConfigurationImpl) engine.getProcessEngineConfiguration()).setAuthorizationEnabled(false);
+    org.junit.Assert.assertEquals("[\"alice\"]",
+        engine.getRuntimeService().getVariable(approve.getProcessInstanceId(), RECORD));
+  }
+
+  @Test
+  public void shouldRefuseChangesOfTheRecordWithACompletionOrAForm() {
+    Task approve = draftedByAlice(engine);
+    // bob may complete the task, but not with a record of his making
+    as("bob");
+
+    expectReserved(given().pathParam("id", approve.getId())
+        .contentType(ContentType.JSON).body(WITH_RECORD), "POST", TASK_URL + "/complete");
+    expectReserved(given().pathParam("id", approve.getId())
+        .contentType(ContentType.JSON).body(WITH_RECORD), "POST", TASK_URL + "/submit-form");
+
+    as(null);
+    org.junit.Assert.assertEquals(1, engine.getTaskService().createTaskQuery().taskId(approve.getId()).count());
+    org.junit.Assert.assertEquals("[\"alice\"]",
+        engine.getRuntimeService().getVariable(approve.getProcessInstanceId(), RECORD));
+  }
+
+  @Test
+  public void shouldRefuseChangesOfTheRecordThroughTheProcessInstanceAndExecutionVariables() {
+    Task approve = draftedByAlice(engine);
+    String pi = approve.getProcessInstanceId();
+    as("bob");
+
+    expectReserved(given().pathParam("id", pi).pathParam("name", RECORD)
+        .contentType(ContentType.JSON).body(EMPTY_RECORD), "PUT", INSTANCE_VARIABLE_URL);
+    expectReserved(given().pathParam("id", pi).pathParam("name", RECORD), "DELETE", INSTANCE_VARIABLE_URL);
+    expectReserved(given().pathParam("id", pi)
+        .contentType(ContentType.JSON).body(SET_RECORD), "POST", INSTANCE_VARIABLES_URL);
+    expectReserved(given().pathParam("id", pi)
+        .contentType(ContentType.JSON).body(DELETE_RECORD), "POST", INSTANCE_VARIABLES_URL);
+    expectReserved(given().pathParam("id", pi).pathParam("name", RECORD)
+        .contentType(ContentType.JSON).body(EMPTY_RECORD), "PUT", EXECUTION_LOCAL_VARIABLE_URL);
+    expectReserved(given().pathParam("id", pi).pathParam("name", RECORD), "DELETE", EXECUTION_LOCAL_VARIABLE_URL);
+
+    as(null);
+    org.junit.Assert.assertEquals("[\"alice\"]", engine.getRuntimeService().getVariable(pi, RECORD));
+  }
+
+  @Test
+  public void shouldNotReserveTheVariablesWithoutPlugin() {
+    use(engineWithoutPlugin);
+    Task approve = draftedByAlice(engineWithoutPlugin);
+    as("alice");
+
+    given().pathParam("id", approve.getId()).pathParam("name", RECORD)
+        .contentType(ContentType.JSON).body(EMPTY_RECORD)
+    .then().expect().statusCode(Status.NO_CONTENT.getStatusCode())
+    .when().put(TASK_VARIABLE_URL);
   }
 
   @Test

@@ -97,6 +97,7 @@ riêng; quy tắc của nó nêu các bước của chính nó.
 |---|---|
 | `GET /task/{id}/four-eyes` | Cho người dùng của yêu cầu: `enabled`, `guarded`, `earlierSteps` (`id`, `name`), `userExcluded` và `userSteps`, `assignee`, `assigneeExcluded` và `assigneeSteps`, và `blocked` (engine có từ chối việc hoàn thành lúc này không). Cần quyền `READ` trên tác vụ; `404` nếu tác vụ không tồn tại |
 | `POST /task/{id}/complete`, `/submit-form`, `/bpmnError`, `/bpmnEscalation` | Bị từ chối với `403` và `{"type": "FourEyesViolationException", "message": "Four-eyes control: …"}` |
+| Mọi yêu cầu đặt hoặc xóa biến `fasti_completedBy_…` của process instance (`PUT`, `POST`, `DELETE` trên biến của tác vụ, process instance hoặc execution; `variables` của `complete`, `submit-form`, message, modification, …) | Bị từ chối với `403` và `{"type": "AuthorizationException", "message": "Four-eyes control: variable … is written by the engine only; …"}`, xem [Giới hạn](#limits) |
 
 Java: `FourEyes.of(processEngine)` trả về `FourEyesService` với `isEnabled()` và
 `getStatus(taskId)`; ngoại lệ là `dev.fasti.engine.foureyes.FourEyesViolationException` kèm
@@ -145,12 +146,29 @@ historic task instance đã hoàn thành (mức `activity` trở lên) và ngư�
   một bên thất bại với `OptimisticLockingException` và, khi thử lại, bị từ chối. Các lần hoàn
   thành bước được kiểm tra của một instance cũng được tuần tự hóa như vậy.
 
+<a id="limits"></a>
+
 Giới hạn:
 
-- Người dùng có quyền thay đổi biến của quy trình có thể xóa bản ghi. Ở nơi có lưu lịch sử,
-  dữ liệu lịch sử vẫn được tính; với lịch sử `none` thì không. Người như vậy thường cũng sửa
-  được dữ liệu mà bước phê duyệt xem xét, vì vậy chỉ cấp quyền `UPDATE_INSTANCE_VARIABLE` (hoặc
-  `UPDATE` trên process instance) cho người bạn tin tưởng việc đó.
+- **Bản ghi là biến dành riêng.** Trên node có plugin, biến tên `fasti_completedBy_…` trong
+  process instance chỉ do cơ chế kiểm soát ghi. Mọi thao tác khác đặt hoặc xóa biến này đều bị
+  từ chối (`403`, trong Java là `ReservedVariableException`, một `AuthorizationException`), dù
+  đi qua đường nào: biến của tác vụ, process instance hoặc execution (REST `PUT`, `POST`,
+  `DELETE`; `setVariable`, `removeVariable` và các biến thể), biến truyền cho `complete`, form,
+  message, signal, modification, batch hoặc external task, instance mới khởi tạo kèm biến như
+  vậy, và delegate, listener, script, mapping của mô hình. Không quyền nào cho phép việc này,
+  kể cả quản trị viên. (Trước quy tắc này, bất kỳ candidate hay assignee nào cũng làm rỗng được
+  bản ghi qua biến của tác vụ của mình.)
+  - Đặt bản ghi bằng đúng giá trị đang có thì được chấp nhận và không thay đổi gì, nên form
+    và worker gửi lại mọi biến đã đọc vẫn chạy.
+  - Các bản sao toàn bộ biến bỏ qua bản ghi: call activity với `variables="all"` (cả hai
+    chiều) và việc khởi động lại (restart) process instance. `removeVariables()` trong
+    delegate giữ lại bản ghi.
+  - Biến cục bộ của tác vụ có tên như vậy không phải là bản ghi và không bị hạn chế.
+- **Điều engine không ngăn được:** thay đổi trực tiếp trong cơ sở dữ liệu, và node không có
+  plugin (Camunda 7.24, hoặc plugin bị tắt) dùng chung cơ sở dữ liệu, nơi biến này là biến
+  thường. Ở nơi có lưu lịch sử, dữ liệu lịch sử vẫn được tính khi biến bị mất hoặc hỏng; với
+  lịch sử `none` thì không.
 - Biến chứa mỗi người dùng một lần; hơn khoảng một trăm người khác nhau hoàn thành cùng một
   bước được kiểm tra trong một instance có thể vượt kích thước biến chuỗi trên Oracle (2000 ký
   tự).

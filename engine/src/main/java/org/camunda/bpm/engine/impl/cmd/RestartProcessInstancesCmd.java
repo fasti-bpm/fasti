@@ -23,6 +23,7 @@ import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureNotNull;
 import java.util.Collection;
 import java.util.List;
 
+import dev.fasti.engine.foureyes.impl.ReservedVariables;
 import org.camunda.bpm.engine.BadUserRequestException;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.authorization.Permissions;
@@ -110,7 +111,8 @@ public class RestartProcessInstancesCmd extends AbstractRestartProcessInstanceCm
 
         modificationBuilder.setModificationOperations(instructions);
 
-        VariableMap variables = collectVariables(commandContext, historicProcessInstance);
+        // Fasti: the records of the four-eyes control are not carried over to the new instance
+        VariableMap variables = ReservedVariables.withoutRecords(collectVariables(commandContext, historicProcessInstance));
         instantiationBuilder.setVariables(variables);
 
         instantiationBuilder.execute(builder.isSkipCustomListeners(), builder.isSkipIoMappings());

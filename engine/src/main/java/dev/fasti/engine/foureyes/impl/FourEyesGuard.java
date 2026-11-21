@@ -143,7 +143,10 @@ public final class FourEyesGuard {
     String name = FourEyesService.VARIABLE_PREFIX + task.getTaskDefinitionKey();
     Set<String> users = new LinkedHashSet<>(readVariable(processInstance, name));
     if (users.addAll(actors)) {
-      processInstance.setVariableLocal(name, Variables.stringValue(JsonUtil.asString(new ArrayList<>(users))));
+      ReservedVariables.asControl(() -> {
+        processInstance.setVariableLocal(name, Variables.stringValue(JsonUtil.asString(new ArrayList<>(users))));
+        return null;
+      });
     }
   }
 

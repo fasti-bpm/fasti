@@ -16,6 +16,10 @@
  */
 package dev.fasti.engine.foureyes;
 
+import dev.fasti.engine.foureyes.impl.ReservedVariables;
+import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
+import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.bpmn.instance.BaseElement;
@@ -45,6 +49,24 @@ final class FourEyesModels {
     property.setCamundaValue(value);
     properties.getCamundaProperties().add(property);
     return model;
+  }
+
+  /**
+   * Sets (or, with {@code null}, removes) the record of a step the way only something outside the
+   * API can: a node without the plugin, or the database.
+   */
+  static void changeRecord(ProcessEngine engine, String processInstanceId, String stepId, String value) {
+    String name = FourEyesService.VARIABLE_PREFIX + stepId;
+    ((ProcessEngineConfigurationImpl) engine.getProcessEngineConfiguration()).getCommandExecutorTxRequired()
+        .execute(commandContext -> ReservedVariables.asControl(() -> {
+          ExecutionEntity processInstance = commandContext.getExecutionManager().findExecutionById(processInstanceId);
+          if (value == null) {
+            processInstance.removeVariableLocal(name);
+          } else {
+            processInstance.setVariableLocal(name, value);
+          }
+          return null;
+        }));
   }
 
   /** draft, then approve (checks draft); both open to {@link #CANDIDATES}. */

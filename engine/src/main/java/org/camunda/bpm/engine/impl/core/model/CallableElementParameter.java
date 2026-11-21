@@ -18,6 +18,8 @@ package org.camunda.bpm.engine.impl.core.model;
 
 import java.util.Map;
 
+import dev.fasti.engine.foureyes.impl.ReservedVariables;
+
 import org.camunda.bpm.engine.delegate.VariableScope;
 import org.camunda.bpm.engine.impl.core.variable.mapping.value.ConstantValueProvider;
 import org.camunda.bpm.engine.impl.core.variable.mapping.value.ParameterValueProvider;
@@ -57,7 +59,8 @@ public class CallableElementParameter {
 
     if (allVariables) {
       Map<String, Object> allVariables = variableScope.getVariables();
-      variables.putAll(allVariables);
+      // Fasti: the records of the four-eyes control stay in their process instance
+      variables.putAll(ReservedVariables.withoutRecords(allVariables));
 
     } else {
       Object value = getSource(variableScope);

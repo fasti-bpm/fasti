@@ -66,6 +66,19 @@ public class FourEyesWithoutPluginTest {
   }
 
   @Test
+  public void shouldNotReserveTheVariablesOfTheRecord() {
+    testRule.deploy(draftApprove());
+    RuntimeService runtimeService = engineRule.getRuntimeService();
+    String name = FourEyesService.VARIABLE_PREFIX + "draft";
+
+    String pi = runtimeService.startProcessInstanceByKey("fourEyes", java.util.Map.of(name, "[]")).getId();
+    runtimeService.setVariable(pi, name, "[\"alice\"]");
+    assertThat(runtimeService.getVariable(pi, name)).isEqualTo("[\"alice\"]");
+    runtimeService.removeVariable(pi, name);
+    assertThat(runtimeService.getVariable(pi, name)).isNull();
+  }
+
+  @Test
   public void shouldNotValidateTheProperty() {
     testRule.deploy(rule(Bpmn.createExecutableProcess("fourEyes").camundaHistoryTimeToLive(180)
         .startEvent().userTask("approve").endEvent().done(), "approve", "nothing"));

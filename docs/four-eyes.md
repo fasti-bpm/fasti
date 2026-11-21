@@ -94,6 +94,7 @@ own; its rules name its own steps.
 |---|---|
 | `GET /task/{id}/four-eyes` | For the user of the request: `enabled`, `guarded`, `earlierSteps` (`id`, `name`), `userExcluded` and `userSteps`, `assignee`, `assigneeExcluded` and `assigneeSteps`, and `blocked` (whether the engine would refuse the completion now). Needs `READ` on the task; `404` for a missing task |
 | `POST /task/{id}/complete`, `/submit-form`, `/bpmnError`, `/bpmnEscalation` | Refused with `403` and `{"type": "FourEyesViolationException", "message": "Four-eyes control: …"}` |
+| Any request that sets or removes a variable `fasti_completedBy_…` of a process instance (`PUT`, `POST`, `DELETE` on the variables of a task, process instance or execution; `variables` of `complete`, `submit-form`, a message, a modification, …) | Refused with `403` and `{"type": "AuthorizationException", "message": "Four-eyes control: variable … is written by the engine only; …"}`, see [Limits](#limits) |
 
 Java: `FourEyes.of(processEngine)` returns the `FourEyesService` with `isEnabled()` and
 `getStatus(taskId)`; the exception is `dev.fasti.engine.foureyes.FourEyesViolationException`
@@ -142,12 +143,30 @@ the completed historic task instances (`activity` and above) and the users of th
   so one of them fails with an `OptimisticLockingException` and, retried, is refused.
   Completions of checked steps of one instance are serialized the same way.
 
+<a id="limits"></a>
+
 Limits:
 
-- A user who may change process variables can remove the record. Where history is kept the
-  historic data still counts; with history `none` it does not. Such a user can usually also
-  change the data the approval is about, so give the permission `UPDATE_INSTANCE_VARIABLE`
-  (or `UPDATE` on process instances) only to people you trust with that.
+- **The record is reserved.** On a node with the plugin, a variable named
+  `fasti_completedBy_…` in a process instance is written by the control only. Every other
+  attempt to set or remove it is refused (`403`, in Java a `ReservedVariableException`, an
+  `AuthorizationException`), whichever way it comes: the variables of a task, process instance
+  or execution (REST `PUT`, `POST`, `DELETE`; `setVariable`, `removeVariable` and their
+  variants), the variables passed to `complete`, a form, a message, a signal, a modification,
+  a batch or an external task, a new instance started with such a variable, and delegates,
+  listeners, scripts and mappings of the model. No permission allows it, also not for
+  administrators. (Before this rule, any candidate or assignee could empty the record through
+  the variables of their task.)
+  - Setting a record to the value it already has is accepted and changes nothing, so forms
+    and workers that send back every variable they read keep working.
+  - Copies of all variables leave the records out: a call activity with
+    `variables="all"` (both directions) and the restart of a process instance.
+    `removeVariables()` in a delegate keeps them.
+  - A local variable of a task with such a name is not the record and is not restricted.
+- **What the engine cannot prevent:** a change in the database itself, and a node without the
+  plugin (Camunda 7.24, or the plugin turned off) on the same database, where the variable is
+  an ordinary one. Where history is kept, the historic data still counts when the variable is
+  gone or damaged; with history `none` it does not.
 - The variable holds each user once; more than about a hundred different people completing
   the same checked step in one instance may exceed the size of a string variable on Oracle
   (2000 characters).

@@ -15,7 +15,7 @@
 # Starts Fasti BPM Run in the container. Accepts the environment variables of the former
 # official Camunda 7 Run container image (DB_DRIVER, DB_URL, DB_USERNAME, DB_PASSWORD, WAIT_FOR,
 # DEBUG, JMX_PROMETHEUS, ...) and FASTI_* aliases, and the arguments of its start script
-# (--webapps, --rest, --example, --oauth2, --production).
+# (--webapps, --rest, --example, --oauth2, --production), and --mcp.
 
 set -eu
 # no pathname expansion anywhere: options and paths are taken literally
@@ -89,7 +89,7 @@ add_arg() {
 
 # --- arguments of the start script ------------------------------------------------------------
 
-webapps=false; rest=false; example=false; oauth2=false; production=false; chosen=false
+webapps=false; rest=false; example=false; oauth2=false; production=false; chosen=false; mcp=false
 for arg in "$@"; do
   case "$arg" in
     ./camunda.sh|camunda.sh|./fasti.sh|fasti.sh|start) ;;   # command of the former image
@@ -97,6 +97,7 @@ for arg in "$@"; do
     --rest) rest=true; chosen=true ;;
     --example) example=true; chosen=true ;;
     --oauth2) oauth2=true; chosen=true ;;
+    --mcp) mcp=true ;;   # an addition to the other components, not a choice instead of them
     --swaggerui) log "--swaggerui is not available in Fasti BPM and is ignored" ;;
     --production) production=true ;;
     --detached) log "--detached is ignored in a container" ;;
@@ -111,6 +112,14 @@ LOADER_PATH="$FASTI_HOME/configuration/userlib/,$FASTI_HOME/configuration/driver
 [ "$webapps" = true ] && LOADER_PATH="$FASTI_HOME/internal/webapps/,$LOADER_PATH"
 [ "$rest" = true ] && LOADER_PATH="$FASTI_HOME/internal/rest/,$LOADER_PATH"
 [ "$oauth2" = true ] && LOADER_PATH="$FASTI_HOME/internal/oauth2/,$LOADER_PATH"
+# MCP server (docs/mcp.md): --mcp or FASTI_MCP_ENABLED=true; authentication is always required,
+# tools that change data need FASTI_MCP_WRITE_TOOLS_ENABLED=true
+is_true "${FASTI_MCP_ENABLED:-}" && mcp=true
+if [ "$mcp" = true ]; then
+  LOADER_PATH="$FASTI_HOME/internal/mcp/,$LOADER_PATH"
+  add_arg "--fasti.mcp.enabled=true"
+  log "MCP server enabled at /mcp"
+fi
 if [ "$example" = true ]; then
   LOADER_PATH="$FASTI_HOME/internal/example/,$LOADER_PATH"
   add_arg "--camunda.bpm.run.example.enabled=true"

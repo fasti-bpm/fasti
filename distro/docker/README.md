@@ -139,6 +139,8 @@ not in the published 1.0.1 image.
 | `FASTI_WEBAPP_PATH` | `/fasti` | `/camunda` keeps the old path, without redirect |
 | `FASTI_LEGACY_PATH_REDIRECT` | `true` | redirects `/camunda/...` to `/fasti/...` |
 | `FASTI_CLASSIC_WEBAPPS` | `false` | `true`: serves the classic Cockpit, Tasklist, Admin and Welcome again (deprecated, AngularJS is end of life; logs a warning) |
+| `FASTI_MCP_ENABLED` | `false` | **From 1.1.0.** `true` (or the argument `--mcp`): MCP server for AI assistants at `/mcp`, with the logins and permissions of the engine ([docs/mcp.md](../../docs/mcp.md)) |
+| `FASTI_MCP_WRITE_TOOLS_ENABLED` | `false` | **From 1.1.0.** `true`: also the MCP tools that start processes, claim and complete tasks and retry jobs |
 | `FASTI_CONFIG` | | additional YAML files (comma-separated) |
 | `FASTI_EXTRA_LIB` | | directory with additional jars (drivers, plugins) |
 | `FASTI_MARIADB_USE_MYSQL_DRIVER` | `true` | uses MySQL Connector/J when the MariaDB driver is missing |

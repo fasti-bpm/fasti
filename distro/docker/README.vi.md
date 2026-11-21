@@ -144,6 +144,8 @@ mục ghi **từ 1.1.0** đã có trên nhánh `main` nhưng chưa có trong ima
 | `FASTI_WEBAPP_PATH` | `/fasti` | `/camunda` để giữ đường dẫn cũ, không chuyển hướng |
 | `FASTI_LEGACY_PATH_REDIRECT` | `true` | chuyển `/camunda/...` sang `/fasti/...` |
 | `FASTI_CLASSIC_WEBAPPS` | `false` | `true`: phục vụ lại Cockpit, Tasklist, Admin, Welcome cổ điển (lỗi thời, AngularJS hết vòng đời; có cảnh báo) |
+| `FASTI_MCP_ENABLED` | `false` | **Từ 1.1.0.** `true` (hoặc tham số `--mcp`): MCP server cho trợ lý AI tại `/mcp`, dùng tài khoản và quyền của engine ([docs/mcp.vi.md](../../docs/mcp.vi.md)) |
+| `FASTI_MCP_WRITE_TOOLS_ENABLED` | `false` | **Từ 1.1.0.** `true`: bật thêm các công cụ MCP khởi động quy trình, nhận và hoàn thành task, chạy lại job |
 | `FASTI_CONFIG` | | file YAML thêm (cách nhau dấu phẩy) |
 | `FASTI_EXTRA_LIB` | | thư mục jar thêm (driver, plugin) |
 | `FASTI_MARIADB_USE_MYSQL_DRIVER` | `true` | khi thiếu driver MariaDB, dùng MySQL Connector/J |

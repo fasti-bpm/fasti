@@ -79,23 +79,32 @@ at the end of the command, until the commit. So commands on other slots and othe
 wait for each other, and commands of one slot are serialized only for the moment of their
 commit. A nested transaction ("requires new") that starts while outer ones of the same thread
 hold chains takes its slot in the next band: with `chains` = 4 the outermost transactions use
-the slots 0 to 3, transactions nested in them 4 to 7, and so on (chains `<node id>/4` … appear on
+the slots 0 to 3, transactions nested in them 4 to 7, and so on (chains `<node id>/end-4`, `<node id>/4` … appear on
 first use). A transaction therefore only waits for transactions of its own nesting depth, never
 for a suspended outer one, so nested transactions of several threads cannot block each other in
 a way the database cannot see. A transaction that spans several commands holds its chain from
 its first record to its commit, so such transactions of one slot run one after the other. Such
 a transaction (a command that joins an outer Spring transaction) writes its records before the
-statements of the engine and uses chains of its own, `<node id>/ext-<slot>` (created on first
-use), while a command whose transaction ends with it writes its records last, on
-`<node id>/<slot>` ([runtime tuning](tuning-runtime.md#audit-trail) explains why). The
-wait for a chain is limited: after `fasti.audit.lock-timeout-seconds` (default 60) the command
-fails with nothing written, instead of hanging. The trade-off: there is no
-single global order of all records (each chain is ordered; across chains the time orders them),
-and verifying reads every chain.
+statements of the engine, on `<node id>/<slot>`, as every transaction of 1.0 and 1.1 did, while
+a command whose transaction ends with it (every request and job of Run and the container image,
+every command of a standalone engine) writes its records last, on chains of its own,
+`<node id>/end-<slot>` ([runtime tuning](tuning-runtime.md#audit-trail) explains why). The
+heads of the first band are created at startup, for each kind of chain the engine writes to; a
+head that is missing later (a further band, a head removed from outside) is created and
+committed in a short transaction of its own, so that the transaction that needs it does not hold
+a new row that another one waits for. The wait for a chain is limited: after
+`fasti.audit.lock-timeout-seconds` (default 60) the command fails with nothing written, instead
+of hanging. The trade-off: there is no single global order of all records (each chain is
+ordered; across chains the time orders them), and verifying reads every chain.
 
 The **node id** (`fasti.audit.node-id`) defaults to `<engine name>@<host name>`. Give each node
 a stable, unique id; two nodes with the same id share chains, which stays correct (the head lock
-serializes them) but makes them wait for each other.
+serializes them) but makes them wait for each other. This also holds for a node of this version
+and a node of 1.1 with the same id, for example two JVMs on one host during an upgrade or a
+rollback: nodes of 1.0 and 1.1 write only to `<node id>/<slot>`, never to the `end-` chains, so
+the two never wait for each other in a cycle on one chain. During such a mixed period, purge
+from a node of this version: a purge of 1.1 locks the head of every chain at once, and can then
+be chosen as a deadlock victim by the database.
 
 **Verifying** (`POST /audit/verify`, or the button in the web UI) recomputes every chain, page
 by page, and reports per chain whether it is intact and where it first breaks:
@@ -194,7 +203,13 @@ database to detect a later truncation or rewrite of them.
   its start only with such a signature: a purge record that someone writes into the database to
   hide removed records is found. Without a key a purge record proves nothing; the chain is
   reported with `purgeAttested: false` and never as authenticated. The purge
-  runs in a transaction of its own (not inside one that has written audit records). Records
+  runs in transactions of its own (not inside one that has written audit records): each chain
+  in batches of at most `fasti.audit.purge-batch-size` records (default 10,000), each batch in a
+  transaction with a purge record of its own, so the writers of a chain wait for one batch at
+  most. A chain that cannot be purged (another transaction holds it for longer than the lock
+  timeout) does not stop the others: the result lists it in `failedChains` (Java:
+  `AuditPurgeResult#getFailedChains`, the cause is in the server log), and `purgedThrough` shows
+  what was purged of it before; purge again to complete it. Records
   younger than `fasti.audit.retention-days` (default 365) are never purged. Export first: the
   JSON export carries every hash, so the removed part can still be verified offline against the
   purge record. Purging needs an administrators group or `DELETE` on `SYSTEM`.
@@ -242,10 +257,10 @@ All below `/engine-rest` (also in the OpenAPI document, tag "Audit Trail"):
 |---|---|
 | `GET /audit` | `enabled`, for every caller and also while the audit trail is off (`200` with `enabled: false`); for callers who may read the trail also the settings (`nodeId`, `chains`, `types`, `variableValues`, `maskedVariables`, `signed`, `keyId`, `retiredKeyIds`, `checkpointInterval`, `retentionDays`, `historyLevel`); never the key |
 | `GET /audit/event` | The records, newest first; filters `processInstanceId`, `businessKey`, `actor` (`system` for the engine), `type` (comma separated), `action`, `tenantId`, `processDefinitionKey`, `entityId`, `chainId`, `from`, `to`, `sortOrder` (`desc`, `asc`), paging `firstResult` (at most 1,000,000), `maxResults` (at most 1000); the page is cut by the database |
-| `GET /audit/event/count` | The number of records the filters select. With `maxCount` (1 to 1,000,000) the database stops counting there, so the count of a large result stays cheap; a result equal to `maxCount` means "that many or more" |
+| `GET /audit/event/count` | The number of records the filters select. With `maxCount` (1 to 1,000,000) the database stops once it has found that many, and a result equal to `maxCount` means "that many or more". It caps the records counted, not the rows the database examines: a filter that no index serves (below) may still read many rows, or the whole table when fewer records match |
 | `POST /audit/event/export?format=csv\|json` | The selection (same filters, as query parameters) as a file, streamed from one database cursor; recorded as `audit`/`export`. A `POST` because it writes that record: a `GET` answers `405` and records nothing |
 | `POST /audit/verify?chainId=` | Verifies every chain (or one): `intact`, `authenticated`, `records`, `chains` (with `authenticated`, `authenticatedThrough`, `lastHash`, `checkpointsVerified`, `purgedThrough`, `purgeAttested`, `firstBreak`) and `firstBreak`; `409` while another verification runs |
-| `POST /audit/purge` | `{"before": "...", "exported": true}`: purges old records, see above |
+| `POST /audit/purge` | `{"before": "...", "exported": true}`: purges old records, see above; the result has `removed`, `purgedThrough` (per chain) and `failedChains` |
 
 **Authorization**: reading, exporting and verifying need membership of an administrators group
 (`camunda-admin`) or the permission `READ` on the resource `SYSTEM`; purging needs an
@@ -265,6 +280,14 @@ hashes, not records.
 **Errors**: when the database fails, the response names what could not be done ("The audit trail
 could not read records"), never the message of the database; that is in the server log. Queries
 and exports stop after `fasti.audit.query-timeout-seconds` (default 120).
+
+**Which filters are fast**: the pages and counts filtered by actor (also `system`), by category,
+by category and action, by process instance, by business key, by chain or by a time range are
+read along an index in the order of the page, so the database stops after the page. A filter
+that no index serves reads records until it has found a page, and as many as the table has when
+few records match: `action` without `type`, `tenantId`, `processDefinitionKey`, `entityId`, and
+the tenant restriction of a reader who is not an administrator. Combine them with one of the
+filters above, such as an action with its category, or with a time range.
 
 Java: `AuditTrail.of(processEngine)` returns the `AuditService` (`createQuery()`, `verify()`,
 `recordExport(…)`, `purge(before)`); `AuditEventQuery#listPage` pages in the database and
@@ -295,6 +318,7 @@ Settings (`fasti.audit.*`; plugin properties in camel case for Tomcat and WildFl
 | `retention-days` | `365` | records younger than this cannot be purged |
 | `lock-timeout-seconds` | `60` | how long a command waits for its chain before it fails; `0` for the limit of the database |
 | `query-timeout-seconds` | `120` | how long a query or export may run; `0` for no limit |
+| `purge-batch-size` | `10000` | records a purge removes from a chain in one transaction (each batch leaves a purge record) |
 
 **Why off by default everywhere**: it adds two tables and one write per command that produces
 history, it should run on every node of a cluster (a node without it records nothing), it needs
@@ -317,16 +341,53 @@ indexed read of the historic task (to tell an assignment); computing the hashes 
 When the transaction ends with the command (every request and job of Run and the container
 image, every command of a standalone engine), the records are written after everything the
 engine writes for the command, so the lock on the head row is held for these statements and the
-commit only; with the default of four chains per node, threads rarely wait
+commit, including what the transaction manager itself writes at commit (with JPA, the entity
+changes Hibernate flushes then, and the statements of `beforeCommit` callbacks; call
+`entityManager.flush()` in the delegate to send them before the head is locked); with the
+default of four chains per node, threads rarely wait
 ([runtime tuning](tuning-runtime.md#audit-trail)).
 
-**Upgrading existing tables.** Audit tables created by 1.0 or 1.1 lack the index
-`FASTI_IDX_AUDIT_ORDER (TIME_, CHAIN_ID_, SEQ_)`, which gives the order of a page. Run
-`fasti.<database>.upgrade.audit.after_1.1.sql` (in the engine jar below
-`dev/fasti/engine/audit/db/upgrade`) once; it creates the index and drops `FASTI_IDX_AUDIT_TIME`,
-which the new index replaces. Until then pages are read as before, only no faster.
-Records of the same millisecond in different chains are listed in the order of their chain ids,
-reversed when the newest come first.
+**Upgrading existing tables.** Audit tables created by 1.0 or 1.1 lack the indexes that give
+the order of a page: `FASTI_IDX_AUDIT_ORDER (TIME_, CHAIN_ID_, SEQ_)`, and for pages filtered by
+actor or by category and action `FASTI_IDX_AUDIT_ACTOR_ORDER (ACTOR_, TIME_, CHAIN_ID_, SEQ_)` and
+`FASTI_IDX_AUDIT_TYPE_ORDER (TYPE_, ACTION_, TIME_, CHAIN_ID_, SEQ_)`. Run the script
+`<database>_fasti_audit_after_1.1.sql` in `sql/upgrade/` of the distribution
+(`configuration/sql/upgrade/` in Fasti BPM Run, `/fasti/configuration/sql/upgrade/` in the
+container image; in the engine jar it is `dev/fasti/engine/audit/db/upgrade/fasti.<database>.upgrade.audit.after_1.1.sql`).
+It creates the three indexes and then drops `FASTI_IDX_AUDIT_TIME`, `FASTI_IDX_AUDIT_ACTOR` and
+`FASTI_IDX_AUDIT_TYPE`, which they replace (an insert still updates seven indexes). It can be
+run again: an index that exists is skipped, one that is gone is not dropped. Building an index
+reads the whole table:
+
+- PostgreSQL builds them `concurrently`, without blocking the inserts of audit records; run the
+  script with `psql` (not `psql -1` or a tool that wraps it in a transaction). A build that
+  fails leaves an invalid index behind; the script says how to find and drop it.
+- MySQL and MariaDB build them online (`ALGORITHM=INPLACE LOCK=NONE`); the script sets
+  `lock_wait_timeout` to 10 seconds, so a statement that waits for a long transaction on the
+  table gives up instead of making every audited command queue behind it: run it again later.
+- Oracle, SQL Server and DB2 build an index without `ONLINE` by blocking the inserts meanwhile,
+  and every audited command waits, holding the head of its chain, so that the other commands of
+  that chain fail after `fasti.audit.lock-timeout-seconds`. Add `ONLINE` (Oracle Enterprise
+  Edition) or `WITH (ONLINE = ON)` (SQL Server Enterprise Edition, Azure SQL) where the edition
+  has it, or run the script at a quiet time.
+
+Until then pages are read as before, only no faster. Nodes of 1.0 and 1.1 keep working on the
+upgraded tables. The drop scripts of 1.0 and 1.1 drop the replaced indexes by name and fail on
+an upgraded table: drop the tables with the drop script of this version, which works on the
+tables of every version. Records of the same millisecond in different chains are listed in the
+order of their chain ids, reversed when the newest come first.
+
+**Oracle and `NLS_SORT`.** The order of a page compares chain ids as text. Oracle sorts text by
+the `NLS_SORT` of the session, and the JDBC driver derives it from the language of the JVM: with
+a locale such as `vi_VN`, `de_DE` or `fr_FR` it is a linguistic sort (only English and a few
+other languages give `BINARY`). An index holds the binary order, so with a linguistic sort Oracle
+sorts every record the filter selects for each page instead of reading one page along the index
+(the result is the same, only slower). Give the connections of the engine `NLS_SORT=BINARY`, for
+example with the pool (`spring.datasource.hikari.connection-init-sql=alter session set
+NLS_SORT=BINARY`), or start the JVM with `-Duser.language=en`. The queries of the engine itself
+then sort text binary as well, as they do on an English system; comparisons are not affected
+(`NLS_COMP` stays `BINARY`). This was derived from the Oracle documentation, not measured: no
+Oracle database was at hand.
 
 ## Storage and compatibility
 
@@ -337,6 +398,9 @@ reversed when the newest come first.
   tables; what they do is not recorded. Turn the plugin on for every node at once.
 - **Rollback to Camunda 7.24**: leave the tables in place or drop them with the drop script;
   nothing else was written.
+- **Rollback to Fasti 1.1**: the tables, the upgraded indexes and the `end-` chains stay as they
+  are; 1.1 reads, verifies and purges every chain. To drop the tables later, use the drop script
+  of this version (see "Upgrading existing tables").
 - If the tables become unwritable (dropped, a record inserted from outside at the next
   position), commands that produce history fail rather than run unrecorded.
 
@@ -352,9 +416,9 @@ reversed when the newest come first.
   lines outside the database.
 - Deleting every record and the head of a chain is only noticed against such an outside
   anchor.
-- A purge removes all records of a chain before a time in one transaction, one chain after the
-  other (each chain in a transaction of its own, so that a purge holds one head at a time; if it
-  fails half-way, the chains done so far stay purged, each with its purge record); very large purges
-  are best done in steps (several `before` dates).
+- A purge removes the records of a chain before a time in batches, one chain after the other,
+  each batch in a transaction of its own with its own purge record: it holds one head at a time,
+  for one batch. If a batch fails, the batches done so far stay purged, each with its purge
+  record, and the other chains are still purged; the result lists the chains that failed.
 - Oracle, SQL Server and DB2 scripts are written in the style of the engine scripts but are
   not tested here; H2, PostgreSQL 16 and MariaDB 11.4 are.

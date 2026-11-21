@@ -78,23 +78,29 @@ như nhau), vào cuối lệnh, cho đến khi commit. Vì vậy lệnh trên sl
 giờ chờ nhau, còn các lệnh cùng slot chỉ xếp hàng trong khoảnh khắc commit. Một giao dịch lồng
 ("requires new") bắt đầu khi các giao dịch ngoài của cùng luồng đang giữ chuỗi sẽ lấy slot của nó
 ở dải kế tiếp: với `chains` = 4, giao dịch ngoài cùng dùng slot 0 đến 3, giao dịch lồng trong đó
-dùng 4 đến 7, và cứ thế (các chuỗi `<node id>/4` … xuất hiện khi dùng lần đầu). Vì vậy một giao
+dùng 4 đến 7, và cứ thế (các chuỗi `<node id>/end-4`, `<node id>/4` … xuất hiện khi dùng lần đầu). Vì vậy một giao
 dịch chỉ chờ các giao dịch cùng độ sâu lồng, không bao giờ chờ một giao dịch ngoài đang tạm dừng,
 nên giao dịch lồng của nhiều luồng không thể chặn nhau theo cách mà cơ sở dữ liệu không nhìn
 thấy. Một giao dịch trải qua nhiều lệnh giữ chuỗi của nó từ bản ghi đầu tiên đến khi commit, nên
 các giao dịch như vậy trên cùng một slot chạy lần lượt. Giao dịch như vậy (một lệnh tham gia giao
-dịch Spring bên ngoài) ghi bản ghi trước các lệnh của engine và dùng chuỗi riêng,
-`<node id>/ext-<slot>` (tạo khi dùng lần đầu), còn lệnh có giao dịch kết thúc cùng nó ghi bản ghi
-sau cùng, trên `<node id>/<slot>` (lý do ở [tinh chỉnh khi chạy](tuning-runtime.vi.md#nhật-ký-kiểm-toán)).
-Thời gian chờ chuỗi có giới hạn: sau
-`fasti.audit.lock-timeout-seconds` (mặc định 60) giây, lệnh thất bại mà không ghi gì, thay vì
-treo. Đánh đổi: không có một thứ tự toàn cục duy nhất cho mọi bản
-ghi (mỗi chuỗi có thứ tự; giữa các chuỗi thì sắp theo thời gian), và việc kiểm tra phải đọc mọi
-chuỗi.
+dịch Spring bên ngoài) ghi bản ghi trước các lệnh của engine, trên `<node id>/<slot>`, như mọi giao
+dịch của bản 1.0 và 1.1, còn lệnh có giao dịch kết thúc cùng nó (mọi yêu cầu và job của Run và
+container image, mọi lệnh của engine standalone) ghi bản ghi sau cùng, trên các chuỗi riêng
+`<node id>/end-<slot>` (lý do ở [tinh chỉnh khi chạy](tuning-runtime.vi.md#nhật-ký-kiểm-toán)).
+Head của dải đầu tiên được tạo khi khởi động, cho mỗi loại chuỗi mà engine ghi vào; head nào thiếu
+về sau (dải tiếp theo, head bị xóa từ bên ngoài) được tạo và commit trong một giao dịch ngắn riêng,
+để giao dịch cần nó không giữ một dòng mới mà giao dịch khác phải chờ. Thời gian chờ chuỗi có giới
+hạn: sau `fasti.audit.lock-timeout-seconds` (mặc định 60) giây, lệnh thất bại mà không ghi gì, thay
+vì treo. Đánh đổi: không có một thứ tự toàn cục duy nhất cho mọi bản ghi (mỗi chuỗi có thứ tự; giữa
+các chuỗi thì sắp theo thời gian), và việc kiểm tra phải đọc mọi chuỗi.
 
 **Node id** (`fasti.audit.node-id`) mặc định là `<tên engine>@<tên máy>`. Hãy đặt cho mỗi node một
 id ổn định và duy nhất; hai node cùng id sẽ dùng chung chuỗi, vẫn đúng (khóa head xếp hàng chúng)
-nhưng phải chờ nhau.
+nhưng phải chờ nhau. Điều này cũng đúng với một node bản này và một node 1.1 cùng id, ví dụ hai JVM
+trên một máy trong lúc nâng cấp hoặc quay về: node 1.0 và 1.1 chỉ ghi vào `<node id>/<slot>`, không
+bao giờ vào các chuỗi `end-`, nên hai node không bao giờ chờ nhau thành vòng trên một chuỗi. Trong
+giai đoạn hỗn hợp như vậy, hãy dọn từ một node bản này: lần dọn của 1.1 khóa head của mọi chuỗi cùng
+lúc, và khi đó có thể bị cơ sở dữ liệu chọn làm nạn nhân của deadlock.
 
 **Kiểm tra** (`POST /audit/verify`, hoặc nút trong giao diện web) tính lại từng chuỗi, theo từng
 trang, và báo cho mỗi chuỗi nó còn toàn vẹn hay không và đứt ở đâu đầu tiên:
@@ -190,8 +196,13 @@ lại chúng về sau.
   ghi dọn), và việc kiểm tra chỉ chấp nhận một chuỗi thiếu phần đầu khi có chữ ký đó: bản ghi dọn
   do ai đó tự ghi vào cơ sở dữ liệu để che việc xóa bản ghi sẽ bị phát hiện. Không có khóa thì
   bản ghi dọn không chứng minh được gì; chuỗi được báo với `purgeAttested: false` và không bao
-  giờ là đã xác thực. Việc dọn chạy trong giao
-  dịch riêng (không nằm trong giao dịch đã ghi bản ghi kiểm toán). Bản ghi mới hơn
+  giờ là đã xác thực. Việc dọn chạy trong các giao
+  dịch riêng (không nằm trong giao dịch đã ghi bản ghi kiểm toán): mỗi chuỗi theo từng lô tối đa
+  `fasti.audit.purge-batch-size` bản ghi (mặc định 10.000), mỗi lô trong một giao dịch với bản ghi
+  dọn riêng, nên các lệnh ghi vào chuỗi chỉ phải chờ nhiều nhất một lô. Một chuỗi không dọn được
+  (giao dịch khác giữ nó lâu hơn thời gian chờ khóa) không chặn các chuỗi khác: kết quả liệt kê nó
+  trong `failedChains` (Java: `AuditPurgeResult#getFailedChains`, nguyên nhân nằm trong log máy
+  chủ), và `purgedThrough` cho biết phần đã dọn của nó trước đó; dọn lại để hoàn tất. Bản ghi mới hơn
   `fasti.audit.retention-days` (mặc định 365) ngày không bao giờ bị dọn. Hãy xuất trước: bản xuất
   JSON có đủ mọi mã băm, nên phần đã xóa vẫn kiểm tra được ngoại tuyến với bản ghi dọn. Dọn cần
   nhóm quản trị hoặc quyền `DELETE` trên `SYSTEM`.
@@ -238,10 +249,10 @@ Tất cả nằm dưới `/engine-rest` (cũng có trong tài liệu OpenAPI, nh
 |---|---|
 | `GET /audit` | `enabled`, cho mọi người gọi và cả khi nhật ký kiểm toán tắt (`200` với `enabled: false`); với người được đọc nhật ký thì có thêm các thiết lập (`nodeId`, `chains`, `types`, `variableValues`, `maskedVariables`, `signed`, `keyId`, `retiredKeyIds`, `checkpointInterval`, `retentionDays`, `historyLevel`); không bao giờ có khóa |
 | `GET /audit/event` | Các bản ghi, mới nhất trước; lọc `processInstanceId`, `businessKey`, `actor` (`system` cho engine), `type` (phân cách bằng dấu phẩy), `action`, `tenantId`, `processDefinitionKey`, `entityId`, `chainId`, `from`, `to`, `sortOrder` (`desc`, `asc`), phân trang `firstResult` (tối đa 1.000.000), `maxResults` (tối đa 1000); trang được cắt ngay trong cơ sở dữ liệu |
-| `GET /audit/event/count` | Số bản ghi khớp bộ lọc. Với `maxCount` (1 đến 1.000.000) cơ sở dữ liệu dừng đếm ở đó, nên đếm một kết quả lớn vẫn rẻ; kết quả bằng `maxCount` nghĩa là "từng đó trở lên" |
+| `GET /audit/event/count` | Số bản ghi khớp bộ lọc. Với `maxCount` (1 đến 1.000.000) cơ sở dữ liệu dừng khi đã tìm thấy từng đó bản ghi, và kết quả bằng `maxCount` nghĩa là "từng đó trở lên". Nó giới hạn số bản ghi được đếm, không giới hạn số dòng cơ sở dữ liệu phải xem: một bộ lọc không có chỉ mục phục vụ (bên dưới) vẫn có thể đọc nhiều dòng, hoặc cả bảng khi có ít bản ghi khớp hơn |
 | `POST /audit/event/export?format=csv\|json` | Phần đang lọc (cùng bộ lọc, dạng tham số truy vấn) dưới dạng tệp, đọc từ một con trỏ cơ sở dữ liệu; được ghi lại là `audit`/`export`. Dùng `POST` vì nó ghi bản ghi đó: `GET` trả `405` và không ghi gì |
 | `POST /audit/verify?chainId=` | Kiểm tra mọi chuỗi (hoặc một chuỗi): `intact`, `authenticated`, `records`, `chains` (với `authenticated`, `authenticatedThrough`, `lastHash`, `checkpointsVerified`, `purgedThrough`, `purgeAttested`, `firstBreak`) và `firstBreak`; `409` khi một lần kiểm tra khác đang chạy |
-| `POST /audit/purge` | `{"before": "...", "exported": true}`: dọn bản ghi cũ, xem ở trên |
+| `POST /audit/purge` | `{"before": "...", "exported": true}`: dọn bản ghi cũ, xem ở trên; kết quả có `removed`, `purgedThrough` (theo từng chuỗi) và `failedChains` |
 
 **Phân quyền**: đọc, xuất và kiểm tra cần là thành viên nhóm quản trị (`camunda-admin`) hoặc có
 quyền `READ` trên tài nguyên `SYSTEM`; dọn cần nhóm quản trị hoặc `DELETE` trên `SYSTEM`. Tài
@@ -260,6 +271,14 @@ trả về bản ghi.
 **Lỗi**: khi cơ sở dữ liệu lỗi, phản hồi chỉ nêu việc không làm được ("The audit trail could not
 read records"), không bao giờ nêu thông báo của cơ sở dữ liệu; thông báo đó nằm trong log máy
 chủ. Truy vấn và xuất dừng sau `fasti.audit.query-timeout-seconds` (mặc định 120) giây.
+
+**Bộ lọc nào nhanh**: các trang và phép đếm lọc theo người thực hiện (cả `system`), theo loại, theo
+loại và hành động, theo thực thể quy trình, theo business key, theo chuỗi hoặc theo khoảng thời gian
+được đọc theo một chỉ mục đúng thứ tự của trang, nên cơ sở dữ liệu dừng sau trang đó. Bộ lọc không có
+chỉ mục phục vụ thì đọc bản ghi cho đến khi đủ một trang, và đọc cả bảng khi có ít bản ghi khớp:
+`action` không kèm `type`, `tenantId`, `processDefinitionKey`, `entityId`, và giới hạn tenant của
+người đọc không phải quản trị. Hãy kết hợp chúng với một bộ lọc ở trên, chẳng hạn hành động cùng
+loại của nó, hoặc với một khoảng thời gian.
 
 Java: `AuditTrail.of(processEngine)` trả về `AuditService` (`createQuery()`, `verify()`,
 `recordExport(…)`, `purge(before)`); `AuditEventQuery#listPage` phân trang trong cơ sở dữ liệu và
@@ -290,6 +309,7 @@ Thiết lập (`fasti.audit.*`; thuộc tính plugin viết kiểu camelCase cho
 | `retention-days` | `365` | bản ghi mới hơn số ngày này không dọn được |
 | `lock-timeout-seconds` | `60` | lệnh chờ chuỗi của nó bao lâu trước khi thất bại; `0` là theo giới hạn của cơ sở dữ liệu |
 | `query-timeout-seconds` | `120` | một truy vấn hay lần xuất được chạy bao lâu; `0` là không giới hạn |
+| `purge-batch-size` | `10000` | số bản ghi một lần dọn xóa khỏi một chuỗi trong một giao dịch (mỗi lô để lại một bản ghi dọn) |
 
 **Vì sao mặc định tắt ở mọi nơi**: tính năng thêm hai bảng và một lần ghi cho mỗi lệnh tạo lịch
 sử, cần chạy trên mọi node của cụm (node không bật sẽ không ghi gì), cần quản lý một khóa để có
@@ -310,16 +330,51 @@ theo lô các bản ghi và một lệnh update head, lúc commit; với cập n
 chỉ mục bảng lịch sử tác vụ (để nhận ra việc giao việc); tính mã băm không đáng kể. Khi giao dịch
 kết thúc cùng lệnh (mọi yêu cầu và job của Run và container image, mọi lệnh của engine
 standalone), các bản ghi được ghi sau mọi thứ engine ghi cho lệnh đó, nên khóa dòng head chỉ được
-giữ trong các lệnh này và lúc commit; với mặc định bốn chuỗi mỗi node, các luồng hiếm khi phải chờ
+giữ trong các lệnh này và lúc commit, kể cả những gì trình quản lý giao dịch tự ghi lúc commit (với
+JPA là các thay đổi entity mà Hibernate flush lúc đó, và các lệnh của callback `beforeCommit`; gọi
+`entityManager.flush()` trong delegate để gửi chúng trước khi head bị khóa); với mặc định bốn chuỗi
+mỗi node, các luồng hiếm khi phải chờ
 ([tinh chỉnh khi chạy](tuning-runtime.vi.md#nhật-ký-kiểm-toán)).
 
-**Nâng cấp bảng đã có.** Bảng kiểm toán do bản 1.0 hoặc 1.1 tạo chưa có chỉ mục
-`FASTI_IDX_AUDIT_ORDER (TIME_, CHAIN_ID_, SEQ_)`, chỉ mục cho thứ tự của một trang. Chạy một lần
-`fasti.<database>.upgrade.audit.after_1.1.sql` (trong jar engine, dưới
-`dev/fasti/engine/audit/db/upgrade`); script tạo chỉ mục và xóa `FASTI_IDX_AUDIT_TIME`, vốn được
-chỉ mục mới thay thế. Chưa chạy thì các trang vẫn được đọc như trước, chỉ là không nhanh hơn.
-Các bản ghi cùng mili giây ở các chuỗi khác nhau được xếp theo mã chuỗi, đảo lại khi bản ghi mới
-nhất đứng trước.
+**Nâng cấp bảng đã có.** Bảng kiểm toán do bản 1.0 hoặc 1.1 tạo chưa có các chỉ mục cho thứ tự của
+một trang: `FASTI_IDX_AUDIT_ORDER (TIME_, CHAIN_ID_, SEQ_)`, và cho trang lọc theo người thực hiện
+hoặc theo loại và hành động là `FASTI_IDX_AUDIT_ACTOR_ORDER (ACTOR_, TIME_, CHAIN_ID_, SEQ_)` và
+`FASTI_IDX_AUDIT_TYPE_ORDER (TYPE_, ACTION_, TIME_, CHAIN_ID_, SEQ_)`. Chạy script
+`<database>_fasti_audit_after_1.1.sql` trong `sql/upgrade/` của bản phân phối
+(`configuration/sql/upgrade/` của Fasti BPM Run, `/fasti/configuration/sql/upgrade/` trong container
+image; trong jar engine là `dev/fasti/engine/audit/db/upgrade/fasti.<database>.upgrade.audit.after_1.1.sql`).
+Script tạo ba chỉ mục rồi xóa `FASTI_IDX_AUDIT_TIME`, `FASTI_IDX_AUDIT_ACTOR` và `FASTI_IDX_AUDIT_TYPE`,
+vốn được chúng thay thế (mỗi lần insert vẫn cập nhật bảy chỉ mục). Có thể chạy lại: chỉ mục đã có
+được bỏ qua, chỉ mục đã mất thì không xóa nữa. Tạo chỉ mục phải đọc cả bảng:
+
+- PostgreSQL tạo chúng `concurrently`, không chặn việc insert bản ghi kiểm toán; chạy script bằng
+  `psql` (không dùng `psql -1` hay công cụ bọc script trong một giao dịch). Lần tạo thất bại để lại
+  một chỉ mục không hợp lệ; script có hướng dẫn tìm và xóa nó.
+- MySQL và MariaDB tạo chúng trực tuyến (`ALGORITHM=INPLACE LOCK=NONE`); script đặt
+  `lock_wait_timeout` là 10 giây, nên một lệnh phải chờ giao dịch dài trên bảng sẽ bỏ cuộc thay vì
+  bắt mọi lệnh có ghi kiểm toán xếp hàng sau nó: chạy lại sau.
+- Oracle, SQL Server và DB2 tạo chỉ mục không có `ONLINE` bằng cách chặn insert trong lúc đó, và mọi
+  lệnh có ghi kiểm toán phải chờ trong khi giữ head của chuỗi, nên các lệnh khác của chuỗi đó thất
+  bại sau `fasti.audit.lock-timeout-seconds`. Thêm `ONLINE` (Oracle Enterprise Edition) hoặc
+  `WITH (ONLINE = ON)` (SQL Server Enterprise Edition, Azure SQL) nếu phiên bản có, hoặc chạy vào
+  lúc vắng.
+
+Chưa chạy thì các trang vẫn được đọc như trước, chỉ là không nhanh hơn. Node 1.0 và 1.1 vẫn chạy
+bình thường trên bảng đã nâng cấp. Script drop của 1.0 và 1.1 xóa các chỉ mục bị thay thế theo tên
+và sẽ lỗi trên bảng đã nâng cấp: hãy xóa bảng bằng script drop của bản này, dùng được cho bảng của
+mọi phiên bản. Các bản ghi cùng mili giây ở các chuỗi khác nhau được xếp theo mã chuỗi, đảo lại khi
+bản ghi mới nhất đứng trước.
+
+**Oracle và `NLS_SORT`.** Thứ tự của một trang so sánh mã chuỗi như văn bản. Oracle sắp văn bản theo
+`NLS_SORT` của phiên, và driver JDBC lấy nó từ ngôn ngữ của JVM: với locale như `vi_VN`, `de_DE` hay
+`fr_FR` đó là một cách sắp theo ngôn ngữ (chỉ tiếng Anh và vài ngôn ngữ khác cho `BINARY`). Chỉ mục
+giữ thứ tự nhị phân, nên với cách sắp theo ngôn ngữ, Oracle sắp mọi bản ghi khớp bộ lọc cho mỗi
+trang thay vì đọc một trang theo chỉ mục (kết quả như nhau, chỉ chậm hơn). Hãy cho các kết nối của
+engine `NLS_SORT=BINARY`, ví dụ qua pool (`spring.datasource.hikari.connection-init-sql=alter
+session set NLS_SORT=BINARY`), hoặc chạy JVM với `-Duser.language=en`. Khi đó các truy vấn của chính
+engine cũng sắp văn bản theo nhị phân, như trên hệ thống tiếng Anh; phép so sánh không bị ảnh hưởng
+(`NLS_COMP` vẫn là `BINARY`). Điều này được suy ra từ tài liệu của Oracle, chưa đo: không có cơ sở
+dữ liệu Oracle để thử.
 
 ## Lưu trữ và tương thích
 
@@ -329,6 +384,9 @@ nhất đứng trước.
 - **Node Camunda 7.24 và node Fasti không bật plugin** trên cùng cơ sở dữ liệu bỏ qua các bảng
   này; những gì chúng làm không được ghi. Hãy bật plugin cho mọi node cùng lúc.
 - **Quay về Camunda 7.24**: để nguyên các bảng hoặc xóa bằng script drop; không có gì khác bị ghi.
+- **Quay về Fasti 1.1**: các bảng, các chỉ mục đã nâng cấp và các chuỗi `end-` giữ nguyên; 1.1 đọc,
+  kiểm tra và dọn được mọi chuỗi. Muốn xóa bảng về sau, hãy dùng script drop của bản này (xem "Nâng
+  cấp bảng đã có").
 - Nếu không ghi được vào bảng (bị xóa, hoặc có bản ghi chèn từ bên ngoài vào vị trí kế tiếp), các
   lệnh tạo lịch sử sẽ thất bại thay vì chạy mà không được ghi.
 
@@ -343,9 +401,9 @@ nhất đứng trước.
   ghi sau điểm kiểm tra cuối mới viết lại được. Hãy lưu các mã băm cuối được báo hoặc các dòng log
   điểm kiểm tra ở ngoài cơ sở dữ liệu.
 - Xóa mọi bản ghi và head của một chuỗi chỉ phát hiện được khi đối chiếu với mốc bên ngoài như vậy.
-- Một lần dọn xóa mọi bản ghi của một chuỗi trước một thời điểm trong một giao dịch, lần lượt từng
-  chuỗi (mỗi chuỗi một giao dịch riêng, để lần dọn chỉ giữ một head mỗi lúc; nếu thất bại giữa
-  chừng, các chuỗi đã xong vẫn được dọn, mỗi chuỗi có bản ghi dọn của nó); lần dọn rất
-  lớn nên chia thành nhiều bước (nhiều mốc `before`).
+- Một lần dọn xóa các bản ghi của một chuỗi trước một thời điểm theo từng lô, lần lượt từng chuỗi,
+  mỗi lô trong một giao dịch riêng với bản ghi dọn riêng: lần dọn chỉ giữ một head mỗi lúc, trong
+  một lô. Nếu một lô thất bại, các lô đã xong vẫn được dọn, mỗi lô có bản ghi dọn của nó, và các
+  chuỗi khác vẫn được dọn; kết quả liệt kê các chuỗi thất bại.
 - Script cho Oracle, SQL Server và DB2 được viết theo kiểu script của engine nhưng chưa được kiểm
   thử ở đây; H2, PostgreSQL 16 và MariaDB 11.4 đã được kiểm thử.

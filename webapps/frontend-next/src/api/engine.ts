@@ -88,14 +88,33 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
 
 // --- filters ---------------------------------------------------------------
 
-export async function getTaskFilters(): Promise<TaskFilter[]> {
+/**
+ * The task filters of the user, without the number of tasks of each: counting
+ * costs the server one task query per filter, so the counts are read apart
+ * from the list and only where they are shown (`getTaskFilterCounts`).
+ */
+export async function getTaskFilters(signal?: AbortSignal): Promise<TaskFilter[]> {
   const filters = await request<TaskFilter[]>(`${engineApi()}/filter`, {
-    query: { resourceType: 'Task', itemCount: true },
+    query: { resourceType: 'Task' },
+    signal,
   });
   return [...filters].sort(
     (a, b) =>
       (a.properties?.priority ?? 0) - (b.properties?.priority ?? 0) || a.name.localeCompare(b.name),
   );
+}
+
+/** How many tasks every filter of the user has now, by filter id; a filter the server could not count is left out. */
+export async function getTaskFilterCounts(signal?: AbortSignal): Promise<Record<string, number>> {
+  const filters = await request<{ id: string; itemCount?: number | null }[]>(`${engineApi()}/filter`, {
+    query: { resourceType: 'Task', itemCount: true },
+    signal,
+  });
+  const counts: Record<string, number> = {};
+  for (const filter of filters) {
+    if (typeof filter.itemCount === 'number') counts[filter.id] = filter.itemCount;
+  }
+  return counts;
 }
 
 export async function canCreateFilter(): Promise<boolean> {
@@ -301,6 +320,25 @@ export function fullName(
 /** Additional criteria that narrow the query of a filter. */
 export type TaskQuery = Record<string, unknown>;
 
+const BUSINESS_KEY_FRESH = 5 * 60_000;
+const BUSINESS_KEYS_KEPT = 1000;
+const businessKeys = new Map<string, { key: string | null; at: number }>();
+
+function knownBusinessKey(instanceId: string): { key: string | null } | undefined {
+  const known = businessKeys.get(instanceId);
+  return known && Date.now() - known.at < BUSINESS_KEY_FRESH ? known : undefined;
+}
+
+function rememberBusinessKey(instanceId: string, key: string | null): void {
+  if (businessKeys.size >= BUSINESS_KEYS_KEPT) businessKeys.clear();
+  businessKeys.set(instanceId, { key, at: Date.now() });
+}
+
+/** For tests: forget the business keys read so far. */
+export function resetBusinessKeys(): void {
+  businessKeys.clear();
+}
+
 export async function getFilterTasks(
   filterId: string,
   options: {
@@ -339,24 +377,32 @@ export async function getFilterTasks(
       processDefinitionKey: definition?.key,
     };
   });
-  // the business keys name the cases; without them the list still works
+  // the business keys name the cases; without them the list still works. Those of processes and
+  // those of cases (CMMN) are two requests, sent together
   const instanceIds = [...new Set(tasks.map((task) => task.processInstanceId).filter((id): id is string => !!id))];
-  if (instanceIds.length > 0) {
-    const instances = await request<{ id: string; businessKey: string | null }[]>(`${engineApi()}/process-instance`, {
-      query: { processInstanceIds: instanceIds.join(','), maxResults: instanceIds.length },
-      signal: options.signal,
-    }).catch((): { id: string; businessKey: string | null }[] => []);
-    const keys = new Map(instances.map((instance) => [instance.id, instance.businessKey]));
-    for (const task of tasks) {
-      task.businessKey = task.processInstanceId ? (keys.get(task.processInstanceId) ?? null) : null;
-    }
-  }
-  // the business keys of cases (CMMN) come from the history, which knows several at once
   const caseIds = [...new Set(tasks.map((task) => task.caseInstanceId).filter((id): id is string => !!id))];
-  if (caseIds.length > 0) {
-    const keys = await getCaseBusinessKeys(caseIds, options.signal).catch(() => new Map<string, string | null>());
+  // an instance gets its business key when it starts, so a key read once is not asked for again
+  // with every refresh of the list
+  const unknownIds = instanceIds.filter((id) => !knownBusinessKey(id));
+  const [instances, caseKeys] = await Promise.all([
+    unknownIds.length > 0
+      ? request<{ id: string; businessKey: string | null }[]>(`${engineApi()}/process-instance`, {
+          query: { processInstanceIds: unknownIds.join(','), maxResults: unknownIds.length },
+          signal: options.signal,
+        }).catch((): { id: string; businessKey: string | null }[] => [])
+      : [],
+    // the business keys of cases come from the history, which knows several at once
+    caseIds.length > 0
+      ? getCaseBusinessKeys(caseIds, options.signal).catch(() => new Map<string, string | null>())
+      : null,
+  ]);
+  for (const instance of instances) rememberBusinessKey(instance.id, instance.businessKey);
+  for (const task of tasks) {
+    task.businessKey = task.processInstanceId ? (knownBusinessKey(task.processInstanceId)?.key ?? null) : null;
+  }
+  if (caseKeys) {
     for (const task of tasks) {
-      if (task.caseInstanceId && !task.processInstanceId) task.businessKey = keys.get(task.caseInstanceId) ?? null;
+      if (task.caseInstanceId && !task.processInstanceId) task.businessKey = caseKeys.get(task.caseInstanceId) ?? null;
     }
   }
   return { count: result.count, tasks };

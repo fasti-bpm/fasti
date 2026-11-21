@@ -10,6 +10,7 @@ import type { Task, TaskPage } from '../api/types';
 import { useSession } from '../app/session';
 import { useI18n } from '../i18n';
 import { useToast } from '../ui/toast';
+import { refreshFilterCountsSoon } from './filterCounts';
 
 /** Shows a change in every cached copy of a task before the server confirmed it. */
 function patchTask(queryClient: QueryClient, taskId: string, patch: Partial<Task>): void {
@@ -200,7 +201,8 @@ export function refreshTasks(queryClient: QueryClient, taskId?: string, options?
   void queryClient.invalidateQueries({ queryKey: ['tasks'] });
   // the variables shown on the cards change with the tasks, not with their key
   void queryClient.invalidateQueries({ queryKey: ['task-card-variables'] });
-  void queryClient.invalidateQueries({ queryKey: ['filters'] });
+  // the filters themselves did not change, only how many tasks they have: read once after a burst
+  refreshFilterCountsSoon(queryClient);
   // who may complete a task depends on its assignee and on the steps completed meanwhile
   readAgain(queryClient, taskId ? ['four-eyes', taskId] : ['four-eyes']);
   // a task assigned anew is no longer held for an absent user

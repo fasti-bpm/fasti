@@ -6,15 +6,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router';
 import { Inbox, MousePointerClick, PanelLeftClose, PanelLeftOpen, Play, Plus, SlidersHorizontal } from 'lucide-react';
-import { canCreateFilter, createStarterFilters, getFilterTasks, getTaskFilters, starterFilters } from '../api/engine';
+import { canCreateFilter, createStarterFilters, getFilterTasks, starterFilters } from '../api/engine';
 import { isTyping } from '../app/shortcuts';
 import { useSession } from '../app/session';
-import { afterComplete } from '../lib/userPrefs';
+import { usePacedInterval } from '../lib/activity';
+import { afterComplete, tenantScope } from '../lib/userPrefs';
 import { useI18n } from '../i18n';
 import { Button, EmptyState, IconButton, Kbd, cx } from '../ui';
 import { useToast } from '../ui/toast';
 import { refreshTasks, useTaskActions } from './actions';
 import { FilterEditor } from './FilterEditor';
+import { useCountedFilters, useTaskFilters } from './filterCounts';
 import { FilterList, FilterSelect } from './FilterList';
 import { NotifyToggle, useNewTaskNotices, useNotifyPreference } from './notifications';
 import { toTaskQuery, type Criterion } from './search';
@@ -51,11 +53,10 @@ export function TasklistPage() {
   /** the filter dialog: `null` closed, `{ filterId: null }` a new filter */
   const [editing, setEditing] = useState<{ filterId: string | null } | null>(null);
 
-  const filters = useQuery({
-    queryKey: ['filters'],
-    queryFn: getTaskFilters,
-    refetchInterval: REFRESH_INTERVAL,
-  });
+  const refreshInterval = usePacedInterval(REFRESH_INTERVAL);
+  /** the filter menu of narrow screens was opened: its entries show the task counts */
+  const [filterMenuUsed, setFilterMenuUsed] = useState(false);
+  const { filters, counts: filterCounts } = useTaskFilters({ collapsed: preferences.filtersCollapsed, menuUsed: filterMenuUsed });
   const creatable = useQuery({
     queryKey: ['filters', 'creatable'],
     queryFn: canCreateFilter,
@@ -77,7 +78,8 @@ export function TasklistPage() {
   const filterId = useMemo(() => {
     const available = filters.data;
     if (!available) {
-      return location.filterId;
+      // not known yet: the tasks of the filter used last are asked for beside the filters, not after them
+      return location.filterId ?? preferences.filterId ?? null;
     }
     const exists = (id: string | null) => !!id && available.some((filter) => filter.id === id);
     if (exists(location.filterId)) return location.filterId;
@@ -107,21 +109,14 @@ export function TasklistPage() {
     if (linkedSearch) setLinkedSearch((current) => (current ? { ...current, ...change } : current));
     else setPreferences(change);
   };
-  // the urgency views compare with now, to the minute, so they move along while the list is open
   const queue = isQueueView(preferences.queue) ? preferences.queue : 'all';
-  const [minute, setMinute] = useState(() => minuteOf(new Date()).getTime());
-  useEffect(() => {
-    if (queue === 'all' || queue === 'unclaimed') return undefined;
-    const timer = window.setInterval(() => setMinute(minuteOf(new Date()).getTime()), 60_000);
-    return () => window.clearInterval(timer);
-  }, [queue]);
-  const taskQuery = useMemo(
-    () => ({
-      ...toTaskQuery(search.criteria, search.onlyMine ? session.userId : null),
-      ...queueQuery(queue, new Date(minute)),
-    }),
-    [search.criteria, search.onlyMine, session.userId, queue, minute],
+  // what the search adds to the filter; the urgency views add a comparison with now (see the query)
+  const searchQuery = useMemo(
+    () => toTaskQuery(search.criteria, search.onlyMine ? session.userId : null),
+    [search.criteria, search.onlyMine, session.userId],
   );
+  const taskQuery = useMemo(() => ({ search: searchQuery, queue }), [searchQuery, queue]);
+  const listInterval = filter?.properties?.refresh === false ? false : refreshInterval;
   const tasks = useQuery({
     queryKey: ['tasks', filterId, location.page, preferences.sorting, taskQuery],
     queryFn: ({ signal }) =>
@@ -129,13 +124,21 @@ export function TasklistPage() {
         firstResult: location.page * PAGE_SIZE,
         maxResults: PAGE_SIZE,
         sorting: [preferences.sorting],
-        query: taskQuery,
+        // "now" is taken when the list is read, so an urgency view moves along with every
+        // refresh while the query, and with it the cached list, stays the same
+        query: { ...searchQuery, ...queueQuery(queue, minuteOf(new Date())) },
         signal,
       }),
-    enabled: !!filterId && !!filter,
+    // also before the filters are known: the list of the filter used last loads beside them
+    enabled: !!filterId,
     placeholderData: keepPreviousData,
-    refetchInterval: filter?.properties?.refresh === false ? false : REFRESH_INTERVAL,
+    refetchInterval: listInterval,
   });
+  // the task list counts the tasks of its filter with every page: unless a search narrows the
+  // list, that is the number the filter shows, without a request of its own
+  const unfiltered = queue === 'all' && Object.keys(searchQuery).length === 0 && !tenantScope();
+  const listedCount = filterId && filter && unfiltered && tasks.data && !tasks.isPlaceholderData ? tasks.data.count : null;
+  const countedFilters = useCountedFilters(filters.data, filterCounts.data, { id: filterId, count: listedCount });
   // the process variables a user chose for the cards, read for the shown tasks
   const cardVariables = preferences.cardVariables;
   // and the business fields chosen for the processes of the shown tasks
@@ -155,7 +158,7 @@ export function TasklistPage() {
     enabled: !!tasks.data && cardNames.length > 0,
     placeholderData: keepPreviousData,
     // the values change without the list changing, so they are read again with it
-    refetchInterval: filter?.properties?.refresh === false ? false : REFRESH_INTERVAL,
+    refetchInterval: listInterval,
   });
   // while a task is open the list keeps its order; tasks that arrive wait behind a notice
   const listKey = JSON.stringify([filterId, location.page, preferences.sorting, taskQuery]);
@@ -181,7 +184,7 @@ export function TasklistPage() {
     queryFn: ({ signal }) => getSubstitutionMarks(listedIds, signal),
     enabled: absenceEnabled && listedIds.length > 0,
     placeholderData: keepPreviousData,
-    refetchInterval: filter?.properties?.refresh === false ? false : REFRESH_INTERVAL,
+    refetchInterval: listInterval,
   });
   const shownPage = useMemo(
     () =>
@@ -224,7 +227,6 @@ export function TasklistPage() {
     if (decoded?.view) {
       const view = decoded.view;
       const sorting = queueSorting(view);
-      setMinute(minuteOf(new Date()).getTime());
       setPreferences({ queue: view, ...(sorting ? { sorting } : {}) });
     }
     setUrlParams(
@@ -456,7 +458,7 @@ export function TasklistPage() {
             <p className="pane-empty">{t('filters.empty')}</p>
           ) : (
             <FilterList
-              filters={filters.data}
+              filters={countedFilters}
               error={filters.error}
               selectedId={filterId}
               onSelect={selectFilter}
@@ -480,7 +482,12 @@ export function TasklistPage() {
             />
           )}
           <h2 className="pane-title pane-title--filter">{filter?.name ?? t('tasks.title')}</h2>
-          <FilterSelect filters={filters.data} selectedId={filterId} onSelect={selectFilter} />
+          <FilterSelect
+            filters={countedFilters}
+            selectedId={filterId}
+            onSelect={selectFilter}
+            onUse={() => setFilterMenuUsed(true)}
+          />
           {filter && (
             <IconButton
               icon={SlidersHorizontal}
@@ -544,7 +551,8 @@ export function TasklistPage() {
           <TaskList
             ref={listRef}
             page={filter ? shownPage : undefined}
-            error={filters.error ?? tasks.error}
+            // the filter used last may be gone by now: its list failing only matters once it is known to exist
+            error={filters.error ?? (filter ? tasks.error : null)}
             fetching={tasks.isFetching}
             updating={tasks.isPlaceholderData}
             pageIndex={location.page}
@@ -561,7 +569,6 @@ export function TasklistPage() {
             queue={queue}
             onQueue={(next) => {
               // a view brings its order: soonest due first, or the longest waiting first
-              setMinute(minuteOf(new Date()).getTime());
               setPreferences({ queue: next, ...(queueSorting(next) ? { sorting: queueSorting(next) ?? preferences.sorting } : {}) });
               navigate({ page: 0 }, { replace: true });
             }}

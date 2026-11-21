@@ -187,8 +187,9 @@ export function CommandPalette({
   const cockpit = session.authorizedApps.includes('cockpit');
   const filters = useQuery({
     queryKey: ['filters'],
-    queryFn: getTaskFilters,
+    queryFn: ({ signal }) => getTaskFilters(signal),
     enabled: open && tasklist,
+    staleTime: 60_000,
   });
   const hits = useQuery({
     queryKey: ['palette-search', term, cockpit, tasklist],

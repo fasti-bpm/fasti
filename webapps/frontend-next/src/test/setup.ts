@@ -5,6 +5,7 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup, configure } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, vi } from 'vitest';
+import { resetBusinessKeys } from '../api/engine';
 import { resetHttpState } from '../api/http';
 import { resetWorkloadSupport } from '../api/workload';
 import { clearReceipts } from '../cockpit/receipts';
@@ -48,6 +49,7 @@ afterEach(() => {
   cleanup();
   resetHttpState();
   resetWorkloadSupport();
+  resetBusinessKeys();
   Object.assign(config, defaultConfig);
   window.localStorage.clear();
   clearReceipts();

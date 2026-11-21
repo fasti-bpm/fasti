@@ -93,7 +93,11 @@ export function FilterSelect({
   filters,
   selectedId,
   onSelect,
-}: Pick<FilterListProps, 'filters' | 'selectedId' | 'onSelect'>) {
+  onUse,
+}: Pick<FilterListProps, 'filters' | 'selectedId' | 'onSelect'> & {
+  /** the user turns to the menu: its entries are about to be seen */
+  onUse?: () => void;
+}) {
   const { t } = useI18n();
   if (!filters || filters.length === 0) {
     return null;
@@ -105,6 +109,8 @@ export function FilterSelect({
       <select
         className="input"
         value={selectedId ?? ''}
+        onFocus={onUse}
+        onPointerDown={onUse}
         onChange={(event) => onSelect(event.target.value)}
       >
         {filters.map((filter) => (

@@ -132,7 +132,7 @@ Kích thước của `vite build`, đã minify (gzip trong ngoặc):
 | `index` (entry) | 396,5 kB (123,0) | 91,7 kB (27,0) |
 | `react` (React, React DOM, router, scheduler) | nằm trong `index` | 315,1 kB (99,3) |
 | `ui` (UI dùng chung, thông điệp tiếng Anh) | 274,2 kB (81,6) | 257,7 kB (76,3) |
-| `icons` (icon dùng ở nhiều trang) | 54 file dưới 1,5 kB | 27,4 kB (9,4) |
+| `icons` (icon dùng ở nhiều trang) | 54 file dưới 1,5 kB | 27,4 kB (9,3) |
 | Số file JavaScript | 204 | 164 |
 
 Lượng JavaScript tải trước trang đầu tiên gần như không đổi: React và router chuyển sang một

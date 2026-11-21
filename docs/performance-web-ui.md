@@ -131,7 +131,7 @@ Sizes of `vite build`, minified (gzip in brackets):
 | `index` (entry) | 396.5 kB (123.0) | 91.7 kB (27.0) |
 | `react` (React, React DOM, router, scheduler) | in `index` | 315.1 kB (99.3) |
 | `ui` (shared UI, English messages) | 274.2 kB (81.6) | 257.7 kB (76.3) |
-| `icons` (icons several pages use) | 54 files under 1.5 kB | 27.4 kB (9.4) |
+| `icons` (icons several pages use) | 54 files under 1.5 kB | 27.4 kB (9.3) |
 | JavaScript files | 204 | 164 |
 
 The JavaScript loaded before the first page is about the same size: React and the router

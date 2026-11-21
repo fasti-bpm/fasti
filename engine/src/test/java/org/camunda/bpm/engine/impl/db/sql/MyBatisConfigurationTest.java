@@ -96,6 +96,76 @@ public class MyBatisConfigurationTest {
   }
 
   @Test
+  public void shouldPassEveryCallOfAPreparedStatementWithoutReflection() throws Exception {
+    PreparedStatement statement = mock(PreparedStatement.class);
+    List<PreparedStatement> received = new ArrayList<>();
+    new MyBatisConfiguration.WithoutParameterMetadata(new ParameterHandler() {
+      @Override
+      public Object getParameterObject() {
+        return null;
+      }
+
+      @Override
+      public void setParameters(PreparedStatement ps) {
+        received.add(ps);
+      }
+    }).setParameters(statement);
+    PreparedStatement wrapper = received.get(0);
+
+    // a plain class, not a dynamic proxy: binding a parameter is a direct call
+    assertThat(wrapper).isInstanceOf(StatementWithoutParameterMetadata.class);
+    assertThat(java.lang.reflect.Proxy.isProxyClass(wrapper.getClass())).isFalse();
+
+    // every method of the JDBC interfaces (default methods included) reaches the statement
+    // with the same arguments, except the parameter metadata
+    int forwarded = 0;
+    for (java.lang.reflect.Method method : PreparedStatement.class.getMethods()) {
+      if (java.lang.reflect.Modifier.isStatic(method.getModifiers()) || method.getName().equals("getParameterMetaData")) {
+        continue;
+      }
+      assertThat(StatementWithoutParameterMetadata.class.getMethod(method.getName(), method.getParameterTypes()).getDeclaringClass())
+          .as(method.toString()).isEqualTo(StatementWithoutParameterMetadata.class);
+      Object[] arguments = new Object[method.getParameterCount()];
+      for (int i = 0; i < arguments.length; i++) {
+        arguments[i] = sample(method.getParameterTypes()[i]);
+      }
+      method.invoke(wrapper, arguments);
+      method.invoke(verify(statement), arguments);
+      forwarded++;
+    }
+    assertThat(forwarded).isGreaterThan(100);
+    assertThat(wrapper.toString()).isEqualTo(statement.toString());
+  }
+
+  /** A value of the type, told apart from the default where the type allows. */
+  static Object sample(Class<?> type) {
+    if (type == int.class) {
+      return 7;
+    } else if (type == long.class) {
+      return 7L;
+    } else if (type == boolean.class) {
+      return true;
+    } else if (type == byte.class) {
+      return (byte) 7;
+    } else if (type == short.class) {
+      return (short) 7;
+    } else if (type == float.class) {
+      return 7f;
+    } else if (type == double.class) {
+      return 7d;
+    } else if (type == String.class) {
+      return "seven";
+    } else if (type == Class.class) {
+      return PreparedStatement.class;
+    } else if (type.isArray()) {
+      return java.lang.reflect.Array.newInstance(type.getComponentType(), 1);
+    } else if (java.lang.reflect.Modifier.isFinal(type.getModifiers())) {
+      return null;
+    }
+    return mock(type);
+  }
+
+  @Test
   public void shouldKeepCallableStatementType() throws SQLException {
     CallableStatement statement = mock(CallableStatement.class);
     List<PreparedStatement> received = new ArrayList<>();

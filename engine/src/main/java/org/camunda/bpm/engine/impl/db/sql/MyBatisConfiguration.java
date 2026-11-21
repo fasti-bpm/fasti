@@ -147,9 +147,14 @@ public class MyBatisConfiguration extends Configuration {
     }
 
     protected static PreparedStatement hideParameterMetadata(PreparedStatement statement) {
-      Class<?> type = statement instanceof CallableStatement ? CallableStatement.class : PreparedStatement.class;
-      return (PreparedStatement) Proxy.newProxyInstance(MyBatisConfiguration.class.getClassLoader(),
-          new Class<?>[] { type }, new StatementHandler(statement));
+      if (statement instanceof CallableStatement) {
+        // a stored procedure call: rare, and its output parameters are read through the same
+        // object, so it keeps its type by a dynamic proxy
+        return (PreparedStatement) Proxy.newProxyInstance(MyBatisConfiguration.class.getClassLoader(),
+            new Class<?>[] { CallableStatement.class }, new StatementHandler(statement));
+      }
+      // every other statement: a plain delegate, so that binding a parameter costs no reflective call
+      return new StatementWithoutParameterMetadata(statement);
     }
   }
 

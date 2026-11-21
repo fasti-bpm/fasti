@@ -238,6 +238,34 @@ class McpProtocolTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
+  void describesTaskVariablesWithoutLoadingBinaries() {
+    String processInstanceId = engine.getRuntimeService().startProcessInstanceByKey("mcpProcess",
+        Variables.createVariables()
+            .putValue("scan", Variables.byteArrayValue(new byte[100_000]))
+            .putValue("invoice", Variables.fileValue("invoice.pdf").file(new byte[] { 1, 2 })
+                .mimeType("application/pdf").create())
+            .putValue("clientSecret", "abc-secret")
+            .putValue("customer", "ACME")).getId();
+    String taskId = engine.getTaskService().createTaskQuery().processInstanceId(processInstanceId).singleResult()
+        .getId();
+    engine.getTaskService().setVariableLocal(taskId, "customer", "local ACME");
+
+    Map<String, Object> task = mcp.callToolOk(CAROL, PASSWORD, "get_task", Map.of("id", taskId));
+    String denied = mcp.callToolError(BOB, PASSWORD, "get_task", Map.of("id", taskId));
+
+    Map<String, Map<String, Object>> variables = ((List<Map<String, Object>>) task.get("variables")).stream()
+        .collect(Collectors.toMap(variable -> (String) variable.get("name"), variable -> variable));
+    assertThat(variables.get("scan")).containsEntry("type", "bytes").doesNotContainKey("value");
+    assertThat(variables.get("invoice")).containsEntry("filename", "invoice.pdf").doesNotContainKey("value");
+    assertThat(variables.get("clientSecret")).containsEntry("masked", true).doesNotContainKey("value");
+    // the task's own variable hides the one of the process instance
+    assertThat(variables.get("customer")).containsEntry("value", "local ACME");
+    assertThat((List<String>) task.get("candidateGroups")).containsExactly("reviewers");
+    assertThat(denied).contains("not found or you are not allowed");
+  }
+
+  @Test
   void enforcesResultLimits() {
     String error = mcp.callToolError(ADMIN, ADMIN_PASSWORD, "list_process_definitions", Map.of("maxResults", 500));
     String unknown = mcp.callToolError(ADMIN, ADMIN_PASSWORD, "list_process_definitions", Map.of("bogus", true));

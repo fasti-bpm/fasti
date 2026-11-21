@@ -157,6 +157,21 @@ class McpWriteToolsTest {
   }
 
   @Test
+  void doesNotDiscloseFailedExpressions() {
+    String error = mcp.callToolError(ADMIN, ADMIN_PASSWORD, "start_process_instance",
+        Map.of("processDefinitionKey", "expressionProcess"));
+
+    assertThat(error).contains("reference").doesNotContain("top-secret-argument").doesNotContain("notThere");
+  }
+
+  @Test
+  void returnsEngineValidationMessages() {
+    String error = mcp.callToolError(ADMIN, ADMIN_PASSWORD, "retry_failed_job", Map.of("jobId", "no-such-job"));
+
+    assertThat(error).contains("no-such-job");
+  }
+
+  @Test
   void unclaimsOnlyOwnTasks() {
     String processInstanceId = engine.getRuntimeService().startProcessInstanceByKey("otherProcess").getId();
     Task task = engine.getTaskService().createTaskQuery().processInstanceId(processInstanceId).singleResult();

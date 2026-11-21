@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.camunda.bpm.engine.TaskService;
+import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.task.IdentityLink;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.engine.task.TaskQuery;
@@ -145,6 +146,10 @@ public class TaskTools {
           List<String> candidateUsers = new ArrayList<>();
           List<String> candidateGroups = new ArrayList<>();
           for (IdentityLink link : tasks().getIdentityLinksForTask(id)) {
+            if (candidateUsers.size() + candidateGroups.size() >= support.maxResults()) {
+              result.with("candidatesTruncated", true);
+              break;
+            }
             if ("candidate".equals(link.getType())) {
               if (link.getUserId() != null) {
                 candidateUsers.add(link.getUserId());
@@ -156,12 +161,11 @@ public class TaskTools {
           }
           result.with("candidateUsers", candidateUsers).with("candidateGroups", candidateGroups);
           if (arguments.bool("includeVariables", true)) {
-            VariableMap variables = tasks().getVariablesTyped(id, false);
             int max = support.properties().getMaxVariables();
-            List<Map<String, Object>> described = new ArrayList<>();
-            variables.keySet().stream().sorted().limit(max).forEach(name ->
-                described.add(support.values().variable(name, variables.getValueTyped(name), null)));
-            result.with("variables", described);
+            List<Map<String, Object>> variables = ((ProcessEngineConfigurationImpl) support.engine()
+                .getProcessEngineConfiguration()).getCommandExecutorTxRequired()
+                .execute(new TaskVariablesCmd(id, max, support.values()));
+            result.with("variables", ToolSupport.limit(variables, max));
             if (variables.size() > max) {
               result.with("variablesTruncated", true);
             }

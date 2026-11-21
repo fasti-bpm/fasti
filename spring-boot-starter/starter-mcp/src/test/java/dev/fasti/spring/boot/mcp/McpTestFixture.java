@@ -98,6 +98,10 @@ public final class McpTestFixture {
             .camundaHistoryTimeToLive(1)
             .startEvent().serviceTask("fail").camundaAsyncBefore().camundaClass("dev.fasti.does.not.Exist")
             .endEvent().done())
+        .addModelInstance("expressionProcess.bpmn", Bpmn.createExecutableProcess("expressionProcess")
+            .camundaHistoryTimeToLive(1)
+            .startEvent().serviceTask("call").camundaExpression("${notThere.call('top-secret-argument')}")
+            .endEvent().done())
         .addClasspathResource("mcp-decision.dmn")
         .deploy();
   }

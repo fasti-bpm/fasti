@@ -179,7 +179,7 @@ public class IncidentTools {
     return support.tool("retry_failed_job", "Retry a failed job",
         "Gives a failed job or failed external task new retries, so that it is executed again; this "
             + "resolves its incident. Pass the incidentId (failedJob or failedExternalTask) or a jobId. "
-            + "Needs UPDATE on the process instance (or UPDATE_INSTANCE on the definition).",
+            + "Needs RETRY_JOB or UPDATE on the process instance (or the matching permission on the definition).",
         Schemas.object()
             .string("incidentId", "Id of a failedJob or failedExternalTask incident.")
             .string("jobId", "Id of a job, used when no incidentId is given.")

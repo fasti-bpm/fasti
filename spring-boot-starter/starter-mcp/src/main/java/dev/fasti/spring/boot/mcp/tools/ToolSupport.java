@@ -23,9 +23,15 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 import org.camunda.bpm.engine.AuthorizationException;
+import org.camunda.bpm.engine.BadUserRequestException;
+import org.camunda.bpm.engine.OptimisticLockingException;
+import org.camunda.bpm.engine.SuspendedEntityInteractionException;
+import org.camunda.bpm.engine.TaskAlreadyClaimedException;
+import org.camunda.bpm.engine.exception.NullValueException;
 import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.ProcessEngineException;
@@ -148,8 +154,9 @@ public class ToolSupport {
     } catch (ProcessEngineException e) {
       return error(engineMessage(e));
     } catch (IOException | RuntimeException e) {
-      LOG.warn("MCP tool {} failed for user {}", name, identity.userId(), e);
-      return error("The tool failed with an internal error; details are in the server log");
+      String reference = reference();
+      LOG.warn("MCP tool {} failed for user {} [reference {}]", name, identity.userId(), reference, e);
+      return error("The tool failed with an internal error (reference " + reference + "; details are in the server log)");
     }
   }
 
@@ -181,14 +188,36 @@ public class ToolSupport {
     throw McpError.builder(McpSchema.ErrorCodes.INVALID_REQUEST).message("Not authenticated").build();
   }
 
+  /**
+   * The message of an engine exception if it is meant for the caller (a missing or invalid
+   * argument, something not found, suspended or changed concurrently, a validation of the engine
+   * with its ENGINE code); otherwise a reference to the server log. Messages of failed
+   * expressions, scripts, delegates and the persistence layer can carry model details, values or
+   * secrets and are never returned.
+   */
   protected String engineMessage(ProcessEngineException e) {
     String message = e.getMessage();
-    if (message == null || message.contains("### ")) {
-      // persistence errors carry SQL and mapping details
-      LOG.warn("MCP tool call failed in the engine", e);
-      return "The engine could not process the request; details are in the server log";
+    if (message != null && !message.contains("### ") && isForTheCaller(e)) {
+      return message;
     }
-    return message;
+    String reference = reference();
+    LOG.warn("MCP tool call failed in the engine [reference {}]", reference, e);
+    return "The engine could not carry out the request (reference " + reference + "; details are in the server log)";
+  }
+
+  protected boolean isForTheCaller(ProcessEngineException e) {
+    if (e instanceof BadUserRequestException || e instanceof NullValueException
+        || e instanceof SuspendedEntityInteractionException || e instanceof OptimisticLockingException
+        || e instanceof TaskAlreadyClaimedException) {
+      return true;
+    }
+    // validations of the engine itself: coded, without an underlying cause
+    return e.getClass() == ProcessEngineException.class && e.getCause() == null
+        && e.getMessage().startsWith("ENGINE-");
+  }
+
+  protected static String reference() {
+    return UUID.randomUUID().toString().substring(0, 8);
   }
 
   protected CallToolResult error(String message) {

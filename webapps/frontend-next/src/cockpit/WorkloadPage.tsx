@@ -10,14 +10,10 @@ import { fullName } from '../api/engine';
 import { isApiError } from '../api/http';
 import {
   WORKLOAD_LIMIT,
-  byLoad,
-  getGroupLoad,
   getOpenTaskFilter,
-  getUserLoad,
+  getWorkload,
   getWorkloadGroups,
-  getWorkloadSummary,
   getWorkloadUsers,
-  mapLimited,
   type WorkloadRow,
 } from '../api/workload';
 import { useSession } from '../app/session';
@@ -34,6 +30,9 @@ import { useDebounced, useRemembered } from '../ui/hooks';
 import { Card, PageHeader } from '../ui/page';
 import { DataTable, Pager, useClampedPage, type Column } from '../ui/table';
 import { Tile } from './DashboardPage';
+
+/** how long a page of groups or users is taken as current; the refresh button reads it again */
+const IDENTITIES_FRESH = 5 * 60_000;
 
 /** where a count leads: the task list, narrowed like the count, if the user may open it */
 type LinkTo = (criteria: Criterion[], view?: QueueView) => string | null;
@@ -202,47 +201,53 @@ export function WorkloadPage() {
   const { t, locale } = useI18n();
   const session = useSession();
   const refetchInterval = useRefreshInterval();
+  const identitiesInterval = useRefreshInterval('slow');
   const [hideEmpty, setHideEmpty] = useRemembered('workload.hideEmpty', true);
   // overdue is before now, taken when the counts are read
   const at = (): Date => minuteOf(new Date());
-
-  const summary = useQuery({
-    queryKey: [COCKPIT, 'workload', 'summary'],
-    queryFn: ({ signal }) => getWorkloadSummary(at(), signal),
-    refetchInterval,
-  });
   const [groupSearch, setGroupSearch] = useState('');
   const [groupPage, setGroupPage] = useState(0);
   const [userSearch, setUserSearch] = useState('');
   const [userPage, setUserPage] = useState(0);
   const groupTerm = useDebounced(groupSearch.trim());
   const userTerm = useDebounced(userSearch.trim());
+  // who is on the board: the groups and users change far less often than their tasks, so their
+  // pages are not read again with every refresh of the numbers
   const groups = useQuery({
     queryKey: [COCKPIT, 'workload', 'groups', groupTerm, groupPage],
-    queryFn: async ({ signal }) => {
-      const found = await getWorkloadGroups({ search: groupTerm, page: groupPage }, signal);
-      const now = at();
-      const rows = await mapLimited(found.items, 4, (group) => getGroupLoad(group, now, signal));
-      return { rows: rows.sort(byLoad), count: found.count };
-    },
+    queryFn: ({ signal }) => getWorkloadGroups({ search: groupTerm, page: groupPage }, signal),
     placeholderData: keepPreviousData,
-    refetchInterval,
+    staleTime: IDENTITIES_FRESH,
+    refetchInterval: identitiesInterval,
     retry: (count, error) => !isApiError(error, 'forbidden') && count < 2,
   });
   const users = useQuery({
     queryKey: [COCKPIT, 'workload', 'users', userTerm, userPage],
-    queryFn: async ({ signal }) => {
-      const found = await getWorkloadUsers({ search: userTerm, page: userPage }, signal);
-      const now = at();
-      const rows = await mapLimited(found.items, 4, (user) =>
-        getUserLoad({ id: user.id, name: fullName(user, locale) }, now, signal),
-      );
-      return { rows: rows.sort(byLoad), count: found.count };
-    },
+    queryFn: ({ signal }) => getWorkloadUsers({ search: userTerm, page: userPage }, signal),
     placeholderData: keepPreviousData,
-    refetchInterval,
+    staleTime: IDENTITIES_FRESH,
+    refetchInterval: identitiesInterval,
     retry: (count, error) => !isApiError(error, 'forbidden') && count < 2,
   });
+  // a section the user may not list stays empty; the rest of the board is still counted
+  const groupItems = groups.isError ? undefined : groups.data?.items;
+  const userItems = users.isError ? undefined : users.data?.items;
+  const members = useMemo(
+    () => ({
+      groups: (groupItems ?? []).map((group) => ({ id: group.id, name: group.name })),
+      users: (userItems ?? []).map((user) => ({ id: user.id, name: fullName(user, locale) })),
+    }),
+    [groupItems, userItems, locale],
+  );
+  // the numbers of the whole board in one request: the totals and a row per group and user
+  const load = useQuery({
+    queryKey: [COCKPIT, 'workload', 'load', members],
+    queryFn: ({ signal }) => getWorkload(members.groups, members.users, at(), signal),
+    enabled: !groups.isPending && !users.isPending,
+    placeholderData: keepPreviousData,
+    refetchInterval,
+  });
+  const summary = load.data?.summary;
   // fewer identities than before, e.g. after some were removed: back to the last page there is
   useClampedPage(groupPage, groups.data?.count ?? undefined, setGroupPage, WORKLOAD_LIMIT);
   useClampedPage(userPage, users.data?.count ?? undefined, setUserPage, WORKLOAD_LIMIT);
@@ -260,8 +265,9 @@ export function WorkloadPage() {
   );
   // claimed tasks of people the user may not list, or who are no users of the engine
   const unlisted =
-    users.data && !userTerm && users.data.count !== null && users.data.count <= WORKLOAD_LIMIT && summary.data
-      ? summary.data.assigned - users.data.rows.reduce((sum, row) => sum + row.open, 0)
+    users.data && !users.isPlaceholderData && !userTerm && users.data.count !== null && users.data.count <= WORKLOAD_LIMIT &&
+    load.data && !load.isPlaceholderData
+      ? load.data.summary.assigned - load.data.users.reduce((sum, row) => sum + row.open, 0)
       : 0;
   const tile = (criteria: Criterion[], view?: QueueView) => linkTo(criteria, view) ?? '/cockpit/workload';
 
@@ -269,17 +275,16 @@ export function WorkloadPage() {
     <div className="page">
       <PageHeader title={t('workload.title')} subtitle={t('workload.subtitle')} />
       <div className="tiles workload__tiles">
-        <Tile to={tile([])} icon={ListChecks} label={t('workload.tile.open')} value={summary.data?.open} />
-        <Tile to={tile([], 'unclaimed')} icon={UserX} label={t('workload.tile.unassigned')} value={summary.data?.unassigned} />
+        <Tile to={tile([])} icon={ListChecks} label={t('workload.tile.open')} value={summary?.open} />
+        <Tile to={tile([], 'unclaimed')} icon={UserX} label={t('workload.tile.unassigned')} value={summary?.unassigned} />
         <Tile
           to={tile([], 'overdue')}
           icon={AlarmClock}
           label={t('workload.tile.overdue')}
-          value={summary.data?.overdue}
-          tone={summary.data?.overdue ? 'danger' : undefined}
+          value={summary?.overdue}
+          tone={summary?.overdue ? 'danger' : undefined}
         />
       </div>
-      {summary.isError && <ErrorState error={summary.error} onRetry={() => void summary.refetch()} />}
       <p className="workload__scope muted">
         {t('workload.scope')}
         {tasklist && !openFilter.isPending && !filterId && <> {t('workload.noOpenFilter')}</>}
@@ -290,10 +295,10 @@ export function WorkloadPage() {
           {t('workload.unlisted', { count: unlisted })}
         </p>
       )}
-      {!!summary.data?.orphaned && (
+      {!!summary?.orphaned && (
         <p className="workload__orphaned" role="note">
           <Users aria-hidden size={14} />
-          {t('workload.orphaned', { count: summary.data.orphaned })}
+          {t('workload.orphaned', { count: summary.orphaned })}
         </p>
       )}
       <label className="option option--inline workload__hide">
@@ -317,10 +322,10 @@ export function WorkloadPage() {
           <LoadTable
             label={t('workload.byGroup')}
             kind="group"
-            rows={groups.data?.rows}
-            updating={groups.isPlaceholderData}
-            error={null}
-            onRetry={() => void groups.refetch()}
+            rows={load.data?.groups}
+            updating={groups.isPlaceholderData || load.isPlaceholderData}
+            error={load.error}
+            onRetry={() => void load.refetch()}
             linkTo={linkTo}
             hideEmpty={hideEmpty}
           />
@@ -344,10 +349,10 @@ export function WorkloadPage() {
           <LoadTable
             label={t('workload.byUser')}
             kind="user"
-            rows={users.data?.rows}
-            updating={users.isPlaceholderData}
-            error={null}
-            onRetry={() => void users.refetch()}
+            rows={load.data?.users}
+            updating={users.isPlaceholderData || load.isPlaceholderData}
+            error={load.error}
+            onRetry={() => void load.refetch()}
             linkTo={linkTo}
             hideEmpty={hideEmpty}
           />

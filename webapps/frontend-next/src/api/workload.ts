@@ -5,7 +5,7 @@
 import { env } from '../env';
 import { toEngineDate } from '../lib/dates';
 import { tenantFilter } from '../lib/userPrefs';
-import { request, seg, type QueryValue } from './http';
+import { isApiError, request, seg, type QueryValue } from './http';
 
 /**
  * The open tasks of a team, by candidate group and by assignee, read with the
@@ -192,4 +192,125 @@ export async function getOpenTaskFilter(signal?: AbortSignal): Promise<string | 
     Object.entries(filter.query ?? {}).every(([name, value]) => name === 'sorting' || empty(value)),
   );
   return (open.find((filter) => !filter.owner) ?? open[0])?.id ?? null;
+}
+
+// --- the aggregate of the server ---------------------------------------------
+
+interface TaskLoadDto {
+  id: string | null;
+  open: number;
+  unassigned: number;
+  overdue: number;
+  oldest: string | null;
+}
+
+interface TaskWorkloadDto {
+  totals: TaskLoadDto;
+  orphaned: number;
+  groups: TaskLoadDto[];
+  users: TaskLoadDto[];
+}
+
+/**
+ * Whether the server has `POST /task/workload` (Fasti 1.2 and later): unknown
+ * until the first answer. An older server answers 404 or 405, and the numbers
+ * are then read with the task queries as before.
+ */
+let aggregate: boolean | undefined;
+
+/** For tests: forget what is known about the server. */
+export function resetWorkloadSupport(): void {
+  aggregate = undefined;
+}
+
+async function readAggregate(
+  body: { groupIdIn?: string[]; userIdIn?: string[] },
+  now: Date,
+  signal?: AbortSignal,
+): Promise<TaskWorkloadDto | null> {
+  if (aggregate === false) return null;
+  const tenant = tenantFilter().tenantIdIn;
+  try {
+    const result = await request<TaskWorkloadDto>(`${engineApi()}/task/workload`, {
+      method: 'POST',
+      json: { ...body, overdueBefore: toEngineDate(now), ...(tenant ? { tenantIdIn: [tenant] } : {}) },
+      signal,
+    });
+    aggregate = true;
+    return result;
+  } catch (error) {
+    if (isApiError(error) && (error.status === 404 || error.status === 405) && aggregate === undefined) {
+      aggregate = false;
+      return null;
+    }
+    throw error;
+  }
+}
+
+const summaryOf = (dto: TaskWorkloadDto): WorkloadSummary => ({
+  open: dto.totals.open,
+  unassigned: dto.totals.unassigned,
+  overdue: dto.totals.overdue,
+  orphaned: dto.orphaned,
+  assigned: dto.totals.open - dto.totals.unassigned,
+});
+
+/**
+ * The totals of the open tasks: one request where the server has the
+ * aggregate, the five task counts otherwise.
+ */
+export async function getTaskTotals(now: Date, signal?: AbortSignal): Promise<WorkloadSummary> {
+  const dto = await readAggregate({}, now, signal);
+  return dto ? summaryOf(dto) : getWorkloadSummary(now, signal);
+}
+
+export interface Workload {
+  summary: WorkloadSummary;
+  /** one row per group asked for, the busiest first */
+  groups: WorkloadRow[];
+  /** one row per user asked for, the busiest first */
+  users: WorkloadRow[];
+}
+
+/** How many ids one request may carry; the pages of the board are smaller. */
+export const WORKLOAD_MAX_IDS = 200;
+
+/**
+ * The board in one request: the totals and the load of the given groups and
+ * users. The server counts with a few grouped statements; an older server is
+ * asked per group and per user, a few at a time, as before.
+ */
+export async function getWorkload(
+  groups: { id: string; name: string | null }[],
+  users: { id: string; name: string }[],
+  now: Date,
+  signal?: AbortSignal,
+): Promise<Workload> {
+  const fits = groups.length <= WORKLOAD_MAX_IDS && users.length <= WORKLOAD_MAX_IDS;
+  const dto = fits
+    ? await readAggregate({ groupIdIn: groups.map((group) => group.id), userIdIn: users.map((user) => user.id) }, now, signal)
+    : null;
+  if (dto) {
+    const row = (name: string, load: TaskLoadDto | undefined, id: string, group: boolean): WorkloadRow => ({
+      id,
+      name,
+      open: load?.open ?? 0,
+      unassigned: group ? (load?.unassigned ?? 0) : null,
+      overdue: load?.overdue ?? 0,
+      oldest: load?.oldest ?? null,
+    });
+    const groupLoads = new Map(dto.groups.map((load) => [load.id, load]));
+    const userLoads = new Map(dto.users.map((load) => [load.id, load]));
+    return {
+      summary: summaryOf(dto),
+      groups: groups.map((group) => row(group.name || group.id, groupLoads.get(group.id), group.id, true)).sort(byLoad),
+      users: users.map((user) => row(user.name, userLoads.get(user.id), user.id, false)).sort(byLoad),
+    };
+  }
+  const [summary, groupRows, userRows] = await Promise.all([
+    getWorkloadSummary(now, signal),
+    mapLimited(groups, 4, (group) => getGroupLoad(group, now, signal)),
+    mapLimited(users, 4, (user) => getUserLoad(user, now, signal)),
+  ]);
+  return { summary, groups: groupRows.sort(byLoad), users: userRows.sort(byLoad) };
 }

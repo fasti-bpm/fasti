@@ -7,10 +7,11 @@ import userEvent from '@testing-library/user-event';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { getColumnValues } from '../api/cockpit';
-import { byLoad, mapLimited, type WorkloadRow } from '../api/workload';
+import { byLoad, getTaskTotals, getWorkload, mapLimited, type WorkloadRow } from '../api/workload';
 import { Providers, createQueryClient, routes } from '../app/App';
 import { decodeSearch, encodeSearch } from '../tasklist/searchLinks';
 import { toTaskQuery } from '../tasklist/search';
+import { setTenantScope } from '../lib/userPrefs';
 import { preloadRoutes } from '../test/routes';
 import { fakeServer, json, type FakeHandler } from '../test/server';
 import { compactValue, readVariableColumns, writeVariableColumns } from './VariableColumns';
@@ -133,6 +134,102 @@ describe('team workload', () => {
     expect(within(people).getByText('Anna Le')).toBeVisible();
     expect(server.requests.some((r) => r.query.get('id') === 'le')).toBe(true);
     expect(screen.getByText(/up to 50 each by first and last name/)).toBeVisible();
+  });
+
+  it('reads the whole board with one request where the server counts', async () => {
+    const server = backend({
+      [`GET ${ENGINE}/filter`]: () => json([]),
+      [`GET ${ENGINE}/group`]: () => json([{ id: 'sales', name: 'Sales' }, { id: 'idle', name: 'Idle' }]),
+      [`GET ${ENGINE}/user`]: () => json([{ id: 'anna', firstName: 'Anna', lastName: 'Le' }, { id: 'bob', firstName: 'Bob', lastName: 'Ng' }]),
+      [`GET ${ENGINE}/group/count`]: () => json({ count: 2 }),
+      [`GET ${ENGINE}/user/count`]: () => json({ count: 2 }),
+      [`POST ${ENGINE}/task/workload`]: () =>
+        json({
+          totals: { id: null, open: 9, unassigned: 6, overdue: 3, oldest: '2026-01-01T09:00:00.000+0000' },
+          orphaned: 1,
+          groups: [
+            { id: 'sales', open: 5, unassigned: 3, overdue: 2, oldest: '2026-01-01T09:00:00.000+0000' },
+            { id: 'idle', open: 0, unassigned: 0, overdue: 0, oldest: null },
+          ],
+          users: [
+            { id: 'anna', open: 1, unassigned: 0, overdue: 0, oldest: '2026-01-02T09:00:00.000+0000' },
+            { id: 'bob', open: 2, unassigned: 0, overdue: 1, oldest: '2026-01-03T09:00:00.000+0000' },
+          ],
+        }),
+    });
+    renderApp('/cockpit/workload');
+
+    const groups = await screen.findByRole('table', { name: 'By candidate group' });
+    expect(await within(groups).findByRole('link', { name: 'Open tasks of Sales: 5' })).toBeVisible();
+    expect(within(groups).getByRole('link', { name: 'Unassigned tasks of Sales: 3' })).toBeVisible();
+    expect(within(groups).getByRole('link', { name: 'Overdue tasks of Sales: 2' })).toBeVisible();
+    expect(within(groups).queryByText('Idle')).toBeNull();
+    // the busiest person first
+    const people = screen.getByRole('table', { name: 'By person' });
+    expect(within(people).getAllByRole('row').slice(1).map((line) => line.textContent)).toEqual([
+      expect.stringContaining('Bob Ng'),
+      expect.stringContaining('Anna Le'),
+    ]);
+    expect(document.querySelector('.workload__tiles')?.textContent).toMatch(/9.*6.*3/);
+    expect(await screen.findByText(/1 unassigned tasks have no candidate group/)).toBeVisible();
+
+    // one request for all the numbers, and no task query per row
+    const calls = server.find('POST', `${ENGINE}/task/workload`);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.body).toMatchObject({ groupIdIn: ['sales', 'idle'], userIdIn: ['anna', 'bob'] });
+    expect((calls[0]?.body as { overdueBefore: string }).overdueBefore).toMatch(/^\d{4}-\d\d-\d\dT/);
+    expect(server.requests.filter((r) => r.path.endsWith('/task/count') || r.path.endsWith('/task'))).toHaveLength(0);
+  });
+
+  it('asks an older server per group and person, and for the aggregate only once', async () => {
+    const server = backend({
+      [`GET ${ENGINE}/filter`]: () => json([]),
+      [`GET ${ENGINE}/group`]: () => json([{ id: 'sales', name: 'Sales' }]),
+      [`GET ${ENGINE}/user`]: () => json([{ id: 'anna', firstName: 'Anna', lastName: 'Le' }]),
+      [`GET ${ENGINE}/group/count`]: () => json({ count: 1 }),
+      [`GET ${ENGINE}/user/count`]: () => json({ count: 1 }),
+      // the task resource of an older server takes "workload" for a task id
+      [`POST ${ENGINE}/task/workload`]: () => json({ type: 'NotAllowedException', message: 'HTTP 405 Method Not Allowed' }, 405),
+      [`GET ${ENGINE}/task/count`]: () => json({ count: 4 }),
+      [`GET ${ENGINE}/task`]: () => json([]),
+    });
+    const now = new Date('2026-03-01T10:00:00Z');
+
+    const first = await getWorkload([{ id: 'sales', name: 'Sales' }], [{ id: 'anna', name: 'Anna Le' }], now);
+    expect(first.summary).toEqual({ open: 4, unassigned: 4, overdue: 4, orphaned: 4, assigned: 4 });
+    expect(first.groups).toEqual([{ id: 'sales', name: 'Sales', open: 4, unassigned: 4, overdue: 4, oldest: null }]);
+    expect(first.users).toEqual([{ id: 'anna', name: 'Anna Le', open: 4, unassigned: null, overdue: 4, oldest: null }]);
+    await getWorkload([{ id: 'sales', name: 'Sales' }], [], now);
+    await getTaskTotals(now);
+
+    expect(server.find('POST', `${ENGINE}/task/workload`)).toHaveLength(1);
+    // 5 totals + 3 of the group + 2 of the person, then 5 + 3, then 5
+    expect(server.find('GET', `${ENGINE}/task/count`)).toHaveLength(23);
+  });
+
+  it('reads the totals alone and passes the tenant in view', async () => {
+    const server = backend({
+      [`POST ${ENGINE}/task/workload`]: () =>
+        json({ totals: { id: null, open: 7, unassigned: 2, overdue: 1, oldest: null }, orphaned: 0, groups: [], users: [] }),
+    });
+    setTenantScope('acme');
+
+    const totals = await getTaskTotals(new Date('2026-03-01T10:00:00Z'));
+
+    expect(totals).toEqual({ open: 7, unassigned: 2, overdue: 1, orphaned: 0, assigned: 5 });
+    expect(server.find('POST', `${ENGINE}/task/workload`)[0]?.body).toEqual({
+      overdueBefore: expect.stringMatching(/^2026-03-01T/),
+      tenantIdIn: ['acme'],
+    });
+  });
+
+  it('fails when the server fails, instead of falling back to the task queries', async () => {
+    const server = backend({
+      [`POST ${ENGINE}/task/workload`]: () => json({ type: 'ProcessEngineException', message: 'down' }, 500),
+    });
+
+    await expect(getTaskTotals(new Date())).rejects.toMatchObject({ status: 500 });
+    expect(server.find('GET', `${ENGINE}/task/count`)).toHaveLength(0);
   });
 
   it('orders the busiest first and runs a few requests at a time', async () => {

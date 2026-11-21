@@ -957,6 +957,13 @@ Copyright 2015 jmrozanec
 Licensed under Apache 2.0
 
 ===========================================================================================
+com.ethlo.time:itu:jar:1.14.0
+https://github.com/ethlo/itu/tree/v1.14.0
+
+Copyright (C) 2017 Morten Haraldsen (ethlo)
+Licensed under Apache 2.0
+
+===========================================================================================
 com.fasterxml.jackson.core:jackson-annotations:jar:2.21
 https://github.com/FasterXML/jackson-annotations
 Copyright: 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
@@ -1334,6 +1341,13 @@ https://github.com/com-lihaoyi/sourcecode/tree/0.4.0
 
 Copyright (c) 2014 Li Haoyi (haoyi.sg@gmail.com)
 Licensed under MIT
+
+===========================================================================================
+com.networknt:json-schema-validator:jar:3.0.6
+https://github.com/networknt/json-schema-validator/tree/3.0.6
+
+Copyright (c) 2016 Network New Technologies Inc.
+Licensed under Apache 2.0
 
 ===========================================================================================
 com.nimbusds:content-type:jar:2.3
@@ -2330,6 +2344,20 @@ package in the Spring Framework library, distributed by VMware, Inc:
 Licensed under Apache 2.0
 
 ===========================================================================================
+io.modelcontextprotocol.sdk:mcp-core:jar:2.1.0
+https://github.com/modelcontextprotocol/java-sdk/tree/v2.1.0
+
+Copyright (c) 2025 the original author or authors.
+Licensed under MIT
+
+===========================================================================================
+io.modelcontextprotocol.sdk:mcp-json-jackson3:jar:2.1.0
+https://github.com/modelcontextprotocol/java-sdk/tree/v2.1.0
+
+Copyright (c) 2025 the original author or authors.
+Licensed under MIT
+
+===========================================================================================
 io.opentelemetry.semconv:opentelemetry-semconv:jar:1.41.1
 https://github.com/open-telemetry/semantic-conventions-java
 Licensed under Apache 2.0
@@ -2402,6 +2430,13 @@ Licensed under Apache 2.0
 ===========================================================================================
 io.opentelemetry:opentelemetry-sdk:jar:1.62.0
 https://github.com/open-telemetry/opentelemetry-java
+Licensed under Apache 2.0
+
+===========================================================================================
+io.projectreactor:reactor-core:jar:3.8.8
+https://github.com/reactor/reactor-core/tree/v3.8.8
+
+Copyright (c) 2016-2025 VMware Inc. or its affiliates, All Rights Reserved.
 Licensed under Apache 2.0
 
 ===========================================================================================
@@ -6164,6 +6199,13 @@ Copyright (c) 2004-2017 QOS.ch
 Licensed under MIT
 
 ===========================================================================================
+org.snakeyaml:snakeyaml-engine:jar:3.0.1
+https://bitbucket.org/snakeyaml/snakeyaml-engine/src
+
+Copyright (c) 2018, SnakeYAML
+Licensed under Apache 2.0
+
+===========================================================================================
 org.springframework.boot:spring-boot-autoconfigure:jar:4.1.2
 https://github.com/spring-projects/spring-boot
 Copyright 2012-present the original author or authors.
@@ -6953,6 +6995,13 @@ To find the details that apply to this artifact see the accompanying LICENSE fil
 A list of contributors may be found from CREDITS file, which is included
 in some artifacts (usually source distributions); but is always available
 from the source code management (SCM) system project uses.
+Licensed under Apache 2.0
+
+===========================================================================================
+tools.jackson.dataformat:jackson-dataformat-yaml:jar:3.1.7
+https://github.com/FasterXML/jackson-dataformats-text
+
+Copyright 2007-, Tatu Saloranta (tatu.saloranta@iki.fi)
 Licensed under Apache 2.0
 
 ===========================================================================================

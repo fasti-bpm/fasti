@@ -51,6 +51,8 @@ public class AuditSettings implements AuditStatus {
   public static final int DEFAULT_RETENTION_DAYS = 365;
   /** HMAC keys shorter than this are refused. */
   public static final int MIN_KEY_BYTES = 32;
+  /** Seconds a query of the audit trail may run. */
+  public static final int DEFAULT_QUERY_TIMEOUT_SECONDS = 120;
   /**
    * In the list of retired key ids: accepts checkpoints and purge records without a signature,
    * written before a key was configured.
@@ -71,10 +73,12 @@ public class AuditSettings implements AuditStatus {
   protected volatile String historyLevel;
   protected volatile String tablePrefix = "";
   protected volatile boolean nationalCharacterColumns;
+  protected volatile String databaseType;
   /** Retired keys this engine still holds, by key id: their signatures are checked. */
   protected volatile Map<String, byte[]> retiredKeys = Collections.emptyMap();
   /** Ids of retired keys this engine does not hold: their signatures are accepted unchecked. */
   protected volatile Set<String> retiredKeyIds = Collections.emptySet();
+  protected volatile int queryTimeoutSeconds = DEFAULT_QUERY_TIMEOUT_SECONDS;
 
   public AuditSettings(String nodeId, int chains, String types, String variableValues, String maskedVariables,
       byte[] hmacKey, int checkpointInterval, int retentionDays) {
@@ -296,6 +300,26 @@ public class AuditSettings implements AuditStatus {
       result.add(normalized);
     }
     this.retiredKeyIds = Collections.unmodifiableSet(result);
+  }
+
+  public int getQueryTimeoutSeconds() {
+    return queryTimeoutSeconds;
+  }
+
+  /** Seconds a query of the audit trail may run; 0 for no limit. */
+  public void setQueryTimeoutSeconds(int queryTimeoutSeconds) {
+    if (queryTimeoutSeconds < 0) {
+      throw new IllegalArgumentException("queryTimeoutSeconds must not be negative");
+    }
+    this.queryTimeoutSeconds = queryTimeoutSeconds;
+  }
+
+  public String getDatabaseType() {
+    return databaseType;
+  }
+
+  public void setDatabaseType(String databaseType) {
+    this.databaseType = databaseType;
   }
 
   public String getEngineName() {

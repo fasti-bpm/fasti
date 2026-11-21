@@ -79,6 +79,7 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
   protected int retentionDays = AuditSettings.DEFAULT_RETENTION_DAYS;
   protected String retiredHmacKeys;
   protected String retiredKeyIds;
+  protected int queryTimeoutSeconds = AuditSettings.DEFAULT_QUERY_TIMEOUT_SECONDS;
 
   protected AuditSettings settings;
 
@@ -96,6 +97,7 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
     }
     settings.setRetiredKeys(retired);
     settings.setRetiredKeyIds(retiredKeyIds);
+    settings.setQueryTimeoutSeconds(queryTimeoutSeconds);
     if (configuration.getCustomSessionFactories() == null) {
       configuration.setCustomSessionFactories(new ArrayList<>());
     }
@@ -146,6 +148,7 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
   public void postProcessEngineBuild(ProcessEngine processEngine) {
     ProcessEngineConfigurationImpl configuration = (ProcessEngineConfigurationImpl) processEngine.getProcessEngineConfiguration();
     settings.setNationalCharacterColumns("oracle".equals(configuration.getDatabaseType()));
+    settings.setDatabaseType(configuration.getDatabaseType());
     try {
       prepareTables(configuration);
     } catch (RuntimeException e) {
@@ -298,6 +301,15 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
    */
   public void setRetiredKeyIds(String retiredKeyIds) {
     this.retiredKeyIds = retiredKeyIds;
+  }
+
+  public int getQueryTimeoutSeconds() {
+    return queryTimeoutSeconds;
+  }
+
+  /** Seconds a query or export of the audit trail may run (default 120, 0 for no limit). */
+  public void setQueryTimeoutSeconds(int queryTimeoutSeconds) {
+    this.queryTimeoutSeconds = queryTimeoutSeconds;
   }
 
   @Override

@@ -21,11 +21,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLTimeoutException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import dev.fasti.engine.audit.AuditService;
 import org.camunda.bpm.engine.ProcessEngineException;
@@ -42,6 +45,10 @@ import org.slf4j.LoggerFactory;
  * update (which every database supports the same way), reads the last position and hash, inserts
  * the records and moves the head. The lock is held until the transaction ends, so appends to one
  * chain are serialized while other chains (other slots, other nodes) are not affected.</p>
+ *
+ * <p>Queries page in the database and exports read one forward-only cursor, so that neither holds
+ * more than a page of records in memory. Messages of the database never reach the caller: they are
+ * logged, and the exception names only what could not be done.</p>
  */
 public final class AuditStore {
 
@@ -81,8 +88,27 @@ public final class AuditStore {
     return settings.getTablePrefix() + HEAD_TABLE;
   }
 
+  /** Rows a cursor fetches at a time. */
+  static final int FETCH_SIZE = 500;
+
+  /**
+   * A failure of the database: logged with what the driver says, reported without it, as driver
+   * messages name tables, columns and constraints and the message of the exception reaches clients.
+   */
   static ProcessEngineException failure(String what, SQLException e) {
-    return new ProcessEngineException("The audit trail could not " + what + ": " + e.getMessage(), e);
+    return failure(what, null, e);
+  }
+
+  static ProcessEngineException failure(String what, String detail, SQLException e) {
+    LOG.error("The audit trail could not {}{}: {} (SQL state {})", what, detail == null ? "" : " (" + detail + ")",
+        e.getMessage(), e.getSQLState(), e);
+    return new ProcessEngineException("The audit trail could not " + what + ". The cause is in the log of the server.", e);
+  }
+
+  static void timeout(PreparedStatement statement, int seconds) throws SQLException {
+    if (seconds > 0) {
+      statement.setQueryTimeout(seconds);
+    }
   }
 
   // writing //////////////////////////////////////////////////////////////////////////////////
@@ -130,7 +156,7 @@ public final class AuditStore {
         update.executeUpdate();
       }
     } catch (SQLException e) {
-      throw failure("write to chain " + chainId, e);
+      throw failure("write its records", "chain " + chainId, e);
     }
     return checkpoints;
   }
@@ -256,7 +282,7 @@ public final class AuditStore {
       insertHead(connection, settings, chainId);
       return true;
     } catch (SQLException e) {
-      throw failure("create the head of chain " + chainId, e);
+      throw failure("create the head of a chain", "chain " + chainId, e);
     }
   }
 
@@ -343,30 +369,54 @@ public final class AuditStore {
     return record;
   }
 
-  /** A page of the records the query selects. */
-  public static List<AuditRecord> select(CommandContext commandContext, AuditSettings settings, AuditEventQueryImpl query,
-      int firstResult, int maxResults) {
-    List<Object> parameters = new ArrayList<>();
-    String where = where(query, parameters);
+  /**
+   * The statement that selects a page of the records of a query. The page is cut in the database
+   * ({@code limit .. offset ..} on H2, PostgreSQL, MySQL and MariaDB; {@code offset .. fetch next ..}
+   * on Oracle, SQL Server and DB2), so that the rows before and after it never reach the engine.
+   * Binds the filters, then the page.
+   */
+  static String selectSql(AuditSettings settings, AuditEventQueryImpl query, List<String> tenants, long firstResult,
+      long maxResults, List<Object> parameters) {
+    String where = where(query, tenants, parameters);
     String order = query.isOldestFirst() ? "TIME_ asc, CHAIN_ID_ asc, SEQ_ asc" : "TIME_ desc, CHAIN_ID_ asc, SEQ_ desc";
     String sql = "select " + COLUMNS + " from " + events(settings) + where + " order by " + order;
+    if (firstResult <= 0 && maxResults >= Integer.MAX_VALUE) {
+      return sql;
+    }
+    if (isOffsetFetch(settings.getDatabaseType())) {
+      parameters.add(firstResult);
+      parameters.add(maxResults);
+      return sql + " offset ? rows fetch next ? rows only";
+    }
+    parameters.add(maxResults);
+    parameters.add(firstResult);
+    return sql + " limit ? offset ?";
+  }
+
+  static boolean isOffsetFetch(String databaseType) {
+    if (databaseType == null) {
+      return false;
+    }
+    String type = databaseType.toLowerCase(Locale.ROOT);
+    return type.equals("oracle") || type.equals("mssql") || type.equals("db2");
+  }
+
+  /** A page of the records the query selects, limited to the tenants (all with {@code null}). */
+  public static List<AuditRecord> select(CommandContext commandContext, AuditSettings settings, AuditEventQueryImpl query,
+      List<String> tenants, int firstResult, int maxResults) {
     List<AuditRecord> records = new ArrayList<>();
+    if (maxResults <= 0) {
+      return records;
+    }
+    List<Object> parameters = new ArrayList<>();
+    String sql = selectSql(settings, query, tenants, firstResult, maxResults, parameters);
     try (PreparedStatement select = connection(commandContext).prepareStatement(sql)) {
       bind(select, parameters);
-      long limit = (long) firstResult + maxResults;
-      if (maxResults < Integer.MAX_VALUE && limit < Integer.MAX_VALUE) {
-        select.setMaxRows((int) limit);
-      }
+      timeout(select, settings.getQueryTimeoutSeconds());
+      select.setFetchSize(Math.min(maxResults, FETCH_SIZE));
       try (ResultSet result = select.executeQuery()) {
-        int row = 0;
         while (result.next()) {
-          if (row++ < firstResult) {
-            continue;
-          }
           records.add(read(result));
-          if (records.size() >= maxResults) {
-            break;
-          }
         }
       }
     } catch (SQLException e) {
@@ -375,11 +425,59 @@ public final class AuditStore {
     return records;
   }
 
-  public static long count(CommandContext commandContext, AuditSettings settings, AuditEventQueryImpl query) {
+  /**
+   * Hands the first {@code maxResults} records the query selects to the consumer, one by one, from
+   * one forward-only cursor that fetches {@value #FETCH_SIZE} rows at a time; how many.
+   */
+  public static long forEach(CommandContext commandContext, AuditSettings settings, AuditEventQueryImpl query,
+      List<String> tenants, int maxResults, Consumer<AuditRecord> consumer) {
+    if (maxResults <= 0) {
+      return 0;
+    }
     List<Object> parameters = new ArrayList<>();
-    String sql = "select count(*) from " + events(settings) + where(query, parameters);
+    String sql = selectSql(settings, query, tenants, 0, maxResults, parameters);
+    Connection connection = connection(commandContext);
+    long count = 0;
+    try (PreparedStatement select = connection.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
+      bind(select, parameters);
+      timeout(select, settings.getQueryTimeoutSeconds());
+      select.setFetchSize(streamingFetchSize(connection));
+      try (ResultSet result = select.executeQuery()) {
+        while (count < maxResults && result.next()) {
+          consumer.accept(read(result));
+          count++;
+        }
+      }
+    } catch (SQLException e) {
+      throw failure("read records", e);
+    }
+    return count;
+  }
+
+  /**
+   * The fetch size that makes the driver read a result as a cursor. MySQL Connector/J buffers the
+   * whole result unless asked to stream row by row with {@code Integer.MIN_VALUE}; the other drivers
+   * (MariaDB Connector/J included) fetch the given number of rows at a time.
+   */
+  static int streamingFetchSize(Connection connection) {
+    try {
+      String driver = connection.getMetaData().getDriverName();
+      if (driver != null && driver.toLowerCase(Locale.ROOT).contains("mysql connector")) {
+        return Integer.MIN_VALUE;
+      }
+    } catch (SQLException | RuntimeException e) {
+      // the default
+    }
+    return FETCH_SIZE;
+  }
+
+  public static long count(CommandContext commandContext, AuditSettings settings, AuditEventQueryImpl query,
+      List<String> tenants) {
+    List<Object> parameters = new ArrayList<>();
+    String sql = "select count(*) from " + events(settings) + where(query, tenants, parameters);
     try (PreparedStatement select = connection(commandContext).prepareStatement(sql)) {
       bind(select, parameters);
+      timeout(select, settings.getQueryTimeoutSeconds());
       try (ResultSet result = select.executeQuery()) {
         result.next();
         return result.getLong(1);
@@ -389,8 +487,24 @@ public final class AuditStore {
     }
   }
 
-  static String where(AuditEventQueryImpl query, List<Object> parameters) {
+  /**
+   * The conditions of a query. With {@code tenants}, only the records of those tenants and the
+   * records without tenant, as the tenant check of the engine does for its own queries.
+   */
+  static String where(AuditEventQueryImpl query, List<String> tenants, List<Object> parameters) {
     List<String> conditions = new ArrayList<>();
+    if (tenants != null) {
+      if (tenants.isEmpty()) {
+        conditions.add("TENANT_ID_ is null");
+      } else {
+        StringBuilder in = new StringBuilder("(TENANT_ID_ is null or TENANT_ID_ in (");
+        for (int i = 0; i < tenants.size(); i++) {
+          in.append(i == 0 ? "?" : ", ?");
+          parameters.add(tenants.get(i));
+        }
+        conditions.add(in.append("))").toString());
+      }
+    }
     condition(conditions, parameters, "PROC_INST_ID_", query.processInstanceId);
     condition(conditions, parameters, "BUSINESS_KEY_", query.businessKey);
     condition(conditions, parameters, "ACTOR_", query.actor);
@@ -433,6 +547,8 @@ public final class AuditStore {
       Object value = parameters.get(i);
       if (value instanceof Long) {
         statement.setLong(i + 1, (Long) value);
+      } else if (value instanceof Integer) {
+        statement.setInt(i + 1, (Integer) value);
       } else {
         statement.setString(i + 1, (String) value);
       }
@@ -454,7 +570,7 @@ public final class AuditStore {
         return result.next() ? result.getString(1) : null;
       }
     } catch (SQLException e) {
-      throw failure("read the assignee of task " + taskId, e);
+      throw failure("read the assignee of a task", "task " + taskId, e);
     }
   }
 
@@ -485,7 +601,7 @@ public final class AuditStore {
     try {
       return readHead(connection(commandContext), settings, chainId);
     } catch (SQLException e) {
-      throw failure("read the head of chain " + chainId, e);
+      throw failure("read the head of a chain", "chain " + chainId, e);
     }
   }
 
@@ -505,7 +621,7 @@ public final class AuditStore {
         }
       }
     } catch (SQLException e) {
-      throw failure("read chain " + chainId, e);
+      throw failure("read a chain", "chain " + chainId, e);
     }
     return records;
   }
@@ -524,7 +640,7 @@ public final class AuditStore {
         }
       }
     } catch (SQLException e) {
-      throw failure("read the purges of chain " + chainId, e);
+      throw failure("read the purges of a chain", "chain " + chainId, e);
     }
     return records;
   }
@@ -559,7 +675,7 @@ public final class AuditStore {
         }
       }
     } catch (SQLException e) {
-      throw failure("find what to purge in chain " + chainId, e);
+      throw failure("find what to purge", "chain " + chainId, e);
     }
   }
 
@@ -573,7 +689,7 @@ public final class AuditStore {
         return result.next() ? read(result) : null;
       }
     } catch (SQLException e) {
-      throw failure("read chain " + chainId, e);
+      throw failure("read a chain", "chain " + chainId, e);
     }
   }
 
@@ -585,7 +701,7 @@ public final class AuditStore {
       delete.setLong(2, sequence);
       return delete.executeUpdate();
     } catch (SQLException e) {
-      throw failure("purge chain " + chainId, e);
+      throw failure("purge a chain", "chain " + chainId, e);
     }
   }
 

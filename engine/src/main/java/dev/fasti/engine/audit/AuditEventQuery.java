@@ -18,6 +18,7 @@ package dev.fasti.engine.audit;
 
 import java.util.Date;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Finds records of the audit trail. Results are ordered by time, newest first (or oldest first
@@ -61,5 +62,13 @@ public interface AuditEventQuery {
 
   List<AuditEvent> list();
 
+  /** A page of the result; the page is cut in the database. */
   List<AuditEvent> listPage(int firstResult, int maxResults);
+
+  /**
+   * Hands the first {@code maxResults} records of the result to the consumer one by one, read from
+   * one cursor, so that a large result is never held in memory; for exports. The consumer runs
+   * inside the command that reads. Returns how many records it got.
+   */
+  long forEach(int maxResults, Consumer<? super AuditEvent> consumer);
 }

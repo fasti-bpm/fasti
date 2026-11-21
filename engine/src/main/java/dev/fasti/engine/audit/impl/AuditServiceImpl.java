@@ -27,6 +27,7 @@ import dev.fasti.engine.audit.AuditEventQuery;
 import dev.fasti.engine.audit.AuditPurgeResult;
 import dev.fasti.engine.audit.AuditService;
 import dev.fasti.engine.audit.AuditStatus;
+import dev.fasti.engine.audit.AuditVerificationRunningException;
 import dev.fasti.engine.audit.AuditVerification;
 import org.camunda.bpm.engine.AuthorizationException;
 import org.camunda.bpm.engine.BadUserRequestException;
@@ -115,18 +116,27 @@ public class AuditServiceImpl implements AuditService {
       }
       chains = List.of(chainId);
     }
-    AuditVerifier verifier = new AuditVerifier(commandExecutor, settings);
-    List<AuditVerification.Chain> results = new ArrayList<>();
-    for (String chain : chains) {
-      results.add(verifier.verifyChain(chain));
+    // one at a time: a verification reads and hashes every record
+    if (!settings.startVerifying()) {
+      throw new AuditVerificationRunningException();
     }
-    AuditVerification verification = new AuditVerification(ClockUtil.getCurrentTime(), results);
+    AuditVerification verification;
     try {
-      record(AuditService.ACTION_VERIFY, verifyDetails(verification, chainId));
-    } catch (RuntimeException e) {
-      // a broken chain may not take another record (a record inserted from outside holds the next
-      // position); the verification is still reported
-      LOG.warn("The verification of the audit trail could not be recorded: {}", e.getMessage());
+      AuditVerifier verifier = new AuditVerifier(commandExecutor, settings);
+      List<AuditVerification.Chain> results = new ArrayList<>();
+      for (String chain : chains) {
+        results.add(verifier.verifyChain(chain));
+      }
+      verification = new AuditVerification(ClockUtil.getCurrentTime(), results);
+      try {
+        record(AuditService.ACTION_VERIFY, verifyDetails(verification, chainId));
+      } catch (RuntimeException e) {
+        // a broken chain may not take another record (a record inserted from outside holds the next
+        // position); the verification is still reported
+        LOG.warn("The verification of the audit trail could not be recorded: {}", e.getMessage());
+      }
+    } finally {
+      settings.endVerifying();
     }
     if (verification.isIntact()) {
       LOG.info("Audit trail verified: {} records in {} chains are intact{}", verification.getRecords(),

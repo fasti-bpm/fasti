@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import dev.fasti.engine.audit.AuditService;
@@ -79,6 +80,8 @@ public class AuditSettings implements AuditStatus {
   /** Ids of retired keys this engine does not hold: their signatures are accepted unchecked. */
   protected volatile Set<String> retiredKeyIds = Collections.emptySet();
   protected volatile int queryTimeoutSeconds = DEFAULT_QUERY_TIMEOUT_SECONDS;
+  /** Set while a verification of this engine runs: one at a time. */
+  protected final AtomicBoolean verifying = new AtomicBoolean();
 
   public AuditSettings(String nodeId, int chains, String types, String variableValues, String maskedVariables,
       byte[] hmacKey, int checkpointInterval, int retentionDays) {
@@ -320,6 +323,15 @@ public class AuditSettings implements AuditStatus {
 
   public void setDatabaseType(String databaseType) {
     this.databaseType = databaseType;
+  }
+
+  /** Marks a verification as running; {@code false} if one runs already. */
+  public boolean startVerifying() {
+    return verifying.compareAndSet(false, true);
+  }
+
+  public void endVerifying() {
+    verifying.set(false);
   }
 
   public String getEngineName() {

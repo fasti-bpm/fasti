@@ -23,9 +23,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import dev.fasti.engine.audit.impl.AuditServiceImpl;
+import dev.fasti.engine.audit.impl.AuditSettings;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.authorization.Groups;
@@ -37,7 +44,7 @@ import org.junit.Test;
 
 /**
  * Reading the trail: pages are cut in the database, exports read one cursor, readers see the
- * tenants they belong to, and database errors stay in the log.
+ * tenants they belong to, one verification runs at a time, and database errors stay in the log.
  */
 public class AuditQueryTest {
 
@@ -195,6 +202,57 @@ public class AuditQueryTest {
     } finally {
       configuration.setTenantCheckEnabled(true);
     }
+  }
+
+  // verification /////////////////////////////////////////////////////////////////////////////
+
+  @Test
+  public void shouldRunOneVerificationAtATime() {
+    AuditSettings settings = AuditServiceImpl.settingsOf((ProcessEngineConfigurationImpl) engine.getProcessEngineConfiguration());
+    // as if another request were verifying
+    assertThat(settings.startVerifying()).isTrue();
+    try {
+      long before = audit.createQuery().types(AuditService.TYPE_AUDIT).action(AuditService.ACTION_VERIFY).count();
+      assertThatThrownBy(audit::verify).isInstanceOf(AuditVerificationRunningException.class);
+      assertThatThrownBy(() -> audit.verify(settings.chainId(0))).isInstanceOf(AuditVerificationRunningException.class);
+      // a refused verification reads nothing and records nothing
+      assertThat(audit.createQuery().types(AuditService.TYPE_AUDIT).action(AuditService.ACTION_VERIFY).count()).isEqualTo(before);
+    } finally {
+      settings.endVerifying();
+    }
+    assertThat(audit.verify().isIntact()).isTrue();
+    // and it lets go when it is done, also after a failure
+    assertThatThrownBy(() -> audit.verify("no-such-chain")).isInstanceOf(ProcessEngineException.class);
+    assertThat(audit.verify().isIntact()).isTrue();
+  }
+
+  @Test
+  public void shouldRefuseVerificationsThatArriveWhileOneRuns() throws Exception {
+    int threads = 6;
+    ExecutorService executor = Executors.newFixedThreadPool(threads);
+    CountDownLatch go = new CountDownLatch(1);
+    try {
+      List<Future<String>> futures = new ArrayList<>();
+      for (int i = 0; i < threads; i++) {
+        futures.add(executor.submit((Callable<String>) () -> {
+          go.await();
+          try {
+            return audit.verify().isIntact() ? "intact" : "broken";
+          } catch (AuditVerificationRunningException e) {
+            return "busy";
+          }
+        }));
+      }
+      go.countDown();
+      List<String> outcomes = new ArrayList<>();
+      for (Future<String> future : futures) {
+        outcomes.add(future.get(2, TimeUnit.MINUTES));
+      }
+      assertThat(outcomes).contains("intact").containsOnly("intact", "busy");
+    } finally {
+      executor.shutdownNow();
+    }
+    assertThat(audit.verify().isIntact()).isTrue();
   }
 
   // errors ///////////////////////////////////////////////////////////////////////////////////

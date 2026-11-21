@@ -21,9 +21,10 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import dev.fasti.engine.absence.Absence;
@@ -35,6 +36,12 @@ import org.camunda.bpm.engine.impl.persistence.entity.IdentityInfoEntity;
  * Reads and writes absences as user info ({@code ACT_ID_INFO}, type {@code userinfo}) within a
  * command. Times are stored as ISO-8601 instants in UTC. Writing replaces all rows of an absence,
  * which also removes duplicates left by concurrent first writes.
+ *
+ * <p>ACT_ID_INFO has no index on the user or the key, and the schema stays that of Camunda 7.24,
+ * so each statement here reads the table once. To keep that cheap, a command remembers what it
+ * looked up ({@link AbsenceCache}), a listing loads all absences with one statement
+ * ({@link #findAll}), and ended absences are removed whenever an absence is written
+ * ({@link #deleteEnded}), so the rows are those of current and upcoming absences.</p>
  */
 public final class AbsenceStore {
 
@@ -53,17 +60,43 @@ public final class AbsenceStore {
     if (userId == null) {
       return null;
     }
-    Map<String, String> values = new HashMap<>();
-    for (IdentityInfoEntity info : rows(commandContext, userId)) {
-      values.putIfAbsent(info.getKey(), info.getValue());
+    AbsenceCache cache = AbsenceCache.of(commandContext);
+    if (cache != null) {
+      Optional<Absence> known = cache.getAbsence(userId);
+      if (known != null) {
+        return known.orElse(null);
+      }
     }
-    String substitute = values.get(KEY_SUBSTITUTE);
-    Date from = parse(values.get(KEY_FROM));
-    Date until = parse(values.get(KEY_UNTIL));
-    if (substitute == null || from == null || until == null) {
-      return null;
+    Absence absence = toAbsence(userId, rows(commandContext, userId));
+    if (cache != null) {
+      cache.putAbsence(userId, absence);
     }
-    return new Absence(userId, from, until, substitute, values.get(KEY_NOTE));
+    return absence;
+  }
+
+  /**
+   * The absences of all users (of any time), by user, read with one statement. Later lookups of
+   * the command are answered from the result.
+   */
+  public static Map<String, Absence> findAll(CommandContext commandContext) {
+    AbsenceCache cache = AbsenceCache.of(commandContext);
+    if (cache != null) {
+      Map<String, Absence> known = cache.getAll();
+      if (known != null) {
+        return known;
+      }
+    }
+    Map<String, Absence> all = new LinkedHashMap<>();
+    allRows(commandContext).forEach((userId, rows) -> {
+      Absence absence = toAbsence(userId, rows);
+      if (absence != null) {
+        all.put(userId, absence);
+      }
+    });
+    if (cache != null) {
+      cache.putAll(all);
+    }
+    return all;
   }
 
   /** Stores the absence, replacing the one of the user. */
@@ -78,6 +111,7 @@ public final class AbsenceStore {
     if (absence.getNote() != null && !absence.getNote().isEmpty()) {
       insert(commandContext, absence.getUserId(), KEY_NOTE, absence.getNote());
     }
+    remember(commandContext, absence.getUserId(), absence);
   }
 
   /** Removes the absence of the user; whether there was one. */
@@ -87,7 +121,30 @@ public final class AbsenceStore {
     for (IdentityInfoEntity info : rows) {
       commandContext.getIdentityInfoManager().deleteIdentityInfo(info);
     }
+    remember(commandContext, userId, null);
     return !rows.isEmpty();
+  }
+
+  /**
+   * Removes the absences that have ended at {@code now}, so that the rows the lookups read do not
+   * grow with every absence ever set. Called when an absence is written, under the same lock.
+   *
+   * @return how many absences were removed
+   */
+  public static int deleteEnded(CommandContext commandContext, Date now) {
+    lock(commandContext);
+    int removed = 0;
+    for (Map.Entry<String, List<IdentityInfoEntity>> entry : allRows(commandContext).entrySet()) {
+      Absence absence = toAbsence(entry.getKey(), entry.getValue());
+      if (absence != null && absence.getStatus(now) == Absence.Status.ENDED) {
+        for (IdentityInfoEntity info : entry.getValue()) {
+          commandContext.getIdentityInfoManager().deleteIdentityInfo(info);
+        }
+        remember(commandContext, entry.getKey(), null);
+        removed++;
+      }
+    }
+    return removed;
   }
 
   /**
@@ -95,24 +152,38 @@ public final class AbsenceStore {
    * the end of the transaction. Absences change rarely; this needs no new table. The engine takes no
    * such lock on H2 (see DbSqlSession#lock), which is meant for development; a later write
    * replaces any duplicate rows.
+   *
+   * <p>What the command remembered about absences before it had the lock may be out of date
+   * (another transaction may have written while this one waited), so it is forgotten: checks and
+   * writes under the lock read the database again.</p>
    */
   static void lock(CommandContext commandContext) {
     commandContext.getPropertyManager().acquireExclusiveLock();
+    AbsenceCache cache = AbsenceCache.of(commandContext);
+    if (cache != null) {
+      cache.forgetAbsences();
+    }
   }
 
-  /** Users who have an absence set (of any time); some may have been removed within this command. */
-  @SuppressWarnings("unchecked")
-  public static Set<String> findUserIdsWithAbsence(CommandContext commandContext) {
-    Set<String> ids = new LinkedHashSet<>(
-        commandContext.getDbEntityManager().selectList("selectFastiUserIdsByIdentityInfoKey", KEY_SUBSTITUTE));
-    // absences stored within this command are not in the database yet
-    DbEntityCache cache = commandContext.getDbEntityManager().getDbEntityCache();
-    for (IdentityInfoEntity info : cache.getEntitiesByType(IdentityInfoEntity.class)) {
-      if (cache.isTransient(info) && KEY_SUBSTITUTE.equals(info.getKey())) {
-        ids.add(info.getUserId());
-      }
+  static void remember(CommandContext commandContext, String userId, Absence absence) {
+    AbsenceCache cache = AbsenceCache.of(commandContext);
+    if (cache != null) {
+      cache.putAbsence(userId, absence);
     }
-    return ids;
+  }
+
+  static Absence toAbsence(String userId, List<IdentityInfoEntity> rows) {
+    Map<String, String> values = new HashMap<>();
+    for (IdentityInfoEntity info : rows) {
+      values.putIfAbsent(info.getKey(), info.getValue());
+    }
+    String substitute = values.get(KEY_SUBSTITUTE);
+    Date from = parse(values.get(KEY_FROM));
+    Date until = parse(values.get(KEY_UNTIL));
+    if (substitute == null || from == null || until == null) {
+      return null;
+    }
+    return new Absence(userId, from, until, substitute, values.get(KEY_NOTE));
   }
 
   /**
@@ -121,17 +192,42 @@ public final class AbsenceStore {
    */
   @SuppressWarnings("unchecked")
   static List<IdentityInfoEntity> rows(CommandContext commandContext, String userId) {
+    List<IdentityInfoEntity> selected =
+        commandContext.getDbEntityManager().selectList("selectIdentityInfoByUserId", userId);
+    List<IdentityInfoEntity> result = new ArrayList<>();
+    for (IdentityInfoEntity info : visible(commandContext, selected)) {
+      if (userId.equals(info.getUserId())) {
+        result.add(info);
+      }
+    }
+    return result;
+  }
+
+  /** The rows of all absences by user, as this command sees them; one statement. */
+  @SuppressWarnings("unchecked")
+  static Map<String, List<IdentityInfoEntity>> allRows(CommandContext commandContext) {
+    List<IdentityInfoEntity> selected = commandContext.getDbEntityManager()
+        .selectList("selectFastiIdentityInfosByKeys", new ArrayList<>(KEYS));
+    Map<String, List<IdentityInfoEntity>> byUser = new LinkedHashMap<>();
+    for (IdentityInfoEntity info : visible(commandContext, selected)) {
+      byUser.computeIfAbsent(info.getUserId(), userId -> new ArrayList<>()).add(info);
+    }
+    return byUser;
+  }
+
+  /** The selected rows of absences plus the ones inserted, minus the ones deleted within the command. */
+  static List<IdentityInfoEntity> visible(CommandContext commandContext, List<IdentityInfoEntity> selected) {
     DbEntityCache cache = commandContext.getDbEntityManager().getDbEntityCache();
-    List<IdentityInfoEntity> all = new ArrayList<>(
-        commandContext.getDbEntityManager().selectList("selectIdentityInfoByUserId", userId));
+    List<IdentityInfoEntity> all = new ArrayList<>(selected);
     for (IdentityInfoEntity info : cache.getEntitiesByType(IdentityInfoEntity.class)) {
-      if (cache.isTransient(info) && userId.equals(info.getUserId()) && !all.contains(info)) {
+      if (cache.isTransient(info) && !all.contains(info)) {
         all.add(info);
       }
     }
     List<IdentityInfoEntity> result = new ArrayList<>();
     for (IdentityInfoEntity info : all) {
-      if (info.getParentId() == null && IdentityInfoEntity.TYPE_USERINFO.equals(info.getType())
+      if (info.getUserId() != null && info.getParentId() == null
+          && IdentityInfoEntity.TYPE_USERINFO.equals(info.getType())
           && KEYS.contains(info.getKey()) && !cache.isDeleted(info)) {
         result.add(info);
       }

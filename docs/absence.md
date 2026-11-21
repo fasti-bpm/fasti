@@ -113,6 +113,14 @@ table or column, rollback stays possible.
   cannot be stored: the plugin logs why, the REST API answers `enabled: false` with the reason,
   and the web UI says the feature is not available.
 - Deleting a user (through the engine) deletes their absence with the other user info.
+- Ended absences are removed the next time any absence is set or ended, so the table holds
+  current and upcoming absences only. Until then `GET /user/{id}/absence` still answers
+  `status: ended`.
+- `ACT_ID_INFO` has no index on the user or the key (and gets none: the schema is not changed),
+  so each lookup reads the table. A command looks a user up once, a task with several candidate
+  users and the list "who do I stand in for" read all absences with one statement.
 - Writes of absences hold the exclusive lock of the engine (the row of `ACT_GE_PROPERTY` that
-  deployments lock), so two first writes for the same user at the same time cannot mix. Like
-  the engine for deployments, Fasti takes no such lock on H2, which is meant for development.
+  deployments lock), so two first writes for the same user at the same time cannot mix, and two
+  users who name each other at the same time are not both accepted (the check for a way back
+  runs under the lock). Like the engine for deployments, Fasti takes no such lock on H2, which
+  is meant for development.

@@ -19,6 +19,7 @@ package dev.fasti.engine.absence.impl;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import dev.fasti.engine.absence.Absence;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
@@ -45,11 +46,30 @@ public final class AbsenceResolver {
 
   /** Starting with the given substitute of {@code userId}, the first user present at {@code now}, or {@code null}. */
   public static String follow(CommandContext commandContext, int maxHops, String userId, String substituteId, Date now) {
+    return follow(commandContext, maxHops, userId, substituteId, now, null);
+  }
+
+  /**
+   * Like {@link #follow(CommandContext, int, String, String, Date)}, but for showing the result to
+   * someone who may not see every user on the way: where the walk would have to look at a user
+   * that {@code visible} rejects (whether they exist, whether they are absent), it stops and
+   * answers the direct substitute, which says nothing about the users behind it.
+   *
+   * @param visible the users the result may tell something about; {@code null} for all
+   */
+  public static String follow(CommandContext commandContext, int maxHops, String userId, String substituteId, Date now,
+      Predicate<String> visible) {
     Set<String> passed = new HashSet<>();
     passed.add(userId);
     String current = substituteId;
     for (int hop = 0; hop < maxHops; hop++) {
-      if (current == null || !passed.add(current) || !userExists(commandContext, current)) {
+      if (current == null || !passed.add(current)) {
+        return null;
+      }
+      if (visible != null && !visible.test(current)) {
+        return substituteId;
+      }
+      if (!userExists(commandContext, current)) {
         return null;
       }
       Absence next = AbsenceStore.find(commandContext, current);
@@ -63,7 +83,18 @@ public final class AbsenceResolver {
 
   /** Whether the identity service knows the user, regardless of what the current user may read. */
   public static boolean userExists(CommandContext commandContext, String userId) {
-    return Boolean.TRUE.equals(commandContext.runWithoutAuthorization(
+    AbsenceCache cache = AbsenceCache.of(commandContext);
+    if (cache != null) {
+      Boolean known = cache.getUserExists(userId);
+      if (known != null) {
+        return known;
+      }
+    }
+    boolean exists = Boolean.TRUE.equals(commandContext.runWithoutAuthorization(
         () -> commandContext.getReadOnlyIdentityProvider().findUserById(userId) != null));
+    if (cache != null) {
+      cache.putUserExists(userId, exists);
+    }
+    return exists;
   }
 }

@@ -19,6 +19,7 @@ package dev.fasti.engine.absence;
 import java.util.ArrayList;
 
 import dev.fasti.engine.absence.impl.AbsenceBpmnParseListener;
+import dev.fasti.engine.absence.impl.AbsenceCache;
 import dev.fasti.engine.absence.impl.AbsenceCmmnTransformListener;
 import dev.fasti.engine.absence.impl.AbsenceSettings;
 import org.camunda.bpm.engine.ProcessEngine;
@@ -60,6 +61,10 @@ public class AbsenceSubstitutionPlugin implements ProcessEnginePlugin {
       configuration.setCustomPreCmmnTransformListeners(new ArrayList<>());
     }
     configuration.getCustomPreCmmnTransformListeners().add(new AbsenceCmmnTransformListener(settings));
+    if (configuration.getCustomSessionFactories() == null) {
+      configuration.setCustomSessionFactories(new ArrayList<>());
+    }
+    configuration.getCustomSessionFactories().add(new AbsenceCache.Factory());
   }
 
   @Override

@@ -113,6 +113,14 @@ không thêm bảng hay cột, vẫn quay lui được.
   được lịch vắng mặt: plugin ghi log lý do, REST API trả `enabled: false` kèm lý do, và giao
   diện web báo tính năng không khả dụng.
 - Xóa người dùng (qua engine) sẽ xóa lịch vắng mặt cùng các user info khác.
+- Lịch vắng mặt đã kết thúc bị xóa vào lần kế tiếp có bất kỳ lịch nào được đặt hoặc kết thúc,
+  nên bảng chỉ chứa lịch đang hiệu lực và sắp tới. Cho đến lúc đó `GET /user/{id}/absence` vẫn
+  trả `status: ended`.
+- `ACT_ID_INFO` không có index trên người dùng hay khóa (và sẽ không có: schema không đổi), nên
+  mỗi lần tra cứu đọc cả bảng. Một lệnh chỉ tra một người dùng một lần; công việc có nhiều
+  candidate user và danh sách "tôi đang thay cho ai" đọc mọi lịch vắng mặt bằng một câu lệnh.
 - Thao tác ghi lịch vắng mặt giữ khóa độc quyền của engine (dòng `ACT_GE_PROPERTY` mà thao tác
-  deploy khóa), nên hai lần ghi đầu tiên cho cùng một người dùng cùng lúc không bị trộn lẫn. Giống
-  như engine khi deploy, Fasti không khóa trên H2 (vốn chỉ dành cho phát triển).
+  deploy khóa), nên hai lần ghi đầu tiên cho cùng một người dùng cùng lúc không bị trộn lẫn, và
+  hai người dùng chọn nhau làm người thay thế cùng lúc không được chấp nhận cả hai (việc kiểm
+  tra chuỗi quay lại chạy trong lúc giữ khóa). Giống như engine khi deploy, Fasti không khóa
+  trên H2 (vốn chỉ dành cho phát triển).

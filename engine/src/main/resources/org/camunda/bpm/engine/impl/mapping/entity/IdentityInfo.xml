@@ -140,10 +140,24 @@
     select * from ${prefix}ACT_ID_INFO where USER_ID_ = #{parameter,jdbcType=VARCHAR}
   </select>
 
-  <!-- Fasti: users with a user info key (absences of dev.fasti.engine.absence); reads only, no schema change -->
-  <select id="selectFastiUserIdsByIdentityInfoKey" parameterType="org.camunda.bpm.engine.impl.db.ListQueryParameterObject" resultType="string">
-    select distinct USER_ID_ from ${prefix}ACT_ID_INFO
-    where KEY_ = #{parameter,jdbcType=VARCHAR}
+  <!-- Fasti: the user info rows with one of the given keys, of all users (absences of
+       dev.fasti.engine.absence); reads only, no schema change. The password column is not read. -->
+  <resultMap id="fastiIdentityInfoResultMap" type="org.camunda.bpm.engine.impl.persistence.entity.IdentityInfoEntity">
+    <id property="id" column="ID_" jdbcType="VARCHAR" />
+    <result property="revision" column="REV_" jdbcType="INTEGER" />
+    <result property="userId" column="USER_ID_" jdbcType="VARCHAR" />
+    <result property="type" column="TYPE_" jdbcType="VARCHAR" />
+    <result property="key" column="KEY_" jdbcType="VARCHAR" />
+    <result property="value" column="VALUE_" jdbcType="VARCHAR" />
+    <result property="parentId" column="PARENT_ID_" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <select id="selectFastiIdentityInfosByKeys" parameterType="org.camunda.bpm.engine.impl.db.ListQueryParameterObject" resultMap="fastiIdentityInfoResultMap">
+    select ID_, REV_, USER_ID_, TYPE_, KEY_, VALUE_, PARENT_ID_ from ${prefix}ACT_ID_INFO
+    where KEY_ in
+      <foreach item="key" collection="parameter" open="(" separator="," close=")">
+        #{key,jdbcType=VARCHAR}
+      </foreach>
       and TYPE_ = 'userinfo'
       and PARENT_ID_ is null
   </select>

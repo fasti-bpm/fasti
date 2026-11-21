@@ -44,7 +44,10 @@ public interface AbsenceService {
   /** Why absences cannot be set ({@code null} when {@link #isEnabled()}). */
   String getUnavailableReason();
 
-  /** The absence of the user, also an upcoming or ended one; {@code null} if none is set. */
+  /**
+   * The absence of the user, also an upcoming one, or an ended one until it is removed (the next
+   * time any absence is set or cleared); {@code null} if none is set.
+   */
   Absence getAbsence(String userId);
 
   /**

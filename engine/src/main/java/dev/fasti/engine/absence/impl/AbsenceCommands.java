@@ -19,7 +19,10 @@ package dev.fasti.engine.absence.impl;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import dev.fasti.engine.absence.Absence;
@@ -145,33 +148,53 @@ public final class AbsenceCommands {
       if (trimmedNote != null && (trimmedNote.length() > MAX_NOTE_LENGTH || tooLongForDb2(commandContext, trimmedNote))) {
         throw new BadUserRequestException("The note may have at most " + MAX_NOTE_LENGTH + " characters.");
       }
+      // before the other absences are read: a concurrent write that would close a circle with
+      // this one waits here and then sees this absence
+      AbsenceStore.lock(commandContext);
       if (!AbsenceResolver.userExists(commandContext, userId)) {
         throw new BadUserRequestException("User '" + userId + "' does not exist.");
       }
       if (!AbsenceResolver.userExists(commandContext, substituteId)) {
         throw new BadUserRequestException("The substitute '" + substituteId + "' does not exist.");
       }
-      checkNoCycle(commandContext, start);
+      if (leadsBack(commandContext, start.before(now) ? now : start)) {
+        throw new BadUserRequestException("The substitute '" + substituteId + "' is absent at the same time and "
+            + "their substitutes lead back to '" + userId + "'; choose someone else.");
+      }
+      AbsenceStore.deleteEnded(commandContext, now);
 
       Absence absence = new Absence(userId, start, until, substituteId, trimmedNote);
       AbsenceStore.save(commandContext, absence);
       return absence;
     }
 
-    /** Following the substitutes absent at the same time must not lead back to the user. */
-    protected void checkNoCycle(CommandContext commandContext, Date start) {
+    /**
+     * Whether following the substitutes leads back to the user at some time of the new absence
+     * (from {@code start}): each absence on the way narrows the time in which all users passed
+     * so far are away together, and the walk ends where none is left.
+     */
+    protected boolean leadsBack(CommandContext commandContext, Date start) {
+      Date from = start;
+      Date to = until;
+      Set<String> passed = new HashSet<>();
       String current = substituteId;
-      for (int hop = 0; hop < settings.getMaxHops() * 2 && current != null; hop++) {
+      for (int hop = 0; hop < settings.getMaxHops() * 2 && current != null && passed.add(current); hop++) {
         Absence next = AbsenceStore.find(commandContext, current);
-        if (next == null || !next.overlaps(start, until)) {
-          return;
+        if (next == null || !next.overlaps(from, to)) {
+          return false;
+        }
+        if (next.getFrom().after(from)) {
+          from = next.getFrom();
+        }
+        if (next.getUntil().before(to)) {
+          to = next.getUntil();
         }
         if (userId.equals(next.getSubstituteId())) {
-          throw new BadUserRequestException("The substitute '" + substituteId + "' is absent at the same time and "
-              + "their substitutes lead back to '" + userId + "'; choose someone else.");
+          return true;
         }
         current = next.getSubstituteId();
       }
+      return false;
     }
 
     protected boolean tooLongForDb2(CommandContext commandContext, String value) {
@@ -197,6 +220,9 @@ public final class AbsenceCommands {
       checkPermission(commandContext, Permissions.UPDATE, userId);
       if (storageReadable(commandContext, settings)) {
         AbsenceStore.delete(commandContext, userId);
+        if (settings != null) {
+          AbsenceStore.deleteEnded(commandContext, ClockUtil.getCurrentTime());
+        }
       }
       return null;
     }
@@ -221,10 +247,11 @@ public final class AbsenceCommands {
         return result;
       }
       Date now = ClockUtil.getCurrentTime();
-      for (String absentUser : AbsenceStore.findUserIdsWithAbsence(commandContext)) {
-        Absence absence = AbsenceStore.find(commandContext, absentUser);
-        if (absence != null && absence.isActiveAt(now)
-            && userId.equals(AbsenceResolver.follow(commandContext, settings.getMaxHops(), absentUser,
+      // one statement for all absences; the walks below are answered from it
+      Map<String, Absence> all = AbsenceStore.findAll(commandContext);
+      for (Absence absence : all.values()) {
+        if (absence.isActiveAt(now)
+            && userId.equals(AbsenceResolver.follow(commandContext, settings.getMaxHops(), absence.getUserId(),
                 absence.getSubstituteId(), now))) {
           result.add(absence);
         }

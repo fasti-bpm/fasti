@@ -104,6 +104,10 @@ public class AbsenceTaskListener implements TaskListener {
       return;
     }
     Date now = ClockUtil.getCurrentTime();
+    if (candidates.size() > 1) {
+      // one statement instead of one per candidate
+      AbsenceStore.findAll(commandContext);
+    }
     for (String candidate : new ArrayList<>(candidates)) {
       String substitute = AbsenceResolver.resolve(commandContext, settings.getMaxHops(), candidate, now);
       if (substitute != null && candidates.add(substitute)) {

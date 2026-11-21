@@ -81,6 +81,11 @@ public class SpringBootProcessEngineLogger extends BaseLogger {
     logInfo("040", "Setting up jobExecutor with corePoolSize={}, maxPoolSize:{}", corePoolSize, maxPoolSize);
   }
 
+  public void jobExecutorCorePoolSizeAboveMaxPoolSize(int corePoolSize, int maxPoolSize) {
+    logWarn("041", "camunda.bpm.job-execution.core-pool-size={} is larger than max-pool-size={}; using {} core threads."
+        + " Set core-pool-size together with max-pool-size", corePoolSize, maxPoolSize, maxPoolSize);
+  }
+
   public SpringBootStarterException exceptionDuringBinding(String message) {
     return new SpringBootStarterException(exceptionMessage(
         "050", message));

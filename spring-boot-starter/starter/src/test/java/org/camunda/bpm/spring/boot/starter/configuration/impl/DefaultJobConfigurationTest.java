@@ -35,6 +35,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -88,6 +89,34 @@ public class DefaultJobConfigurationTest {
 
     // then
     assertThat(rejectedJobsHandler).isInstanceOf(NotifyAcquisitionRejectedJobsHandler.class);
+  }
+
+  @Test
+  public void shouldLimitTheCoreThreadsToTheMaximum() {
+    // a configuration that sets the core threads (e.g. a shipped file) and an override that lowers only the maximum
+    properties.getJobExecution().setCorePoolSize(10);
+    properties.getJobExecution().setMaxPoolSize(4);
+
+    ThreadPoolTaskExecutor executor = (ThreadPoolTaskExecutor) DefaultJobConfiguration.JobConfiguration.camundaTaskExecutor(properties);
+    try {
+      // a pool with more core threads than its maximum would fail here
+      executor.initialize();
+      assertThat(executor.getCorePoolSize()).isEqualTo(4);
+      assertThat(executor.getMaxPoolSize()).isEqualTo(4);
+    } finally {
+      executor.shutdown();
+    }
+  }
+
+  @Test
+  public void shouldKeepCoreThreadsBelowTheMaximum() {
+    properties.getJobExecution().setCorePoolSize(3);
+    properties.getJobExecution().setMaxPoolSize(10);
+
+    ThreadPoolTaskExecutor executor = (ThreadPoolTaskExecutor) DefaultJobConfiguration.JobConfiguration.camundaTaskExecutor(properties);
+
+    assertThat(executor.getCorePoolSize()).isEqualTo(3);
+    assertThat(executor.getMaxPoolSize()).isEqualTo(10);
   }
 
 }

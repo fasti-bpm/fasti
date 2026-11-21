@@ -8,6 +8,8 @@ import type { KeyboardEvent } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Braces, Check, Download, Eye, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
 import {
+  addCaseFileVariable,
+  addCaseVariable,
   addInstanceFileVariable,
   addInstanceVariable,
   deleteVariable,
@@ -382,7 +384,10 @@ function UploadDialog({ variable, onClose }: { variable: VariableInstance; onClo
   );
 }
 
-function AddDialog({ processInstanceId, onClose }: { processInstanceId: string; onClose: () => void }) {
+/** The instance variables belong to: a process instance or a case instance (CMMN). */
+type VariableOwner = { kind: 'process' | 'case'; id: string };
+
+function AddDialog({ owner, onClose }: { owner: VariableOwner; onClose: () => void }) {
   const { t } = useI18n();
   const run = useCockpitAction();
   const [name, setName] = useState('');
@@ -410,8 +415,8 @@ function AddDialog({ processInstanceId, onClose }: { processInstanceId: string; 
           void run(
             () =>
               isFile && file
-                ? addInstanceFileVariable(processInstanceId, name.trim(), file)
-                : addInstanceVariable(processInstanceId, name.trim(), converted.value),
+                ? (owner.kind === 'case' ? addCaseFileVariable : addInstanceFileVariable)(owner.id, name.trim(), file)
+                : (owner.kind === 'case' ? addCaseVariable : addInstanceVariable)(owner.id, name.trim(), converted.value),
             {
               success: t('cockpit.variable.added', { name: name.trim() }),
               failure: t('cockpit.variable.saveFailed'),
@@ -496,12 +501,19 @@ function AddDialog({ processInstanceId, onClose }: { processInstanceId: string; 
 /** The variables of an instance: look at them, change simple ones in place, add and delete. */
 export function VariablesTab({
   processInstanceId,
+  caseInstanceId,
   scopeNames,
 }: {
-  processInstanceId: string;
-  /** names of the activity instances by id */
+  processInstanceId?: string;
+  /** the variables of a case instance (CMMN) instead of a process instance */
+  caseInstanceId?: string;
+  /** names of the activity instances (or case executions) by id */
   scopeNames: Map<string, string>;
 }) {
+  const owner = useMemo<VariableOwner>(
+    () => (caseInstanceId ? { kind: 'case', id: caseInstanceId } : { kind: 'process', id: processInstanceId ?? '' }),
+    [caseInstanceId, processInstanceId],
+  );
   const { t } = useI18n();
   const run = useCockpitAction();
   const [params, setParams] = useUrlState();
@@ -527,10 +539,10 @@ export function VariablesTab({
   }, [term, params, setParams]);
 
   const variables = useQuery({
-    queryKey: [COCKPIT, 'variables', processInstanceId, term, sortOrder, page],
+    queryKey: [COCKPIT, 'variables', owner.kind, owner.id, term, sortOrder, page],
     queryFn: ({ signal }) =>
       getVariables({
-        processInstanceId,
+        ...(owner.kind === 'case' ? { caseInstanceId: owner.id } : { processInstanceId: owner.id }),
         nameLike: term || undefined,
         sortOrder,
         paging: { firstResult: page * PAGE_SIZE, maxResults: PAGE_SIZE },
@@ -620,12 +632,15 @@ export function VariablesTab({
         id: 'scope',
         header: t('cockpit.variable.scope'),
         secondary: true,
-        cell: (variable) =>
-          variable.taskId
+        cell: (variable) => {
+          // a variable of a case lives on the case instance or on one of its plan items
+          const scope = owner.kind === 'case' ? variable.caseExecutionId : variable.activityInstanceId;
+          return variable.taskId
             ? t('cockpit.variable.scopeTask')
-            : variable.activityInstanceId && variable.activityInstanceId !== processInstanceId
-              ? (scopeNames.get(variable.activityInstanceId) ?? variable.activityInstanceId)
-              : t('cockpit.variable.scopeInstance'),
+            : scope && scope !== owner.id
+              ? (scopeNames.get(scope) ?? scope)
+              : t('cockpit.variable.scopeInstance');
+        },
       },
       {
         id: 'actions',
@@ -666,7 +681,7 @@ export function VariablesTab({
         },
       },
     ];
-  }, [t, editing, saving, run, scopeNames, processInstanceId]);
+  }, [t, editing, saving, run, scopeNames, owner]);
 
   return (
     <>
@@ -703,7 +718,7 @@ export function VariablesTab({
       {viewed && <ViewDialog variable={viewed} onClose={() => setViewed(null)} />}
       {textEdited && <TextEditDialog variable={textEdited} onClose={() => setTextEdited(null)} />}
       {uploaded && <UploadDialog variable={uploaded} onClose={() => setUploaded(null)} />}
-      {adding && <AddDialog processInstanceId={processInstanceId} onClose={() => setAdding(false)} />}
+      {adding && <AddDialog owner={owner} onClose={() => setAdding(false)} />}
       <ConfirmDialog
         open={!!removed}
         onOpenChange={(open) => !open && setRemoved(null)}

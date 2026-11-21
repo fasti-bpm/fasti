@@ -1037,6 +1037,8 @@ describe('helpers', () => {
     expect(resourceKind('process/invoice.v2.bpmn')).toBe('bpmn');
     expect(resourceKind('legacy.bpmn20.xml')).toBe('bpmn');
     expect(resourceKind('rules.dmn')).toBe('dmn');
+    expect(resourceKind('claim.cmmn')).toBe('cmmn');
+    expect(resourceKind('claim.cmmn11.xml')).toBe('cmmn');
     expect(resourceKind('start.form')).toBe('text');
     expect(resourceKind('logo.svg')).toBe('image');
     expect(resourceKind('archive.zip')).toBe('other');

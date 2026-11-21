@@ -542,10 +542,15 @@ export interface VariableInstance extends VariableValue {
   taskId: string | null;
   activityInstanceId: string | null;
   errorMessage: string | null;
+  /** set for a variable of a case instance (CMMN) */
+  caseInstanceId?: string | null;
+  caseExecutionId?: string | null;
 }
 
+/** The variables of a process instance or, with `caseInstanceId`, of a case instance. */
 export async function getVariables(options: {
-  processInstanceId: string;
+  processInstanceId?: string;
+  caseInstanceId?: string;
   nameLike?: string;
   sortOrder: SortOrder;
   paging: Paging;
@@ -553,7 +558,8 @@ export async function getVariables(options: {
 }): Promise<Page<VariableInstance>> {
   const path = `${engineApi()}/variable-instance`;
   const query = {
-    processInstanceIdIn: options.processInstanceId,
+    processInstanceIdIn: options.caseInstanceId ? undefined : options.processInstanceId,
+    caseInstanceIdIn: options.caseInstanceId,
     variableNameLike: options.nameLike ? `%${options.nameLike}%` : undefined,
   };
   const [total, items] = await Promise.all([
@@ -573,10 +579,13 @@ export async function getVariables(options: {
   return { count: total, items };
 }
 
-/** Where a variable lives: a task or an execution of the instance. */
-function variableScope(variable: Pick<VariableInstance, 'taskId' | 'executionId'>): string {
+/** Where a variable lives: a task, an execution of the instance or a plan item of a case. */
+function variableScope(variable: Pick<VariableInstance, 'taskId' | 'executionId' | 'caseExecutionId'>): string {
   if (variable.taskId) {
     return `${engineApi()}/task/${seg(variable.taskId)}/localVariables`;
+  }
+  if (!variable.executionId && variable.caseExecutionId) {
+    return `${engineApi()}/case-execution/${seg(variable.caseExecutionId)}/localVariables`;
   }
   return `${engineApi()}/execution/${seg(variable.executionId ?? '')}/localVariables`;
 }
@@ -624,6 +633,22 @@ export function addInstanceVariable(
     `${engineApi()}/process-instance/${seg(processInstanceId)}/variables/${seg(name)}`,
     { method: 'PUT', json: value },
   );
+}
+
+/** Adds a variable to a case instance. */
+export function addCaseVariable(caseInstanceId: string, name: string, value: VariableValue): Promise<void> {
+  return request<void>(`${engineApi()}/case-instance/${seg(caseInstanceId)}/variables/${seg(name)}`, {
+    method: 'PUT',
+    json: value,
+  });
+}
+
+/** Adds a file variable to a case instance. */
+export function addCaseFileVariable(caseInstanceId: string, name: string, file: File): Promise<void> {
+  return request<void>(`${engineApi()}/case-instance/${seg(caseInstanceId)}/variables/${seg(name)}/data`, {
+    method: 'POST',
+    multipart: binaryParts(file, 'File'),
+  });
 }
 
 /** Link to the content of a file or bytes variable; the browser downloads it. */
@@ -1224,8 +1249,8 @@ export function deleteFinishedBatch(id: string): Promise<void> {
 // --- search -----------------------------------------------------------------
 
 export interface SearchHit {
-  /** `finished` is an instance that only the history knows */
-  kind: 'instance' | 'finished' | 'task' | 'incident' | 'job' | 'deployment' | 'batch';
+  /** `finished` is an instance that only the history knows; `case` a case instance (CMMN), open or closed */
+  kind: 'instance' | 'finished' | 'case' | 'task' | 'incident' | 'job' | 'deployment' | 'batch';
   id: string;
   title: string;
   detail: string | null;
@@ -1239,10 +1264,10 @@ export function mayBeId(term: string): boolean {
 }
 
 /**
- * What has exactly the given id: a running or finished instance, a task, an
- * incident, a job, a deployment or a batch; or instances with exactly this
- * business key. Each lookup the user may not make is skipped; the engine only
- * returns what the user may read.
+ * What has exactly the given id: a running or finished instance, a case
+ * instance, a task, an incident, a job, a deployment or a batch; or process
+ * and case instances with exactly this business key. Each lookup the user may
+ * not make is skipped; the engine only returns what the user may read.
  */
 export async function findById(
   term: string,
@@ -1256,10 +1281,15 @@ export async function findById(
     enabled ? request<T[]>(`${engineApi()}${path}`, { query: { ...query, maxResults: 5 }, signal }).catch(() => []) : Promise.resolve([]);
   type Instance = { id: string; businessKey: string | null; definitionId: string };
   type Finished = { id: string; businessKey: string | null; processDefinitionKey: string; state: string };
-  const [running, byKey, finished, tasks, incidents, jobs, deployments, batches] = await Promise.all([
+  type Case = { id: string; businessKey: string | null; caseDefinitionId: string };
+  type FinishedCase = { id: string; businessKey: string | null; caseDefinitionKey: string | null };
+  const [running, byKey, finished, cases, casesByKey, closedCases, tasks, incidents, jobs, deployments, batches] = await Promise.all([
     get<Instance>('/process-instance', { processInstanceIds: term }, options.instances),
     get<Instance>('/process-instance', { businessKey: term }, options.instances),
     get<Finished>('/history/process-instance', { processInstanceId: term }, options.instances),
+    get<Case>('/case-instance', { caseInstanceId: term }, options.instances),
+    get<Case>('/case-instance', { businessKey: term }, options.instances),
+    get<FinishedCase>('/history/case-instance', { caseInstanceId: term }, options.instances),
     get<{ id: string; name: string | null; taskDefinitionKey: string | null; assignee: string | null }>('/task', { taskId: term }, options.tasks),
     get<{ id: string; incidentMessage: string | null; activityId: string; processInstanceId: string | null }>('/incident', { incidentId: term }, options.instances),
     get<{ id: string; exceptionMessage: string | null; processInstanceId: string | null; processDefinitionKey: string | null }>('/job', { jobId: term }, options.instances),
@@ -1276,6 +1306,13 @@ export async function findById(
   for (const instance of finished) {
     if (seen.has(instance.id)) continue;
     hits.push({ kind: 'finished', id: instance.id, title: instance.businessKey ?? instance.id, detail: instance.processDefinitionKey });
+  }
+  // a case instance is shown on one page, open or closed
+  for (const instance of [...cases, ...casesByKey, ...closedCases]) {
+    if (seen.has(instance.id)) continue;
+    seen.add(instance.id);
+    const detail = 'caseDefinitionKey' in instance ? instance.caseDefinitionKey : (instance.caseDefinitionId.split(':')[0] ?? null);
+    hits.push({ kind: 'case', id: instance.id, title: instance.businessKey ?? instance.id, detail });
   }
   for (const task of tasks) {
     hits.push({ kind: 'task', id: task.id, title: task.name ?? task.taskDefinitionKey ?? task.id, detail: task.assignee });

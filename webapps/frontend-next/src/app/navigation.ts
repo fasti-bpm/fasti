@@ -14,6 +14,7 @@ export const COCKPIT_GROUPS: { label: MessageKey; sections: Section[] }[] = [
       { to: '/cockpit', label: 'cockpit.nav.dashboard', end: true },
       { to: '/cockpit/processes', label: 'cockpit.nav.processes' },
       { to: '/cockpit/decisions', label: 'cockpit.nav.decisions' },
+      { to: '/cockpit/cases', label: 'cmmn.nav' },
       { to: '/cockpit/incidents', label: 'cockpit.nav.incidents' },
       { to: '/cockpit/jobs', label: 'cockpit.nav.jobs' },
       { to: '/cockpit/external-tasks', label: 'ops.nav.externalTasks' },
@@ -25,6 +26,7 @@ export const COCKPIT_GROUPS: { label: MessageKey; sections: Section[] }[] = [
     sections: [
       { to: '/cockpit/history', label: 'ops.nav.history' },
       { to: '/cockpit/decision-history', label: 'ops.nav.decisionHistory' },
+      { to: '/cockpit/case-history', label: 'cmmn.nav.history' },
       { to: '/cockpit/audit', label: 'ops.nav.audit' },
       { to: '/cockpit/audit-trail', label: 'audit.nav' },
     ],

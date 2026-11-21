@@ -291,6 +291,40 @@ describe('variables', () => {
       type: 'Boolean',
     });
   });
+
+  it('reads and writes the variables of a case instance where they live', async () => {
+    const server = fakeServer({
+      'GET /engine/engine': () => json([], 200, TOKEN),
+      [`GET ${ENGINE}/variable-instance/count`]: () => json({ count: 0 }),
+      [`GET ${ENGINE}/variable-instance`]: () => json([]),
+      [`PUT ${ENGINE}/case-execution/x1/localVariables/amount`]: () => empty(),
+      [`PUT ${ENGINE}/case-instance/c1/variables/new`]: () => empty(),
+    });
+
+    await api.getVariables({ caseInstanceId: 'c1', sortOrder: 'asc', paging: { firstResult: 0, maxResults: 25 } });
+    const caseVariable = variable({ processInstanceId: null, executionId: null, activityInstanceId: null, caseInstanceId: 'c1', caseExecutionId: 'x1' });
+    await api.updateVariable(caseVariable, { value: 9, type: 'Long' });
+    await api.addCaseVariable('c1', 'new', { value: 'x', type: 'String' });
+
+    const [list] = server.find('GET', `${ENGINE}/variable-instance`);
+    expect(list?.query.get('caseInstanceIdIn')).toBe('c1');
+    expect(list?.query.has('processInstanceIdIn')).toBe(false);
+    expect(server.find('PUT', `${ENGINE}/case-execution/x1/localVariables/amount`)).toHaveLength(1);
+    expect(server.find('PUT', `${ENGINE}/case-instance/c1/variables/new`)[0]?.body).toEqual({ value: 'x', type: 'String' });
+  });
+});
+
+describe('search', () => {
+  it('finds a case instance by its id or business key, open or closed, once', async () => {
+    const server = fakeServer({
+      [`GET ${ENGINE}/case-instance`]: (request) =>
+        json(request.query.get('businessKey') === 'CL-1' || request.query.get('caseInstanceId') === 'CL-1' ? [{ id: 'c1', businessKey: 'CL-1', caseDefinitionId: 'claim:1:a' }] : []),
+      [`GET ${ENGINE}/history/case-instance`]: () => json([{ id: 'c1', businessKey: 'CL-1', caseDefinitionKey: 'claim' }]),
+    });
+    const hits = await api.findById('CL-1', { instances: true, tasks: false });
+    expect(hits.filter((hit) => hit.kind === 'case')).toEqual([{ kind: 'case', id: 'c1', title: 'CL-1', detail: 'claim' }]);
+    expect(server.find('GET', `${ENGINE}/history/case-instance`)[0]?.query.get('caseInstanceId')).toBe('CL-1');
+  });
 });
 
 describe('incidents', () => {

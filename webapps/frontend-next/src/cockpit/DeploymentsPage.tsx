@@ -5,7 +5,7 @@
 import { Suspense, lazy, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { Download, File, FileCode2, FileImage, PackageOpen, PencilRuler, SearchX, Trash2, Upload, Workflow } from 'lucide-react';
+import { Download, File, FileCode2, FileImage, FolderKanban, PackageOpen, PencilRuler, SearchX, Trash2, Upload, Workflow } from 'lucide-react';
 import { kindOfFile } from '../modeler/kinds';
 import {
   createDeployment,
@@ -21,6 +21,7 @@ import {
   type DeploymentSortBy,
   type Sorting,
 } from '../api/cockpit';
+import { getDeploymentCaseDefinitions } from '../api/cases';
 import { isApiError } from '../api/http';
 import { useI18n } from '../i18n';
 import { Button, Dialog, EmptyState, ErrorState, Field, Loading, NoMatch, Skeleton, cx } from '../ui';
@@ -31,22 +32,25 @@ import { pageOf, useUrlSearch, useRemembered, useUrlState } from '../ui/hooks';
 import { Card, PageHeader } from '../ui/page';
 import { DataTable, PAGE_SIZE, Pager, type Column } from '../ui/table';
 import { definitionPath } from './DefinitionsPage';
+import { caseDefinitionPath } from './paths';
 
 const BpmnDiagram = lazy(() => import('../bpmn/BpmnDiagram'));
 const DmnViewer = lazy(() => import('../dmn/DmnViewer'));
+const CmmnDiagram = lazy(() => import('../cmmn/CmmnDiagram'));
 
 function deploymentPath(id: string): string {
   return `/cockpit/deployments/${encodeURIComponent(id)}`;
 }
 
-export type ResourceKind = 'bpmn' | 'dmn' | 'image' | 'text' | 'other';
+export type ResourceKind = 'bpmn' | 'dmn' | 'cmmn' | 'image' | 'text' | 'other';
 
-const TEXT = /\.(form|json|xml|cmmn|txt|md|js|groovy|py|rb|ftl|html?|css|properties|ya?ml|sql|csv|feel|java)$/i;
+const TEXT = /\.(form|json|xml|txt|md|js|groovy|py|rb|ftl|html?|css|properties|ya?ml|sql|csv|feel|java)$/i;
 
 /** How a resource is shown, judged by its file name. */
 export function resourceKind(name: string): ResourceKind {
   if (/\.bpmn(20\.xml)?$/i.test(name)) return 'bpmn';
   if (/\.dmn(11\.xml)?$/i.test(name)) return 'dmn';
+  if (/\.cmmn(11\.xml)?$/i.test(name)) return 'cmmn';
   if (/\.(png|jpe?g|gif|svg)$/i.test(name)) return 'image';
   if (TEXT.test(name)) return 'text';
   return 'other';
@@ -291,7 +295,7 @@ export function DeploymentsPage() {
 }
 
 function ResourceIcon({ kind }: { kind: ResourceKind }) {
-  const Icon = kind === 'bpmn' ? Workflow : kind === 'image' ? FileImage : kind === 'other' ? File : FileCode2;
+  const Icon = kind === 'bpmn' ? Workflow : kind === 'cmmn' ? FolderKanban : kind === 'image' ? FileImage : kind === 'other' ? File : FileCode2;
   return <Icon aria-hidden size={15} />;
 }
 
@@ -299,7 +303,8 @@ function ResourceView({ deploymentId, resource }: { deploymentId: string; resour
   const { t } = useI18n();
   const kind = resourceKind(resource.name);
   const [source, setSource] = useState(false);
-  const textual = kind === 'bpmn' || kind === 'dmn' || kind === 'text';
+  const diagram = kind === 'bpmn' || kind === 'dmn' || kind === 'cmmn';
+  const textual = diagram || kind === 'text';
   const content = useQuery({
     queryKey: ['deployment-resource', deploymentId, resource.id],
     queryFn: () => getResourceText(deploymentId, resource.id),
@@ -307,13 +312,13 @@ function ResourceView({ deploymentId, resource }: { deploymentId: string; resour
     staleTime: Infinity,
   });
   const url = resourceDataUrl(deploymentId, resource.id);
-  const model = (kind === 'bpmn' || kind === 'dmn') && !source;
+  const model = diagram && !source;
 
   return (
     <section className="resource" aria-label={resource.name}>
       <header className="resource__header">
         <h2 className="resource__name">{resource.name}</h2>
-        {(kind === 'bpmn' || kind === 'dmn') && (
+        {diagram && (
           <button
             type="button"
             className={cx('toggle', source && 'is-on')}
@@ -355,7 +360,13 @@ function ResourceView({ deploymentId, resource }: { deploymentId: string; resour
       ) : model ? (
         <div className="resource__model">
           <Suspense fallback={<Loading label={t('state.loading')} />}>
-            {kind === 'bpmn' ? <BpmnDiagram xml={content.data} /> : <DmnViewer xml={content.data} />}
+            {kind === 'bpmn' ? (
+              <BpmnDiagram xml={content.data} />
+            ) : kind === 'cmmn' ? (
+              <CmmnDiagram xml={content.data} />
+            ) : (
+              <DmnViewer xml={content.data} />
+            )}
           </Suspense>
         </div>
       ) : (
@@ -454,6 +465,11 @@ export function DeploymentPage() {
     queryFn: () => getDeploymentDefinitions(id),
     enabled: !!deployment.data,
   });
+  const caseDefinitions = useQuery({
+    queryKey: [COCKPIT, 'deployment-case-definitions', id],
+    queryFn: () => getDeploymentCaseDefinitions(id),
+    enabled: !!deployment.data,
+  });
 
   if (deployment.isError && !deployment.data) {
     return (
@@ -485,8 +501,13 @@ export function DeploymentPage() {
   const current = deployment.data;
   const sorted = [...(resources.data ?? [])].sort((a, b) => a.name.localeCompare(b.name));
   const selected = sorted.find((resource) => resource.id === params.get('resource')) ?? sorted[0];
-  const definitionOf = (resource: DeploymentResource) =>
-    definitions.data?.find((definition) => definition.resource === resource.name);
+  // the process or case a resource defines, to open it from the list
+  const definitionOf = (resource: DeploymentResource) => {
+    const process = definitions.data?.find((definition) => definition.resource === resource.name);
+    if (process) return { ...process, path: definitionPath(process.id) };
+    const found = caseDefinitions.data?.find((definition) => definition.resource === resource.name);
+    return found ? { ...found, path: caseDefinitionPath(found.id) } : undefined;
+  };
 
   return (
     <div className="page">
@@ -539,7 +560,7 @@ export function DeploymentPage() {
                       <span className="resource-list__name">{resource.name}</span>
                     </button>
                     {definition && (
-                      <Link className="link link--subtle resource-list__link" to={definitionPath(definition.id)}>
+                      <Link className="link link--subtle resource-list__link" to={definition.path}>
                         {t('cockpit.deployments.openDefinition', {
                           name: definition.name ?? definition.key,
                           version: definition.version,

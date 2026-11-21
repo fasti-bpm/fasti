@@ -215,6 +215,31 @@ export const routes: RouteObject[] = [
                 }),
               },
               {
+                // cases (CMMN): definitions, instances with their plan items, history
+                path: 'cases',
+                lazy: async () => ({
+                  Component: (await import('../cockpit/CasesPage')).CaseDefinitionsPage,
+                }),
+              },
+              {
+                path: 'cases/definition/:id',
+                lazy: async () => ({
+                  Component: (await import('../cockpit/CasesPage')).CaseDefinitionPage,
+                }),
+              },
+              {
+                path: 'cases/instance/:id',
+                lazy: async () => ({
+                  Component: (await import('../cockpit/CaseInstancePage')).CaseInstancePage,
+                }),
+              },
+              {
+                path: 'case-history',
+                lazy: async () => ({
+                  Component: (await import('../cockpit/CaseHistoryPage')).CaseHistoryPage,
+                }),
+              },
+              {
                 path: 'history',
                 lazy: async () => ({
                   Component: (await import('../cockpit/HistoryPage')).HistoryPage,

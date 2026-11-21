@@ -16,6 +16,8 @@ import {
   Building2,
   ExternalLink,
   Filter,
+  FolderClock,
+  FolderKanban,
   Hash,
   History,
   House,
@@ -46,7 +48,7 @@ import {
 import type { LucideProps } from 'lucide-react';
 import { COCKPIT_GROUPS } from './navigation';
 import { findById, searchEngine, type SearchHit } from '../api/cockpit';
-import { historyPath } from '../cockpit/paths';
+import { caseInstancePath, historyPath } from '../cockpit/paths';
 import { recentItems, rememberRecent } from '../lib/recent';
 import { getTaskFilters } from '../api/engine';
 import { classicAppUrl, classicWebapps } from '../env';
@@ -78,6 +80,8 @@ const ALIASES: Record<string, string> = {
   '/cockpit': 'dashboard overview monitoring operate',
   '/cockpit/processes': 'definitions instances workflows',
   '/cockpit/decisions': 'dmn rules tables',
+  '/cockpit/cases': 'cmmn case management plan items stages milestones',
+  '/cockpit/case-history': 'cmmn cases closed finished archive',
   '/cockpit/incidents': 'errors failures problems alerts',
   '/cockpit/jobs': 'failed jobs retries timers',
   '/cockpit/external-tasks': 'workers topics',
@@ -113,6 +117,8 @@ export function hitPath(hit: SearchHit): string {
       return instanceLink(hit.id);
     case 'finished':
       return historyPath(hit.id);
+    case 'case':
+      return caseInstancePath(hit.id);
     case 'task':
       return `/tasklist?task=${encodeURIComponent(hit.id)}`;
     case 'incident':
@@ -129,6 +135,7 @@ export function hitPath(hit: SearchHit): string {
 const HIT_ICONS: Record<SearchHit['kind'], ComponentType<LucideProps>> = {
   instance: Hash,
   finished: History,
+  case: FolderKanban,
   task: CheckSquare,
   incident: AlertTriangle,
   job: Cog,
@@ -139,6 +146,7 @@ const HIT_ICONS: Record<SearchHit['kind'], ComponentType<LucideProps>> = {
 const HIT_LABELS: Record<SearchHit['kind'], MessageKey> = {
   instance: 'palette.kind.instance',
   finished: 'palette.kind.finished',
+  case: 'palette.kind.case',
   task: 'palette.kind.task',
   incident: 'palette.kind.incident',
   job: 'palette.kind.job',
@@ -243,6 +251,8 @@ export function CommandPalette({
         '/cockpit': Activity,
         '/cockpit/processes': Workflow,
         '/cockpit/decisions': Table2,
+        '/cockpit/cases': FolderKanban,
+        '/cockpit/case-history': FolderClock,
         '/cockpit/incidents': AlertTriangle,
         '/cockpit/jobs': Cog,
         '/cockpit/external-tasks': Briefcase,
@@ -389,7 +399,7 @@ export function CommandPalette({
     // instance that was found is not offered a second time
     if (cockpit && !/\s/.test(text)) {
       const open = t('palette.group.open');
-      if (!answer?.exact.some((hit) => hit.kind === 'instance' || hit.kind === 'finished')) {
+      if (!answer?.exact.some((hit) => hit.kind === 'instance' || hit.kind === 'finished' || hit.kind === 'case')) {
         found.push({
           id: 'open-instance',
           label: t('palette.openInstance', { id: text }),

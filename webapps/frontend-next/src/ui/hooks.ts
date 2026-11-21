@@ -67,13 +67,14 @@ export function useDebounced<T>(value: T, delay = 250): T {
 }
 
 /**
- * The text of a search field that is kept in the `q` parameter of the address. Typing writes the
- * address after a short delay; an address restored by the browser history updates the field
- * instead of being overwritten by it.
+ * The text of a search field that is kept in a parameter of the address, `q` unless named. Typing
+ * writes the address after a short delay; an address restored by the browser history updates the
+ * field instead of being overwritten by it.
  */
 export function useUrlSearch(
   term: string,
   setParams: (changes: Record<string, string | null>) => void,
+  name = 'q',
 ): [string, (value: string) => void] {
   const [search, setSearch] = useState(term);
   const [shownTerm, setShownTerm] = useState(term);
@@ -87,7 +88,7 @@ export function useUrlSearch(
     // only a change of the typed text is written, never a stale one after the address changed
     if (debounced === written.current) return;
     written.current = debounced;
-    if (debounced !== term) setParams({ q: debounced || null, page: null });
-  }, [debounced, term, setParams]);
+    if (debounced !== term) setParams({ [name]: debounced || null, page: null });
+  }, [debounced, term, setParams, name]);
   return [search, setSearch];
 }

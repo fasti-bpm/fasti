@@ -30,3 +30,17 @@ export function migrationPath(sourceDefinitionId: string, instanceIds?: string[]
 export function decisionInstancePath(id: string): string {
   return `/cockpit/decision-history/${encodeURIComponent(id)}`;
 }
+
+// --- cases (CMMN) -------------------------------------------------------------
+
+export const CASES_PATH = '/cockpit/cases';
+export const CASE_HISTORY_PATH = '/cockpit/case-history';
+
+export function caseDefinitionPath(id: string): string {
+  return `${CASES_PATH}/definition/${encodeURIComponent(id)}`;
+}
+
+/** A case instance, open or closed: the page reads the history for a closed one. */
+export function caseInstancePath(id: string, tab?: string): string {
+  return `${CASES_PATH}/instance/${encodeURIComponent(id)}${tab ? `?tab=${tab}` : ''}`;
+}

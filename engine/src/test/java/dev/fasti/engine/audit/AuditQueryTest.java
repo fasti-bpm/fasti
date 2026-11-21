@@ -28,14 +28,16 @@ import java.util.stream.Collectors;
 
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.ProcessEngineException;
+import org.camunda.bpm.engine.authorization.Groups;
+import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
- * Reading the trail: pages are cut in the database, exports read one cursor, and database errors
- * stay in the log.
+ * Reading the trail: pages are cut in the database, exports read one cursor, readers see the
+ * tenants they belong to, and database errors stay in the log.
  */
 public class AuditQueryTest {
 
@@ -145,6 +147,54 @@ public class AuditQueryTest {
     assertThat(streamed).hasSize(1);
     assertThat(streamed.get(0).getDetails()).isEqualTo(listed.getDetails());
     assertThat(streamed.get(0).getHash()).isEqualTo(listed.getHash());
+  }
+
+  // tenants //////////////////////////////////////////////////////////////////////////////////
+
+  @Test
+  public void shouldShowReadersOnlyTheirTenantsAndRecordsWithoutTenant() {
+    long all = audit.createQuery().count();
+    long ofT2 = audit.createQuery().tenantId("t2").count();
+    assertThat(ofT2).isPositive();
+
+    engine.getIdentityService().setAuthentication("tina", List.of("staff"), List.of("t1"));
+    List<AuditEvent> visible = audit.createQuery().list();
+    assertThat(visible).isNotEmpty().allSatisfy(event -> assertThat(event.getTenantId()).isIn(null, "t1"));
+    assertThat(visible).anySatisfy(event -> assertThat(event.getTenantId()).isEqualTo("t1"));
+    assertThat(audit.createQuery().count()).isEqualTo(visible.size()).isEqualTo(all - ofT2);
+    assertThat(audit.createQuery().tenantId("t2").count()).isZero();
+    assertThat(audit.createQuery().tenantId("t2").list()).isEmpty();
+    assertThat(audit.createQuery().businessKey("t2-0").listPage(0, 10)).isEmpty();
+    List<AuditEvent> streamed = new ArrayList<>();
+    audit.createQuery().forEach(Integer.MAX_VALUE, streamed::add);
+    assertThat(streamed).hasSize(visible.size()).allSatisfy(event -> assertThat(event.getTenantId()).isIn(null, "t1"));
+  }
+
+  @Test
+  public void shouldShowReadersWithoutTenantOnlyRecordsWithoutTenant() {
+    engine.getIdentityService().setAuthentication("nora", List.of("staff"), List.of());
+    assertThat(audit.createQuery().list()).isNotEmpty().allSatisfy(event -> assertThat(event.getTenantId()).isNull());
+    assertThat(audit.createQuery().tenantId("t1").count()).isZero();
+  }
+
+  @Test
+  public void shouldShowAdministratorsAndTheEngineItselfEveryTenant() {
+    long all = audit.createQuery().count();
+    engine.getIdentityService().setAuthentication("root", List.of(Groups.CAMUNDA_ADMIN), List.of("t1"));
+    assertThat(audit.createQuery().count()).isEqualTo(all);
+    assertThat(audit.createQuery().tenantId("t2").count()).isPositive();
+  }
+
+  @Test
+  public void shouldShowEveryTenantWhenTheTenantCheckIsOff() {
+    ProcessEngineConfigurationImpl configuration = (ProcessEngineConfigurationImpl) engine.getProcessEngineConfiguration();
+    engine.getIdentityService().setAuthentication("tina", List.of("staff"), List.of("t1"));
+    configuration.setTenantCheckEnabled(false);
+    try {
+      assertThat(audit.createQuery().tenantId("t2").count()).isPositive();
+    } finally {
+      configuration.setTenantCheckEnabled(true);
+    }
   }
 
   // errors ///////////////////////////////////////////////////////////////////////////////////

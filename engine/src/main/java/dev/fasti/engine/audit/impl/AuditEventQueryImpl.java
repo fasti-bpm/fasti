@@ -149,7 +149,7 @@ public class AuditEventQueryImpl implements AuditEventQuery {
   public long count() {
     return commandExecutor.execute(commandContext -> {
       AuditAuthorization.checkRead(commandContext);
-      return AuditStore.count(commandContext, settings, this, null);
+      return AuditStore.count(commandContext, settings, this, AuditAuthorization.readableTenants(commandContext));
     });
   }
 
@@ -164,7 +164,8 @@ public class AuditEventQueryImpl implements AuditEventQuery {
     int max = maxResults < 0 ? Integer.MAX_VALUE : maxResults;
     return commandExecutor.execute(commandContext -> {
       AuditAuthorization.checkRead(commandContext);
-      return new ArrayList<AuditEvent>(AuditStore.select(commandContext, settings, this, null, first, max));
+      return new ArrayList<AuditEvent>(AuditStore.select(commandContext, settings, this,
+          AuditAuthorization.readableTenants(commandContext), first, max));
     });
   }
 
@@ -172,7 +173,8 @@ public class AuditEventQueryImpl implements AuditEventQuery {
   public long forEach(int maxResults, Consumer<? super AuditEvent> consumer) {
     return commandExecutor.execute(commandContext -> {
       AuditAuthorization.checkRead(commandContext);
-      return AuditStore.forEach(commandContext, settings, this, null, maxResults, consumer::accept);
+      return AuditStore.forEach(commandContext, settings, this, AuditAuthorization.readableTenants(commandContext),
+          maxResults, consumer::accept);
     });
   }
 

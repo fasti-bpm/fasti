@@ -78,6 +78,21 @@ public class AuditStoreSqlTest {
   }
 
   @Test
+  public void shouldRestrictToTenantsBeforeOtherFilters() {
+    List<Object> parameters = new ArrayList<>();
+    AuditEventQueryImpl query = query();
+    query.tenantId("t2");
+    String sql = AuditStore.selectSql(settings("h2"), query, List.of("t1", "t3"), 0, 10, parameters);
+    assertThat(sql).contains(" where (TENANT_ID_ is null or TENANT_ID_ in (?, ?)) and TENANT_ID_ = ? order by ");
+    assertThat(parameters).containsExactly("t1", "t3", "t2", 10L, 0L);
+
+    parameters.clear();
+    assertThat(AuditStore.where(query(), List.of(), parameters)).isEqualTo(" where TENANT_ID_ is null");
+    assertThat(parameters).isEmpty();
+    assertThat(AuditStore.where(query(), null, parameters)).isEmpty();
+  }
+
+  @Test
   public void shouldKeepWhatTheDatabaseSaysOutOfTheMessage() {
     SQLException cause = new SQLException("relation \"fasti_audit_event\" does not exist at character 15", "42P01");
     ProcessEngineException failure = AuditStore.failure("read records", "chain node/0", cause);

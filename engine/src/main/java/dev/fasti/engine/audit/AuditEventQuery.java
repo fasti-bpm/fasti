@@ -23,7 +23,9 @@ import java.util.function.Consumer;
 /**
  * Finds records of the audit trail. Results are ordered by time, newest first (or oldest first
  * with {@link #oldestFirst()}), then by chain and position. Reading needs membership of an
- * administrators group or {@code READ} on the resource {@code SYSTEM}.
+ * administrators group or {@code READ} on the resource {@code SYSTEM}. A reader who is not an
+ * administrator gets the records of the tenants of the authentication and the records without
+ * tenant, while the tenant check of the engine is on.
  */
 public interface AuditEventQuery {
 

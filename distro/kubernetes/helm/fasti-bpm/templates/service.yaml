@@ -29,6 +29,13 @@ spec:
       {{- if and (has .Values.service.type (list "NodePort" "LoadBalancer")) .Values.service.nodePort }}
       nodePort: {{ .Values.service.nodePort }}
       {{- end }}
+    {{- with include "fasti.managementPort" . }}
+    # the actuator (health, metrics); the Ingress routes to "http" only
+    - name: management
+      port: {{ . }}
+      targetPort: management
+      protocol: TCP
+    {{- end }}
     {{- if .Values.metrics.extraPort.enabled }}
     - name: {{ .Values.metrics.extraPort.name }}
       port: {{ .Values.metrics.extraPort.port }}

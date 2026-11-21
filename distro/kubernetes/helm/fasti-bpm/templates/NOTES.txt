@@ -18,8 +18,8 @@ Web UI and REST API:
 
 Local access through a port-forward:
 
-  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "fasti.fullname" . }} 8080:{{ .Values.service.port }}
-  curl -s http://localhost:8080/actuator/health/readiness
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "fasti.fullname" . }} 8080:{{ .Values.service.port }}{{ with include "fasti.managementPort" . }} {{ . }}:{{ . }}{{ end }}
+  curl -s http://localhost:{{ include "fasti.managementPort" . | default "8080" }}/actuator/health/readiness
   open http://localhost:8080/fasti/
 {{- end }}
 

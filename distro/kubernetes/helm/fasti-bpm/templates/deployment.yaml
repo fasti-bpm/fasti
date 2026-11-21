@@ -4,6 +4,7 @@ Copyright Fasti BPM contributors
 */}}
 {{- include "fasti.validate" . }}
 {{- $fullname := include "fasti.fullname" . }}
+{{- $managementPort := include "fasti.managementPort" . }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -51,7 +52,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.priorityClassName }}
-      priorityClassName: {{ . }}
+      priorityClassName: {{ . | quote }}
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- with .Values.podSecurityContext }}
@@ -72,6 +73,11 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
+            {{- if $managementPort }}
+            - name: management
+              containerPort: {{ $managementPort }}
+              protocol: TCP
+            {{- end }}
             {{- if .Values.metrics.extraPort.enabled }}
             - name: {{ .Values.metrics.extraPort.name }}
               containerPort: {{ .Values.metrics.extraPort.port }}
@@ -87,8 +93,8 @@ spec:
             - name: DB_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.database.existingSecret }}
-                  key: {{ .Values.database.urlKey }}
+                  name: {{ .Values.database.existingSecret | quote }}
+                  key: {{ .Values.database.urlKey | quote }}
             {{- else }}
             - name: DB_URL
               value: {{ .Values.database.url | quote }}
@@ -159,12 +165,17 @@ spec:
             - name: FASTI_OIDC_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.oidc.existingSecret }}
-                  key: {{ .Values.oidc.clientSecretKey }}
+                  name: {{ .Values.oidc.existingSecret | quote }}
+                  key: {{ .Values.oidc.clientSecretKey | quote }}
             {{- end }}
             {{- if include "fasti.hasConfig" . }}
             - name: FASTI_CONFIG
               value: {{ include "fasti.configFiles" . | quote }}
+            {{- end }}
+            {{- if $managementPort }}
+            # the actuator (health, metrics) on a port of its own; the probes follow it
+            - name: FASTI_MANAGEMENT_PORT
+              value: {{ $managementPort | quote }}
             {{- end }}
             - name: FASTI_MAX_RAM_PERCENTAGE
               value: {{ .Values.jvm.maxRamPercentage | quote }}
@@ -180,8 +191,12 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- range $name := list "startupProbe" "livenessProbe" "readinessProbe" }}
-          {{- $probe := index $.Values $name }}
+          {{- $probe := deepCopy (index $.Values $name) }}
           {{- if $probe.enabled }}
+          {{- /* the actuator answers on the management port when there is one */}}
+          {{- if and $managementPort $probe.httpGet (eq (toString $probe.httpGet.port) "http") }}
+          {{- $_ := set $probe.httpGet "port" "management" }}
+          {{- end }}
           {{ $name }}:
             {{- toYaml (omit $probe "enabled") | nindent 12 }}
           {{- end }}
@@ -224,28 +239,28 @@ spec:
             defaultMode: 0440
             sources:
               - secret:
-                  name: {{ .Values.database.existingSecret }}
+                  name: {{ .Values.database.existingSecret | quote }}
                   items:
-                    - key: {{ .Values.database.usernameKey }}
+                    - key: {{ .Values.database.usernameKey | quote }}
                       path: db-username
-                    - key: {{ .Values.database.passwordKey }}
+                    - key: {{ .Values.database.passwordKey | quote }}
                       path: db-password
               {{- if .Values.admin.user }}
               - secret:
-                  name: {{ .Values.admin.existingSecret }}
+                  name: {{ .Values.admin.existingSecret | quote }}
                   items:
-                    - key: {{ .Values.admin.passwordKey }}
+                    - key: {{ .Values.admin.passwordKey | quote }}
                       path: admin-password
               {{- end }}
         - name: tmp
           emptyDir:
             {{- with .Values.tmpVolume.sizeLimit }}
-            sizeLimit: {{ . }}
+            sizeLimit: {{ . | quote }}
             {{- end }}
         - name: data
           emptyDir:
             {{- with .Values.dataVolume.sizeLimit }}
-            sizeLimit: {{ . }}
+            sizeLimit: {{ . | quote }}
             {{- end }}
         {{- if include "fasti.hasConfig" . }}
         - name: config

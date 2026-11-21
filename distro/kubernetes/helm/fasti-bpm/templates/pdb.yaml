@@ -12,10 +12,10 @@ metadata:
     {{- include "fasti.labels" . | nindent 4 }}
 spec:
   {{- if ne (toString .Values.pdb.minAvailable) "" }}
-  minAvailable: {{ .Values.pdb.minAvailable }}
+  minAvailable: {{ include "fasti.intOrPercent" .Values.pdb.minAvailable }}
   {{- else if ne (toString .Values.pdb.maxUnavailable) "" }}
   {{- /* 0 is kept: no voluntary disruption at all */}}
-  maxUnavailable: {{ .Values.pdb.maxUnavailable }}
+  maxUnavailable: {{ include "fasti.intOrPercent" .Values.pdb.maxUnavailable }}
   {{- else }}
   maxUnavailable: 1
   {{- end }}

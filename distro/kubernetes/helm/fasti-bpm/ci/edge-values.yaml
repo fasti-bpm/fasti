@@ -14,6 +14,13 @@ updateStrategy:
   type: Recreate
 pdb:
   maxUnavailable: 0
+# the actuator on a port of its own: probes, helm test, Service and NetworkPolicy follow it
+management:
+  port: 9464
+metrics:
+  serviceMonitor:
+    enabled: true
+    port: management
 networkPolicy:
   enabled: true
   ingressFrom:

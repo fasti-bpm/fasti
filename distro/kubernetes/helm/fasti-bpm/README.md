@@ -92,7 +92,8 @@ existing Camunda 7.24 installation leave them out: tables and accounts already e
 | `extraArgs`, `extraEnv`, `extraEnvFrom` | `[]` | more arguments and environment variables |
 | `extraVolumes`, `extraVolumeMounts`, `initContainers`, `extraContainers` | `[]` | for example a driver directory with `FASTI_EXTRA_LIB` |
 | `resources` | requests 1 CPU / 2Gi, limit 2Gi | at least 2 CPUs and 2 GiB for real workloads |
-| `startupProbe`, `livenessProbe`, `readinessProbe` | see `values.yaml` | `enabled: false` removes a probe |
+| `management.port` | `""` | port of its own for the actuator (health, metrics), images from 1.1.0; see Metrics |
+| `startupProbe`, `livenessProbe`, `readinessProbe` | see `values.yaml` | `enabled: false` removes a probe; port `http` follows `management.port` |
 | `podSecurityContext`, `containerSecurityContext` | hardened | see above |
 | `podAntiAffinityPreset` | `soft` | `soft`, `hard` or `""`; ignored when `affinity` is set |
 | `topologySpreadConstraints` | `[]` | spread over zones |
@@ -106,7 +107,8 @@ existing Camunda 7.24 installation leave them out: tables and accounts already e
 
 `values.schema.json` rejects unknown keys and malformed values; the templates refuse
 incomplete combinations (missing secrets, OIDC without issuer, `FASTI_INSECURE_DEMO` or `DEBUG`
-together with production mode).
+together with production mode, `FASTI_MANAGEMENT_PORT` in `extraEnv` instead of
+`management.port`, a ServiceMonitor port the Service does not have).
 
 Not exposed on purpose: `FASTI_INSECURE_DEMO` (open REST API, refused with `--production`) and
 `FASTI_INITIAL_SETUP` (anonymous first-admin page). Use `admin.*` for an empty database.
@@ -167,9 +169,27 @@ The 1.0.x image exposes no metrics endpoint (only `/actuator/health`), so
 `metrics.serviceMonitor.enabled` stays `false`. From 1.1.0, with metrics enabled
 (`FASTI_METRICS_PROMETHEUS_ENABLED=true` and a scrape token or a management port; see
 "Observability" in the Docker guide), the image serves Prometheus metrics at
-`/actuator/prometheus`. The chart has no values for this yet: the ServiceMonitor sends no scrape
-token, and a management port also moves the health endpoints that the probes use. Metrics that need
-neither work today: enable the ServiceMonitor with the matching `path` and `port`; for the JMX
+`/actuator/prometheus`. The ServiceMonitor sends no scrape token, so use the management port:
+
+```yaml
+management:
+  port: 9464
+extraEnv:
+  - name: FASTI_METRICS_PROMETHEUS_ENABLED
+    value: "true"
+metrics:
+  serviceMonitor:
+    enabled: true
+    port: management
+```
+
+`management.port` sets `FASTI_MANAGEMENT_PORT`, which moves the whole actuator (the health
+endpoints too) to that port. The chart follows it: the container and the Service get a port
+named `management`, probes whose port is `http` use `management`, `helm test` calls it and the
+NetworkPolicy admits it (list the namespace of Prometheus in `networkPolicy.ingressFrom`). The
+Ingress keeps routing to `http` only, so the actuator is not reachable from outside. Setting
+`FASTI_MANAGEMENT_PORT` or `MANAGEMENT_SERVER_PORT` in `extraEnv` is refused, because the probes
+would keep calling port 8080 and the pod would never become ready. For the JMX
 exporter agent of the image
 (`JMX_PROMETHEUS=true`, agent jar added to `/fasti/javaagent`) use `metrics.extraPort` and
 `port: metrics`. The ServiceMonitor needs the Prometheus Operator CRDs.

@@ -23,6 +23,10 @@ spec:
     - ports:
         - port: http
           protocol: TCP
+        {{- if include "fasti.managementPort" . }}
+        - port: management
+          protocol: TCP
+        {{- end }}
         {{- if .Values.metrics.extraPort.enabled }}
         - port: {{ .Values.metrics.extraPort.name }}
           protocol: TCP

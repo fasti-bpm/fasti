@@ -216,7 +216,17 @@ resources:
   limits:
     memory: 2Gi
 
-# Probes on the actuator health endpoints of the image (no login needed).
+# Port of the actuator (health endpoints and, when enabled, Prometheus metrics). Empty: the
+# actuator shares the HTTP port 8080. A number (1024-65535) gives it a port of its own
+# (FASTI_MANAGEMENT_PORT, images from 1.1.0): the container and the Service get a port named
+# "management", the probes below whose port is "http" use it, as does "helm test", and the
+# NetworkPolicy admits it. The Ingress keeps routing to "http" only. Do not set
+# FASTI_MANAGEMENT_PORT in extraEnv: the chart refuses that.
+management:
+  port: ""
+
+# Probes on the actuator health endpoints of the image (no login needed). Port "http" stands
+# for the port of the actuator: it becomes "management" when management.port is set.
 startupProbe:
   enabled: true
   httpGet:
@@ -294,7 +304,7 @@ ingress:
 
 pdb:
   enabled: true
-  # one of maxUnavailable or minAvailable
+  # one of maxUnavailable or minAvailable: a number of pods or a percentage ("25%")
   maxUnavailable: 1
   minAvailable: ""
 
@@ -325,13 +335,15 @@ networkPolicy:
 
 # Prometheus Operator ServiceMonitor. The 1.0.x image exposes no metrics endpoint (only
 # /actuator/health). From 1.1.0 the image serves /actuator/prometheus with metrics enabled, but
-# behind a scrape token or on a management port, which this chart does not configure yet (see
-# the chart README). Enable it for an image that serves metrics at path on port.
+# behind a scrape token or on a management port. For the management port set management.port
+# and port: management below; the chart does not send a scrape token (see the chart README).
+# Enable it for an image that serves metrics at path on port.
 metrics:
   serviceMonitor:
     enabled: false
     path: /actuator/prometheus
-    # name of a container port: http, or a port added with metrics.extraPort
+    # name of a Service port: http, management (with management.port) or the name of
+    # metrics.extraPort
     port: http
     interval: 30s
     scrapeTimeout: 10s

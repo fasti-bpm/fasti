@@ -69,6 +69,11 @@ app.kubernetes.io/part-of: fasti-bpm
 {{- if or .Values.config .Values.oidc.enabled -}}true{{- end -}}
 {{- end -}}
 
+{{/* the port of the actuator when it has a port of its own; empty when it shares the HTTP port */}}
+{{- define "fasti.managementPort" -}}
+{{- if ne (toString .Values.management.port) "" -}}{{- .Values.management.port | int -}}{{- end -}}
+{{- end -}}
+
 {{/* checks of combinations the schema cannot express */}}
 {{- define "fasti.validate" -}}
 {{- if and (not .Values.database.url) (not .Values.database.urlKey) -}}
@@ -97,16 +102,43 @@ app.kubernetes.io/part-of: fasti-bpm
 {{- if and .Values.pdb.enabled (ne (toString .Values.pdb.maxUnavailable) "") (ne (toString .Values.pdb.minAvailable) "") -}}
 {{- fail "pdb: set maxUnavailable or minAvailable, not both" -}}
 {{- end -}}
-{{- if and .Values.metrics.serviceMonitor.enabled (ne .Values.metrics.serviceMonitor.port "http") (not .Values.metrics.extraPort.enabled) -}}
-{{- fail "metrics.serviceMonitor.port names a port other than http: enable metrics.extraPort" -}}
+{{- $managementPort := include "fasti.managementPort" . -}}
+{{- if and $managementPort (eq $managementPort (toString .Values.service.port)) -}}
+{{- fail "management.port and service.port must differ: the Service exposes both" -}}
+{{- end -}}
+{{- if .Values.metrics.extraPort.enabled -}}
+{{- if has (toString .Values.metrics.extraPort.port) (list "8080" $managementPort (toString .Values.service.port)) -}}
+{{- fail "metrics.extraPort.port must differ from 8080, management.port and service.port" -}}
+{{- end -}}
+{{- end -}}
+{{- if .Values.metrics.serviceMonitor.enabled -}}
+{{- $ports := list "http" -}}
+{{- if $managementPort -}}{{- $ports = append $ports "management" -}}{{- end -}}
+{{- if .Values.metrics.extraPort.enabled -}}{{- $ports = append $ports .Values.metrics.extraPort.name -}}{{- end -}}
+{{- if not (has .Values.metrics.serviceMonitor.port $ports) -}}
+{{- fail (printf "metrics.serviceMonitor.port %q is not a port of the Service (%s): set management.port or enable metrics.extraPort" .Values.metrics.serviceMonitor.port (join ", " $ports)) -}}
+{{- end -}}
+{{- end -}}
+{{- range .Values.extraArgs -}}
+{{- if hasPrefix "--management.server.port" (toString .) -}}
+{{- fail "extraArgs: --management.server.port moves the health endpoints away from the probes: set management.port instead" -}}
+{{- end -}}
 {{- end -}}
 {{- range .Values.extraEnv -}}
+{{- if has .name (list "FASTI_MANAGEMENT_PORT" "MANAGEMENT_SERVER_PORT") -}}
+{{- fail (printf "extraEnv: %s moves the health endpoints away from the probes: set management.port instead" .name) -}}
+{{- end -}}
 {{- if has .name (list "FASTI_INSECURE_DEMO" "DEBUG" "FASTI_DEBUG") -}}
 {{- if and $.Values.production (eq (toString .value | lower) "true") -}}
 {{- fail (printf "%s=true cannot be combined with production: true" .name) -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
+{{- end -}}
+
+{{/* a number of pods (integer) or a percentage (string, quoted) */}}
+{{- define "fasti.intOrPercent" -}}
+{{- if kindIs "string" . -}}{{- . | quote -}}{{- else -}}{{- . | int -}}{{- end -}}
 {{- end -}}
 
 {{/* arguments of the entrypoint */}}

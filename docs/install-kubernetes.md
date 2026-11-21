@@ -248,7 +248,10 @@ No login is needed and nothing else of the actuator is exposed. The 1.0.x image 
 endpoint; `metrics.serviceMonitor` is therefore off by default. From 1.1.0, with metrics enabled
 (`FASTI_METRICS_PROMETHEUS_ENABLED=true` and a scrape token or a management port, see the
 [Docker guide](install-docker.md#13-observability)), the image serves Prometheus metrics at
-`/actuator/prometheus`; the chart does not configure this yet (see the chart README).
+`/actuator/prometheus`. Set `management.port` (for example `9464`) to give the actuator a port
+of its own: probes, `helm test`, the Service and the NetworkPolicy follow it, and
+`metrics.serviceMonitor.port: management` scrapes it. The chart does not send a scrape token
+(see the chart README).
 
 <a id="10-upgrade-and-rollback"></a>
 

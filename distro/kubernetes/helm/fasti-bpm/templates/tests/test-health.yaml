@@ -2,8 +2,9 @@
 SPDX-License-Identifier: Apache-2.0
 Copyright Fasti BPM contributors
 */}}
-{{/* helm test: readiness through the Service, with the image of the release (busybox wget);
-the NetworkPolicy of the chart admits this pod by its labels */}}
+{{/* helm test: readiness through the Service (its management port when the actuator has one),
+with the image of the release (busybox wget); the NetworkPolicy of the chart admits this pod by
+its labels */}}
 apiVersion: v1
 kind: Pod
 metadata:
@@ -42,7 +43,7 @@ spec:
         - -c
         - |
           for attempt in 1 2 3 4 5 6 7 8 9 10; do
-            wget -q -T 5 -O - "http://{{ include "fasti.fullname" . }}:{{ .Values.service.port }}/actuator/health/readiness" && exit 0
+            wget -q -T 5 -O - "http://{{ include "fasti.fullname" . }}:{{ include "fasti.managementPort" . | default .Values.service.port }}/actuator/health/readiness" && exit 0
             sleep 3
           done
           exit 1

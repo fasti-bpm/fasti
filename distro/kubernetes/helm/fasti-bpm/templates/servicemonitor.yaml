@@ -21,10 +21,10 @@ spec:
     matchNames:
       - {{ .Release.Namespace }}
   endpoints:
-    - port: {{ .Values.metrics.serviceMonitor.port }}
-      path: {{ .Values.metrics.serviceMonitor.path }}
-      interval: {{ .Values.metrics.serviceMonitor.interval }}
-      scrapeTimeout: {{ .Values.metrics.serviceMonitor.scrapeTimeout }}
+    - port: {{ .Values.metrics.serviceMonitor.port | quote }}
+      path: {{ .Values.metrics.serviceMonitor.path | quote }}
+      interval: {{ .Values.metrics.serviceMonitor.interval | quote }}
+      scrapeTimeout: {{ .Values.metrics.serviceMonitor.scrapeTimeout | quote }}
       {{- with .Values.metrics.serviceMonitor.relabelings }}
       relabelings:
         {{- toYaml . | nindent 8 }}

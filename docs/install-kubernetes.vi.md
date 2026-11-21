@@ -244,7 +244,10 @@ Không cần đăng nhập và ngoài các endpoint này actuator không mở g�
 endpoint metrics; vì vậy `metrics.serviceMonitor` tắt theo mặc định. Từ 1.1.0, khi bật metrics
 (`FASTI_METRICS_PROMETHEUS_ENABLED=true` cùng token scrape hoặc cổng management, xem
 [hướng dẫn Docker](install-docker.vi.md#13-observability)), image phục vụ metrics Prometheus tại
-`/actuator/prometheus`; chart chưa cấu hình phần này (xem README của chart).
+`/actuator/prometheus`. Đặt `management.port` (ví dụ `9464`) để actuator chạy trên cổng riêng:
+probe, `helm test`, Service và NetworkPolicy đi theo cổng này, và
+`metrics.serviceMonitor.port: management` scrape cổng đó. Chart không gửi token scrape (xem
+README của chart).
 
 <a id="10-upgrade-and-rollback"></a>
 

@@ -89,6 +89,13 @@
         <targetPath>sql/liquibase</targetPath>
         <directory>target/sql/liquibase</directory>
       </resource>
+      <resource>
+        <targetPath>sql/optional</targetPath>
+        <directory>target/sql/optional</directory>
+        <includes>
+          <include>*.sql</include>
+        </includes>
+      </resource>
     </resources>
 
     <testResources>
@@ -159,7 +166,7 @@
                   <outputDirectory>target/fasti-engine-${project.version}</outputDirectory>
                 </artifactItem>
               </artifactItems>
-              <includes>**/create/*.sql, **/drop/*.sql, **/upgrade/*.sql, **/liquibase/**/*</includes>
+              <includes>**/create/*.sql, **/drop/*.sql, **/upgrade/*.sql, **/optional/*.sql, **/liquibase/**/*</includes>
             </configuration>
           </execution>
         </executions>
@@ -262,6 +269,12 @@
                 <copy todir="target/sql/drop" flatten="true">
                   <fileset dir="target/fasti-engine-${project.version}/dev/fasti/engine/audit/db/drop" />
                   <mapper type="regexp" from="^fasti\.([A-Za-z0-9]*)\.drop\.audit\.sql$" to="\1_fasti_audit.sql" />
+                </copy>
+
+                <!-- optional performance indexes (docs/performance.md): never run by the engine -->
+                <copy todir="target/sql/optional" flatten="true">
+                  <fileset dir="target/fasti-engine-${project.version}/dev/fasti/engine/performance/db/optional" />
+                  <mapper type="regexp" from="^fasti\.([A-Za-z0-9]*)\.(create|drop)\.perf\.indexes\.sql$" to="\1_fasti_perf_indexes_\2.sql" />
                 </copy>
 
                 <!-- upgrade -->

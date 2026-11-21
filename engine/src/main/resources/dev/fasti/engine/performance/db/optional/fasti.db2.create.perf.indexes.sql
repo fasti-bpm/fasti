@@ -1,0 +1,54 @@
+-- Fasti BPM: optional performance indexes for IBM Db2 (docs/performance.md).
+--
+-- Optional and additive: non-unique indexes on tables of the Camunda 7.24 schema. No table,
+-- column or constraint is changed, nothing is recorded in ACT_GE_SCHEMA_LOG, and the engine never
+-- runs this script: a database administrator does. Camunda 7.24 nodes and Fasti nodes work on the
+-- same database with or without these indexes; db2_fasti_perf_indexes_drop.sql removes them.
+--
+-- NOT YET VERIFIED ON DB2: the index definitions were measured on PostgreSQL 16 and
+-- MariaDB 11.4 (docs/performance.md); this script was only reviewed for syntax. Run it on a test
+-- system first and compare the plans of the queries named below.
+--
+-- Run it with the schema of the engine tables as current schema (db2 -tvf <file>). Plain
+-- statements: run again, an index that exists is refused with SQL0601N and an index with the
+-- same columns as an existing one gives the warning SQL0605W; both mean the index is there, and
+-- the command line processor goes on with the next statement. Db2 builds indexes while reads
+-- and writes go on. Run RUNSTATS on the tables afterwards.
+
+-- Job acquisition (selectNextJobsToExecute, every few seconds on every node) and timers by due
+-- date: without it each acquisition reads all of ACT_RU_JOB, mostly timers that are not due.
+-- Check on a test system: with jobExecutorAcquireByDueDate=true and ensureJobDueDateNotNull=false,
+-- the acquisition plan must not read the whole index when nothing is due (Db2 sorts NULL last, as
+-- PostgreSQL does, where an ascending index did that; see docs/performance.md).
+-- Write cost: one entry per job; changed again only when a job is rescheduled.
+create index FASTI_IDX_JOB_DUEDATE on ACT_RU_JOB (DUEDATE_);
+
+-- Overdue tasks and tasks by due date (dueBefore/dueAfter, sorting by due date): task lists,
+-- the dashboard and the workload page.
+-- Write cost: one entry per task; changed only when the due date changes.
+create index FASTI_IDX_TASK_DUE on ACT_RU_TASK (DUE_DATE_);
+
+-- Tasks of one assignee counted or sorted by due date ("my tasks", workload per user) and
+-- unassigned overdue tasks.
+-- Write cost: one entry per task, rewritten at each claim, unclaim and reassignment (as the
+-- stock index on ASSIGNEE_ is).
+create index FASTI_IDX_TASK_ASSIGNEE_DUE on ACT_RU_TASK (ASSIGNEE_, DUE_DATE_);
+
+-- User info by user: absences (fasti.absence.enabled) are looked up at each task assignment,
+-- and ACT_ID_INFO has no index besides its primary key.
+-- Write cost: one entry per user info row; written only when a profile or an absence changes.
+create index FASTI_IDX_ID_INFO_USER on ACT_ID_INFO (USER_ID_, KEY_);
+
+-- Second group: worth it only for the usage named; remove the "-- " to create them.
+--
+-- History of one process definition newest first (Cockpit history list of a definition). One
+-- more entry per started process instance.
+-- create index FASTI_IDX_HI_PI_PDEF_START on ACT_HI_PROCINST (PROC_DEF_ID_, START_TIME_);
+--
+-- Activity statistics of a definition (the definition page reads up to 2,000 finished activity
+-- instances every 30 seconds). ACT_HI_ACTINST is the largest history table: one more entry per
+-- activity instance, so only where that page is used on definitions with large histories.
+-- create index FASTI_IDX_HI_AI_PDEF_START on ACT_HI_ACTINST (PROC_DEF_ID_, START_TIME_);
+--
+-- Open incidents oldest first (incidents page, dashboard), with tens of thousands of open incidents.
+-- create index FASTI_IDX_INC_TIMESTAMP on ACT_RU_INCIDENT (INCIDENT_TIMESTAMP_);

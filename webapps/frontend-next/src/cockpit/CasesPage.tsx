@@ -75,7 +75,8 @@ export function CaseDefinitionsPage() {
     placeholderData: keepPreviousData,
     refetchInterval,
   });
-  const counts = useInstanceCounts(definitions.data?.items, refetchInterval);
+  // one request per row: the counts follow every few minutes, the list itself every 30 s
+  const counts = useInstanceCounts(definitions.data?.items, useRefreshInterval('slow'));
   const countOf = useMemo(() => {
     const byId = new Map<string, number | undefined>();
     (definitions.data?.items ?? []).forEach((definition, index) => byId.set(definition.id, counts[index]?.data));

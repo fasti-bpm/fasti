@@ -3,6 +3,7 @@
  * Copyright Fasti BPM contributors
  */
 import { Suspense, lazy, useMemo, useState } from 'react';
+import { usePacedInterval } from '../lib/activity';
 import type { FormEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Tabs } from 'radix-ui';
@@ -267,7 +268,7 @@ export function TaskDetail({
     queryKey: ['task', taskId],
     queryFn: () => getTask(taskId),
     placeholderData: preview,
-    refetchInterval: 60_000,
+    refetchInterval: usePacedInterval(60_000),
   });
   const task = query.data;
   const definition = useQuery({

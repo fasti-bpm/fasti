@@ -4,6 +4,7 @@
  */
 import { useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { usePacedInterval } from '../lib/activity';
 import { Link } from 'react-router';
 import { CircleAlert, CircleCheck, CircleHelp, TriangleAlert } from 'lucide-react';
 import { EXECUTION_METRICS, getDiagnostics, getExecutionMetrics, getHealth, type ExecutionMetric, type Health } from '../api/admin';
@@ -173,7 +174,7 @@ function useHealth() {
   return useQuery({
     queryKey: [ADMIN, 'health'],
     queryFn: ({ signal }) => getHealth(new Date(), signal),
-    refetchInterval: 60_000,
+    refetchInterval: usePacedInterval(60_000),
   });
 }
 

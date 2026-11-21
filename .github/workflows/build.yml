@@ -42,6 +42,7 @@ jobs:
         with:
           # the licence header check (part of the web UI build) compares with the 7.24.0 tag
           fetch-depth: 0
+          persist-credentials: false
       - id: maven
         uses: ./.github/actions/setup-maven
         with:
@@ -68,6 +69,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-maven
         with:
           java-version: '21'
@@ -90,6 +93,7 @@ jobs:
         with:
           # the licence header check compares with the 7.24.0 tag
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           # keep in line with version.nodejs.frontend.next in webapps/pom.xml
@@ -111,6 +115,7 @@ jobs:
         with:
           # the licence header check (part of the web UI build) compares with the 7.24.0 tag
           fetch-depth: 0
+          persist-credentials: false
       - uses: ./.github/actions/setup-maven
         with:
           java-version: '21'

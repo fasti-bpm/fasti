@@ -24,6 +24,8 @@ import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.SqlTimestampTypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.apache.ibatis.type.UnknownTypeHandler;
+import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
+import org.camunda.bpm.engine.impl.context.Context;
 
 /**
  * <p>The MyBatis configuration of the process engine. It keeps the way MyBatis 3.5 chose
@@ -49,7 +51,8 @@ import org.apache.ibatis.type.UnknownTypeHandler;
  * the value; once released, they can replace this class.</p>
  *
  * <p>On MySQL and MariaDB, {@link #useDatabaseType(String)} binds dates truncated to whole
- * seconds, see {@link WholeSecondDateTypeHandler}.</p>
+ * seconds, see {@link WholeSecondDateTypeHandler}; the expiration times of locks are rounded up
+ * before, see {@link #lockExpirationTime(String, long)}.</p>
  */
 public class MyBatisConfiguration extends Configuration {
 
@@ -84,6 +87,32 @@ public class MyBatisConfiguration extends Configuration {
    */
   public static long truncateToSeconds(long epochMillis) {
     return Math.floorDiv(epochMillis, 1000L) * 1000L;
+  }
+
+  /**
+   * The time a lock (of a job or an external task) that starts now expires, as it is stored: on
+   * MySQL and MariaDB rounded up to the next whole second, because the stored value has no
+   * fraction and {@link WholeSecondDateTypeHandler} would cut it off, ending the lock up to a
+   * second early (a lock of 500 ms taken at 12:00:00.100 would end at 12:00:00). Rounded up, a
+   * lock lasts at least as long as asked for, and less than a second longer. Other databases
+   * keep the milliseconds. Not for times that are no locks: the retry time of a failed external
+   * task stays cut off, so that a retry timeout of 0 lets the task be fetched at once.
+   *
+   * @param databaseType the database type of the process engine, such as <code>mysql</code>
+   * @param epochMillis the time the lock was asked to expire at
+   */
+  public static Date lockExpirationTime(String databaseType, long epochMillis) {
+    if (DbSqlSessionFactory.MYSQL.equals(databaseType)) {
+      long truncated = truncateToSeconds(epochMillis);
+      return new Date(truncated == epochMillis ? epochMillis : truncated + 1000L);
+    }
+    return new Date(epochMillis);
+  }
+
+  /** {@link #lockExpirationTime(String, long)} for the database of the current command. */
+  public static Date lockExpirationTime(long epochMillis) {
+    ProcessEngineConfigurationImpl configuration = Context.getProcessEngineConfiguration();
+    return lockExpirationTime(configuration == null ? null : configuration.getDatabaseType(), epochMillis);
   }
 
   @Override

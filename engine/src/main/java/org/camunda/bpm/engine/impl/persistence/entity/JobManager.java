@@ -37,6 +37,7 @@ import org.camunda.bpm.engine.impl.cfg.TransactionListener;
 import org.camunda.bpm.engine.impl.cfg.TransactionState;
 import org.camunda.bpm.engine.impl.context.Context;
 import org.camunda.bpm.engine.impl.db.ListQueryParameterObject;
+import org.camunda.bpm.engine.impl.db.sql.MyBatisConfiguration;
 import org.camunda.bpm.engine.impl.db.sql.DbSqlSessionFactory;
 import org.camunda.bpm.engine.impl.jobexecutor.ExclusiveJobAddedNotification;
 import org.camunda.bpm.engine.impl.jobexecutor.JobExecutor;
@@ -152,7 +153,7 @@ public class JobManager extends AbstractManager {
          && areInSameProcessInstance(job, jobExecutorContext.getCurrentJob())) {
         // lock job & add to the queue of the current processor
         Date currentTime = ClockUtil.getCurrentTime();
-        job.setLockExpirationTime(new Date(currentTime.getTime() + jobExecutor.getLockTimeInMillis()));
+        job.setLockExpirationTime(MyBatisConfiguration.lockExpirationTime(currentTime.getTime() + jobExecutor.getLockTimeInMillis()));
         job.setLockOwner(jobExecutor.getLockOwner());
         transactionListener = new ExclusiveJobAddedNotification(job.getId(), jobExecutorContext);
       } else {

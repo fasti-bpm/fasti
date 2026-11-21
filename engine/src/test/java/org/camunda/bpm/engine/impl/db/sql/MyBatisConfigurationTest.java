@@ -169,6 +169,30 @@ public class MyBatisConfigurationTest {
     assertThat((Throwable) exception.getNextException()).isNull();
   }
 
+  // Lock expiration times on MySQL and MariaDB: rounded up to the whole second
+
+  @Test
+  public void shouldRoundLockExpirationUpOnMysql() {
+    long second = 1_700_000_000_000L;
+
+    assertThat(MyBatisConfiguration.lockExpirationTime("mysql", second + 1)).isEqualTo(new Date(second + 1000));
+    assertThat(MyBatisConfiguration.lockExpirationTime("mysql", second + 999)).isEqualTo(new Date(second + 1000));
+    assertThat(MyBatisConfiguration.lockExpirationTime("mysql", second)).isEqualTo(new Date(second));
+    // before 1970
+    assertThat(MyBatisConfiguration.lockExpirationTime("mysql", -1500)).isEqualTo(new Date(-1000));
+  }
+
+  @Test
+  public void shouldKeepLockExpirationOnOtherDatabases() {
+    long time = 1_700_000_000_123L;
+
+    assertThat(MyBatisConfiguration.lockExpirationTime("h2", time)).isEqualTo(new Date(time));
+    assertThat(MyBatisConfiguration.lockExpirationTime("postgres", time)).isEqualTo(new Date(time));
+    assertThat(MyBatisConfiguration.lockExpirationTime(null, time)).isEqualTo(new Date(time));
+    // outside a command there is no engine configuration
+    assertThat(MyBatisConfiguration.lockExpirationTime(time)).isEqualTo(new Date(time));
+  }
+
   // Dates on MySQL and MariaDB (database type mysql): bound truncated to whole seconds
 
   private static final long MILLIS = 1_700_000_000_789L;

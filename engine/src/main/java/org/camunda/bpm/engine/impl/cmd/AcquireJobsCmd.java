@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import org.camunda.bpm.engine.impl.Page;
 import org.camunda.bpm.engine.impl.db.DbEntity;
+import org.camunda.bpm.engine.impl.db.sql.MyBatisConfiguration;
 import org.camunda.bpm.engine.impl.db.entitymanager.OptimisticLockingListener;
 import org.camunda.bpm.engine.impl.db.entitymanager.OptimisticLockingResult;
 import org.camunda.bpm.engine.impl.db.entitymanager.operation.DbEntityOperation;
@@ -105,7 +106,7 @@ public class AcquireJobsCmd implements Command<AcquiredJobs>, OptimisticLockingL
     GregorianCalendar gregorianCalendar = new GregorianCalendar();
     gregorianCalendar.setTime(ClockUtil.getCurrentTime());
     gregorianCalendar.add(Calendar.MILLISECOND, lockTimeInMillis);
-    job.setLockExpirationTime(gregorianCalendar.getTime());
+    job.setLockExpirationTime(MyBatisConfiguration.lockExpirationTime(gregorianCalendar.getTimeInMillis()));
   }
 
   @Override

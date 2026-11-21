@@ -37,6 +37,7 @@ import org.camunda.bpm.engine.impl.context.Context;
 import org.camunda.bpm.engine.impl.db.DbEntity;
 import org.camunda.bpm.engine.impl.db.EnginePersistenceLogger;
 import org.camunda.bpm.engine.impl.db.HasDbReferences;
+import org.camunda.bpm.engine.impl.db.sql.MyBatisConfiguration;
 import org.camunda.bpm.engine.impl.db.HasDbRevision;
 import org.camunda.bpm.engine.impl.incident.IncidentContext;
 import org.camunda.bpm.engine.impl.incident.IncidentHandling;
@@ -471,7 +472,7 @@ public class ExternalTaskEntity implements ExternalTask, DbEntity,
 
   public void lock(String workerId, long lockDuration) {
     this.workerId = workerId;
-    this.lockExpirationTime = new Date(ClockUtil.getCurrentTime().getTime() + lockDuration);
+    this.lockExpirationTime = MyBatisConfiguration.lockExpirationTime(ClockUtil.getCurrentTime().getTime() + lockDuration);
   }
 
   public ExecutionEntity getExecution() {
@@ -610,7 +611,7 @@ public class ExternalTaskEntity implements ExternalTask, DbEntity,
   public void extendLock(long newLockExpirationTime) {
     ensureActive();
     long newTime = ClockUtil.getCurrentTime().getTime() + newLockExpirationTime;
-    this.lockExpirationTime = new Date(newTime);
+    this.lockExpirationTime = MyBatisConfiguration.lockExpirationTime(newTime);
   }
 
   @Override

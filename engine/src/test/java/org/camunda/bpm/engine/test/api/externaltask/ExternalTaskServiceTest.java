@@ -61,6 +61,7 @@ import org.camunda.bpm.engine.history.HistoricExternalTaskLog;
 import org.camunda.bpm.engine.history.HistoricIncident;
 import org.camunda.bpm.engine.history.HistoricProcessInstanceQuery;
 import org.camunda.bpm.engine.history.HistoricVariableInstance;
+import org.camunda.bpm.engine.impl.db.sql.MyBatisConfiguration;
 import org.camunda.bpm.engine.impl.history.HistoryLevel;
 import org.camunda.bpm.engine.impl.util.ClockUtil;
 import org.camunda.bpm.engine.runtime.ActivityInstance;
@@ -3722,7 +3723,10 @@ public class ExternalTaskServiceTest extends PluggableProcessEngineTest {
       // then
       ExternalTask taskWithExtendedLock = externalTaskService.createExternalTaskQuery().locked().singleResult();
       assertNotNull(taskWithExtendedLock);
-      AssertUtil.assertEqualsSecondPrecision(new Date(extendLockTime.getTime() + LOCK_TIME), taskWithExtendedLock.getLockExpirationTime());
+      // Fasti: on MySQL and MariaDB the expiration is rounded up to the whole second
+      Date expectedLockExpiration = MyBatisConfiguration.lockExpirationTime(
+          processEngineConfiguration.getDatabaseType(), extendLockTime.getTime() + LOCK_TIME);
+      AssertUtil.assertEqualsSecondPrecision(expectedLockExpiration, taskWithExtendedLock.getLockExpirationTime());
 
     } finally {
       ClockUtil.setCurrentTime(oldCurrentTime);
@@ -3743,7 +3747,8 @@ public class ExternalTaskServiceTest extends PluggableProcessEngineTest {
     assertNotNull(lockedTasks);
     assertEquals(1, lockedTasks.size());
 
-    ClockUtil.setCurrentTime(nowPlus(2));
+    // Fasti: a second later, because MySQL and MariaDB round the expiration up to the whole second
+    ClockUtil.setCurrentTime(nowPlus(1002));
     // when
     try {
       externalTaskService.extendLock(lockedTasks.get(0).getId(), WORKER_ID, 100);

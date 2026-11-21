@@ -274,6 +274,41 @@ describe('dashboard', () => {
     expect(within(panel).queryByText(/batch/)).toBeNull();
   });
 
+  it('does not say that nothing needs attention before the overdue tasks are counted', async () => {
+    let answer: (response: Response) => void = () => undefined;
+    const totals = new Promise<Response>((resolve) => (answer = resolve));
+    backend({
+      routes: {
+        [`GET ${ENGINE}/incident`]: () => json([]),
+        [`GET ${ENGINE}/job/count`]: () => json({ count: 0 }),
+        [`GET ${ENGINE}/batch/statistics/count`]: () => json({ count: 0 }),
+        [`POST ${ENGINE}/task/workload`]: () => totals,
+      },
+    });
+    renderApp('/cockpit');
+    await screen.findByRole('link', { name: /Running instances/ });
+    await waitFor(() => expect(screen.getByRole('link', { name: /Running instances/ })).toHaveTextContent('12'));
+    expect(screen.queryByText('Nothing needs attention right now')).toBeNull();
+
+    answer(json({ totals: { id: null, open: 3, unassigned: 1, overdue: 1, oldest: null }, orphaned: 0, groups: [], users: [] }));
+
+    const panel = await screen.findByRole('region', { name: 'Needs attention' });
+    expect(await within(panel).findByRole('link', { name: '1 task is overdue' })).toBeVisible();
+    expect(screen.queryByText('Nothing needs attention right now')).toBeNull();
+  });
+
+  it('says so when the totals or the definitions of the tiles cannot be read', async () => {
+    backend({
+      routes: {
+        [`POST ${ENGINE}/task/workload`]: () => json({ type: 'ProcessEngineException', message: 'totals down' }, 500),
+      },
+    });
+    renderApp('/cockpit');
+
+    expect((await screen.findAllByText('totals down', {}, { timeout: 15_000 })).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: 'Try again' }).length).toBeGreaterThan(0);
+  }, 20_000);
+
   it('compares the work of a chosen time range with the range before', async () => {
     const user = userEvent.setup();
     const after = (request: { query: URLSearchParams }, name: string) => new Date(request.query.get(name) ?? '').getTime();

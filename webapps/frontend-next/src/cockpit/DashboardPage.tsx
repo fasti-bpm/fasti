@@ -109,7 +109,9 @@ function Attention({ tasklist }: { tasklist: boolean }) {
   const totals = useTaskTotals();
   const overdueTasks = totals.data?.overdue;
   const data = attention.data;
-  if (!data) {
+  // overdue tasks are often the only item: "nothing needs attention" waits for their count
+  const overduePending = tasklist && totals.isPending;
+  if (!data || (overduePending && !attention.isError)) {
     // a check that failed is no sign that nothing needs attention
     return attention.isError ? (
       <div className="table-stale" role="alert">
@@ -428,6 +430,18 @@ export function DashboardPage() {
             value={definitions.data?.deployments}
           />
         </div>
+      )}
+      {/* the tiles of the totals and of the definitions are read apart from the numbers above */}
+      {!(numbers.isError && !data) && ((totals.isError && !totals.data) || (definitions.isError && !definitions.data)) && (
+        <Card>
+          <ErrorState
+            error={totals.isError && !totals.data ? totals.error : definitions.error}
+            onRetry={() => {
+              if (totals.isError) void totals.refetch();
+              if (definitions.isError) void definitions.refetch();
+            }}
+          />
+        </Card>
       )}
 
       <div className="dashboard">

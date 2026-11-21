@@ -304,7 +304,7 @@ properties for Fasti BPM Run outside Docker (`configuration/default.yml` or
 |---|---|---|
 | `FASTI_LOG_FORMAT=json` | `fasti.logging.format` | one JSON object per log line ([Elastic Common Schema](https://www.elastic.co/guide/en/ecs/current/)); also `logstash`, `gelf`; `text` is the default |
 | `FASTI_METRICS_PROMETHEUS_ENABLED=true` | `fasti.metrics.prometheus.enabled` | Prometheus metrics at `/actuator/prometheus` |
-| `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | `fasti.metrics.prometheus.token` | scrape token, sent as `Authorization: Bearer <token>` |
+| `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | `fasti.metrics.prometheus.token` | scrape token, sent as `Authorization: Bearer <token>`; a random value of at least 16 characters |
 | `FASTI_MANAGEMENT_PORT` | `management.server.port` | the actuator (health **and** metrics) on a port of its own |
 | `FASTI_TRACING_ENABLED=true` | `fasti.tracing.enabled` | OpenTelemetry spans for HTTP requests, engine commands and job executions |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | `management.opentelemetry.tracing.export.otlp.endpoint` | where spans are sent (OTLP over HTTP, port 4318) |
@@ -348,7 +348,9 @@ not the gauges, across nodes). The counters move only while the engine metrics a
 The metrics are **not public**. Pick one of two ways:
 
 1. **Scrape token** on the application port. Every request needs
-   `Authorization: Bearer <token>`, otherwise the answer is `401`:
+   `Authorization: Bearer <token>`, otherwise the answer is `401`. The token must be a random
+   value of at least 16 characters; a node with a shorter one, or with the placeholder
+   `change-me` of the example configuration, refuses to start:
 
    ```bash
    openssl rand -hex 32 > metrics-token && chmod 0644 metrics-token
@@ -379,7 +381,11 @@ The metrics are **not public**. Pick one of two ways:
 
 Without either, a node with `FASTI_METRICS_PROMETHEUS_ENABLED=true` refuses to start. While the
 switch is off the endpoint does not exist at all, even if a configuration file exposes every
-actuator endpoint (`management.endpoints.web.exposure.include: "*"`).
+actuator endpoint (`management.endpoints.web.exposure.include: "*"`). The same rule holds when
+the endpoint is switched on with the Spring Boot settings behind the switch instead
+(`management.endpoint.prometheus.access`, `management.prometheus.metrics.export.enabled` and
+the exposure list): the node refuses to start without a token or a management port of its own,
+and a configured token is required on the endpoint.
 
 ### Tracing (OpenTelemetry)
 

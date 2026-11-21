@@ -47,7 +47,7 @@ public class FastiPrometheusAccessGuardTest {
   public void shouldAcceptTokenOrManagementPort() {
     assertThat(FastiPrometheusAccessGuard.check(new MockEnvironment()
         .withProperty("fasti.metrics.prometheus.enabled", "true")
-        .withProperty("fasti.metrics.prometheus.token", "secret"))).isNull();
+        .withProperty("fasti.metrics.prometheus.token", "0123456789abcdef"))).isNull();
     assertThat(FastiPrometheusAccessGuard.check(new MockEnvironment()
         .withProperty("fasti.metrics.prometheus.enabled", "true")
         .withProperty("management.server.port", "9464"))).isNull();
@@ -55,6 +55,90 @@ public class FastiPrometheusAccessGuardTest {
         .withProperty("fasti.metrics.prometheus.enabled", "true")
         .withProperty("server.port", "9464")
         .withProperty("management.server.port", "8080"))).isNull();
+  }
+
+  @Test
+  public void shouldRefuseShortTokensAndThePlaceholder() {
+    MockEnvironment environment = new MockEnvironment()
+        .withProperty("fasti.metrics.prometheus.enabled", "true")
+        .withProperty("fasti.metrics.prometheus.token", "a");
+    assertThat(FastiPrometheusAccessGuard.check(environment)).contains("too short").contains("16");
+
+    environment.setProperty("fasti.metrics.prometheus.token", "0123456789abcde");
+    assertThat(FastiPrometheusAccessGuard.check(environment)).contains("too short");
+    // white space around the token does not count
+    environment.setProperty("fasti.metrics.prometheus.token", "  0123456789abcde \r\n");
+    assertThat(FastiPrometheusAccessGuard.check(environment)).contains("too short");
+    environment.setProperty("fasti.metrics.prometheus.token", "0123456789abcdef\r\n");
+    assertThat(FastiPrometheusAccessGuard.check(environment)).isNull();
+
+    // the value of the commented example in default.yml and the documentation
+    environment.setProperty("fasti.metrics.prometheus.token", "change-me");
+    assertThat(FastiPrometheusAccessGuard.check(environment)).contains("placeholder");
+    environment.setProperty("fasti.metrics.prometheus.token", "Change-Me");
+    assertThat(FastiPrometheusAccessGuard.check(environment)).contains("placeholder");
+
+    // a token that is set must be usable, also next to a management port of its own
+    environment.setProperty("management.server.port", "9464");
+    assertThatThrownBy(() -> new FastiPrometheusAccessGuard(environment).postProcessBeanFactory(null))
+        .isInstanceOf(IllegalStateException.class).hasMessageContaining("placeholder");
+  }
+
+  @Test
+  public void shouldRefuseAnEndpointSwitchedOnWithSpringBootSettingsAlone() {
+    // the switch of Fasti is off, but the endpoint is enabled and exposed by hand
+    MockEnvironment environment = new MockEnvironment()
+        .withProperty("management.endpoint.prometheus.access", "read-only")
+        .withProperty("management.prometheus.metrics.export.enabled", "true")
+        .withProperty("management.endpoints.web.exposure.include", "health,prometheus");
+    assertThat(FastiPrometheusAccessGuard.isEndpointServed(environment)).isTrue();
+    assertThat(FastiPrometheusAccessGuard.check(environment))
+        .contains("management.* settings").contains("fasti.metrics.prometheus.token");
+
+    // every endpoint exposed
+    environment.setProperty("management.endpoints.web.exposure.include", "*");
+    assertThat(FastiPrometheusAccessGuard.check(environment)).isNotNull();
+    environment.setProperty("management.endpoint.prometheus.access", "UNRESTRICTED");
+    assertThat(FastiPrometheusAccessGuard.check(environment)).isNotNull();
+
+    // with a token or a management port of its own it may be served
+    environment.setProperty("fasti.metrics.prometheus.token", "0123456789abcdef");
+    assertThat(FastiPrometheusAccessGuard.check(environment)).isNull();
+    environment.setProperty("fasti.metrics.prometheus.token", "");
+    environment.setProperty("management.server.port", "9464");
+    assertThat(FastiPrometheusAccessGuard.check(environment)).isNull();
+  }
+
+  @Test
+  public void shouldAcceptAnEndpointThatIsNotServed() {
+    // as the environment post processor leaves it while the switch is off
+    assertThat(FastiPrometheusAccessGuard.isEndpointServed(new MockEnvironment()
+        .withProperty("management.endpoint.prometheus.access", "none")
+        .withProperty("management.prometheus.metrics.export.enabled", "false")
+        .withProperty("management.endpoints.web.exposure.include", "*"))).isFalse();
+    // not exposed
+    assertThat(FastiPrometheusAccessGuard.isEndpointServed(new MockEnvironment()
+        .withProperty("management.endpoint.prometheus.access", "read-only"))).isFalse();
+    assertThat(FastiPrometheusAccessGuard.isEndpointServed(new MockEnvironment()
+        .withProperty("management.endpoints.web.exposure.include", "*")
+        .withProperty("management.endpoints.web.exposure.exclude", "prometheus"))).isFalse();
+    // no registry, no endpoint
+    assertThat(FastiPrometheusAccessGuard.isEndpointServed(new MockEnvironment()
+        .withProperty("management.endpoints.web.exposure.include", "prometheus")
+        .withProperty("management.prometheus.metrics.export.enabled", "false"))).isFalse();
+    assertThat(FastiPrometheusAccessGuard.isEndpointServed(new MockEnvironment()
+        .withProperty("management.endpoints.web.exposure.include", "prometheus")
+        .withProperty("management.defaults.metrics.export.enabled", "false"))).isFalse();
+    // access capped or off by default
+    assertThat(FastiPrometheusAccessGuard.isEndpointServed(new MockEnvironment()
+        .withProperty("management.endpoints.web.exposure.include", "prometheus")
+        .withProperty("management.endpoints.access.max-permitted", "none"))).isFalse();
+    assertThat(FastiPrometheusAccessGuard.isEndpointServed(new MockEnvironment()
+        .withProperty("management.endpoints.web.exposure.include", "prometheus")
+        .withProperty("management.endpoints.access.default", "none"))).isFalse();
+    // a token alone switches nothing on
+    assertThat(FastiPrometheusAccessGuard.check(new MockEnvironment()
+        .withProperty("fasti.metrics.prometheus.token", "a"))).isNull();
   }
 
   @Test

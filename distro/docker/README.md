@@ -147,7 +147,7 @@ not in the published 1.0.1 image.
 | `FASTI_PORT` | 8080 | HTTP port; the image `HEALTHCHECK` follows it. **From 1.1.0:** a value that is not a number (Kubernetes sets `FASTI_PORT=tcp://...` for a Service named `fasti`) is ignored with a warning; the 1.0.1 image fails to start with it |
 | `FASTI_LOG_FORMAT` | `text` | **From 1.1.0.** `json`: one JSON object per log line (Elastic Common Schema); also `logstash`, `gelf` |
 | `FASTI_METRICS_PROMETHEUS_ENABLED` | `false` | **From 1.1.0.** `true`: Prometheus metrics at `/actuator/prometheus` (JVM, HTTP, pool, engine); needs a token or `FASTI_MANAGEMENT_PORT` |
-| `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | | **From 1.1.0.** Scrape token (`Authorization: Bearer <token>`) for the metrics on the application port |
+| `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | | **From 1.1.0.** Scrape token (`Authorization: Bearer <token>`) for the metrics on the application port; a random value of at least 16 characters (the server does not start with a shorter one or with `change-me`) |
 | `FASTI_MANAGEMENT_PORT` | | **From 1.1.0.** Serves the actuator (health and metrics) on a port of its own; the `HEALTHCHECK` follows it (a value that is not a number is ignored with a warning; the `HEALTHCHECK` then falls back to `FASTI_PORT`, else 8080) |
 | `FASTI_TRACING_ENABLED` | `false` | **From 1.1.0.** `true`: OpenTelemetry spans for requests, engine commands and jobs, sent to `OTEL_EXPORTER_OTLP_ENDPOINT` (OTLP/HTTP) |
 | `FASTI_TRACING_ENGINE_ENABLED` | `true` | **From 1.1.0.** `false`: with tracing on, keeps the spans of HTTP requests and leaves out those of engine commands and job executions |

@@ -152,7 +152,7 @@ mục ghi **từ 1.1.0** đã có trên nhánh `main` nhưng chưa có trong ima
 | `FASTI_PORT` | 8080 | cổng HTTP; `HEALTHCHECK` của image dùng cùng cổng này. **Từ 1.1.0:** giá trị không phải số (Kubernetes đặt `FASTI_PORT=tcp://...` cho Service tên `fasti`) bị bỏ qua kèm cảnh báo; image 1.0.1 không khởi động được với giá trị đó |
 | `FASTI_LOG_FORMAT` | `text` | **Từ 1.1.0.** `json`: mỗi dòng log là một đối tượng JSON (Elastic Common Schema); có thêm `logstash`, `gelf` |
 | `FASTI_METRICS_PROMETHEUS_ENABLED` | `false` | **Từ 1.1.0.** `true`: metrics Prometheus tại `/actuator/prometheus` (JVM, HTTP, pool, engine); cần token hoặc `FASTI_MANAGEMENT_PORT` |
-| `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | | **Từ 1.1.0.** Token scrape (`Authorization: Bearer <token>`) cho metrics trên cổng của ứng dụng |
+| `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | | **Từ 1.1.0.** Token scrape (`Authorization: Bearer <token>`) cho metrics trên cổng của ứng dụng; giá trị ngẫu nhiên ít nhất 16 ký tự (server không khởi động với token ngắn hơn hoặc với `change-me`) |
 | `FASTI_MANAGEMENT_PORT` | | **Từ 1.1.0.** Actuator (health và metrics) chạy trên cổng riêng; `HEALTHCHECK` theo cổng này (giá trị không phải số bị bỏ qua kèm cảnh báo; khi đó `HEALTHCHECK` dùng `FASTI_PORT`, nếu không thì 8080) |
 | `FASTI_TRACING_ENABLED` | `false` | **Từ 1.1.0.** `true`: span OpenTelemetry cho request, lệnh engine và job, gửi tới `OTEL_EXPORTER_OTLP_ENDPOINT` (OTLP/HTTP) |
 | `FASTI_TRACING_ENGINE_ENABLED` | `true` | **Từ 1.1.0.** `false`: khi bật tracing, giữ span của request HTTP và bỏ span của lệnh engine và của các lần chạy job |

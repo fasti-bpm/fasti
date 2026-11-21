@@ -19,21 +19,62 @@ package org.camunda.bpm.run.test.config.observability;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
+import java.util.Arrays;
+
 import org.camunda.bpm.run.CamundaBpmRun;
 import org.junit.Test;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 
 /**
- * Run refuses to start when the metrics would be public on the port of the application.
+ * Run refuses to start when the metrics would be public on the port of the application, or
+ * protected by a token that is no secret.
  */
 public class PrometheusWithoutTokenTest {
 
   @Test
   public void shouldRefuseToStart() {
+    assertThat(startFailure("without-token", "fasti.metrics.prometheus.enabled=true"))
+        .hasMessageContaining("fasti.metrics.prometheus.token")
+        .hasMessageContaining("fasti.metrics.prometheus.enabled=true");
+  }
+
+  @Test
+  public void shouldRefuseToStartWhenTheEndpointIsSwitchedOnWithSpringBootSettingsAlone() {
+    // without the switch of Fasti, which would require the token
+    assertThat(startFailure("spring-settings",
+        "management.endpoint.prometheus.access=read-only",
+        "management.prometheus.metrics.export.enabled=true",
+        "management.endpoints.web.exposure.include=health,prometheus"))
+        .hasMessageContaining("fasti.metrics.prometheus.token")
+        .hasMessageContaining("management.* settings");
+  }
+
+  @Test
+  public void shouldRefuseToStartWithAShortToken() {
+    assertThat(startFailure("short-token",
+        "fasti.metrics.prometheus.enabled=true", "fasti.metrics.prometheus.token=secret"))
+        .hasMessageContaining("fasti.metrics.prometheus.token")
+        .hasMessageContaining("too short");
+  }
+
+  @Test
+  public void shouldRefuseToStartWithThePlaceholderToken() {
+    assertThat(startFailure("placeholder-token",
+        "fasti.metrics.prometheus.enabled=true", "fasti.metrics.prometheus.token=change-me"))
+        .hasMessageContaining("fasti.metrics.prometheus.token")
+        .hasMessageContaining("placeholder");
+  }
+
+  /**
+   * Starts Run with the properties and returns the refusal of the access guard. The properties
+   * are passed as command line arguments, which win over the defaults Run derives from its
+   * switches, like values of a configuration file or of the environment do.
+   */
+  protected Throwable startFailure(String database, String... properties) {
+    String[] arguments = Arrays.stream(properties).map(property -> "--" + property).toArray(String[]::new);
     Throwable failure = catchThrowable(() -> new SpringApplicationBuilder(CamundaBpmRun.class)
-        .properties("server.port=0", "fasti.metrics.prometheus.enabled=true",
-            "spring.datasource.url=jdbc:h2:mem:prometheus-without-token")
-        .run()
+        .properties("server.port=0", "spring.datasource.url=jdbc:h2:mem:prometheus-" + database)
+        .run(arguments)
         .close());
 
     assertThat(failure).isNotNull();
@@ -42,6 +83,6 @@ public class PrometheusWithoutTokenTest {
         && cause.getMessage() != null && cause.getMessage().contains("fasti.metrics.prometheus.token"))) {
       cause = cause.getCause();
     }
-    assertThat(cause).hasMessageContaining("fasti.metrics.prometheus.token");
+    return cause;
   }
 }

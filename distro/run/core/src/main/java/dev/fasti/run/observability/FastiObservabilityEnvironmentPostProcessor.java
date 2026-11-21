@@ -43,7 +43,8 @@ import org.springframework.util.StringUtils;
  * <li>{@code fasti.metrics.prometheus.enabled} (default {@code false}): adds the
  * {@code prometheus} actuator endpoint to the exposed web endpoints. While it is off, the
  * endpoint is not available at all, even if the exposure list names it or uses {@code *}.
- * {@link FastiPrometheusAccessGuard} requires a scrape token or a separate management port.</li>
+ * {@link FastiPrometheusAccessGuard} requires a scrape token or a separate management port,
+ * also when the endpoint is switched on with the settings of Spring Boot instead.</li>
  * <li>{@code fasti.tracing.enabled} (default {@code false}): keeps the OpenTelemetry SDK and
  * the export of spans off until switched on. Spans are only sent once an OTLP endpoint is
  * configured.</li>

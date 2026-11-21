@@ -79,8 +79,10 @@ fasti.four-eyes.enabled: true
 
 # Observability, all off by default. JSON logs: text (default), json (Elastic Common Schema),
 # logstash or gelf. Prometheus metrics at /actuator/prometheus need a scrape token
-# (Authorization: Bearer <token>) or a separate management.server.port. Tracing sends
-# OpenTelemetry spans over OTLP/HTTP once an endpoint is set.
+# (Authorization: Bearer <token>) or a separate management.server.port. The token must be a
+# random value of at least 16 characters (for example from: openssl rand -hex 32); Run does not
+# start with a shorter one or with the placeholder below. Tracing sends OpenTelemetry spans over
+# OTLP/HTTP once an endpoint is set.
 #fasti.logging.format: json
 #fasti.metrics.prometheus:
 #  enabled: true

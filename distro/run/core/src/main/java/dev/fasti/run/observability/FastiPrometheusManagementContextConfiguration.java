@@ -24,7 +24,6 @@ import org.springframework.boot.actuate.autoconfigure.web.ManagementContextConfi
 import org.springframework.boot.actuate.autoconfigure.web.ManagementContextType;
 import org.springframework.boot.actuate.endpoint.EndpointId;
 import org.springframework.boot.actuate.endpoint.web.PathMappedEndpoints;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.webmvc.autoconfigure.DispatcherServletPath;
@@ -36,12 +35,14 @@ import org.springframework.util.StringUtils;
 /**
  * Requires the scrape token on the Prometheus endpoint, wherever the actuator is served: on the
  * port of the application or, with {@code management.server.port}, on the management port. Any
- * non-blank value is a token (also "false"); without one the endpoint is only served on a
- * management port of its own.
+ * non-blank value is a token (also "false"; {@link FastiPrometheusAccessGuard} refuses short
+ * ones); without one the endpoint is only served on a management port of its own.
+ * <p>
+ * The filter does not depend on {@code fasti.metrics.prometheus.enabled}: it also protects an
+ * endpoint that was switched on with the settings of Spring Boot alone.
  */
 @ManagementContextConfiguration(value = ManagementContextType.ANY, proxyBeanMethods = false)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-@ConditionalOnBooleanProperty(FastiObservabilityEnvironmentPostProcessor.PROMETHEUS_ENABLED)
 public class FastiPrometheusManagementContextConfiguration {
 
   @Bean

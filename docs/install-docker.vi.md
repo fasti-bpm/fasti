@@ -300,7 +300,7 @@ Spring Boot cho Fasti BPM Run chạy ngoài Docker (`configuration/default.yml` 
 |---|---|---|
 | `FASTI_LOG_FORMAT=json` | `fasti.logging.format` | mỗi dòng log là một đối tượng JSON ([Elastic Common Schema](https://www.elastic.co/guide/en/ecs/current/)); có thêm `logstash`, `gelf`; mặc định `text` |
 | `FASTI_METRICS_PROMETHEUS_ENABLED=true` | `fasti.metrics.prometheus.enabled` | metrics Prometheus tại `/actuator/prometheus` |
-| `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | `fasti.metrics.prometheus.token` | token để scrape, gửi dạng `Authorization: Bearer <token>` |
+| `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | `fasti.metrics.prometheus.token` | token để scrape, gửi dạng `Authorization: Bearer <token>`; giá trị ngẫu nhiên ít nhất 16 ký tự |
 | `FASTI_MANAGEMENT_PORT` | `management.server.port` | actuator (health **và** metrics) chạy trên cổng riêng |
 | `FASTI_TRACING_ENABLED=true` | `fasti.tracing.enabled` | span OpenTelemetry cho request HTTP, lệnh của engine và mỗi lần chạy job |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | `management.opentelemetry.tracing.export.otlp.endpoint` | nơi nhận span (OTLP qua HTTP, cổng 4318) |
@@ -344,7 +344,9 @@ cộng counter, không cộng gauge). Counter chỉ tăng khi metrics của engi
 Metrics **không công khai**. Chọn một trong hai cách:
 
 1. **Token scrape** trên cổng của ứng dụng. Mỗi request phải có
-   `Authorization: Bearer <token>`, nếu không sẽ nhận `401`:
+   `Authorization: Bearer <token>`, nếu không sẽ nhận `401`. Token phải là giá trị ngẫu nhiên
+   ít nhất 16 ký tự; node có token ngắn hơn, hoặc dùng giá trị mẫu `change-me` của cấu hình ví
+   dụ, sẽ từ chối khởi động:
 
    ```bash
    openssl rand -hex 32 > metrics-token && chmod 0644 metrics-token
@@ -375,7 +377,11 @@ Metrics **không công khai**. Chọn một trong hai cách:
 
 Không có cách nào trong hai cách trên thì node có `FASTI_METRICS_PROMETHEUS_ENABLED=true` sẽ từ
 chối khởi động. Khi công tắc tắt, endpoint hoàn toàn không tồn tại, kể cả khi tệp cấu hình mở mọi
-endpoint của actuator (`management.endpoints.web.exposure.include: "*"`).
+endpoint của actuator (`management.endpoints.web.exposure.include: "*"`). Quy tắc này cũng áp
+dụng khi endpoint được bật bằng chính các cấu hình Spring Boot đứng sau công tắc
+(`management.endpoint.prometheus.access`, `management.prometheus.metrics.export.enabled` và
+danh sách exposure): node từ chối khởi động nếu không có token hoặc cổng management riêng, và
+token đã cấu hình là bắt buộc trên endpoint.
 
 ### Tracing (OpenTelemetry)
 

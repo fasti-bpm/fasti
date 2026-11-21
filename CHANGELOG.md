@@ -122,6 +122,20 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   `helm test` and the NetworkPolicy follow it, and `metrics.serviceMonitor.port: management`
   scrapes it. Setting `FASTI_MANAGEMENT_PORT` through `extraEnv` is refused, because the probes
   would keep calling port 8080.
+- MCP server for AI assistants ([docs](docs/mcp.md)): with `fasti.mcp.enabled=true` (Run:
+  `--mcp`; container image: `FASTI_MCP_ENABLED=true`; Spring Boot: the new starter
+  `fasti-bpm-spring-boot-starter-mcp`) the engine serves a Model Context Protocol server at
+  `/mcp` (Streamable HTTP, stateless, MCP 2025-11-25), built on the official MCP Java SDK 2.1.0.
+  Every request must be authenticated, with HTTP basic against the engine users or, with
+  `fasti.security.oidc.rest.bearer-enabled=true`, with the bearer tokens of the REST API (plus
+  RFC 9728 protected resource metadata); every tool runs as that user through the engine's
+  authorization checks, four-eyes rules and audit trail. Read tools: engine info, process
+  definitions with BPMN XML, running and historic process instances with masked and cut
+  variables, user tasks, incidents with stack traces, DMN decisions (list, evaluate); BPMN and
+  DMN XML also as resources. Tools that start processes, claim, unclaim and complete tasks and
+  retry failed jobs exist only with `fasti.mcp.write-tools.enabled=true`; no tool deploys
+  models or evaluates expressions or scripts of the caller. Requests with a foreign `Origin`
+  are refused (DNS rebinding), results are paged and limited. Off by default everywhere.
 
 ### Changed
 

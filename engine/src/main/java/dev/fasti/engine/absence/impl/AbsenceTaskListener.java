@@ -104,8 +104,8 @@ public class AbsenceTaskListener implements TaskListener {
       return;
     }
     Date now = ClockUtil.getCurrentTime();
-    if (candidates.size() > 1) {
-      // one statement instead of one per candidate
+    if (candidates.size() > 1 && AbsenceStore.prefersReadingAll(commandContext)) {
+      // no index on the user: one statement instead of one table scan per candidate
       AbsenceStore.findAll(commandContext);
     }
     for (String candidate : new ArrayList<>(candidates)) {

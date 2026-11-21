@@ -27,10 +27,12 @@ import org.camunda.bpm.engine.impl.interceptor.SessionFactory;
 
 /**
  * What a command has already looked up about absences: the absence of a user, whether a user
- * exists, and whether all absences are loaded. ACT_ID_INFO has no index on the user or the key
- * (and the schema stays that of Camunda 7.24), so every lookup reads the table; a command that
- * asks for the same user again (several tasks, a chain of substitutes) is answered from here,
- * and the second user a command asks for makes it read all absences at once.
+ * exists, and whether all absences are loaded. A command that asks for the same user again
+ * (several tasks, a chain of substitutes) is answered from here. Whether the second user a
+ * command asks for makes it read all absences at once depends on the database: without an index
+ * on ACT_ID_INFO (USER_ID_, ...) every lookup of one user reads the whole table, so reading all
+ * absences costs no more; with the optional index FASTI_IDX_ID_INFO_USER a lookup of one user is
+ * an index seek, which reading all absences would turn into a scan (see {@link Factory}).
  * The plugin registers the factory; without it nothing is remembered. Writes through
  * {@link AbsenceStore} keep it up to date; user info or users changed in the same command by
  * other means (the identity service) are not noticed until the command ends.
@@ -42,6 +44,16 @@ public class AbsenceCache implements Session {
   protected boolean complete;
   /** How many users this command looked up one by one. */
   protected int lookups;
+  /** Whether reading all absences at once is cheaper than reading the absence of one more user. */
+  protected final boolean readAllPreferred;
+
+  public AbsenceCache() {
+    this(false);
+  }
+
+  public AbsenceCache(boolean readAllPreferred) {
+    this.readAllPreferred = readAllPreferred;
+  }
 
   /** The cache of the command, or {@code null} on an engine without the plugin. */
   public static AbsenceCache of(CommandContext commandContext) {
@@ -62,6 +74,15 @@ public class AbsenceCache implements Session {
   /** Counts a lookup of one user that has to read the table; how many there were, this one included. */
   public int countLookup() {
     return ++lookups;
+  }
+
+  /**
+   * Whether one statement for all absences is the better way to answer the lookups of more than
+   * one user: only when the engine knows that ACT_ID_INFO has no index that serves a lookup by
+   * user (see {@link Factory#setUserIndexPresent}).
+   */
+  public boolean isReadAllPreferred() {
+    return readAllPreferred;
   }
 
   public void putAbsence(String userId, Absence absence) {
@@ -112,8 +133,14 @@ public class AbsenceCache implements Session {
     lookups = 0;
   }
 
-  /** Opens an {@link AbsenceCache} per command context. */
+  /**
+   * Opens an {@link AbsenceCache} per command context. Until the plugin has looked at the indexes
+   * of ACT_ID_INFO at engine start, and when it could not tell, absences are read user by user:
+   * that never turns an index seek into a scan.
+   */
   public static class Factory implements SessionFactory {
+
+    protected volatile Boolean userIndexPresent;
 
     @Override
     public Class<?> getSessionType() {
@@ -122,7 +149,20 @@ public class AbsenceCache implements Session {
 
     @Override
     public Session openSession() {
-      return new AbsenceCache();
+      return new AbsenceCache(Boolean.FALSE.equals(userIndexPresent));
+    }
+
+    public Boolean getUserIndexPresent() {
+      return userIndexPresent;
+    }
+
+    /**
+     * @param userIndexPresent whether ACT_ID_INFO has an index that serves the lookup of the user
+     *        info of one user ({@code USER_ID_} leading, as FASTI_IDX_ID_INFO_USER); {@code null}
+     *        if that is not known
+     */
+    public void setUserIndexPresent(Boolean userIndexPresent) {
+      this.userIndexPresent = userIndexPresent;
     }
   }
 }

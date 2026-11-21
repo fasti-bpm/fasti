@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import dev.fasti.engine.absence.Absence;
+import org.camunda.bpm.engine.impl.db.ListQueryParameterObject;
 import org.camunda.bpm.engine.impl.db.entitymanager.cache.DbEntityCache;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.persistence.entity.IdentityInfoEntity;
@@ -37,11 +38,14 @@ import org.camunda.bpm.engine.impl.persistence.entity.IdentityInfoEntity;
  * command. Times are stored as ISO-8601 instants in UTC. Writing replaces all rows of an absence,
  * which also removes duplicates left by concurrent first writes.
  *
- * <p>ACT_ID_INFO has no index on the user or the key, and the schema stays that of Camunda 7.24,
- * so each statement here reads the table once. To keep that cheap, a command remembers what it
- * looked up ({@link AbsenceCache}), a listing loads all absences with one statement
- * ({@link #findAll}), and ended absences are removed whenever an absence is written
- * ({@link #deleteEnded}), so the rows are those of current and upcoming absences.</p>
+ * <p>The Camunda 7.24 schema has no index on ACT_ID_INFO besides its primary key, so there each
+ * statement here reads the table once; the optional index FASTI_IDX_ID_INFO_USER (USER_ID_, KEY_)
+ * makes the lookup of one user an index seek. A command remembers what it looked up
+ * ({@link AbsenceCache}); without that index, the second user a command looks up makes it read
+ * all absences with one statement ({@link #findAll}), which answers every later lookup. A listing
+ * reads all absences with one statement in any case. Ended absences are removed whenever an
+ * absence is written ({@link #deleteEnded}), so the rows are those of current and upcoming
+ * absences.</p>
  */
 public final class AbsenceStore {
 
@@ -67,8 +71,9 @@ public final class AbsenceStore {
         return known.orElse(null);
       }
     }
-    if (cache != null && cache.countLookup() > 1) {
-      // the command asks for a second user (a substitute on the way, another assignee): one
+    if (cache != null && cache.countLookup() > 1 && cache.isReadAllPreferred()) {
+      // the command asks for a second user (a substitute on the way, another assignee) and the
+      // table has no index on the user, so this lookup reads the whole table anyway: one
       // statement for all absences answers this and every later lookup of the command
       return findAll(commandContext).get(userId);
     }
@@ -80,8 +85,19 @@ public final class AbsenceStore {
   }
 
   /**
+   * Whether the lookups of several users in this command are better answered by
+   * {@link #findAll}: only where ACT_ID_INFO is known to have no index on the user.
+   */
+  public static boolean prefersReadingAll(CommandContext commandContext) {
+    AbsenceCache cache = AbsenceCache.of(commandContext);
+    return cache != null && cache.isReadAllPreferred();
+  }
+
+  /**
    * The absences of all users (of any time), by user, read with one statement. Later lookups of
-   * the command are answered from the result.
+   * the command are answered from the result. The rows are not put into the entity cache of the
+   * command (which would hold and dirty-check every absence row until the command ends); only
+   * the absences are remembered.
    */
   public static Map<String, Absence> findAll(CommandContext commandContext) {
     AbsenceCache cache = AbsenceCache.of(commandContext);
@@ -92,7 +108,7 @@ public final class AbsenceStore {
       }
     }
     Map<String, Absence> all = new LinkedHashMap<>();
-    allRows(commandContext).forEach((userId, rows) -> {
+    allRows(commandContext, false).forEach((userId, rows) -> {
       Absence absence = toAbsence(userId, rows);
       if (absence != null) {
         all.put(userId, absence);
@@ -139,7 +155,8 @@ public final class AbsenceStore {
   public static int deleteEnded(CommandContext commandContext, Date now) {
     lock(commandContext);
     int removed = 0;
-    for (Map.Entry<String, List<IdentityInfoEntity>> entry : allRows(commandContext).entrySet()) {
+    // read through the entity cache: the rows are deleted below
+    for (Map.Entry<String, List<IdentityInfoEntity>> entry : allRows(commandContext, true).entrySet()) {
       Absence absence = toAbsence(entry.getKey(), entry.getValue());
       if (absence != null && absence.getStatus(now) == Absence.Status.ENDED) {
         for (IdentityInfoEntity info : entry.getValue()) {
@@ -208,11 +225,21 @@ public final class AbsenceStore {
     return result;
   }
 
-  /** The rows of all absences by user, as this command sees them; one statement. */
+  /**
+   * The rows of all absences by user, as this command sees them; one statement.
+   *
+   * @param cached whether the rows go into the entity cache of the command, as rows that are
+   *        changed or deleted must; rows that are only read stay out of it
+   */
   @SuppressWarnings("unchecked")
-  static Map<String, List<IdentityInfoEntity>> allRows(CommandContext commandContext) {
-    List<IdentityInfoEntity> selected = commandContext.getDbEntityManager()
-        .selectList("selectFastiIdentityInfosByKeys", new ArrayList<>(KEYS));
+  static Map<String, List<IdentityInfoEntity>> allRows(CommandContext commandContext, boolean cached) {
+    List<IdentityInfoEntity> selected;
+    if (cached) {
+      selected = commandContext.getDbEntityManager().selectList("selectFastiIdentityInfosByKeys", new ArrayList<>(KEYS));
+    } else {
+      selected = (List<IdentityInfoEntity>) commandContext.getDbSqlSession().selectList("selectFastiIdentityInfosByKeys",
+          new ListQueryParameterObject(new ArrayList<>(KEYS), 0, Integer.MAX_VALUE));
+    }
     Map<String, List<IdentityInfoEntity>> byUser = new LinkedHashMap<>();
     for (IdentityInfoEntity info : visible(commandContext, selected)) {
       byUser.computeIfAbsent(info.getUserId(), userId -> new ArrayList<>()).add(info);
@@ -220,7 +247,11 @@ public final class AbsenceStore {
     return byUser;
   }
 
-  /** The selected rows of absences plus the ones inserted, minus the ones deleted within the command. */
+  /**
+   * The selected rows of absences plus the ones inserted, minus the ones deleted within the
+   * command. The entity cache knows inserts and deletes by id, so the selected rows need not be
+   * cached themselves.
+   */
   static List<IdentityInfoEntity> visible(CommandContext commandContext, List<IdentityInfoEntity> selected) {
     DbEntityCache cache = commandContext.getDbEntityManager().getDbEntityCache();
     List<IdentityInfoEntity> all = new ArrayList<>(selected);

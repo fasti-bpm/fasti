@@ -111,7 +111,8 @@ of the provider must have `username` and `password` fields (Keycloak). Reports g
 | `src/i18n` | Messages: one folder per language in `locales/`, English is the reference (see Languages) |
 | `src/theme` | Design tokens (colour, spacing, type) for the light and the dark theme |
 | `src/ui` | Shared components on top of Radix UI |
-| `src/tasklist`, `src/processes` | Tasklist and Start process |
+| `src/tasklist`, `src/processes` | Tasklist and Start process; the [four-eyes](../../docs/four-eyes.md) notice of a task (from 1.1.0) |
+| `src/absence` | [Substitutes during absence](../../docs/absence.md) (from 1.1.0): the Absence section of the preferences and of a user in Admin, the banner and the substitute notes in the tasklist |
 | `src/cockpit` | Monitoring: dashboard, processes, instances, incidents, jobs, history, deployments, decisions, batches |
 | `src/modeler` | BPMN, DMN and form modeler |
 | `src/admin` | Administration |
@@ -147,6 +148,7 @@ statistics, instance list, incidents, called processes). The calls are in `src/a
 | `/cockpit/decision-history`, `/cockpit/decision-history/{id}` | Decision evaluation history |
 | `/cockpit/migration` | Migrating instances to another version |
 | `/cockpit/audit` | Operation log (who changed what) |
+| `/cockpit/audit-trail` | [Immutable audit trail](../../docs/audit-trail.md) (from 1.1.0): records with filters, CSV and JSON export, integrity check; says how to turn the audit trail on while it is off |
 | `/cockpit/cleanup` | History cleanup |
 | `/cockpit/modeler` | BPMN, DMN and form modeler, deployment |
 

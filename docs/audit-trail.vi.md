@@ -2,6 +2,10 @@
 
 # Nhật ký kiểm toán bất biến
 
+> **Có từ 1.1.0, chưa có trong bản phát hành 1.0.1.** Tính năng này đã có trên nhánh `main` và sẽ
+> được phát hành cùng Fasti 1.1.0. Bản phát hành 1.0.1 và image 1.0.1 đã công bố chưa có tính năng
+> này; các thiết lập của nó không có tác dụng ở đó.
+
 Kiểm toán viên muốn biết ai đã làm gì, khi nào, với hồ sơ nào, và rằng không ai sửa bản ghi đó
 về sau. Lịch sử và nhật ký thao tác của engine trả lời câu hỏi đầu, nhưng bất kỳ ai có quyền
 truy cập cơ sở dữ liệu đều có thể sửa chúng mà không để lại dấu vết, và việc dọn lịch sử sẽ xóa
@@ -32,11 +36,17 @@ Mỗi bản ghi có **người thực hiện** (người dùng đã xác thực,
 executor, timer, lúc khởi động), **thời điểm** theo đồng hồ engine (mili giây từ năm 1970 UTC),
 **engine**, **tenant**, định nghĩa tiến trình, lượt chạy tiến trình và **mã nghiệp vụ** của nó.
 
-Engine tạo ra sự kiện gì phụ thuộc **mức lịch sử**: ở `full` (mặc định của Run và container
-image) là tất cả những gì nêu trên; ở `audit` và `activity` không có nhật ký thao tác người dùng
-(ai nhận việc, thay đổi người dùng và phân quyền); ở `none` chỉ có triển khai và bản ghi của
-chính nhật ký kiểm toán. Plugin ghi cảnh báo khi mức thấp hơn `full`. Nhật ký thao tác cần người
-dùng đã xác thực, như trong Camunda 7.
+Plugin ghi những gì engine tạo ra, và điều đó phụ thuộc **mức lịch sử**:
+
+| Mức lịch sử | Được ghi |
+|---|---|
+| `full` (mặc định của Run và container image) | tất cả những gì nêu trên |
+| `audit` | `process`, `task` (`create`, `assign`, `update`, `complete`, `delete`), `variable`, `deployment`, `audit` và, nếu bật, `activity`. Không ghi: `operation` (ai nhận việc, thay đổi người dùng và phân quyền), `incident`, `decision`, và các hành động `identity-link-add` / `identity-link-delete` của tác vụ (người và nhóm ứng viên, chủ sở hữu) |
+| `activity` | như `audit`, và cũng không có bản ghi `variable` |
+| `none` | chỉ có `deployment` và bản ghi của chính nhật ký kiểm toán (`audit`) |
+
+Plugin ghi cảnh báo khi mức thấp hơn `full`. Nhật ký thao tác cần người dùng đã xác thực, như
+trong Camunda 7.
 
 **Giá trị biến** (`fasti.audit.variable-values`):
 
@@ -55,9 +65,10 @@ cùng biến (`entityId`).
 
 ## Cách phát hiện sửa đổi
 
-Mỗi bản ghi lưu `HASH_ = SHA-256(PREV_HASH_ ‖ dạng chuẩn của bản ghi)`. Dạng chuẩn ghi mỗi trường
-trên một dòng (có thoát ký tự, phân biệt `null` với văn bản) và bắt đầu bằng phiên bản
-`fasti-audit-v1`. Các bản ghi tạo thành **chuỗi**: vị trí 1, 2, 3, … không có khoảng trống, mỗi bản
+Mỗi bản ghi lưu `HASH_ = SHA-256(PREV_HASH_ + "\n" + dạng chuẩn của bản ghi)`: mã băm trước (64 ký
+tự thập lục phân; 64 số không với bản ghi đầu của chuỗi), một ký tự xuống dòng và dạng chuẩn, tính
+trên các byte UTF-8. Dạng chuẩn ghi mỗi trường trên một dòng (có thoát ký tự, phân biệt `null` với
+văn bản) và bắt đầu bằng phiên bản `fasti-audit-v1`. Các bản ghi tạo thành **chuỗi**: vị trí 1, 2, 3, … không có khoảng trống, mỗi bản
 ghi chứa mã băm của bản ghi trước. Bảng `FASTI_AUDIT_HEAD` giữ vị trí và mã băm của bản ghi cuối
 của từng chuỗi.
 
@@ -157,7 +168,7 @@ Tất cả nằm dưới `/engine-rest` (cũng có trong tài liệu OpenAPI, nh
 
 | Phương thức và đường dẫn | Chức năng |
 |---|---|
-| `GET /audit` | `enabled` và các thiết lập (`nodeId`, `chains`, `types`, `variableValues`, `maskedVariables`, `signed`, `keyId`, `checkpointInterval`, `retentionDays`, `historyLevel`); không bao giờ có khóa |
+| `GET /audit` | `enabled`, cho mọi người gọi và cả khi nhật ký kiểm toán tắt (`200` với `enabled: false`); với người được đọc nhật ký thì có thêm các thiết lập (`nodeId`, `chains`, `types`, `variableValues`, `maskedVariables`, `signed`, `keyId`, `checkpointInterval`, `retentionDays`, `historyLevel`); không bao giờ có khóa |
 | `GET /audit/event` | Các bản ghi, mới nhất trước; lọc `processInstanceId`, `businessKey`, `actor` (`system` cho engine), `type` (phân cách bằng dấu phẩy), `action`, `tenantId`, `processDefinitionKey`, `entityId`, `chainId`, `from`, `to`, `sortOrder` (`desc`, `asc`), phân trang `firstResult`, `maxResults` (tối đa 1000) |
 | `GET /audit/event/count` | Số bản ghi khớp bộ lọc |
 | `GET /audit/event/export?format=csv\|json` | Phần đang lọc dưới dạng tệp (được ghi lại là `audit`/`export`) |
@@ -167,7 +178,10 @@ Tất cả nằm dưới `/engine-rest` (cũng có trong tài liệu OpenAPI, nh
 **Phân quyền**: đọc, xuất và kiểm tra cần là thành viên nhóm quản trị (`camunda-admin`) hoặc có
 quyền `READ` trên tài nguyên `SYSTEM`; dọn cần nhóm quản trị hoặc `DELETE` trên `SYSTEM`. Tài
 nguyên `SYSTEM` có sẵn trong Camunda 7.24 nên không cần loại tài nguyên mới. Khi không kiểm tra
-phân quyền, như mọi nơi trong engine, ai cũng được. Trả về `400` khi nhật ký kiểm toán tắt.
+phân quyền, như mọi nơi trong engine, ai cũng được. Điều đó cũng đúng với yêu cầu không có người
+dùng đã xác thực, kể cả khi phân quyền đang bật: đó là trường hợp xác thực REST đang tắt, như trong
+cấu hình mặc định của Fasti BPM Run (container image thì bật). Mọi endpoint trừ `GET /audit` trả về
+`400` khi nhật ký kiểm toán tắt.
 
 Java: `AuditTrail.of(processEngine)` trả về `AuditService` (`createQuery()`, `verify()`,
 `recordExport(…)`, `purge(before)`).
@@ -201,8 +215,10 @@ hệ thống bật nó một cách có chủ đích.
 
 **Bảng.** Với `databaseSchemaUpdate` là `true` hoặc `create` (Run, starter theo mặc định) plugin tự
 tạo bảng khi khởi động. Nếu không (container image giữ nguyên cơ sở dữ liệu có sẵn), hãy tạo trước
-bằng `sql/create/<database>_fasti_audit.sql` của bản phân phối (cũng có trong jar engine dưới
-`dev/fasti/engine/audit/db/create`); `sql/drop/…` xóa bảng cùng mọi bản ghi. Nếu thiếu bảng mà
+bằng script `<database>_fasti_audit.sql` của bản phân phối: trong `configuration/sql/create/` của
+Fasti BPM Run (`/fasti/configuration/sql/create/` trong container image), trong `sql/create/` của
+bản Tomcat và WildFly (cũng có trong jar engine dưới `dev/fasti/engine/audit/db/create`). Script
+cùng tên trong `sql/drop/` bên cạnh xóa bảng cùng mọi bản ghi. Nếu thiếu bảng mà
 không được tạo, engine từ chối khởi động với thông báo nêu tên script. Có script cho H2,
 PostgreSQL, MySQL/MariaDB (dùng `utf8mb4`), Oracle, SQL Server và DB2.
 
@@ -229,8 +245,14 @@ phải chờ.
   đều đã được ghi: node không bật plugin, mức lịch sử thấp hơn, hoặc sửa trực tiếp bảng engine
   trong cơ sở dữ liệu sẽ đi vòng qua nó.
 - Không có khóa ký, người có quyền ghi vào cơ sở dữ liệu có thể viết lại một chuỗi từ một bản ghi
-  nào đó trở đi cùng với head; có khóa thì chỉ các bản ghi sau điểm kiểm tra cuối. Hãy lưu các mã
-  băm cuối được báo hoặc các dòng log điểm kiểm tra ở ngoài cơ sở dữ liệu.
+  nào đó trở đi cùng với head. Có khóa thì việc viết lại lùi về trước một điểm kiểm tra sẽ làm
+  điểm kiểm tra đó không khớp (`checkpoint-mismatch`), nhưng chỉ khi điểm kiểm tra vẫn ghi khóa
+  hiện tại. Người viết lại chuỗi cũng có thể đổi `keyId` của các điểm kiểm tra: khi đó chúng trông
+  như điểm kiểm tra của một khóa cũ, không được kiểm tra, và chuỗi vẫn được báo là toàn vẹn. Dấu
+  hiệu duy nhất là `checkpointsVerified` thấp hơn `checkpoints`. Vì vậy hãy theo dõi con số đó (mọi
+  điểm kiểm tra chưa xác minh mà không giải thích được bằng một lần đổi khóa hay bằng giai đoạn
+  trước khi đặt khóa đều đáng ngờ), và lưu các mã băm cuối được báo hoặc các dòng log điểm kiểm
+  tra ở ngoài cơ sở dữ liệu. Các bản ghi sau điểm kiểm tra cuối chỉ được chuỗi bảo vệ.
 - Xóa mọi bản ghi và head của một chuỗi chỉ phát hiện được khi đối chiếu với mốc bên ngoài như vậy.
 - Một lần dọn xóa mọi bản ghi của một chuỗi trước một thời điểm trong một giao dịch; lần dọn rất
   lớn nên chia thành nhiều bước (nhiều mốc `before`).

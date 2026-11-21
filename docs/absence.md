@@ -2,6 +2,10 @@ English | [Tiếng Việt](absence.vi.md)
 
 # Substitutes during absence
 
+> **Coming in 1.1.0, not in the 1.0.1 release.** This feature is on the `main` branch and will be
+> released with Fasti 1.1.0. The 1.0.1 release and the published 1.0.1 image do not have it; its
+> settings have no effect there.
+
 Work should not wait for someone on leave. A user records an absence (from, until, a substitute
 and an optional note); while the absence is active, user tasks created for or assigned to that
 user go to the substitute. Asked for on the forum in
@@ -21,9 +25,12 @@ user go to the substitute. Asked for on the forum in
   (`substitute-candidates`, default `true`).
 - **The absent user is evidently there** when they assign a task to themselves (claim): that is
   never redirected.
-- **Every substitution is recorded**: the task gets a comment such as
-  "Assigned to bob as substitute for alice, who is absent." and the local task variables
-  `fasti_absentAssignee` (the absent user) and `fasti_absenceSubstitute` (who got the task).
+- **Substitutions are recorded**: when the assignee is substituted, the task gets a comment
+  such as "Assigned to bob as substitute for alice, who is absent." and the local task variables
+  `fasti_absentAssignee` (the absent user) and `fasti_absenceSubstitute` (who got the task). A
+  substitute added as candidate user leaves a comment only ("Candidate user bob added as
+  substitute for alice, who is absent."), no variables. Comments need history: at history level
+  `none` no comment is written, so there only the variables mark a substituted assignee.
   The variables can be queried (`POST /task` with
   `{"taskVariables": [{"name": "fasti_absentAssignee", "operator": "eq", "value": "alice"}]}`;
   the `GET` syntax `name_operator_value` cannot hold the underscores of the names) and stay in

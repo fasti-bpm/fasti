@@ -107,7 +107,8 @@ nhà cung cấp phải có ô `username` và `password` (Keycloak). Báo cáo n�
 | `src/i18n` | Thông điệp: một thư mục mỗi ngôn ngữ trong `locales/`, tiếng Anh là danh mục gốc (xem Ngôn ngữ) |
 | `src/theme` | Token thiết kế (màu, khoảng cách, chữ) cho giao diện sáng và tối |
 | `src/ui` | Thành phần dùng chung trên nền Radix UI |
-| `src/tasklist`, `src/processes` | Mục Công việc và Bắt đầu quy trình |
+| `src/tasklist`, `src/processes` | Mục Công việc và Bắt đầu quy trình; thông báo [bốn mắt](../../docs/four-eyes.vi.md) của công việc (từ 1.1.0) |
+| `src/absence` | [Người thay thế khi vắng mặt](../../docs/absence.vi.md) (từ 1.1.0): phần Vắng mặt trong Tùy chọn và trong trang người dùng của mục Quản trị, dải thông báo và ghi chú thay thế trong mục Công việc |
 | `src/cockpit` | Mục Giám sát: tổng quan, quy trình, lượt chạy, sự cố, job, lịch sử, triển khai, quyết định, xử lý hàng loạt |
 | `src/modeler` | Trình soạn BPMN, DMN và biểu mẫu |
 | `src/admin` | Mục Quản trị |
@@ -143,6 +144,7 @@ trình con). Lời gọi nằm trong `src/api/` (`cockpit.ts`, `operations.ts`, 
 | `/cockpit/decision-history`, `/cockpit/decision-history/{id}` | Lịch sử đánh giá bảng quyết định |
 | `/cockpit/migration` | Di trú lượt chạy sang phiên bản khác |
 | `/cockpit/audit` | Nhật ký thao tác (ai đã đổi gì) |
+| `/cockpit/audit-trail` | [Nhật ký kiểm toán bất biến](../../docs/audit-trail.vi.md) (từ 1.1.0): bản ghi kèm bộ lọc, xuất CSV và JSON, kiểm tra toàn vẹn; khi tính năng đang tắt, trang cho biết cách bật |
 | `/cockpit/cleanup` | Dọn lịch sử (history cleanup) |
 | `/cockpit/modeler` | Trình soạn BPMN, DMN và biểu mẫu, triển khai |
 

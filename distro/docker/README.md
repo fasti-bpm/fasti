@@ -125,11 +125,11 @@ not in the published 1.0.1 image.
 | `JMX_PROMETHEUS=true` | | Prometheus JMX exporter on port `JMX_PROMETHEUS_PORT` (9404), configuration `JMX_PROMETHEUS_CONF`, if the agent jar is in `/fasti/javaagent` |
 | `JAVA_OPTS` | | additional JVM options (space-separated, no quotes) |
 | `FASTI_MAX_RAM_PERCENTAGE` | 75 | percentage of container memory used for the heap |
-| `FASTI_DB_SCHEMA_UPDATE` | `false` | `true` creates missing tables (new database); never upgrades a schema |
+| `FASTI_DB_SCHEMA_UPDATE` | `false` (`true` for the built-in H2 demo database) | `true` creates missing tables (new database); never upgrades a schema |
 | `FASTI_SCHEMA_VERSION_CHECK` | `enforce` | `warn`: a schema older than 7.24 only logs a warning instead of stopping |
 | `FASTI_DB_SCHEMA`, `FASTI_DB_TABLE_PREFIX` | | `camunda.bpm.database.schema-name` / `table-prefix` |
 | `FASTI_HISTORY_LEVEL` | `auto` | uses the history level stored in the database (new database: `full`) |
-| `FASTI_JOB_EXECUTOR_ENABLED` | `true` | turns off the job executor on this node |
+| `FASTI_JOB_EXECUTOR_ENABLED` | `true` | `false` turns off the job executor on this node |
 | `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | `false` | runs only jobs of deployments registered on this node |
 | `FASTI_INSECURE_DEMO` | `false` | `true`: **turns off** REST authentication and authorization, for demos only (see Secure by default) |
 | `FASTI_REST_AUTH` | `true` | always on; `false` is refused (use `FASTI_INSECURE_DEMO`) |
@@ -146,8 +146,13 @@ not in the published 1.0.1 image.
 | `FASTI_LOG_FORMAT` | `text` | **From 1.1.0.** `json`: one JSON object per log line (Elastic Common Schema); also `logstash`, `gelf` |
 | `FASTI_METRICS_PROMETHEUS_ENABLED` | `false` | **From 1.1.0.** `true`: Prometheus metrics at `/actuator/prometheus` (JVM, HTTP, pool, engine); needs a token or `FASTI_MANAGEMENT_PORT` |
 | `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | | **From 1.1.0.** Scrape token (`Authorization: Bearer <token>`) for the metrics on the application port |
-| `FASTI_MANAGEMENT_PORT` | | **From 1.1.0.** Serves the actuator (health and metrics) on a port of its own; the `HEALTHCHECK` follows it (a value that is not a number is ignored with a warning) |
+| `FASTI_MANAGEMENT_PORT` | | **From 1.1.0.** Serves the actuator (health and metrics) on a port of its own; the `HEALTHCHECK` follows it (a value that is not a number is ignored with a warning; the `HEALTHCHECK` then falls back to `FASTI_PORT`, else 8080) |
 | `FASTI_TRACING_ENABLED` | `false` | **From 1.1.0.** `true`: OpenTelemetry spans for requests, engine commands and jobs, sent to `OTEL_EXPORTER_OTLP_ENDPOINT` (OTLP/HTTP) |
+| `FASTI_TRACING_ENGINE_ENABLED` | `true` | **From 1.1.0.** `false`: with tracing on, keeps the spans of HTTP requests and leaves out those of engine commands and job executions |
+| `FASTI_ABSENCE_ENABLED` | `false` | **From 1.1.0.** `true`: [substitutes during absence](../../docs/absence.md); turn it on for every node |
+| `FASTI_FOUR_EYES_ENABLED` | `true` | **From 1.1.0.** [Four-eyes control](../../docs/four-eyes.md) for user tasks whose model declares `fasti:fourEyes`; `false` turns it off |
+| `FASTI_AUDIT_ENABLED` | `false` | **From 1.1.0.** `true`: [immutable audit trail](../../docs/audit-trail.md), on every node. Unless `FASTI_DB_SCHEMA_UPDATE=true`, create its tables first with `/fasti/configuration/sql/create/<database>_fasti_audit.sql` |
+| `FASTI_AUDIT_HMAC_KEY`, `FASTI_AUDIT_HMAC_KEY_FILE` | | **From 1.1.0.** Key that signs the checkpoints of the audit trail (at least 32 bytes), or the path of a file that holds it (Docker/Kubernetes secret) |
 | `FASTI_APPCDS`, `FASTI_APPCDS_FILE` | `false`, `/fasti/data/fasti-appcds.jsa` | class data sharing for faster startup (see Performance tuning) |
 | `FASTI_BASE64_INTRINSICS` | `false` | `false` adds `-XX:-UseBASE64Intrinsics` to mitigate CVE-2026-114938 ("Java4Shell"); `true` keeps the JVM Base64 intrinsic. See [docs/security/CVE-2026-114938.md](../../docs/security/CVE-2026-114938.md) |
 
@@ -165,7 +170,7 @@ Bundled (licences in the License Book and NOTICE): PostgreSQL 42.7.14 (BSD-2-Cla
 Connector/J 9.7.0 (GPLv2 with the Universal FOSS Exception), MariaDB Connector/J 3.5.11
 (LGPL-2.1, unless built
 with `skipMariadbDriver`; then MariaDB is reached through MySQL Connector/J), SQL Server
-13.4.0.jre11 (MIT; encrypts by default: you may need `encrypt=false` or
+13.6.2.jre11 (MIT; encrypts by default: you may need `encrypt=false` or
 `trustServerCertificate=true`), H2 2.5.252. Oracle (`ojdbc11.jar`) and DB2 (`jcc.jar`) are
 licensed separately and not redistributed: add them in a derived image
 (`COPY ojdbc11.jar /fasti/configuration/userlib/`) or mount a directory and set

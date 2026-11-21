@@ -1,14 +1,14 @@
 # Changelog
 
-Mọi thay đổi đáng chú ý của Fasti BPM được ghi ở đây. Định dạng theo
-[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), phiên bản theo
-[Semantic Versioning](https://semver.org/). Fasti BPM được xây dựng trên Camunda 7 CE 7.24.0;
-các mục dưới đây là khác biệt so với bản đó.
-
 All notable changes to Fasti BPM are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/). Fasti BPM is built on Camunda 7 CE 7.24.0; the
 entries below describe the differences from that release.
+
+Mọi thay đổi đáng chú ý của Fasti BPM được ghi ở đây. Định dạng theo
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), phiên bản theo
+[Semantic Versioning](https://semver.org/). Fasti BPM được xây dựng trên Camunda 7 CE 7.24.0;
+các mục dưới đây là khác biệt so với bản đó.
 
 ## [Unreleased]
 
@@ -26,7 +26,9 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   transaction of what it records. Each record carries SHA-256(previous hash, canonical record);
   every node appends to a few chains of its own, locking only the head row of a chain, so nodes
   do not wait for one global lock. Checkpoints can be signed with an HMAC key that never reaches
-  the database (`FASTI_AUDIT_HMAC_KEY` or a key file). `POST /audit/verify` and the
+  the database (`FASTI_AUDIT_HMAC_KEY` or a key file): a chain rewritten before a signed
+  checkpoint then fails verification, unless the key id of the checkpoint was changed as well,
+  which shows only as fewer verified checkpoints (`checkpointsVerified`). `POST /audit/verify` and the
   **Cockpit → Audit trail** page recompute the chains and name the first changed, removed or
   inserted record; the page and the new "Audit trail" tab of an instance history filter by
   instance, business key, user, category and time and export CSV or JSON (the export is
@@ -35,7 +37,8 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   record that keeps the chain verifiable. Reading needs an administrators group or `READ` on
   `SYSTEM`, purging `DELETE` on `SYSTEM`. Stored in the optional tables `FASTI_AUDIT_EVENT` and
   `FASTI_AUDIT_HEAD` (scripts for H2, PostgreSQL, MySQL/MariaDB, Oracle, SQL Server and DB2,
-  `sql/create/<database>_fasti_audit.sql`); the Camunda 7.24 schema is unchanged. Off by default
+  `sql/create/<database>_fasti_audit.sql`, below `configuration/` in Run and the container
+  image); the Camunda 7.24 schema is unchanged. Off by default
   everywhere (plugin `dev.fasti.engine.audit.AuditTrailPlugin`, `FASTI_AUDIT_ENABLED` in the
   container image).
 - Four-eyes control for approvals ([docs](docs/four-eyes.md)): a BPMN user task with the
@@ -47,8 +50,8 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   `FourEyesViolationException`); claiming is not refused and there is no administrator
   override. Who completed a step is recorded in the process instance variable
   `fasti_completedBy_<step>` and also read from the historic task instances and the operation
-  log, so it works at every history level, counts steps completed on nodes without the plugin,
-  and keeps the Camunda 7.24 schema. Wrong rules fail the deployment. `GET /task/{id}/four-eyes`
+  log, so it works at every history level, counts steps completed on nodes without the plugin
+  (where history is kept, so not at level `none`), and keeps the Camunda 7.24 schema. Wrong rules fail the deployment. `GET /task/{id}/four-eyes`
   tells the current user whether they may complete a task; the tasklist says so and disables
   the form, and the modeler has a four-eyes field on user tasks. On in Run, the container image
   (`FASTI_FOUR_EYES_ENABLED=false` turns it off) and the Tomcat and WildFly bundles; off in the
@@ -59,8 +62,9 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   Absence tab of a user. While it is active, BPMN user tasks and CMMN human tasks created for
   or assigned to the user go to the substitute (following absent substitutes up to
   `fasti.absence.max-hops`, never in a circle), and the substitute becomes a candidate user next
-  to an absent candidate user. Each substitution leaves a task comment and the local task
-  variables `fasti_absentAssignee` and `fasti_absenceSubstitute`. Open tasks from before the
+  to an absent candidate user. A substituted assignee leaves a task comment (not at history
+  level `none`) and the local task variables `fasti_absentAssignee` and
+  `fasti_absenceSubstitute`; a substitute added as candidate user leaves the comment only. Open tasks from before the
   absence are handed over on request ("Hand over my open tasks now"). The tasklist says when
   you are away or stand in for someone and marks tasks held for an absent user. REST:
   `GET`/`PUT`/`DELETE /user/{id}/absence`, `POST /user/{id}/absence/handover`,
@@ -100,7 +104,10 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   - OpenTelemetry tracing with `fasti.tracing.enabled=true`: spans for HTTP requests, the
     engine commands they run and each job execution, exported over OTLP/HTTP to
     `management.opentelemetry.tracing.export.otlp.endpoint` or `OTEL_EXPORTER_OTLP_ENDPOINT`.
-    Nothing is sent while no endpoint is set.
+    Nothing is sent while no endpoint is set. Log lines written inside a span carry the trace
+    and span ids: `traceId` and `spanId` in JSON lines, `[<trace id>-<span id>]` in text lines
+    (the console pattern of the container image now includes them; without a span it adds
+    nothing).
 - Publishing to Maven Central prepared: the root POM profile `central` builds the published
   libraries, starters, BOMs and parent POMs (QA modules, distributions and build helpers are
   left out), attaches sources and javadoc jars, signs with GPG and uploads through the Central

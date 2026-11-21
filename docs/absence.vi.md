@@ -2,6 +2,10 @@
 
 # Người thay thế khi vắng mặt
 
+> **Có từ 1.1.0, chưa có trong bản phát hành 1.0.1.** Tính năng này đã có trên nhánh `main` và sẽ
+> được phát hành cùng Fasti 1.1.0. Bản phát hành 1.0.1 và image 1.0.1 đã công bố chưa có tính năng
+> này; các thiết lập của nó không có tác dụng ở đó.
+
 Công việc không nên phải chờ người đang nghỉ phép. Người dùng ghi lại lịch vắng mặt (từ, đến,
 người thay thế và ghi chú tùy chọn); trong thời gian vắng mặt, công việc (user task) được tạo
 cho hoặc giao cho người đó sẽ chuyển sang người thay thế. Nhu cầu này được nêu trên diễn đàn ở
@@ -21,9 +25,12 @@ cho hoặc giao cho người đó sẽ chuyển sang người thay thế. Nhu c�
   (`substitute-candidates`, mặc định `true`).
 - **Người vắng mặt rõ ràng đang có mặt** khi tự giao việc cho chính mình (nhận việc): trường hợp
   này không bao giờ bị chuyển hướng.
-- **Mỗi lần thay thế đều được ghi lại**: công việc có một bình luận như
+- **Việc thay thế được ghi lại**: khi người xử lý được thay thế, công việc có một bình luận như
   "Assigned to bob as substitute for alice, who is absent." và các biến cục bộ
-  `fasti_absentAssignee` (người vắng mặt) và `fasti_absenceSubstitute` (người nhận việc). Có thể
+  `fasti_absentAssignee` (người vắng mặt) và `fasti_absenceSubstitute` (người nhận việc). Người
+  thay thế được thêm làm candidate user chỉ để lại bình luận ("Candidate user bob added as
+  substitute for alice, who is absent."), không có biến. Bình luận cần lịch sử: ở mức lịch sử
+  `none` không có bình luận nào được ghi, khi đó chỉ các biến đánh dấu việc thay người xử lý. Có thể
   truy vấn các biến này (`POST /task` với
   `{"taskVariables": [{"name": "fasti_absentAssignee", "operator": "eq", "value": "alice"}]}`;
   cú pháp `GET` dạng `name_operator_value` không chứa được dấu gạch dưới trong tên biến) và chúng

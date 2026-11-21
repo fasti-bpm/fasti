@@ -130,11 +130,11 @@ mục ghi **từ 1.1.0** đã có trên nhánh `main` nhưng chưa có trong ima
 | `JMX_PROMETHEUS=true` | | Prometheus JMX exporter cổng `JMX_PROMETHEUS_PORT` (9404), cấu hình `JMX_PROMETHEUS_CONF`, nếu có jar trong `/fasti/javaagent` |
 | `JAVA_OPTS` | | thêm tùy chọn JVM (tách bằng khoảng trắng, không có dấu nháy) |
 | `FASTI_MAX_RAM_PERCENTAGE` | 75 | phần trăm RAM của container cho heap |
-| `FASTI_DB_SCHEMA_UPDATE` | `false` | `true` tạo bảng còn thiếu (cơ sở dữ liệu mới); không bao giờ nâng cấp schema |
+| `FASTI_DB_SCHEMA_UPDATE` | `false` (`true` với cơ sở dữ liệu H2 demo có sẵn) | `true` tạo bảng còn thiếu (cơ sở dữ liệu mới); không bao giờ nâng cấp schema |
 | `FASTI_SCHEMA_VERSION_CHECK` | `enforce` | `warn`: schema cũ hơn 7.24 chỉ cảnh báo thay vì dừng |
 | `FASTI_DB_SCHEMA`, `FASTI_DB_TABLE_PREFIX` | | `camunda.bpm.database.schema-name` / `table-prefix` |
 | `FASTI_HISTORY_LEVEL` | `auto` | mặc định lấy mức lịch sử đang lưu trong cơ sở dữ liệu (mới: `full`) |
-| `FASTI_JOB_EXECUTOR_ENABLED` | `true` | tắt job executor của node này |
+| `FASTI_JOB_EXECUTOR_ENABLED` | `true` | `false` tắt job executor của node này |
 | `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | `false` | chỉ chạy job của deployment đã đăng ký trên node này |
 | `FASTI_INSECURE_DEMO` | `false` | `true`: **tắt** xác thực REST và phân quyền, chỉ để demo (xem Bảo mật mặc định) |
 | `FASTI_REST_AUTH` | `true` | luôn bật; giá trị `false` bị từ chối (dùng `FASTI_INSECURE_DEMO`) |
@@ -151,8 +151,13 @@ mục ghi **từ 1.1.0** đã có trên nhánh `main` nhưng chưa có trong ima
 | `FASTI_LOG_FORMAT` | `text` | **Từ 1.1.0.** `json`: mỗi dòng log là một đối tượng JSON (Elastic Common Schema); có thêm `logstash`, `gelf` |
 | `FASTI_METRICS_PROMETHEUS_ENABLED` | `false` | **Từ 1.1.0.** `true`: metrics Prometheus tại `/actuator/prometheus` (JVM, HTTP, pool, engine); cần token hoặc `FASTI_MANAGEMENT_PORT` |
 | `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | | **Từ 1.1.0.** Token scrape (`Authorization: Bearer <token>`) cho metrics trên cổng của ứng dụng |
-| `FASTI_MANAGEMENT_PORT` | | **Từ 1.1.0.** Actuator (health và metrics) chạy trên cổng riêng; `HEALTHCHECK` theo cổng này (giá trị không phải số bị bỏ qua kèm cảnh báo) |
+| `FASTI_MANAGEMENT_PORT` | | **Từ 1.1.0.** Actuator (health và metrics) chạy trên cổng riêng; `HEALTHCHECK` theo cổng này (giá trị không phải số bị bỏ qua kèm cảnh báo; khi đó `HEALTHCHECK` dùng `FASTI_PORT`, nếu không thì 8080) |
 | `FASTI_TRACING_ENABLED` | `false` | **Từ 1.1.0.** `true`: span OpenTelemetry cho request, lệnh engine và job, gửi tới `OTEL_EXPORTER_OTLP_ENDPOINT` (OTLP/HTTP) |
+| `FASTI_TRACING_ENGINE_ENABLED` | `true` | **Từ 1.1.0.** `false`: khi bật tracing, giữ span của request HTTP và bỏ span của lệnh engine và của các lần chạy job |
+| `FASTI_ABSENCE_ENABLED` | `false` | **Từ 1.1.0.** `true`: [người thay thế khi vắng mặt](../../docs/absence.vi.md); hãy bật trên mọi node |
+| `FASTI_FOUR_EYES_ENABLED` | `true` | **Từ 1.1.0.** [Kiểm soát bốn mắt](../../docs/four-eyes.vi.md) cho các user task mà mô hình khai báo `fasti:fourEyes`; `false` để tắt |
+| `FASTI_AUDIT_ENABLED` | `false` | **Từ 1.1.0.** `true`: [nhật ký kiểm toán bất biến](../../docs/audit-trail.vi.md), trên mọi node. Trừ khi `FASTI_DB_SCHEMA_UPDATE=true`, hãy tạo bảng trước bằng `/fasti/configuration/sql/create/<database>_fasti_audit.sql` |
+| `FASTI_AUDIT_HMAC_KEY`, `FASTI_AUDIT_HMAC_KEY_FILE` | | **Từ 1.1.0.** Khóa ký các điểm kiểm tra của nhật ký kiểm toán (ít nhất 32 byte), hoặc đường dẫn tệp chứa khóa (secret của Docker/Kubernetes) |
 | `FASTI_APPCDS`, `FASTI_APPCDS_FILE` | `false`, `/fasti/data/fasti-appcds.jsa` | class data sharing để khởi động nhanh hơn (xem Tinh chỉnh hiệu năng) |
 | `FASTI_BASE64_INTRINSICS` | `false` | `false` thêm `-XX:-UseBASE64Intrinsics` để giảm thiểu CVE-2026-114938 ("Java4Shell"); `true` giữ intrinsic Base64 của JVM. Xem [docs/security/CVE-2026-114938.vi.md](../../docs/security/CVE-2026-114938.vi.md) |
 
@@ -172,7 +177,7 @@ deployment ở `/camunda/configuration/resources`. Đường dẫn riêng của 
 | PostgreSQL | `postgresql` 42.7.14 | BSD-2-Clause |
 | MySQL | `mysql-connector-j` 9.7.0 | GPLv2 + Universal FOSS Exception |
 | MariaDB | `mariadb-java-client` 3.5.11 (LGPL-2.1) | build offline bỏ qua: khi đó dùng MySQL Connector/J với `jdbc:mysql:` |
-| SQL Server | `mssql-jdbc` 13.4.0.jre11 | MIT; 13.x mã hóa mặc định: có thể cần `encrypt=false` hoặc `trustServerCertificate=true` |
+| SQL Server | `mssql-jdbc` 13.6.2.jre11 | MIT; 13.x mã hóa mặc định: có thể cần `encrypt=false` hoặc `trustServerCertificate=true` |
 | H2 | `h2` 2.5.252 | chỉ để thử |
 | Oracle | không | giấy phép riêng: thêm `ojdbc11.jar` |
 | DB2 | không | giấy phép riêng: thêm `jcc.jar` |

@@ -37,8 +37,10 @@ existing Camunda 7.24 installation leave them out: tables and accounts already e
 ## What the chart does
 
 - **Production mode on by default** (`production: true` → `--production`): REST authentication
-  and authorizations (always on in the image), `Secure`/`SameSite=Strict` session cookies,
-  password policy, no implicit H2, no remote debugging. Needs HTTPS in front (Ingress with TLS).
+  and authorizations (always on in the image), `Secure`/`SameSite=Strict` session cookies
+  (`SameSite=Lax` with `oidc.enabled`, as `Strict` would drop the session on the redirect back
+  from the identity provider), password policy, no implicit H2, no remote debugging. Needs HTTPS
+  in front (Ingress with TLS).
 - **No credentials in values:** database username and password, the administrator password and
   the OIDC client secret come from existing Secrets. Database and admin secrets are mounted as
   files (`DB_PASSWORD_FILE`, `FASTI_ADMIN_PASSWORD_FILE`), mode `0440`, group of the container

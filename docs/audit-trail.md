@@ -2,6 +2,10 @@ English | [Tiếng Việt](audit-trail.vi.md)
 
 # Immutable audit trail
 
+> **Coming in 1.1.0, not in the 1.0.1 release.** This feature is on the `main` branch and will be
+> released with Fasti 1.1.0. The 1.0.1 release and the published 1.0.1 image do not have it; its
+> settings have no effect there.
+
 Auditors want to know who did what, when, to which case, and that nobody changed that record
 afterwards. The history and the operation log of the engine answer the first question, but any
 user with database access can change them without a trace, and history cleanup removes them.
@@ -33,11 +37,17 @@ executor, timers, startup), the **time** of the engine clock (milliseconds since
 **engine**, the **tenant**, the process definition, the process instance and its **business
 key**.
 
-What the engine produces depends on its **history level**: at `full` (the default of Run and
-the container image) everything above; at `audit` and `activity` no user operation log (who
-claimed, identity and authorization changes); at `none` only deployments and the records of the
-audit trail itself. The plugin logs a warning below `full`. The user operation log needs an
-authenticated user, as in Camunda 7.
+The plugin records what the engine produces, and that depends on the **history level**:
+
+| History level | Recorded |
+|---|---|
+| `full` (the default of Run and the container image) | everything above |
+| `audit` | `process`, `task` (`create`, `assign`, `update`, `complete`, `delete`), `variable`, `deployment`, `audit` and, if turned on, `activity`. Not recorded: `operation` (who claimed, identity and authorization changes), `incident`, `decision`, and the task actions `identity-link-add` / `identity-link-delete` (candidate users and groups, owner) |
+| `activity` | as `audit`, and no `variable` records either |
+| `none` | only `deployment` and the records of the audit trail itself (`audit`) |
+
+The plugin logs a warning below `full`. The user operation log needs an authenticated user, as
+in Camunda 7.
 
 **Variable values** (`fasti.audit.variable-values`):
 
@@ -56,9 +66,10 @@ same variable instance (`entityId`).
 
 ## How tampering is found
 
-Each record stores `HASH_ = SHA-256(PREV_HASH_ ‖ canonical form of the record)`. The canonical
-form names every field on its own line (escaped, `null` told apart from text) and starts with
-the version `fasti-audit-v1`. Records form **chains**: positions 1, 2, 3, … without gaps, each
+Each record stores `HASH_ = SHA-256(PREV_HASH_ + "\n" + canonical form of the record)`: the
+previous hash (64 hexadecimal characters; 64 zeros for the first record of a chain), a line feed
+and the canonical form, as UTF-8 bytes. The canonical form names every field on its own line
+(escaped, `null` told apart from text) and starts with the version `fasti-audit-v1`. Records form **chains**: positions 1, 2, 3, … without gaps, each
 naming the hash of the one before. A table `FASTI_AUDIT_HEAD` holds the position and hash of the
 last record of each chain.
 
@@ -159,7 +170,7 @@ All below `/engine-rest` (also in the OpenAPI document, tag "Audit Trail"):
 
 | Method and path | What it does |
 |---|---|
-| `GET /audit` | `enabled` and the settings (`nodeId`, `chains`, `types`, `variableValues`, `maskedVariables`, `signed`, `keyId`, `checkpointInterval`, `retentionDays`, `historyLevel`); never the key |
+| `GET /audit` | `enabled`, for every caller and also while the audit trail is off (`200` with `enabled: false`); for callers who may read the trail also the settings (`nodeId`, `chains`, `types`, `variableValues`, `maskedVariables`, `signed`, `keyId`, `checkpointInterval`, `retentionDays`, `historyLevel`); never the key |
 | `GET /audit/event` | The records, newest first; filters `processInstanceId`, `businessKey`, `actor` (`system` for the engine), `type` (comma separated), `action`, `tenantId`, `processDefinitionKey`, `entityId`, `chainId`, `from`, `to`, `sortOrder` (`desc`, `asc`), paging `firstResult`, `maxResults` (at most 1000) |
 | `GET /audit/event/count` | The number of records the filters select |
 | `GET /audit/event/export?format=csv\|json` | The selection as a file (recorded as `audit`/`export`) |
@@ -170,7 +181,10 @@ All below `/engine-rest` (also in the OpenAPI document, tag "Audit Trail"):
 (`camunda-admin`) or the permission `READ` on the resource `SYSTEM`; purging needs an
 administrators group or `DELETE` on `SYSTEM`. The resource `SYSTEM` exists in Camunda 7.24, so
 no new resource type is needed. Without authorization checks, as everywhere in the engine,
-anyone may. `400` when the audit trail is off.
+anyone may. The same holds for a request without an authenticated user, even while
+authorization is on: that is the case when REST authentication is off, as in the default
+configuration of Fasti BPM Run (the container image has it on). All endpoints except `GET /audit`
+answer `400` when the audit trail is off.
 
 Java: `AuditTrail.of(processEngine)` returns the `AuditService` (`createQuery()`, `verify()`,
 `recordExport(…)`, `purge(before)`).
@@ -204,9 +218,11 @@ Camunda 7.24 nodes. An installation turns it on deliberately.
 
 **Tables.** With `databaseSchemaUpdate` `true` or `create` (Run, the starter by default) the
 plugin creates its tables at startup. Otherwise (the container image keeps an existing database
-unchanged) create them first with `sql/create/<database>_fasti_audit.sql` of the distribution
-(also in the engine jar below `dev/fasti/engine/audit/db/create`); `sql/drop/…` removes them
-with all records. If the tables are missing and may not be created, the engine refuses to start
+unchanged) create them first with the script `<database>_fasti_audit.sql` of the distribution:
+in `configuration/sql/create/` of Fasti BPM Run (`/fasti/configuration/sql/create/` in the
+container image), in `sql/create/` of the Tomcat and WildFly distributions (also in the engine
+jar below `dev/fasti/engine/audit/db/create`). The script of the same name in `sql/drop/` next
+to it removes the tables with all records. If the tables are missing and may not be created, the engine refuses to start
 with a message that names the script. Scripts exist for H2, PostgreSQL, MySQL/MariaDB (use
 `utf8mb4`), Oracle, SQL Server and DB2.
 
@@ -234,8 +250,14 @@ four chains per node, threads rarely wait.
   something was recorded at all: a node without the plugin, a lower history level or a direct
   change of the engine tables in the database bypasses it.
 - Without a signing key, someone with write access to the database can rewrite a chain from
-  some record on together with its head; with a key, only the records after the last
-  checkpoint. Keep reported last hashes or the checkpoint log lines outside the database.
+  some record on together with its head. With a key, a rewrite that reaches back before a
+  checkpoint breaks that checkpoint (`checkpoint-mismatch`), but only while the checkpoint still
+  names the current key. Whoever rewrites the chain can also change the `keyId` of its
+  checkpoints: they then look like checkpoints of an earlier key, are not checked, and the chain
+  is reported as intact. The only sign is a `checkpointsVerified` lower than `checkpoints`. So
+  watch that number (every checkpoint you cannot explain by a key change or by the time before
+  the key was set is suspect), and keep reported last hashes or the checkpoint log lines outside
+  the database. The records after the last checkpoint are protected by the chain only.
 - Deleting every record and the head of a chain is only noticed against such an outside
   anchor.
 - A purge removes all records of a chain before a time in one transaction; very large purges

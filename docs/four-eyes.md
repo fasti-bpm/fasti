@@ -2,6 +2,10 @@ English | [Tiếng Việt](four-eyes.vi.md)
 
 # Four-eyes control for approvals
 
+> **Coming in 1.1.0, not in the 1.0.1 release.** This feature is on the `main` branch and will be
+> released with Fasti 1.1.0. The 1.0.1 release and the published 1.0.1 image do not have it; its
+> settings have no effect there.
+
 In regulated work an approval only counts if someone other than the person who prepared the
 work gives it. Fasti BPM lets a model say so on the approving user task, and the engine
 enforces it: the person who completed one of the named earlier steps of the same process

@@ -1,0 +1,20 @@
+# Test application of the MCP server: an H2 engine with authorization checks on
+camunda.bpm:
+  job-execution:
+    enabled: false
+  authorization:
+    enabled: true
+  admin-user:
+    id: admin
+    password: admin-Secret-1
+  database:
+    schema-update: true
+
+fasti.mcp:
+  enabled: true
+  max-value-length: 40
+  max-results: 20
+  default-results: 10
+
+logging.level:
+  dev.fasti.spring.boot.mcp: debug

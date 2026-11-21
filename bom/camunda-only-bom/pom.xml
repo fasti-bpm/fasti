@@ -175,6 +175,11 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
+        <groupId>dev.fasti.platform.springboot</groupId>
+        <artifactId>fasti-bpm-spring-boot-starter-mcp</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.camunda.bpm.springboot</groupId>
         <artifactId>camunda-bpm-spring-boot-starter-webapp-ee</artifactId>
         <version>${project.version}</version>

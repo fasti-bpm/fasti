@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <description>
+    Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
+    Model Context Protocol (MCP) server for the process engine, off unless fasti.mcp.enabled=true.
+  </description>
+
+  <parent>
+    <groupId>dev.fasti.platform.springboot.project</groupId>
+    <artifactId>fasti-bpm-spring-boot-starter-root</artifactId>
+    <version>1.0.1</version>
+  </parent>
+
+  <groupId>dev.fasti.platform.springboot</groupId>
+  <artifactId>fasti-bpm-spring-boot-starter-mcp</artifactId>
+  <name>Fasti BPM Platform - Spring Boot Starter - MCP Server</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>dev.fasti.platform.springboot</groupId>
+      <artifactId>fasti-bpm-spring-boot-starter</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- the MCP server runs in the servlet container of the application -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webmvc</artifactId>
+    </dependency>
+
+    <!-- official Model Context Protocol Java SDK: protocol, stateless Streamable HTTP servlet
+      transport and the Jackson 3 binding of Spring Boot 4 -->
+    <dependency>
+      <groupId>io.modelcontextprotocol.sdk</groupId>
+      <artifactId>mcp-core</artifactId>
+      <version>${version.mcp-sdk}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.modelcontextprotocol.sdk</groupId>
+      <artifactId>mcp-json-jackson3</artifactId>
+      <version>${version.mcp-sdk}</version>
+    </dependency>
+
+    <!-- bearer tokens (OIDC) are accepted when the Spring Security starter is present and
+      fasti.security.oidc.rest.bearer-enabled=true; then the token checks of the REST API apply -->
+    <dependency>
+      <groupId>dev.fasti.platform.springboot</groupId>
+      <artifactId>fasti-bpm-spring-boot-starter-security</artifactId>
+      <version>${project.version}</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <!-- AuthenticationResult of the bearer token mapping; present wherever the REST API is -->
+      <groupId>dev.fasti.platform</groupId>
+      <artifactId>fasti-engine-rest-core-jakarta</artifactId>
+      <version>${project.version}</version>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-configuration-processor</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <artifactId>fasti-bpm-spring-boot-starter-test</artifactId>
+      <groupId>${project.groupId}</groupId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jdbc</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+</project>

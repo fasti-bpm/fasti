@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="mcpDefinitions" name="MCP test" namespace="https://fasti.dev/test">
+  <decision id="mcpDecision" name="Approver" camunda:historyTimeToLive="1">
+    <decisionTable id="mcpTable" hitPolicy="FIRST">
+      <input id="amountInput" label="Amount">
+        <inputExpression id="amountExpression" typeRef="integer">
+          <text>amount</text>
+        </inputExpression>
+      </input>
+      <output id="approverOutput" name="approver" typeRef="string" />
+      <rule id="small">
+        <inputEntry id="smallEntry"><text>&lt; 1000</text></inputEntry>
+        <outputEntry id="smallOutput"><text>"clerk"</text></outputEntry>
+      </rule>
+      <rule id="large">
+        <inputEntry id="largeEntry"><text>&gt;= 1000</text></inputEntry>
+        <outputEntry id="largeOutput"><text>"manager"</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>

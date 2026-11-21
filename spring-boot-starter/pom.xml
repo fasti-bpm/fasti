@@ -50,6 +50,7 @@
         <module>starter</module>
         <module>starter-rest</module>
         <module>starter-security</module>
+        <module>starter-mcp</module>
         <module>starter-test</module>
         <module>starter-client/spring</module>
         <module>starter-client/spring-boot</module>
@@ -85,6 +86,7 @@
         <module>starter</module>
         <module>starter-rest</module>
         <module>starter-security</module>
+        <module>starter-mcp</module>
         <module>starter-test</module>
         <module>starter-client/spring</module>
         <module>starter-client/spring-boot</module>

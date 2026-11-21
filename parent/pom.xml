@@ -50,6 +50,9 @@
     <version.jakarta.xml.bind-api>4.0.5</version.jakarta.xml.bind-api>
     <version.httpclient5>5.6.5</version.httpclient5>
     <version.httpcore5>5.4.4</version.httpcore5>
+    <!-- Model Context Protocol Java SDK (MIT): MCP server of the Spring Boot starter and Run.
+      2.1.x rather than 2.2.0, which pulls a release candidate of reactor-core -->
+    <version.mcp-sdk>2.1.0</version.mcp-sdk>
     <version.cronutils>9.2.1</version.cronutils>
 
     <version.slf4j>2.0.20</version.slf4j>

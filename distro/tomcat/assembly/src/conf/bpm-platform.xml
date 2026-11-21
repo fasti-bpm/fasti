@@ -62,7 +62,8 @@
     <!-- PERFORMANCE HINTS AT START (docs/performance.md) -->
     <!-- Logs one warning that lists the optional indexes of sql/optional/<database>_fasti_perf_indexes_create.sql
          that the database does not have, and one for each setting that costs performance as the
-         data grows. It only reads; set a property to off to silence it. -->
+         data grows. It only reads; set a property to off to silence it. Fasti BPM 1.1 and older
+         do not have this class: remove this element before starting older binaries with this file. -->
       <plugin>
         <class>dev.fasti.engine.performance.PerformanceAdvisorPlugin</class>
         <properties>

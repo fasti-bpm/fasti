@@ -16,15 +16,71 @@
 --
 
 -- Fasti audit trail (docs/audit-trail.md): upgrade of audit tables created by Fasti BPM 1.0 or 1.1.
--- Only for databases that have the tables FASTI_AUDIT_EVENT and FASTI_AUDIT_HEAD; new tables are
--- created with this index. The tables of Camunda 7.24 are not changed.
+-- Only for databases that have the tables FASTI_AUDIT_EVENT and FASTI_AUDIT_HEAD; tables created by
+-- a later version have these indexes already. The tables of Camunda 7.24 are not changed. The engine
+-- never runs this script: a database administrator does. It can be run again: an index that exists
+-- is not created again, and one that is gone is not dropped again.
 --
 -- A page of the audit trail is ordered by TIME_, CHAIN_ID_, SEQ_ (all descending, or all ascending
--- for oldest first). This index gives that order, so the database reads one page instead of
--- sorting every record the filter selects. It starts with TIME_ and so replaces
--- FASTI_IDX_AUDIT_TIME, which is dropped. Nodes of 1.0 and 1.1 keep working with it.
--- Creating the index reads the whole table; on a large table run it outside peak hours (and use
--- the online option of your database where it has one).
+-- for oldest first). FASTI_IDX_AUDIT_ORDER gives that order, so the database reads one page instead
+-- of sorting every record the filter selects; it starts with TIME_ and replaces FASTI_IDX_AUDIT_TIME.
+-- FASTI_IDX_AUDIT_ACTOR_ORDER and FASTI_IDX_AUDIT_TYPE_ORDER put the columns of the usual filters
+-- (the actor; the category and the action) before that order, so that a filtered page is read in
+-- order as well and the database stops after it; they replace FASTI_IDX_AUDIT_ACTOR and
+-- FASTI_IDX_AUDIT_TYPE, so an insert still updates seven indexes. The new indexes are created
+-- before the old ones are dropped. Nodes of 1.0 and 1.1 keep working with them (no code names an
+-- index). The drop scripts of 1.0 and 1.1 drop FASTI_IDX_AUDIT_TIME, _ACTOR and _TYPE by name and
+-- fail on an upgraded table: drop it with the drop script of this version.
+--
+-- Run it with SQL*Plus or SQLcl as the owner of the audit tables. An index that exists (ORA-00955,
+-- ORA-01408) is skipped, one that is gone (ORA-01418) is not dropped. Without ONLINE every insert
+-- into FASTI_AUDIT_EVENT waits while an index is built, and with it every command that writes
+-- audit records, holding the head of its chain: the other commands of that chain fail after
+-- fasti.audit.lock-timeout-seconds. On Enterprise Edition add ONLINE to each CREATE INDEX
+-- (create index ... (...) online); Standard Edition does not have it (ORA-00439): run the script at
+-- a quiet time there. DDL on a table with uncommitted inserts fails at once with ORA-00054 unless
+-- it may wait: ddl_lock_timeout lets each statement try for 30 seconds.
 
-create index FASTI_IDX_AUDIT_ORDER on FASTI_AUDIT_EVENT(TIME_, CHAIN_ID_, SEQ_);
-drop index FASTI_IDX_AUDIT_TIME;
+alter session set ddl_lock_timeout = 30;
+
+begin
+  execute immediate 'create index FASTI_IDX_AUDIT_ORDER on FASTI_AUDIT_EVENT (TIME_, CHAIN_ID_, SEQ_)';
+exception when others then
+  if sqlcode not in (-955, -1408) then raise; end if;
+end;
+/
+
+begin
+  execute immediate 'create index FASTI_IDX_AUDIT_ACTOR_ORDER on FASTI_AUDIT_EVENT (ACTOR_, TIME_, CHAIN_ID_, SEQ_)';
+exception when others then
+  if sqlcode not in (-955, -1408) then raise; end if;
+end;
+/
+
+begin
+  execute immediate 'create index FASTI_IDX_AUDIT_TYPE_ORDER on FASTI_AUDIT_EVENT (TYPE_, ACTION_, TIME_, CHAIN_ID_, SEQ_)';
+exception when others then
+  if sqlcode not in (-955, -1408) then raise; end if;
+end;
+/
+
+begin
+  execute immediate 'drop index FASTI_IDX_AUDIT_TIME';
+exception when others then
+  if sqlcode != -1418 then raise; end if;
+end;
+/
+
+begin
+  execute immediate 'drop index FASTI_IDX_AUDIT_ACTOR';
+exception when others then
+  if sqlcode != -1418 then raise; end if;
+end;
+/
+
+begin
+  execute immediate 'drop index FASTI_IDX_AUDIT_TYPE';
+exception when others then
+  if sqlcode != -1418 then raise; end if;
+end;
+/

@@ -49,8 +49,10 @@ create unique index FASTI_IDX_AUDIT_CHAIN on FASTI_AUDIT_EVENT(CHAIN_ID_, SEQ_);
 create index FASTI_IDX_AUDIT_ORDER on FASTI_AUDIT_EVENT(TIME_, CHAIN_ID_, SEQ_);
 create index FASTI_IDX_AUDIT_PROCINST on FASTI_AUDIT_EVENT(PROC_INST_ID_);
 create index FASTI_IDX_AUDIT_BUSKEY on FASTI_AUDIT_EVENT(BUSINESS_KEY_);
-create index FASTI_IDX_AUDIT_ACTOR on FASTI_AUDIT_EVENT(ACTOR_);
-create index FASTI_IDX_AUDIT_TYPE on FASTI_AUDIT_EVENT(TYPE_, TIME_);
+-- a page filtered by actor (also "system": ACTOR_ null), or by category and action, read in the
+-- order of the page and stopped after it: the filter columns, then the order of FASTI_IDX_AUDIT_ORDER
+create index FASTI_IDX_AUDIT_ACTOR_ORDER on FASTI_AUDIT_EVENT(ACTOR_, TIME_, CHAIN_ID_, SEQ_);
+create index FASTI_IDX_AUDIT_TYPE_ORDER on FASTI_AUDIT_EVENT(TYPE_, ACTION_, TIME_, CHAIN_ID_, SEQ_);
 
 -- one row per chain: position and hash of its last record; appending locks the row
 create table FASTI_AUDIT_HEAD (

@@ -285,6 +285,12 @@
                     <include name="*.sql" />
                   </fileset>
                 </copy>
+
+                <!-- upgrade of the audit tables of Fasti 1.0 and 1.1 (docs/audit-trail.md): run by an administrator -->
+                <copy todir="target/sql/upgrade" flatten="true">
+                  <fileset dir="target/fasti-engine-${project.version}/dev/fasti/engine/audit/db/upgrade" />
+                  <mapper type="regexp" from="^fasti\.([A-Za-z0-9]*)\.upgrade\.audit\.after_1\.1\.sql$" to="\1_fasti_audit_after_1.1.sql" />
+                </copy>
                 
                 <!-- liquibase -->
 

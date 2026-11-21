@@ -22,8 +22,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
-import java.util.regex.Matcher;
+import java.util.Locale;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import dev.fasti.engine.audit.impl.AuditStore;
@@ -32,12 +38,21 @@ import org.camunda.bpm.engine.ProcessEngineConfiguration;
 import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Test;
 
 /** The create and drop scripts, and how the plugin treats missing tables. */
 public class AuditSchemaTest {
 
   static final List<String> DATABASES = List.of("h2", "postgres", "mysql", "oracle", "mssql", "db2");
+
+  /** The indexes of the event table as this version creates them. */
+  static final Set<String> INDEXES = Set.of("FASTI_IDX_AUDIT_CHAIN", "FASTI_IDX_AUDIT_ORDER", "FASTI_IDX_AUDIT_PROCINST",
+      "FASTI_IDX_AUDIT_BUSKEY", "FASTI_IDX_AUDIT_ACTOR_ORDER", "FASTI_IDX_AUDIT_TYPE_ORDER");
+
+  /** The indexes of the event table as 1.0 and 1.1 created them. */
+  static final Set<String> INDEXES_1_1 = Set.of("FASTI_IDX_AUDIT_CHAIN", "FASTI_IDX_AUDIT_TIME", "FASTI_IDX_AUDIT_PROCINST",
+      "FASTI_IDX_AUDIT_BUSKEY", "FASTI_IDX_AUDIT_ACTOR", "FASTI_IDX_AUDIT_TYPE");
 
   ProcessEngine engine;
 
@@ -51,18 +66,106 @@ public class AuditSchemaTest {
         .execute(AuditStore::isTablePresent);
   }
 
+  /** The names of the indexes (of this product) on the event table, upper case. */
+  static Set<String> indexes(ProcessEngine engine) {
+    return configuration(engine).getCommandExecutorTxRequired().execute(commandContext -> {
+      Connection connection = commandContext.getDbSqlSession().getSqlSession().getConnection();
+      Set<String> names = new TreeSet<>();
+      try {
+        DatabaseMetaData metaData = connection.getMetaData();
+        for (String table : List.of(AuditStore.EVENT_TABLE, AuditStore.EVENT_TABLE.toLowerCase(Locale.ROOT))) {
+          try (ResultSet result = metaData.getIndexInfo(connection.getCatalog(), null, table, false, false)) {
+            while (result.next()) {
+              String name = result.getString("INDEX_NAME");
+              if (name != null && name.toUpperCase(Locale.ROOT).startsWith("FASTI_IDX_")) {
+                names.add(name.toUpperCase(Locale.ROOT));
+              }
+            }
+          }
+        }
+      } catch (SQLException e) {
+        throw new IllegalStateException(e);
+      }
+      return names;
+    });
+  }
+
+  static ProcessEngineConfigurationImpl configuration(ProcessEngine engine) {
+    return (ProcessEngineConfigurationImpl) engine.getProcessEngineConfiguration();
+  }
+
+  /** Runs a script of the class path as the engine runs its schema scripts, statement by statement. */
+  static void run(ProcessEngine engine, String resource) {
+    configuration(engine).getCommandExecutorTxRequired().execute(commandContext -> {
+      commandContext.getDbSqlSession().executeSchemaResource("upgrade", "audit", resource, false);
+      return null;
+    });
+  }
+
+  static String upgradeResource(String databaseType) {
+    return "dev/fasti/engine/audit/db/upgrade/fasti." + databaseType + ".upgrade.audit.after_1.1.sql";
+  }
+
+  static String resource11(String databaseType, String operation) {
+    return "dev/fasti/engine/audit/db/v1.1/fasti." + databaseType + "." + operation + ".audit.sql";
+  }
+
   @Test
   public void shouldCreateAndDropTheTablesOnTheTestDatabase() {
     engine = AuditTestSupport.engine("schema", plugin -> { });
     assertThat(present(engine)).isTrue();
+    assertThat(indexes(engine)).containsExactlyInAnyOrderElementsOf(INDEXES);
     AuditTestSupport.dropTables(engine);
     assertThat(present(engine)).isFalse();
+    // the indexes went with the table: their names are free again (on PostgreSQL, Oracle and DB2
+    // index names are unique in the schema, so creating them again would fail otherwise)
+    assertThat(indexes(engine)).isEmpty();
     ProcessEngineConfigurationImpl configuration = (ProcessEngineConfigurationImpl) engine.getProcessEngineConfiguration();
     configuration.getCommandExecutorTxRequired().execute(commandContext -> {
       AuditStore.createTables(commandContext);
       return null;
     });
     assertThat(present(engine)).isTrue();
+    assertThat(indexes(engine)).containsExactlyInAnyOrderElementsOf(INDEXES);
+  }
+
+  @Test
+  public void shouldUpgradeTheTablesOf11AndRunTheUpgradeAgain() {
+    engine = AuditTestSupport.engine("upgrade", plugin -> { });
+    String type = configuration(engine).getDatabaseType();
+    // the scripts of PostgreSQL (CREATE INDEX CONCURRENTLY), Oracle, SQL Server and DB2 do not run
+    // inside the transaction of a command; PostgreSQL was run with psql (see the report)
+    Assume.assumeTrue(type.equals("h2") || type.equals("mysql"));
+    AuditTestSupport.dropTables(engine);
+    run(engine, resource11(type, "create"));
+    assertThat(indexes(engine)).containsExactlyInAnyOrderElementsOf(INDEXES_1_1);
+    AuditTestSupport.sql(engine, "insert into FASTI_AUDIT_EVENT (ID_, CHAIN_ID_, SEQ_, TIME_, TYPE_, PREV_HASH_, HASH_) "
+        + "values ('r1', 'old/0', 1, 1, 'audit', 'p', 'h')");
+
+    run(engine, upgradeResource(type));
+    assertThat(indexes(engine)).containsExactlyInAnyOrderElementsOf(INDEXES);
+    // once more, as after a run that stopped half-way: nothing to create, nothing to drop
+    run(engine, upgradeResource(type));
+    assertThat(indexes(engine)).containsExactlyInAnyOrderElementsOf(INDEXES);
+    assertThat(AuditTestSupport.sql(engine, "update FASTI_AUDIT_EVENT set SEQ_ = 1 where ID_ = 'r1'")).isEqualTo(1);
+
+    // the drop script of 1.1 names the indexes it replaced; the one of this version drops the tables
+    assertThatThrownBy(() -> run(engine, resource11(type, "drop"))).isInstanceOf(ProcessEngineException.class);
+    AuditTestSupport.dropTables(engine);
+    assertThat(present(engine)).isFalse();
+  }
+
+  @Test
+  public void shouldDropTheTablesOf11ThatWereNotUpgraded() {
+    engine = AuditTestSupport.engine("drop11", plugin -> { });
+    String type = configuration(engine).getDatabaseType();
+    Assume.assumeTrue(type.equals("h2") || type.equals("mysql") || type.equals("postgres"));
+    AuditTestSupport.dropTables(engine);
+    run(engine, resource11(type, "create"));
+    assertThat(indexes(engine)).containsExactlyInAnyOrderElementsOf(INDEXES_1_1);
+    AuditTestSupport.dropTables(engine);
+    assertThat(present(engine)).isFalse();
+    assertThat(indexes(engine)).isEmpty();
   }
 
   @Test
@@ -96,7 +199,7 @@ public class AuditSchemaTest {
     engine = configuration.buildProcessEngine();
     try {
       assertThat(AuditTrail.of(engine).verify().getChains()).extracting(AuditVerification.Chain::getChainId)
-          .contains("second/0", "second/3");
+          .contains("second/end-0", "second/end-3");
     } finally {
       creator.close();
     }
@@ -110,14 +213,31 @@ public class AuditSchemaTest {
       assertThat(create).as(database).contains("create table FASTI_AUDIT_EVENT", "create table FASTI_AUDIT_HEAD",
           "create unique index FASTI_IDX_AUDIT_CHAIN");
       assertThat(drop).as(database).contains("drop table FASTI_AUDIT_EVENT", "drop table FASTI_AUDIT_HEAD");
-      // every column of the event table, in every script, and every index is dropped again
+      // every column of the event table, in every script
       for (String column : AuditStoreColumns.COLUMNS) {
         assertThat(create).as(database + " " + column).containsPattern("\\n\\s+" + Pattern.quote(column) + " ");
       }
-      Matcher indexes = Pattern.compile("create (?:unique )?index (\\w+)").matcher(create);
-      while (indexes.find()) {
-        assertThat(drop).as(database).contains(indexes.group(1));
+      // the indexes of this version, under their names
+      assertThat(create).as(database).contains(
+          "create index FASTI_IDX_AUDIT_ORDER on FASTI_AUDIT_EVENT(TIME_, CHAIN_ID_, SEQ_)",
+          "create index FASTI_IDX_AUDIT_ACTOR_ORDER on FASTI_AUDIT_EVENT(ACTOR_, TIME_, CHAIN_ID_, SEQ_)",
+          "create index FASTI_IDX_AUDIT_TYPE_ORDER on FASTI_AUDIT_EVENT(TYPE_, ACTION_, TIME_, CHAIN_ID_, SEQ_)");
+      assertThat(create).as(database).doesNotContain("FASTI_IDX_AUDIT_TIME", "FASTI_IDX_AUDIT_ACTOR ", "FASTI_IDX_AUDIT_TYPE ");
+      // the indexes go with the table, so the script drops the tables of every version, whichever
+      // indexes they have
+      assertThat(drop).as(database).doesNotContainPattern("(?im)^\\s*drop index");
+      // the upgrade creates the same indexes, then drops the ones they replace
+      String upgrade = resource(upgradeResource(database));
+      for (String index : List.of("FASTI_IDX_AUDIT_ORDER", "FASTI_IDX_AUDIT_ACTOR_ORDER", "FASTI_IDX_AUDIT_TYPE_ORDER")) {
+        assertThat(upgrade).as(database).containsPattern("create index (?:concurrently )?(?:if not exists )?" + index + " ");
       }
+      int lastCreate = upgrade.lastIndexOf("create index");
+      for (String index : List.of("FASTI_IDX_AUDIT_TIME", "FASTI_IDX_AUDIT_ACTOR", "FASTI_IDX_AUDIT_TYPE")) {
+        assertThat(upgrade).as(database).containsPattern("drop index (?:concurrently )?(?:if exists )?" + index + "\\b");
+      }
+      assertThat(upgrade.indexOf("drop index", lastCreate)).as(database + ": the new indexes first").isPositive();
+      assertThat(upgrade.substring(0, lastCreate)).as(database + ": the new indexes first")
+          .doesNotContainPattern("(?im)^[^-\\n]*drop index");
     }
   }
 

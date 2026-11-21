@@ -17,13 +17,8 @@
 
 -- Drops the tables of the Fasti audit trail, with all audit records. Export them first.
 
-drop index FASTI_IDX_AUDIT_CHAIN on FASTI_AUDIT_EVENT;
--- FASTI_IDX_AUDIT_ORDER (or FASTI_IDX_AUDIT_TIME on a table of 1.0 or 1.1 that was not upgraded)
--- is dropped with the table
-drop index FASTI_IDX_AUDIT_PROCINST on FASTI_AUDIT_EVENT;
-drop index FASTI_IDX_AUDIT_BUSKEY on FASTI_AUDIT_EVENT;
-drop index FASTI_IDX_AUDIT_ACTOR on FASTI_AUDIT_EVENT;
-drop index FASTI_IDX_AUDIT_TYPE on FASTI_AUDIT_EVENT;
+-- The indexes are dropped with the table, whichever a table has (those of 1.0 and 1.1, or of this
+-- version after the script in upgrade/ or created anew), so this script drops tables of every version.
 
 drop table FASTI_AUDIT_EVENT;
 drop table FASTI_AUDIT_HEAD;

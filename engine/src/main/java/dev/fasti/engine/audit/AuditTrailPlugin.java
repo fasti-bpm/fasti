@@ -160,7 +160,8 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
         throw new ProcessEngineException("The tables of the audit trail (" + AuditStore.EVENT_TABLE + ", "
             + AuditStore.HEAD_TABLE + ") are missing and the engine may not create its schema (databaseSchemaUpdate="
             + schemaUpdate + "). Run " + AuditStore.createResource(configuration.getDatabaseType())
-            + " (sql/create/" + configuration.getDatabaseType() + "_fasti_audit.sql in the distribution) or turn the audit trail off.");
+            + " (sql/create/" + configuration.getDatabaseType() + "_fasti_audit.sql of the distribution, below configuration/ in"
+            + " Run and the container image) or turn the audit trail off.");
       }
       try {
         executor.execute(commandContext -> {

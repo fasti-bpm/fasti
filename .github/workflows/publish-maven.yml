@@ -2,15 +2,23 @@
 # Copyright Fasti BPM contributors
 
 # Publishes the Maven artifacts of a version tag to Maven Central (manual start only).
-# Runs the root POM profile "central": sources and javadoc jars, GPG signatures, and an upload
-# through the Central Portal. The deployment is validated by the portal and then waits there
-# for a manual "Publish" on https://central.sonatype.com/publishing, unless "auto-publish" is
-# set. Setup and release steps: docs/publishing-maven-central.md.
+# Setup and release steps: docs/publishing-maven-central.md.
 #
-# Repository secrets: MAVEN_CENTRAL_USERNAME and MAVEN_CENTRAL_PASSWORD (a Central Portal user
-# token), MAVEN_GPG_PRIVATE_KEY (ASCII-armoured secret key) and MAVEN_GPG_PASSPHRASE. Without
-# them the "publish" job is skipped with a notice. A dry run needs none of them: it builds the
-# bundle (signed only if the key is set), keeps it as a workflow artifact and uploads nothing.
+# Two jobs, so that no secret is present while project code, Maven plugins or npm packages run:
+#
+# - "bundle" checks out the tag and runs the root POM profile "central" without signing and
+#   without uploading (sources and javadoc jars, checksums, the bundle of the Central Portal).
+#   It has no secrets. A dry run ends here; the bundle is kept as a workflow artifact.
+# - "publish" (not for a dry run) runs in the GitHub environment "maven-central", which holds
+#   the secrets and can require a reviewer. It checks out nothing and runs no build: it takes
+#   the bundle of the first job, signs every file with GPG and uploads the result through the
+#   Publisher API of the Central Portal. The deployment is validated by the portal and then
+#   waits there for a manual "Publish" on https://central.sonatype.com/publishing, unless
+#   "auto-publish" is set.
+#
+# Secrets of the environment "maven-central": MAVEN_CENTRAL_USERNAME and MAVEN_CENTRAL_PASSWORD
+# (a Central Portal user token), MAVEN_GPG_PRIVATE_KEY (ASCII-armoured secret key) and
+# MAVEN_GPG_PASSPHRASE.
 #
 # The tests are not run here: the build workflow runs them for the tag (release.yml).
 name: publish-maven
@@ -23,7 +31,7 @@ on:
         required: true
         type: string
       dry-run:
-        description: Build and check the bundle only; do not upload it
+        description: Build and keep the bundle only; no secrets, no signature, no upload
         type: boolean
         default: false
       auto-publish:
@@ -39,41 +47,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions: {}
-    outputs:
-      configured: ${{ steps.secrets.outputs.configured }}
-      signing: ${{ steps.secrets.outputs.signing }}
-    steps:
-      - id: secrets
-        name: Check the publishing secrets
-        env:
-          CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          GPG_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
-          GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-        run: |
-          signing=false
-          if [ -n "$GPG_KEY" ] && [ -n "$GPG_PASSPHRASE" ]; then
-            signing=true
-          fi
-          if [ -n "$CENTRAL_USERNAME" ] && [ -n "$CENTRAL_PASSWORD" ] && [ "$signing" = true ]; then
-            echo "configured=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::The Maven Central secrets (MAVEN_CENTRAL_USERNAME, MAVEN_CENTRAL_PASSWORD, MAVEN_GPG_PRIVATE_KEY, MAVEN_GPG_PASSPHRASE) are not all set; nothing is published. See docs/publishing-maven-central.md."
-          fi
-          echo "signing=${signing}" >> "$GITHUB_OUTPUT"
-
-  publish:
-    needs: check
-    if: needs.check.outputs.configured == 'true' || inputs.dry-run
+  bundle:
     runs-on: ubuntu-latest
     timeout-minutes: 150
     permissions:
       contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      sha256: ${{ steps.digest.outputs.sha256 }}
     env:
       MAVEN_OPTS: -Xmx3g
       npm_config_fetch_retries: '5'
@@ -84,7 +65,7 @@ jobs:
         env:
           TAG: ${{ inputs.tag }}
         run: |
-          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          if ! [[ "$TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
             echo "::error::'${TAG}' is not a release tag (vMAJOR.MINOR.PATCH)."
             exit 1
           fi
@@ -97,7 +78,8 @@ jobs:
       - uses: ./.github/actions/setup-maven
         with:
           java-version: '21'
-      - name: Check that the POM version matches the tag
+      - id: version
+        name: Check that the POM version matches the tag
         env:
           TAG: ${{ inputs.tag }}
         run: |
@@ -106,48 +88,133 @@ jobs:
             echo "::error::The POM version ${version} does not match the tag ${TAG}."
             exit 1
           fi
-      - name: Import the signing key
-        if: needs.check.outputs.signing == 'true'
-        env:
-          MAVEN_GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+      # no secrets in this job: -Dgpg.skip leaves the signing to the "publish" job, and
+      # central.skipUpload makes the plugin write the bundle without contacting the portal
+      - name: Build the bundle
+        run: ./mvnw -B -ntp -Pcentral -DskipTests -Dgpg.skip -Dcentral.skipUpload=true deploy
+      - id: digest
+        name: Record the checksum of the bundle
         run: |
-          printf '%s\n' "$MAVEN_GPG_PRIVATE_KEY" | gpg --batch --import
-          gpg --list-secret-keys --keyid-format long
-      # setup-maven writes ~/.m2/settings.xml with the download mirror; this adds the server
-      # entry of the Central Portal. The credentials stay in the environment of the Maven step.
-      - name: Add the Central Portal server to the Maven settings
-        run: |
-          python3 - <<'EOF'
-          import pathlib
-          path = pathlib.Path.home() / '.m2' / 'settings.xml'
-          server = ('  <servers>\n    <server>\n      <id>central</id>\n'
-                    '      <username>${env.MAVEN_CENTRAL_USERNAME}</username>\n'
-                    '      <password>${env.MAVEN_CENTRAL_PASSWORD}</password>\n'
-                    '    </server>\n  </servers>\n')
-          text = path.read_text()
-          path.write_text(text.replace('</settings>', server + '</settings>', 1))
-          EOF
-      - name: Build, sign and upload to the Central Portal
-        env:
-          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-          DRY_RUN: ${{ inputs.dry-run }}
-          AUTO_PUBLISH: ${{ inputs.auto-publish }}
-          SIGNING: ${{ needs.check.outputs.signing }}
-        run: |
-          args=(-Pcentral -DskipTests "-Dcentral.autoPublish=${AUTO_PUBLISH}")
-          if [ "$DRY_RUN" = true ]; then
-            args+=(-Dcentral.skipUpload=true)
-          fi
-          if [ "$SIGNING" != true ]; then
-            args+=(-Dgpg.skip)
-          fi
-          ./mvnw -B -ntp "${args[@]}" deploy
-      - name: Keep the bundle of a dry run
-        if: inputs.dry-run
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+          sha256=$(sha256sum target/central-publishing/central-bundle.zip | cut -d' ' -f1)
+          echo "sha256=${sha256}" >> "$GITHUB_OUTPUT"
+          echo "central-bundle.zip: ${sha256}, $(unzip -Z1 target/central-publishing/central-bundle.zip | grep -c '\.pom$') components"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: central-bundle
           path: target/central-publishing/central-bundle.zip
+          if-no-files-found: error
           retention-days: 3
+
+  publish:
+    needs: bundle
+    if: ${{ !inputs.dry-run }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    # holds the secrets; configure required reviewers there (docs/publishing-maven-central.md)
+    environment: maven-central
+    permissions: {}
+    steps:
+      - name: Check the publishing secrets
+        env:
+          CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          GPG_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+        run: |
+          if [ -z "$CENTRAL_USERNAME" ] || [ -z "$CENTRAL_PASSWORD" ] || [ -z "$GPG_KEY" ] || [ -z "$GPG_PASSPHRASE" ]; then
+            echo "::error::The secrets MAVEN_CENTRAL_USERNAME, MAVEN_CENTRAL_PASSWORD, MAVEN_GPG_PRIVATE_KEY and MAVEN_GPG_PASSPHRASE are not all set in the environment maven-central; nothing is published. See docs/publishing-maven-central.md."
+            exit 1
+          fi
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: central-bundle
+      - name: Check the bundle against the checksum of the build
+        env:
+          EXPECTED: ${{ needs.bundle.outputs.sha256 }}
+        run: echo "${EXPECTED}  central-bundle.zip" | sha256sum -c -
+      - name: Sign the bundle
+        env:
+          MAVEN_GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          # a keyring of this step only, removed when the step ends
+          GNUPGHOME=$(mktemp -d "$RUNNER_TEMP/gnupg.XXXXXX")
+          export GNUPGHOME
+          trap 'gpgconf --kill gpg-agent || true; rm -rf "$GNUPGHOME"' EXIT
+          printf '%s\n' "$MAVEN_GPG_PRIVATE_KEY" | gpg --batch --quiet --import
+          gpg --batch --list-secret-keys --keyid-format long
+
+          mkdir bundle
+          unzip -q central-bundle.zip -d bundle
+          # every file except the checksums gets a detached signature next to it
+          count=0
+          while IFS= read -r -d '' file; do
+            gpg --batch --yes --quiet --pinentry-mode loopback --passphrase-fd 3 \
+              --armor --detach-sign --output "${file}.asc" "$file" 3<<<"$MAVEN_GPG_PASSPHRASE"
+            gpg --batch --quiet --verify "${file}.asc" "$file" 2>/dev/null
+            count=$((count + 1))
+          done < <(find bundle -type f ! -name '*.md5' ! -name '*.sha1' ! -name '*.sha256' \
+                     ! -name '*.sha512' ! -name '*.asc' -print0)
+          if [ "$count" -eq 0 ]; then
+            echo "::error::The bundle holds no files to sign."
+            exit 1
+          fi
+          echo "Signed ${count} files."
+          (cd bundle && zip -qr ../central-bundle-signed.zip .)
+          rm -rf bundle
+      - name: Upload to the Central Portal and wait for the validation
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          AUTO_PUBLISH: ${{ inputs.auto-publish }}
+          VERSION: ${{ needs.bundle.outputs.version }}
+        run: |
+          set -euo pipefail
+          api=https://central.sonatype.com/api/v1/publisher
+          token=$(printf '%s:%s' "$MAVEN_CENTRAL_USERNAME" "$MAVEN_CENTRAL_PASSWORD" | base64 -w 0)
+          echo "::add-mask::${token}"
+          # the token goes to curl in a file, not on its command line
+          auth=$(mktemp "$RUNNER_TEMP/central-auth.XXXXXX")
+          trap 'rm -f "$auth"' EXIT
+          printf 'header = "Authorization: Bearer %s"\n' "$token" > "$auth"
+
+          type=USER_MANAGED
+          if [ "$AUTO_PUBLISH" = true ]; then
+            type=AUTOMATIC
+          fi
+          id=$(curl --silent --show-error --fail-with-body --config "$auth" --request POST \
+            --form 'bundle=@central-bundle-signed.zip;type=application/octet-stream' \
+            "${api}/upload?publishingType=${type}&name=Fasti%20BPM%20Platform%20${VERSION}")
+          echo "Deployment ${id} (${type}) uploaded; waiting for the validation."
+
+          deadline=$((SECONDS + 3600))
+          while :; do
+            sleep 15
+            if [ "$SECONDS" -gt "$deadline" ]; then
+              echo "::error::The portal did not validate deployment ${id} within an hour; see https://central.sonatype.com/publishing/deployments"
+              exit 1
+            fi
+            if ! status=$(curl --silent --show-error --fail-with-body --config "$auth" --request POST "${api}/status?id=${id}"); then
+              echo "::warning::The status request failed; trying again."
+              continue
+            fi
+            state=$(printf '%s' "$status" | python3 -c 'import json, sys; print(json.load(sys.stdin).get("deploymentState", ""))')
+            echo "State: ${state}"
+            case "$state" in
+              VALIDATED | PUBLISHING | PUBLISHED)
+                break
+                ;;
+              FAILED)
+                echo "::error::The portal rejected deployment ${id}."
+                printf '%s\n' "$status" | python3 -m json.tool
+                exit 1
+                ;;
+            esac
+          done
+          if [ "$type" = USER_MANAGED ]; then
+            echo "::notice::Deployment ${id} is validated. Publish or drop it on https://central.sonatype.com/publishing/deployments"
+          else
+            echo "::notice::Deployment ${id} is validated and is being published."
+          fi

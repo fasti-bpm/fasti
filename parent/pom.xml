@@ -348,16 +348,37 @@
         </plugins>
       </build>
     </profile>
-  </profiles>
 
-  <repositories>
-    <!-- Some test and provided dependencies are only available there (for example
-         org.apache.taglibs:taglibs-standard-*:1.2.6-RC1 of engine-cdi). -->
-    <repository>
-      <id>JBoss public</id>
-      <name>jboss</name>
-      <url>https://repository.jboss.org/nexus/content/groups/public/</url>
-    </repository>
-  </repositories>
+    <!-- Build only. Some test and provided dependencies are not on Maven Central (for example
+         org.apache.taglibs:taglibs-standard-*:1.2.6-RC1 of engine-cdi and
+         org.jgroups:jgroups:5.4.9.Final of the WildFly subsystem); the build gets them from the
+         JBoss repository.
+         The repository is declared in a profile that is active only for a project that is
+         built from its POM file (every module of this source tree). When Maven reads the
+         published fasti-parent as the parent of a dependency there is no base directory, the
+         profile stays inactive, and the builds of applications that use Fasti artifacts do not
+         get this repository. Snapshots are never taken from it. -->
+    <profile>
+      <id>jboss-repository</id>
+      <activation>
+        <file>
+          <exists>${basedir}/pom.xml</exists>
+        </file>
+      </activation>
+      <repositories>
+        <repository>
+          <id>jboss-public</id>
+          <name>JBoss public repository</name>
+          <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
 </project>
 

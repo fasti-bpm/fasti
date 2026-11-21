@@ -212,23 +212,32 @@ interface TaskWorkloadDto {
 }
 
 /**
- * Whether the server has `POST /task/workload` (Fasti 1.2 and later): unknown
- * until the first answer. An older server answers 404 or 405, and the numbers
- * are then read with the task queries as before.
+ * Whether the server has `POST /task/workload` (Fasti 1.2 and later). An older server answers
+ * 404 or 405, a server whose MyBatis mappings lack the workload statements 501; the numbers are
+ * then read with the task queries as before. What was learnt is kept for a few minutes only:
+ * during a rolling update, or after a rollback, the node that answers may change while the page
+ * stays open, so a missing endpoint is asked again later, and one that went missing after it had
+ * answered is no error either.
  */
-let aggregate: boolean | undefined;
+let support: { aggregate: boolean; at: number } | undefined;
+
+/** How long the answer of the server about the endpoint is taken as current. */
+export const WORKLOAD_SUPPORT_FRESH = 5 * 60_000;
 
 /** For tests: forget what is known about the server. */
 export function resetWorkloadSupport(): void {
-  aggregate = undefined;
+  support = undefined;
 }
+
+/** Statuses that say the endpoint is not there, as opposed to a failure of the request. */
+const MISSING = new Set([404, 405, 501]);
 
 async function readAggregate(
   body: { groupIdIn?: string[]; userIdIn?: string[] },
   now: Date,
   signal?: AbortSignal,
 ): Promise<TaskWorkloadDto | null> {
-  if (aggregate === false) return null;
+  if (support && !support.aggregate && Date.now() - support.at < WORKLOAD_SUPPORT_FRESH) return null;
   const tenant = tenantFilter().tenantIdIn;
   try {
     const result = await request<TaskWorkloadDto>(`${engineApi()}/task/workload`, {
@@ -236,11 +245,11 @@ async function readAggregate(
       json: { ...body, overdueBefore: toEngineDate(now), ...(tenant ? { tenantIdIn: [tenant] } : {}) },
       signal,
     });
-    aggregate = true;
+    support = { aggregate: true, at: Date.now() };
     return result;
   } catch (error) {
-    if (isApiError(error) && (error.status === 404 || error.status === 405) && aggregate === undefined) {
-      aggregate = false;
+    if (isApiError(error) && MISSING.has(error.status)) {
+      support = { aggregate: false, at: Date.now() };
       return null;
     }
     throw error;

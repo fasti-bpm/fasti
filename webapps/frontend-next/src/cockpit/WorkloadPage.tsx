@@ -285,6 +285,10 @@ export function WorkloadPage() {
           tone={summary?.overdue ? 'danger' : undefined}
         />
       </div>
+      {/* the tables show a failure of the numbers; without either table, it is shown here */}
+      {load.isError && !load.data && groups.isError && users.isError && (
+        <ErrorState error={load.error} onRetry={() => void load.refetch()} />
+      )}
       <p className="workload__scope muted">
         {t('workload.scope')}
         {tasklist && !openFilter.isPending && !filterId && <> {t('workload.noOpenFilter')}</>}

@@ -5,9 +5,9 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RouterProvider, createMemoryRouter } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getColumnValues } from '../api/cockpit';
-import { byLoad, getTaskTotals, getWorkload, mapLimited, type WorkloadRow } from '../api/workload';
+import { WORKLOAD_SUPPORT_FRESH, byLoad, getTaskTotals, getWorkload, mapLimited, type WorkloadRow } from '../api/workload';
 import { Providers, createQueryClient, routes } from '../app/App';
 import { decodeSearch, encodeSearch } from '../tasklist/searchLinks';
 import { toTaskQuery } from '../tasklist/search';
@@ -44,6 +44,10 @@ function renderApp(path: string) {
 const row = (id: string, open: number, overdue: number): WorkloadRow => ({ id, name: id, open, overdue, unassigned: null, oldest: null });
 
 describe('team workload', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('counts per group and per person and links every count to the task list', async () => {
     const server = backend({
       [`GET ${ENGINE}/filter`]: () =>
@@ -103,6 +107,23 @@ describe('team workload', () => {
     expect(await screen.findByText('You may not list groups')).toBeVisible();
     expect(await screen.findByRole('table', { name: 'By person' })).toBeVisible();
     expect(screen.getByText(/You have no task list without criteria/)).toBeVisible();
+  });
+
+  it('shows a failure of the numbers also when neither groups nor people may be listed', async () => {
+    const forbidden = () => json({ type: 'AuthorizationException', message: 'not allowed' }, 403);
+    backend({
+      [`GET ${ENGINE}/filter`]: () => json([]),
+      [`GET ${ENGINE}/group`]: forbidden,
+      [`GET ${ENGINE}/group/count`]: forbidden,
+      [`GET ${ENGINE}/user`]: forbidden,
+      [`GET ${ENGINE}/user/count`]: forbidden,
+      [`POST ${ENGINE}/task/workload`]: () => json({ type: 'AuthorizationException', message: 'numbers refused' }, 403),
+    });
+    renderApp('/cockpit/workload');
+
+    expect(await screen.findByText('You may not list groups')).toBeVisible();
+    expect(await screen.findByText('numbers refused')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeVisible();
   });
 
   it('pages through many groups and searches people by id and name', async () => {
@@ -221,6 +242,44 @@ describe('team workload', () => {
       overdueBefore: expect.stringMatching(/^2026-03-01T/),
       tenantIdIn: ['acme'],
     });
+  });
+
+  it('falls back when the endpoint goes away after it answered, and asks for it again later', async () => {
+    // a rolling update or a rollback: the node that answers changes while the page stays open
+    let status = 200;
+    const server = backend({
+      [`POST ${ENGINE}/task/workload`]: () =>
+        status === 200
+          ? json({ totals: { id: null, open: 7, unassigned: 2, overdue: 1, oldest: null }, orphaned: 0, groups: [], users: [] })
+          : json({ type: 'NotFoundException', message: 'gone' }, status),
+      [`GET ${ENGINE}/task/count`]: () => json({ count: 3 }),
+    });
+    vi.useFakeTimers({ toFake: ['Date'] });
+    const now = new Date('2026-03-01T10:00:00Z');
+    vi.setSystemTime(now);
+
+    expect((await getTaskTotals(now)).open).toBe(7);
+    status = 404;
+    expect((await getTaskTotals(now)).open).toBe(3);
+    // known to be missing: not asked again at once
+    expect((await getTaskTotals(now)).open).toBe(3);
+    expect(server.find('POST', `${ENGINE}/task/workload`)).toHaveLength(2);
+
+    status = 200;
+    vi.setSystemTime(now.getTime() + WORKLOAD_SUPPORT_FRESH);
+    expect((await getTaskTotals(now)).open).toBe(7);
+    expect(server.find('POST', `${ENGINE}/task/workload`)).toHaveLength(3);
+  });
+
+  it('falls back when the server has the endpoint but not its statements (501)', async () => {
+    const server = backend({
+      [`POST ${ENGINE}/task/workload`]: () =>
+        json({ type: 'RestException', message: 'The workload statements are not mapped' }, 501),
+      [`GET ${ENGINE}/task/count`]: () => json({ count: 2 }),
+    });
+
+    expect((await getTaskTotals(new Date())).open).toBe(2);
+    expect(server.find('GET', `${ENGINE}/task/count`)).toHaveLength(5);
   });
 
   it('fails when the server fails, instead of falling back to the task queries', async () => {

@@ -127,6 +127,7 @@ const messages: Catalog = {
   'cmmn.task.diagramLabel': 'Diagramme du dossier, l’élément de plan de la tâche est mis en évidence',
   'cmmn.task.openCase': 'Ouvrir le dossier dans Cockpit',
 
+  'cmmn.deployments.openCase': 'Ouvrir le dossier « {name} » (version {version})',
   'palette.kind.case': 'Instance de dossier',
 };
 

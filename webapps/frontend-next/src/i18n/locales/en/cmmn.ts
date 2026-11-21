@@ -125,6 +125,7 @@ const messages = {
   'cmmn.task.diagramLabel': 'Case diagram, the plan item of the task is highlighted',
   'cmmn.task.openCase': 'Open the case in Cockpit',
 
+  'cmmn.deployments.openCase': 'Open the case “{name}” (version {version})',
   'palette.kind.case': 'Case instance',
 };
 

@@ -125,6 +125,7 @@ const messages: Catalog = {
   'cmmn.task.diagramLabel': 'Diagram kasus, item rencana dari tugas disorot',
   'cmmn.task.openCase': 'Buka kasus di Cockpit',
 
+  'cmmn.deployments.openCase': 'Buka kasus “{name}” (versi {version})',
   'palette.kind.case': 'Instans kasus',
 };
 

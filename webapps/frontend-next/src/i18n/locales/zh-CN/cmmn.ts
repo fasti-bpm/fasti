@@ -120,6 +120,7 @@ const messages: Catalog = {
   'cmmn.task.diagramLabel': '案例图，任务的计划项已突出显示',
   'cmmn.task.openCase': '在 Cockpit 中打开案例',
 
+  'cmmn.deployments.openCase': '打开案例“{name}”（版本 {version}）',
   'palette.kind.case': '案例实例',
 };
 

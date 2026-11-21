@@ -504,9 +504,9 @@ export function DeploymentPage() {
   // the process or case a resource defines, to open it from the list
   const definitionOf = (resource: DeploymentResource) => {
     const process = definitions.data?.find((definition) => definition.resource === resource.name);
-    if (process) return { ...process, path: definitionPath(process.id) };
+    if (process) return { ...process, path: definitionPath(process.id), message: 'cockpit.deployments.openDefinition' as const };
     const found = caseDefinitions.data?.find((definition) => definition.resource === resource.name);
-    return found ? { ...found, path: caseDefinitionPath(found.id) } : undefined;
+    return found ? { ...found, path: caseDefinitionPath(found.id), message: 'cmmn.deployments.openCase' as const } : undefined;
   };
 
   return (
@@ -561,7 +561,7 @@ export function DeploymentPage() {
                     </button>
                     {definition && (
                       <Link className="link link--subtle resource-list__link" to={definition.path}>
-                        {t('cockpit.deployments.openDefinition', {
+                        {t(definition.message, {
                           name: definition.name ?? definition.key,
                           version: definition.version,
                         })}

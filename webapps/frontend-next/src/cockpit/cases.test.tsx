@@ -333,6 +333,24 @@ describe('a case instance', () => {
   });
 });
 
+describe('deployments with cases', () => {
+  it('draws a .cmmn resource and links the case it defines', async () => {
+    backend({
+      [`GET ${ENGINE}/deployment/d1`]: () => json({ id: 'd1', name: 'claims', source: null, deploymentTime: '2026-03-01T09:30:00.000+0700', tenantId: null }),
+      [`GET ${ENGINE}/deployment/d1/resources`]: () => json([{ id: 'r1', name: 'claim.cmmn', deploymentId: 'd1' }]),
+      [`GET ${ENGINE}/deployment/d1/resources/r1/data`]: () => new Response('<definitions />', { headers: { 'Content-Type': 'application/xml' } }),
+      [`GET ${ENGINE}/process-definition`]: () => json([]),
+    });
+    renderApp('/cockpit/deployments/d1');
+
+    expect(await screen.findByTestId('case-diagram')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Open the case “Claim case” (version 1)' })).toHaveAttribute(
+      'href',
+      `/cockpit/cases/definition/${encodeURIComponent(DEFINITION)}`,
+    );
+  });
+});
+
 describe('case history', () => {
   it('lists case instances and filters the closed ones', async () => {
     const user = userEvent.setup();

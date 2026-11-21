@@ -125,6 +125,7 @@ const messages: Catalog = {
   'cmmn.task.diagramLabel': 'Sơ đồ hồ sơ, mục kế hoạch của công việc được tô sáng',
   'cmmn.task.openCase': 'Mở hồ sơ trong trang giám sát',
 
+  'cmmn.deployments.openCase': 'Mở hồ sơ “{name}” (phiên bản {version})',
   'palette.kind.case': 'Lượt chạy hồ sơ',
 };
 

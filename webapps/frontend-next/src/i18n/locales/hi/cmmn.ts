@@ -127,6 +127,7 @@ const messages: Catalog = {
   'cmmn.task.diagramLabel': 'केस आरेख, टास्क का प्लान आइटम हाइलाइट है',
   'cmmn.task.openCase': 'केस को Cockpit में खोलें',
 
+  'cmmn.deployments.openCase': 'केस “{name}” खोलें (संस्करण {version})',
   'palette.kind.case': 'केस इंस्टेंस',
 };
 

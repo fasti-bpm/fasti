@@ -125,6 +125,7 @@ const messages: Catalog = {
   'cmmn.task.diagramLabel': '케이스 다이어그램, 태스크의 계획 항목이 강조 표시됨',
   'cmmn.task.openCase': 'Cockpit에서 케이스 열기',
 
+  'cmmn.deployments.openCase': '케이스 “{name}”(버전 {version}) 열기',
   'palette.kind.case': '케이스 인스턴스',
 };
 

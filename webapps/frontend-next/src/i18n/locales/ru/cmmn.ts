@@ -131,6 +131,7 @@ const messages: Catalog = {
   'cmmn.task.diagramLabel': 'Диаграмма кейса, элемент плана задачи выделен',
   'cmmn.task.openCase': 'Открыть кейс в Cockpit',
 
+  'cmmn.deployments.openCase': 'Открыть кейс «{name}» (версия {version})',
   'palette.kind.case': 'Экземпляр кейса',
 };
 

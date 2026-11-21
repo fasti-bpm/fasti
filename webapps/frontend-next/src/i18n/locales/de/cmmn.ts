@@ -127,6 +127,7 @@ const messages: Catalog = {
   'cmmn.task.diagramLabel': 'Falldiagramm, das Planelement der Aufgabe ist hervorgehoben',
   'cmmn.task.openCase': 'Fall im Cockpit öffnen',
 
+  'cmmn.deployments.openCase': 'Fall „{name}“ öffnen (Version {version})',
   'palette.kind.case': 'Fallinstanz',
 };
 

@@ -50,12 +50,17 @@ interface View {
 const MARGIN = 24;
 const MAX_FIT_SCALE = 1.25;
 
+/** Width of the zoom tools at the right edge, which the fitted diagram keeps clear of. */
+const TOOLS = 56;
+
 function fitView(box: Bounds, width: number, height: number): View {
+  const room = width - 2 * MARGIN - TOOLS;
   const scale =
-    width > 0 && height > 0 && box.width > 0 && box.height > 0
-      ? Math.min(MAX_FIT_SCALE, (width - 2 * MARGIN) / box.width, (height - 2 * MARGIN) / box.height)
+    room > 0 && height > 0 && box.width > 0 && box.height > 0
+      ? Math.max(Math.min(MAX_FIT_SCALE, room / box.width, (height - 2 * MARGIN) / box.height), 0.05)
       : 1;
-  return { cx: box.x + box.width / 2, cy: box.y + box.height / 2, scale: Math.max(scale, 0.05) };
+  // the drawing is centred in the room left of the tools
+  return { cx: box.x + box.width / 2 + TOOLS / 2 / scale, cy: box.y + box.height / 2, scale };
 }
 
 // --- shapes -------------------------------------------------------------------

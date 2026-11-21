@@ -125,6 +125,7 @@ const messages: Catalog = {
   'cmmn.task.diagramLabel': 'แผนภาพเคส รายการแผนของงานถูกเน้นไว้',
   'cmmn.task.openCase': 'เปิดเคสใน Cockpit',
 
+  'cmmn.deployments.openCase': 'เปิดเคส “{name}” (เวอร์ชัน {version})',
   'palette.kind.case': 'อินสแตนซ์เคส',
 };
 

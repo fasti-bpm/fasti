@@ -217,7 +217,10 @@ describe('absence settings', () => {
     expect(dialog).toHaveTextContent('The 3 open tasks of Demo User go to Mary Major now');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Hand over' }));
     expect(await screen.findByText('2 tasks handed over to Mary Major')).toBeVisible();
-    expect(screen.getByText(/1 task stays assigned/)).toBeVisible();
+    // in the notification itself; its text is also read out in a region of its own for a moment
+    expect(screen.getByText(/1 task stays assigned/, { selector: '.toast__detail' })).toBeVisible();
+    // confirming the handover does not save the form of the absence the dialog was opened from
+    expect(server.find('PUT', `${ENGINE}/user/demo/absence`)).toHaveLength(0);
     expect(server.find('GET', `${ENGINE}/task/count`)[0]?.query.get('assignee')).toBe('demo');
     // the task list reads the tasks and whom they are held for again
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['tasks'] });

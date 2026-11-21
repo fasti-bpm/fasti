@@ -362,6 +362,9 @@ export function Dialog({
         <RadixDialog.Overlay className="dialog__overlay" />
         <RadixDialog.Content
           className={cx('dialog', wide && 'dialog--wide')}
+          // React hands the events of a portal on to the components around it, not to the elements:
+          // a form submitted in the dialog would submit the form the dialog was opened from as well
+          onSubmit={(event) => event.stopPropagation()}
           onCloseAutoFocus={(event) => {
             // a dialog opened from a menu item returns to the button of that menu, as the item is gone
             const fromMenu = opener.current instanceof HTMLElement && !!opener.current.closest('[role="menu"]');

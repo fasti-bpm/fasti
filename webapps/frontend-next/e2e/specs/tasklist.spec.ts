@@ -5,7 +5,7 @@
 import type { Page } from '@playwright/test';
 import { expect, open, test } from '../support/test';
 import { PREFIX, user } from '../support/env';
-import { dialog } from '../support/ui';
+import { answered, dialog } from '../support/ui';
 import { createFilter } from '../support/data';
 import type { Api, Task } from '../support/api';
 
@@ -58,9 +58,18 @@ test.describe('Tasklist', () => {
     // delete
     await app.getByRole('button', { name: /Settings of the filter/ }).click();
     await editor.getByRole('button', { name: 'Delete filter' }).click();
+    // only the delete is sent, not a save of the filter being deleted as well
+    const saves: string[] = [];
+    app.on('request', (request) => {
+      if (request.method() === 'PUT' && /\/filter\/[^/]+$/.test(new URL(request.url()).pathname)) saves.push(request.url());
+    });
+    const deleted = answered(app, 'DELETE', /\/filter\/[^/]+$/);
     await dialog(app).last().getByRole('button', { name: 'Delete filter' }).click();
+    // the filter is gone on the server once the delete was answered, not before
+    expect((await deleted).status()).toBe(204);
     await expect(filters.getByRole('button', { name: new RegExp(renamed) })).toBeHidden();
     expect(await api.get<unknown[]>('filter', { name: renamed })).toHaveLength(0);
+    expect(saves).toEqual([]);
   });
 
   test('claims and unclaims a task', async ({ app, api }) => {

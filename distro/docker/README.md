@@ -155,6 +155,8 @@ images.
 | `FASTI_FOUR_EYES_ENABLED` | `true` | **From 1.1.0.** [Four-eyes control](../../docs/four-eyes.md) for user tasks whose model declares `fasti:fourEyes`; `false` turns it off |
 | `FASTI_AUDIT_ENABLED` | `false` | **From 1.1.0.** `true`: [immutable audit trail](../../docs/audit-trail.md), on every node. Unless `FASTI_DB_SCHEMA_UPDATE=true`, create its tables first with `/fasti/configuration/sql/create/<database>_fasti_audit.sql` |
 | `FASTI_AUDIT_HMAC_KEY`, `FASTI_AUDIT_HMAC_KEY_FILE` | | **From 1.1.0.** Key that signs the checkpoints of the audit trail (at least 32 bytes), or the path of a file that holds it (Docker/Kubernetes secret) |
+| `FASTI_PERFORMANCE_INDEX_CHECK` | `warn` | One warning at start listing the [optional performance indexes](../../docs/performance.md) of `/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql` that the database does not have; `off` silences it |
+| `FASTI_PERFORMANCE_CONFIG_CHECK` | `warn` | Warnings at start for settings that cost performance as the data grows (history without cleanup window, connection pool smaller than the job executor needs, …); `off` silences them |
 | `FASTI_APPCDS`, `FASTI_APPCDS_FILE` | `false`, `/fasti/data/fasti-appcds.jsa` | class data sharing for faster startup (see Performance tuning) |
 | `FASTI_BASE64_INTRINSICS` | `false` | `false` adds `-XX:-UseBASE64Intrinsics` to mitigate CVE-2026-114938 ("Java4Shell"); `true` keeps the JVM Base64 intrinsic. See [docs/security/CVE-2026-114938.md](../../docs/security/CVE-2026-114938.md) |
 

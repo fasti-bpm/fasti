@@ -160,6 +160,8 @@ mục ghi **từ 1.1.0** chưa có trong các image 1.0.x.
 | `FASTI_FOUR_EYES_ENABLED` | `true` | **Từ 1.1.0.** [Kiểm soát bốn mắt](../../docs/four-eyes.vi.md) cho các user task mà mô hình khai báo `fasti:fourEyes`; `false` để tắt |
 | `FASTI_AUDIT_ENABLED` | `false` | **Từ 1.1.0.** `true`: [nhật ký kiểm toán bất biến](../../docs/audit-trail.vi.md), trên mọi node. Trừ khi `FASTI_DB_SCHEMA_UPDATE=true`, hãy tạo bảng trước bằng `/fasti/configuration/sql/create/<database>_fasti_audit.sql` |
 | `FASTI_AUDIT_HMAC_KEY`, `FASTI_AUDIT_HMAC_KEY_FILE` | | **Từ 1.1.0.** Khóa ký các điểm kiểm tra của nhật ký kiểm toán (ít nhất 32 byte), hoặc đường dẫn tệp chứa khóa (secret của Docker/Kubernetes) |
+| `FASTI_PERFORMANCE_INDEX_CHECK` | `warn` | Một cảnh báo khi khởi động liệt kê các [chỉ mục hiệu năng tùy chọn](../../docs/performance.vi.md) của `/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql` mà cơ sở dữ liệu chưa có; `off` để tắt |
+| `FASTI_PERFORMANCE_CONFIG_CHECK` | `warn` | Cảnh báo khi khởi động cho các cấu hình tốn hiệu năng khi dữ liệu lớn dần (lịch sử không có khung giờ dọn, connection pool nhỏ hơn mức job executor cần, …); `off` để tắt |
 | `FASTI_APPCDS`, `FASTI_APPCDS_FILE` | `false`, `/fasti/data/fasti-appcds.jsa` | class data sharing để khởi động nhanh hơn (xem Tinh chỉnh hiệu năng) |
 | `FASTI_BASE64_INTRINSICS` | `false` | `false` thêm `-XX:-UseBASE64Intrinsics` để giảm thiểu CVE-2026-114938 ("Java4Shell"); `true` giữ intrinsic Base64 của JVM. Xem [docs/security/CVE-2026-114938.vi.md](../../docs/security/CVE-2026-114938.vi.md) |
 

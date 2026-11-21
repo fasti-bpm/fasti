@@ -591,6 +591,19 @@
                             <class>dev.fasti.engine.foureyes.FourEyesPlugin</class>
                         </plugin>
 
+                        <!-- PERFORMANCE HINTS AT START (docs/performance.md) -->
+                        <!-- Logs one warning that lists the optional indexes of
+                             sql/optional/<database>_fasti_perf_indexes_create.sql that the database does
+                             not have, and one for each setting that costs performance as the data
+                             grows. It only reads; set a property to off to silence it. -->
+                        <plugin>
+                            <class>dev.fasti.engine.performance.PerformanceAdvisorPlugin</class>
+                            <properties>
+                                <property name="indexCheck">warn</property>
+                                <property name="configCheck">warn</property>
+                            </properties>
+                        </plugin>
+
                         <!-- IMMUTABLE AUDIT TRAIL (docs/audit-trail.md) -->
                         <!-- Uncomment so that what happens in the engine is recorded in hash-chained records
                              of the tables FASTI_AUDIT_EVENT and FASTI_AUDIT_HEAD (created at startup when the

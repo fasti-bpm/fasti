@@ -52,6 +52,14 @@ fasti.absence:
 # those steps in the same process instance. Acts only where a model declares such a rule.
 fasti.four-eyes.enabled: true
 
+# Performance hints at start (docs/performance.md): one warning that lists the optional indexes of
+# configuration/sql/optional/<database>_fasti_perf_indexes_create.sql that the database does not
+# have, and one for each setting that costs performance as the data grows (history without cleanup
+# window, connection pool smaller than the job executor needs). They only read. To silence them:
+#fasti.performance:
+#  index-check: "off"
+#  config-check: "off"
+
 # Immutable audit trail (docs/audit-trail.md), off by default: what happens in the engine (process
 # instances, tasks and who assigned or completed them, variables, deployments, incidents, the
 # operation log) is recorded in hash-chained records of the tables FASTI_AUDIT_EVENT and

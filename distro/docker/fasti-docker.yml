@@ -74,6 +74,13 @@ fasti:
   # model declares a rule (fasti:fourEyes); FASTI_FOUR_EYES_ENABLED=false turns it off
   four-eyes:
     enabled: true
+  # performance hints at start (docs/performance.md): one warning that lists the optional indexes of
+  # /fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql that the database does
+  # not have, and one for each setting that costs performance as the data grows. They only read;
+  # FASTI_PERFORMANCE_INDEX_CHECK=off and FASTI_PERFORMANCE_CONFIG_CHECK=off silence them
+  performance:
+    index-check: warn
+    config-check: warn
   # immutable audit trail (docs/audit-trail.md): off, as it adds the tables FASTI_AUDIT_EVENT and
   # FASTI_AUDIT_HEAD and a write per command; FASTI_AUDIT_ENABLED=true turns it on (on every node).
   # With FASTI_DB_SCHEMA_UPDATE left off, create the tables first

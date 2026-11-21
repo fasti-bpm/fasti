@@ -83,6 +83,30 @@ public class FastiAuditProperties {
    */
   private int retentionDays = AuditSettings.DEFAULT_RETENTION_DAYS;
 
+  /**
+   * Earlier keys, comma separated: what they signed is still checked after hmac-key was replaced.
+   * Best given as the environment variable FASTI_AUDIT_RETIRED_HMAC_KEYS.
+   */
+  private String retiredHmacKeys;
+
+  /**
+   * Ids (12 hex characters, as the settings and checkpoints show them) of earlier keys that are no
+   * longer at hand, comma separated, and "unsigned" for checkpoints and purge records written before
+   * a key was set. With a key configured they are accepted without being checked, before the first
+   * checkpoint of the current key; chains that hold them verify as intact, but not as authenticated.
+   */
+  private String retiredKeyIds;
+
+  /**
+   * Seconds a command waits for the head of its chain before it fails; 0 for the limit of the database.
+   */
+  private int lockTimeoutSeconds = AuditSettings.DEFAULT_LOCK_TIMEOUT_SECONDS;
+
+  /**
+   * Seconds a query or export of the audit trail may run; 0 for no limit.
+   */
+  private int queryTimeoutSeconds = AuditSettings.DEFAULT_QUERY_TIMEOUT_SECONDS;
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -161,6 +185,38 @@ public class FastiAuditProperties {
 
   public void setRetentionDays(int retentionDays) {
     this.retentionDays = retentionDays;
+  }
+
+  public String getRetiredHmacKeys() {
+    return retiredHmacKeys;
+  }
+
+  public void setRetiredHmacKeys(String retiredHmacKeys) {
+    this.retiredHmacKeys = retiredHmacKeys;
+  }
+
+  public String getRetiredKeyIds() {
+    return retiredKeyIds;
+  }
+
+  public void setRetiredKeyIds(String retiredKeyIds) {
+    this.retiredKeyIds = retiredKeyIds;
+  }
+
+  public int getLockTimeoutSeconds() {
+    return lockTimeoutSeconds;
+  }
+
+  public void setLockTimeoutSeconds(int lockTimeoutSeconds) {
+    this.lockTimeoutSeconds = lockTimeoutSeconds;
+  }
+
+  public int getQueryTimeoutSeconds() {
+    return queryTimeoutSeconds;
+  }
+
+  public void setQueryTimeoutSeconds(int queryTimeoutSeconds) {
+    this.queryTimeoutSeconds = queryTimeoutSeconds;
   }
 
   @Override

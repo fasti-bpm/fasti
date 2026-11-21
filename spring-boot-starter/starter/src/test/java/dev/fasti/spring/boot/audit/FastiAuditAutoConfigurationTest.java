@@ -45,7 +45,11 @@ public class FastiAuditAutoConfigurationTest {
       "fasti.audit.node-id=starter-node",
       "fasti.audit.chains=2",
       "fasti.audit.variable-values=none",
-      "fasti.audit.hmac-key=a-starter-test-key-that-is-long-enough-0123"
+      "fasti.audit.hmac-key=a-starter-test-key-that-is-long-enough-0123",
+      "fasti.audit.retired-hmac-keys=an-earlier-starter-key-that-is-long-enough-01",
+      "fasti.audit.retired-key-ids=unsigned",
+      "fasti.audit.lock-timeout-seconds=7",
+      "fasti.audit.query-timeout-seconds=9"
   })
   public static class Enabled {
 
@@ -63,6 +67,9 @@ public class FastiAuditAutoConfigurationTest {
       assertThat(audit.getStatus().getNodeId()).isEqualTo("starter-node");
       assertThat(audit.getStatus().getVariableValues()).isEqualTo("none");
       assertThat(audit.getStatus().isSigned()).isTrue();
+      assertThat(audit.getStatus().getRetiredKeyIds()).hasSize(2).contains("unsigned");
+      assertThat(plugin.getLockTimeoutSeconds()).isEqualTo(7);
+      assertThat(plugin.getQueryTimeoutSeconds()).isEqualTo(9);
 
       RepositoryService repositoryService = processEngine.getRepositoryService();
       Deployment deployment = repositoryService.createDeployment().addModelInstance("audit.bpmn",

@@ -118,6 +118,7 @@
         <module>modules</module>
         <module>modules/rest</module>
         <module>modules/oauth2</module>
+        <module>modules/mcp</module>
         <module>modules/example</module>
         <module>core</module>
         <module>assembly</module>

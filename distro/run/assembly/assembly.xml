@@ -133,6 +133,10 @@
       <directory>../modules/oauth2/target/dependency/</directory>
       <outputDirectory>internal/oauth2/</outputDirectory>
     </fileSet>
+    <fileSet>
+      <directory>../modules/mcp/target/dependency/</directory>
+      <outputDirectory>internal/mcp/</outputDirectory>
+    </fileSet>
     <!-- create empty resource folder -->
     <fileSet>
       <directory>resources/dummyResource</directory>

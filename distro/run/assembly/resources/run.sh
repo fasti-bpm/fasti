@@ -7,6 +7,7 @@ DEPLOYMENT_DIR=$PARENTDIR/configuration/resources
 WEBAPPS_PATH=$BASEDIR/webapps/
 OAUTH2_PATH=$BASEDIR/oauth2/
 REST_PATH=$BASEDIR/rest/
+MCP_PATH=$BASEDIR/mcp/
 EXAMPLE_PATH=$BASEDIR/example
 PID_PATH=$BASEDIR/run.pid
 OPTIONS_HELP="Options:
@@ -14,6 +15,8 @@ OPTIONS_HELP="Options:
   --oauth2     - Enables the Fasti BPM Spring Security OAuth2 integration
   --rest       - Enables the REST API
   --example    - Enables the example application
+  --mcp        - Enables the MCP server (Model Context Protocol) at /mcp, in addition to the
+                 other components; tools that change data need fasti.mcp.write-tools.enabled
   --production - Applies the production.yml configuration file
   --detached   - Starts Fasti BPM Run as a detached process
 "
@@ -23,6 +26,7 @@ optionalComponentChosen=false
 restChosen=false
 productionChosen=false
 detachProcess=false
+mcpOption=
 classPath=$PARENTDIR/configuration/userlib/,$PARENTDIR/configuration/keystore/
 configuration=$PARENTDIR/configuration/default.yml
 
@@ -72,6 +76,11 @@ if [ "$1" = "start" ] ; then
                      classPath=$EXAMPLE_PATH,$classPath
                      echo Invoice Example included - needs to be enabled in application configuration as well
                      ;;
+      # an addition to the other components, not a choice instead of them
+      --mcp )        classPath=$MCP_PATH,$classPath
+                     mcpOption=-Dfasti.mcp.enabled=true
+                     echo MCP server enabled
+                     ;;
       --production ) configuration=$PARENTDIR/configuration/production.yml
                      productionChosen=true
                      ;;
@@ -118,12 +127,12 @@ Please stop it or remove the file $PID_PATH."
     fi
 
     # start Fasti BPM Run detached
-    "$JAVA" -Dloader.path="$classPath" -Dcamunda.deploymentDir="$DEPLOYMENT_DIR" $JAVA_OPTS -jar "$BASEDIR/fasti-bpm-run-core.jar" --spring.config.location=file:"$configuration" &
+    "$JAVA" -Dloader.path="$classPath" -Dcamunda.deploymentDir="$DEPLOYMENT_DIR" $mcpOption $JAVA_OPTS -jar "$BASEDIR/fasti-bpm-run-core.jar" --spring.config.location=file:"$configuration" &
     # store the process id
     echo $! > "$PID_PATH"
 
   else
-    "$JAVA" -Dloader.path="$classPath" -Dcamunda.deploymentDir="$DEPLOYMENT_DIR" $JAVA_OPTS -jar "$BASEDIR/fasti-bpm-run-core.jar" --spring.config.location=file:"$configuration"
+    "$JAVA" -Dloader.path="$classPath" -Dcamunda.deploymentDir="$DEPLOYMENT_DIR" $mcpOption $JAVA_OPTS -jar "$BASEDIR/fasti-bpm-run-core.jar" --spring.config.location=file:"$configuration"
   fi
 
 elif [ "$1" = "stop" ] ; then

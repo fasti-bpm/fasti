@@ -7,6 +7,7 @@ SET DEPLOYMENTDIR=%PARENTDIR%configuration/resources
 SET WEBAPPS_PATH=%BASEDIR%webapps
 SET OAUTH2_PATH=%BASEDIR%oauth2
 SET REST_PATH=%BASEDIR%rest
+SET MCP_PATH=%BASEDIR%mcp
 SET EXAMPLE_PATH=%BASEDIR%example
 SET APPNAME=Fasti BPM Run
 
@@ -66,6 +67,7 @@ SET optionalComponentChosen=false
 SET restChosen=false
 SET productionChosen=false
 SET detachProcess=false
+SET mcpOption=
 SET classPath=%PARENTDIR%configuration\userlib,%PARENTDIR%configuration\keystore
 SET configuration=%PARENTDIR%configuration\default.yml
 
@@ -97,6 +99,13 @@ IF [%~1]==[--example] (
   SET optionalComponentChosen=true
   SET classPath=%EXAMPLE_PATH%,%classPath%
   ECHO Invoice Example included - needs to be enabled in application configuration as well
+)
+
+REM an addition to the other components, not a choice instead of them
+IF [%~1]==[--mcp] (
+  SET classPath=%MCP_PATH%,%classPath%
+  SET mcpOption=-Dfasti.mcp.enabled=true
+  ECHO MCP server enabled
 )
 
 IF [%~1]==[--production] (
@@ -136,10 +145,10 @@ ECHO classpath: %classPath%
 REM start the application
 IF [%detachProcess%]==[true] (
   REM in the background
-  start "%APPNAME%" "%JAVA%" -Dloader.path="%classPath%" -Dcamunda.deploymentDir="%DEPLOYMENTDIR%" %JAVA_OPTS% -jar "%BASEDIR%fasti-bpm-run-core.jar" --spring.config.location=file:"%configuration%"
+  start "%APPNAME%" "%JAVA%" -Dloader.path="%classPath%" -Dcamunda.deploymentDir="%DEPLOYMENTDIR%" %mcpOption% %JAVA_OPTS% -jar "%BASEDIR%fasti-bpm-run-core.jar" --spring.config.location=file:"%configuration%"
 
 ) ELSE (
-  call "%JAVA%" -Dloader.path="%classPath%" -Dcamunda.deploymentDir="%DEPLOYMENTDIR%" %JAVA_OPTS% -jar "%BASEDIR%fasti-bpm-run-core.jar" --spring.config.location=file:"%configuration%"
+  call "%JAVA%" -Dloader.path="%classPath%" -Dcamunda.deploymentDir="%DEPLOYMENTDIR%" %mcpOption% %JAVA_OPTS% -jar "%BASEDIR%fasti-bpm-run-core.jar" --spring.config.location=file:"%configuration%"
 )
 
 GOTO End
@@ -162,6 +171,8 @@ ECHO   --webapps    - Enables the Fasti BPM web apps
 ECHO   --oauth2     - Enables the Fasti BPM Spring Security OAuth2 integration
 ECHO   --rest       - Enables the REST API
 ECHO   --example    - Enables the example application
+ECHO   --mcp        - Enables the MCP server (Model Context Protocol) at /mcp, in addition to the
+ECHO                  other components; tools that change data need fasti.mcp.write-tools.enabled
 ECHO   --production - Applies the production.yml configuration file
 ECHO   --detached   - Starts Fasti BPM Run as a detached process
 

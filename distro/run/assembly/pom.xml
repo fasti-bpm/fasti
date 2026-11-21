@@ -68,6 +68,21 @@
       </exclusions>
     </dependency>
 
+    <!-- make sure this runs after the MCP module -->
+    <dependency>
+      <groupId>dev.fasti.platform.run</groupId>
+      <artifactId>fasti-bpm-run-modules-mcp</artifactId>
+      <version>${project.version}</version>
+      <type>pom</type>
+      <exclusions>
+        <!-- we don't need any transitive dependencies -->
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
     <dependency>
       <groupId>dev.fasti.platform.run</groupId>
       <artifactId>fasti-bpm-run-modules-example-invoice</artifactId>

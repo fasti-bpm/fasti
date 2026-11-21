@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>dev.fasti.platform.run</groupId>
+    <artifactId>fasti-bpm-run-modules</artifactId>
+    <version>1.0.1</version>
+    <relativePath>..</relativePath>
+  </parent>
+
+  <artifactId>fasti-bpm-run-modules-mcp</artifactId>
+  <name>Fasti BPM Platform - Run - Module MCP Server</name>
+  <packaging>pom</packaging>
+
+  <description>
+    Part of Fasti BPM, an independent open source BPM platform built on Camunda 7 Community Edition 7.24.0.
+    Model Context Protocol server of Run (internal/mcp, start option --mcp or FASTI_MCP_ENABLED=true in the image).
+  </description>
+
+  <properties>
+    <!-- generate a bom of compile time dependencies for the license book.
+    Note: Every compile time dependency will end up in the license book. Please
+    declare only dependencies that are actually needed -->
+    <skip-third-party-bom>false</skip-third-party-bom>
+  </properties>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>dev.fasti.platform.springboot</groupId>
+      <artifactId>fasti-bpm-spring-boot-starter-mcp</artifactId>
+      <exclusions>
+        <!-- part of the Run uberjar (Spring Boot, Spring Framework, Jackson, SLF4J) -->
+        <exclusion>
+          <groupId>tools.jackson.core</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.jspecify</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

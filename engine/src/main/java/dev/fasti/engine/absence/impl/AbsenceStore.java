@@ -67,6 +67,11 @@ public final class AbsenceStore {
         return known.orElse(null);
       }
     }
+    if (cache != null && cache.countLookup() > 1) {
+      // the command asks for a second user (a substitute on the way, another assignee): one
+      // statement for all absences answers this and every later lookup of the command
+      return findAll(commandContext).get(userId);
+    }
     Absence absence = toAbsence(userId, rows(commandContext, userId));
     if (cache != null) {
       cache.putAbsence(userId, absence);

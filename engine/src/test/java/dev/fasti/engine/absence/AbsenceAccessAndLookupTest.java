@@ -361,6 +361,41 @@ public class AbsenceAccessAndLookupTest {
   }
 
   @Test
+  public void shouldFollowAChainOfSubstitutesWithTwoStatements() {
+    setAbsence("alice", "bob");
+    setAbsence("bob", "carol");
+    setAbsence("carol", "dave");
+    testRule.deploy(userTask("alice"));
+    clearStatementLog();
+
+    String pi = runtimeService.startProcessInstanceByKey("process").getId();
+
+    assertThat(taskService.createTaskQuery().processInstanceId(pi).singleResult().getAssignee()).isEqualTo("dave");
+    // alice alone, then all absences at once: not one statement per substitute on the way
+    assertThat(identityInfoStatements()).isEqualTo(2);
+  }
+
+  @Test
+  public void shouldLookUpManyAssigneesOfACommandWithTwoStatements() {
+    setAbsence("carol", "erin");
+    testRule.deploy(Bpmn.createExecutableProcess("process").camundaHistoryTimeToLive(180)
+        .startEvent().parallelGateway("fork")
+        .userTask("first").camundaAssignee("alice").endEvent("firstEnd")
+        .moveToNode("fork").userTask("second").camundaAssignee("bob").endEvent("secondEnd")
+        .moveToNode("fork").userTask("third").camundaAssignee("carol").endEvent("thirdEnd")
+        .moveToNode("fork").userTask("fourth").camundaAssignee("dave").endEvent("fourthEnd")
+        .done());
+    clearStatementLog();
+
+    String pi = runtimeService.startProcessInstanceByKey("process").getId();
+
+    assertThat(taskService.createTaskQuery().processInstanceId(pi).list()).extracting(Task::getAssignee)
+        .containsExactlyInAnyOrder("alice", "bob", "erin", "dave");
+    // the first assignee alone, then all absences at once: not one statement per assignee
+    assertThat(identityInfoStatements()).isEqualTo(2);
+  }
+
+  @Test
   public void shouldLookUpTheCandidatesOfATaskWithOneStatement() {
     setAbsence("alice", "erin");
     setAbsence("bob", "erin");

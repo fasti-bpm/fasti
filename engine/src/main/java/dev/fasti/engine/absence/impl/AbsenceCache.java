@@ -29,7 +29,8 @@ import org.camunda.bpm.engine.impl.interceptor.SessionFactory;
  * What a command has already looked up about absences: the absence of a user, whether a user
  * exists, and whether all absences are loaded. ACT_ID_INFO has no index on the user or the key
  * (and the schema stays that of Camunda 7.24), so every lookup reads the table; a command that
- * asks for the same user again (several tasks, a chain of substitutes) is answered from here.
+ * asks for the same user again (several tasks, a chain of substitutes) is answered from here,
+ * and the second user a command asks for makes it read all absences at once.
  * The plugin registers the factory; without it nothing is remembered. Writes through
  * {@link AbsenceStore} keep it up to date; user info or users changed in the same command by
  * other means (the identity service) are not noticed until the command ends.
@@ -39,6 +40,8 @@ public class AbsenceCache implements Session {
   protected final Map<String, Optional<Absence>> absences = new HashMap<>();
   protected final Map<String, Boolean> users = new HashMap<>();
   protected boolean complete;
+  /** How many users this command looked up one by one. */
+  protected int lookups;
 
   /** The cache of the command, or {@code null} on an engine without the plugin. */
   public static AbsenceCache of(CommandContext commandContext) {
@@ -54,6 +57,11 @@ public class AbsenceCache implements Session {
       return Optional.empty();
     }
     return absence;
+  }
+
+  /** Counts a lookup of one user that has to read the table; how many there were, this one included. */
+  public int countLookup() {
+    return ++lookups;
   }
 
   public void putAbsence(String userId, Absence absence) {
@@ -101,6 +109,7 @@ public class AbsenceCache implements Session {
     absences.clear();
     users.clear();
     complete = false;
+    lookups = 0;
   }
 
   /** Opens an {@link AbsenceCache} per command context. */

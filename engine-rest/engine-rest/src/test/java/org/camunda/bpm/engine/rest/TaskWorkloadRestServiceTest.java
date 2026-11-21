@@ -235,5 +235,88 @@ public class TaskWorkloadRestServiceTest extends AbstractRestServiceTest {
     given().queryParam("overdueBefore", "yesterday")
     .then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).body("message", containsString("overdueBefore"))
     .when().get(WORKLOAD_URL);
+
+    given().queryParam("tenantIdIn", ids.toString())
+    .then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).body("message", containsString("more than 200"))
+    .when().get(WORKLOAD_URL);
+
+    given().queryParam("userIdIn", "u".repeat(256))
+    .then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).body("message", containsString("longer than 255"))
+    .when().get(WORKLOAD_URL);
+  }
+
+  @Test
+  public void shouldRefuseEmptyIdsInAListAlikeForGetAndPost() {
+    given().queryParam("groupIdIn", "sales,,support")
+    .then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).body("message", containsString("empty id"))
+    .when().get(WORKLOAD_URL);
+
+    given().queryParam("userIdIn", "alice,")
+    .then().expect().statusCode(Status.BAD_REQUEST.getStatusCode())
+    .when().get(WORKLOAD_URL);
+
+    given().contentType(ContentType.JSON).body("{\"groupIdIn\": [\"sales\", \"\"]}")
+    .then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).body("message", containsString("empty id"))
+    .when().post(WORKLOAD_URL);
+
+    given().contentType(ContentType.JSON).body("{\"userIdIn\": [\"alice\", null]}")
+    .then().expect().statusCode(Status.BAD_REQUEST.getStatusCode())
+    .when().post(WORKLOAD_URL);
+
+    given().contentType(ContentType.JSON).body("{\"tenantIdIn\": [\"tenant1\", null]}")
+    .then().expect().statusCode(Status.BAD_REQUEST.getStatusCode())
+    .when().post(WORKLOAD_URL);
+
+    // a parameter without a value is an empty list, as [] is in the body
+    given().queryParam("groupIdIn", "")
+    .then().expect().statusCode(Status.OK.getStatusCode()).body("groups", hasSize(0)).body("totals.open", equalTo(4))
+    .when().get(WORKLOAD_URL);
+  }
+
+  @Test
+  public void shouldRefuseABodyThatIsNoQuery() {
+    given().contentType(ContentType.JSON).body("{\"groupIdIn\": [\"sales\"")
+    .then().expect().statusCode(Status.BAD_REQUEST.getStatusCode())
+    .when().post(WORKLOAD_URL);
+
+    given().contentType(ContentType.JSON).body("{\"overdueBefore\": \"yesterday\"}")
+    .then().expect().statusCode(Status.BAD_REQUEST.getStatusCode())
+    .when().post(WORKLOAD_URL);
+  }
+
+  @Test
+  public void shouldCountTheTasksOfTheTenantsAskedFor() {
+    Task task = engine.getTaskService().newTask();
+    task.setTenantId("tenant1");
+    engine.getTaskService().saveTask(task);
+    taskIds.add(task.getId());
+    engine.getTaskService().addCandidateGroup(task.getId(), "sales");
+
+    given().queryParam("tenantIdIn", "tenant1,tenant2").queryParam("groupIdIn", "sales")
+    .then().expect()
+        .statusCode(Status.OK.getStatusCode())
+        .body("totals.open", equalTo(1))
+        .body("groups.open", contains(1))
+    .when().get(WORKLOAD_URL);
+
+    Map<String, Object> body = new HashMap<>();
+    body.put("tenantIdIn", List.of("tenant2"));
+    body.put("groupIdIn", List.of("sales"));
+    given().contentType(ContentType.JSON).body(body)
+    .then().expect()
+        .statusCode(Status.OK.getStatusCode())
+        .body("totals.open", equalTo(0))
+        .body("groups.open", contains(0))
+    .when().post(WORKLOAD_URL);
+  }
+
+  @Test
+  public void shouldAnswerEveryDistinctIdOnceInTheOrderOfItsFirstOccurrence() {
+    given().queryParam("groupIdIn", "support,sales,support").queryParam("userIdIn", "bob,bob")
+    .then().expect()
+        .statusCode(Status.OK.getStatusCode())
+        .body("groups.id", contains("support", "sales"))
+        .body("users.id", contains("bob"))
+    .when().get(WORKLOAD_URL);
   }
 }

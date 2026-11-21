@@ -8,7 +8,9 @@
       desc = "Fasti: counts the open tasks in total and for each candidate group and assignee asked for: open,
               unclaimed, overdue and the creation time of the oldest one. The numbers are computed with a few grouped
               statements instead of one task query per group and user, and cover exactly the tasks a task query of the
-              user would return (the same authorization and tenant checks apply). Nothing is written." />
+              user would return (the same authorization and tenant checks apply). Ids are compared as the database
+              compares them: with a case-insensitive collation (the default of SQL Server, MySQL and MariaDB) `sales`
+              also counts the tasks of `Sales`, as a task query does. Nothing is written." />
 
   "parameters" : [
 
@@ -16,13 +18,15 @@
         name = "groupIdIn"
         location = "query"
         type = "string"
-        desc = "Candidate group ids, comma separated, at most 200. A task offered to several of the groups counts for each of them." />
+        desc = "Candidate group ids, comma separated: at most 200 distinct ids of at most 255 characters each. A
+                task offered to several of the groups counts for each of them. A repeated id is answered once; an
+                empty id within the list (`a,,b`) is refused; the parameter without a value means no groups." />
 
     <@lib.parameter
         name = "userIdIn"
         location = "query"
         type = "string"
-        desc = "Assignee ids, comma separated, at most 200." />
+        desc = "Assignee ids, comma separated; the rules of `groupIdIn` apply." />
 
     <@lib.parameter
         name = "overdueBefore"
@@ -36,7 +40,8 @@
         location = "query"
         type = "string"
         last = true
-        desc = "Only tasks of these tenants, comma separated." />
+        desc = "Only tasks of these tenants, comma separated: at most 200 ids of at most 255 characters each. An
+                empty id within the list is refused." />
 
   ],
 
@@ -59,10 +64,18 @@
     <@lib.response
         code = "400"
         dto = "ExceptionDto"
-        last = true
-        desc = "A list has more than 200 ids or `overdueBefore` is no date. See the
+        desc = "A list has more than 200 distinct ids, an empty id or one longer than 255 characters, or
+                `overdueBefore` is no date. See the
                 [Introduction](${docsUrl}/reference/rest/overview/#error-handling)
                 for the error response format." />
+
+    <@lib.response
+        code = "501"
+        dto = "ExceptionDto"
+        last = true
+        desc = "The MyBatis mappings of the engine lack the workload statements: an application replaced the
+                default `mappings.xml` with a copy of its own without `dev/fasti/engine/workload/TaskWorkload.xml`.
+                Clients can count with one task query per group and user instead." />
 
   }
 }

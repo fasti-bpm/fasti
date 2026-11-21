@@ -30,6 +30,7 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Variant;
 import dev.fasti.engine.workload.TaskWorkloadQuery;
 import dev.fasti.engine.workload.TaskWorkloads;
+import dev.fasti.engine.workload.WorkloadNotAvailableException;
 import org.camunda.bpm.engine.BadUserRequestException;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.TaskService;
@@ -45,6 +46,7 @@ import org.camunda.bpm.engine.rest.dto.task.TaskWorkloadQueryDto;
 import org.camunda.bpm.engine.rest.dto.converter.DateConverter;
 import org.camunda.bpm.engine.rest.dto.VariableValueDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
+import org.camunda.bpm.engine.rest.exception.RestException;
 import org.camunda.bpm.engine.rest.hal.Hal;
 import org.camunda.bpm.engine.rest.hal.task.HalTaskList;
 import org.camunda.bpm.engine.rest.sub.task.TaskReportResource;
@@ -212,10 +214,19 @@ public class TaskRestServiceImpl extends AbstractRestProcessEngineAware implemen
     } catch (BadUserRequestException e) {
       throw new InvalidRequestException(Status.BAD_REQUEST, e, e.getMessage());
     }
-    return TaskWorkloadDto.fromWorkload(query.read());
+    try {
+      return TaskWorkloadDto.fromWorkload(query.read());
+    } catch (WorkloadNotAvailableException e) {
+      // a custom MyBatis configuration without the statements: clients count per group instead
+      throw new RestException(Status.NOT_IMPLEMENTED, e, e.getMessage());
+    }
   }
 
-  /** The values of a comma separated parameter; {@code null} if it is not given. */
+  /**
+   * The values of a comma separated parameter; {@code null} if it is not given. A parameter
+   * without a value is an empty list; an empty id within a list is refused, as in the body of
+   * the {@code POST} method.
+   */
   private static List<String> listParameter(MultivaluedMap<String, String> parameters, String name) {
     List<String> values = parameters.get(name);
     if (values == null) {
@@ -223,10 +234,14 @@ public class TaskRestServiceImpl extends AbstractRestProcessEngineAware implemen
     }
     List<String> result = new ArrayList<>();
     for (String value : values) {
-      for (String part : value.split(",")) {
-        if (!part.isEmpty()) {
-          result.add(part);
+      if (value.isEmpty()) {
+        continue;
+      }
+      for (String part : value.split(",", -1)) {
+        if (part.isEmpty()) {
+          throw new InvalidRequestException(Status.BAD_REQUEST, name + " contains an empty id");
         }
+        result.add(part);
       }
     }
     return result;

@@ -5,13 +5,13 @@
         name = "groupIdIn"
         type = "array"
         itemType = "string"
-        desc = "Candidate group ids, at most 200." />
+        desc = "Candidate group ids: at most 200 distinct ids, none empty, `null` or longer than 255 characters." />
 
     <@lib.property
         name = "userIdIn"
         type = "array"
         itemType = "string"
-        desc = "Assignee ids, at most 200." />
+        desc = "Assignee ids: at most 200 distinct ids, none empty, `null` or longer than 255 characters." />
 
     <@lib.property
         name = "overdueBefore"
@@ -24,7 +24,8 @@
         type = "array"
         itemType = "string"
         last = true
-        desc = "Only tasks of these tenants." />
+        desc = "Only tasks of these tenants: at most 200 ids, none empty, `null` or longer than 255 characters. An
+                empty list means no restriction." />
 
 </@lib.dto>
 </#macro>

@@ -676,15 +676,18 @@ public class FourEyesTest {
   }
 
   @Test
-  public void shouldNeedReadPermissionOnTheTaskForTheStatus() {
+  public void shouldReportATaskTheUserMayNotReadLikeAMissingOne() {
     testRule.deploy(draftApprove());
     String pi = start("fourEyes");
     String taskId = task(pi, "draft").getId();
     configuration.setAuthorizationEnabled(true);
     identityService.setAuthenticatedUserId("mallory");
     try {
-      assertThatThrownBy(() -> fourEyes.getStatus(taskId)).isInstanceOf(AuthorizationException.class)
-          .isNotInstanceOf(FourEyesViolationException.class);
+      // the same answer as for an id that is not in use
+      assertThatThrownBy(() -> fourEyes.getStatus(taskId)).isInstanceOf(NotFoundException.class)
+          .hasMessage("Cannot find task with id " + taskId);
+      assertThatThrownBy(() -> fourEyes.getStatus("unknown")).isInstanceOf(NotFoundException.class)
+          .hasMessage("Cannot find task with id unknown");
 
       configuration.setAuthorizationEnabled(false);
       Authorization read = authorizationService.createNewAuthorization(Authorization.AUTH_TYPE_GRANT);

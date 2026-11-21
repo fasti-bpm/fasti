@@ -340,15 +340,17 @@ public class TaskFourEyesRestServiceTest extends AbstractRestServiceTest {
   }
 
   @Test
-  public void shouldAnswer403WithoutReadPermission() {
+  public void shouldAnswer404WithoutReadPermission() {
+    // like GET /task/{id}: the answer does not tell whether the id is in use
     Task approve = draftedByAlice(engine);
     ((ProcessEngineConfigurationImpl) engine.getProcessEngineConfiguration()).setAuthorizationEnabled(true);
     as("mallory");
 
     given().pathParam("id", approve.getId())
     .then().expect()
-        .statusCode(Status.FORBIDDEN.getStatusCode())
-        .body("type", equalTo("AuthorizationException"))
+        .statusCode(Status.NOT_FOUND.getStatusCode())
+        .body("type", equalTo("InvalidRequestException"))
+        .body("message", equalTo("No matching task with id " + approve.getId()))
     .when().get(FOUR_EYES_URL);
   }
 

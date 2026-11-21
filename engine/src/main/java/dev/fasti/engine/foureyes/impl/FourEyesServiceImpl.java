@@ -20,7 +20,9 @@ import java.util.List;
 
 import dev.fasti.engine.foureyes.FourEyesService;
 import dev.fasti.engine.foureyes.FourEyesStatus;
+import org.camunda.bpm.engine.AuthorizationException;
 import org.camunda.bpm.engine.BadUserRequestException;
+import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.exception.NotFoundException;
 import org.camunda.bpm.engine.impl.bpmn.parser.BpmnParseListener;
 import org.camunda.bpm.engine.impl.cfg.CommandChecker;
@@ -66,7 +68,10 @@ public class FourEyesServiceImpl implements FourEyesService {
     return configuration.getCommandExecutorTxRequired().execute(new GetStatusCmd(taskId, enabled));
   }
 
-  /** Reads the status of a task for the authenticated user. */
+  /**
+   * Reads the status of a task for the authenticated user; a task the user may not read is
+   * reported as not found.
+   */
   public static class GetStatusCmd implements Command<FourEyesStatus> {
     protected final String taskId;
     protected final boolean enabled;
@@ -76,14 +81,27 @@ public class FourEyesServiceImpl implements FourEyesService {
       this.enabled = enabled;
     }
 
+    protected NotFoundException notFound() {
+      return new NotFoundException("Cannot find task with id " + taskId);
+    }
+
     @Override
     public FourEyesStatus execute(CommandContext commandContext) {
       TaskEntity task = commandContext.getTaskManager().findTaskById(taskId);
       if (task == null) {
-        throw new NotFoundException("Cannot find task with id " + taskId);
+        throw notFound();
       }
-      for (CommandChecker checker : commandContext.getProcessEngineConfiguration().getCommandCheckers()) {
-        checker.checkReadTask(task);
+      try {
+        for (CommandChecker checker : commandContext.getProcessEngineConfiguration().getCommandCheckers()) {
+          checker.checkReadTask(task);
+        }
+      } catch (ProcessEngineException e) {
+        // a task the user may not read (authorization, tenant) is answered like one that does not
+        // exist, as the task query does: the answer does not tell whether the id is in use
+        if (e instanceof AuthorizationException || e.getClass() == ProcessEngineException.class) {
+          throw notFound();
+        }
+        throw e;
       }
       String userId = commandContext.getAuthenticatedUserId();
       if (!enabled) {

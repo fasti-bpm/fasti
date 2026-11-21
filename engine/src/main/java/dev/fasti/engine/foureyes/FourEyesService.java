@@ -43,8 +43,8 @@ public interface FourEyesService {
    * The four-eyes status of the task for the authenticated user. Needs the permission to read the
    * task.
    *
-   * @throws org.camunda.bpm.engine.exception.NotFoundException if the task does not exist
-   * @throws org.camunda.bpm.engine.AuthorizationException if the user may not read the task
+   * @throws org.camunda.bpm.engine.exception.NotFoundException if the task does not exist, or the
+   *         user may not read it (as with the task query, the two cannot be told apart)
    */
   FourEyesStatus getStatus(String taskId);
 }

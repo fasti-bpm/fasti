@@ -50,17 +50,11 @@
                      }'] />
 
     <@lib.response
-        code = "403"
-        dto = "AuthorizationExceptionDto"
-        desc = "The user may not read the task. See the
-                [Introduction](${docsUrl}/reference/rest/overview/#error-handling)
-                for the error response format." />
-
-    <@lib.response
         code = "404"
         dto = "ExceptionDto"
         last = true
-        desc = "The task does not exist. See the
+        desc = "The task does not exist, or the user may not read it (the two are answered alike, as by
+                `GET /task/{id}`). See the
                 [Introduction](${docsUrl}/reference/rest/overview/#error-handling)
                 for the error response format." />
 

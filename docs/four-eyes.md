@@ -92,7 +92,7 @@ own; its rules name its own steps.
 
 | Method and path | What it does |
 |---|---|
-| `GET /task/{id}/four-eyes` | For the user of the request: `enabled`, `guarded`, `earlierSteps` (`id`, `name`), `userExcluded` and `userSteps`, `assignee`, `assigneeExcluded` and `assigneeSteps`, and `blocked` (whether the engine would refuse the completion now). Needs `READ` on the task; `404` for a missing task |
+| `GET /task/{id}/four-eyes` | For the user of the request: `enabled`, `guarded`, `earlierSteps` (`id`, `name`), `userExcluded` and `userSteps`, `assignee`, `assigneeExcluded` and `assigneeSteps`, and `blocked` (whether the engine would refuse the completion now). Needs `READ` on the task; `404` for a missing task and, like `GET /task/{id}`, for one the user may not read |
 | `POST /task/{id}/complete`, `/submit-form`, `/bpmnError`, `/bpmnEscalation` | Refused with `403` and `{"type": "FourEyesViolationException", "message": "Four-eyes control: …"}` |
 | Any request that sets or removes a variable `fasti_completedBy_…` of a process instance (`PUT`, `POST`, `DELETE` on the variables of a task, process instance or execution; `variables` of `complete`, `submit-form`, a message, a modification, …) | Refused with `403` and `{"type": "AuthorizationException", "message": "Four-eyes control: variable … is written by the engine only; …"}`, see [Limits](#limits) |
 

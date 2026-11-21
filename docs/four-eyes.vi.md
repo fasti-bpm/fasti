@@ -95,7 +95,7 @@ riêng; quy tắc của nó nêu các bước của chính nó.
 
 | Phương thức và đường dẫn | Chức năng |
 |---|---|
-| `GET /task/{id}/four-eyes` | Cho người dùng của yêu cầu: `enabled`, `guarded`, `earlierSteps` (`id`, `name`), `userExcluded` và `userSteps`, `assignee`, `assigneeExcluded` và `assigneeSteps`, và `blocked` (engine có từ chối việc hoàn thành lúc này không). Cần quyền `READ` trên tác vụ; `404` nếu tác vụ không tồn tại |
+| `GET /task/{id}/four-eyes` | Cho người dùng của yêu cầu: `enabled`, `guarded`, `earlierSteps` (`id`, `name`), `userExcluded` và `userSteps`, `assignee`, `assigneeExcluded` và `assigneeSteps`, và `blocked` (engine có từ chối việc hoàn thành lúc này không). Cần quyền `READ` trên tác vụ; `404` nếu tác vụ không tồn tại và, giống `GET /task/{id}`, nếu người dùng không được đọc tác vụ |
 | `POST /task/{id}/complete`, `/submit-form`, `/bpmnError`, `/bpmnEscalation` | Bị từ chối với `403` và `{"type": "FourEyesViolationException", "message": "Four-eyes control: …"}` |
 | Mọi yêu cầu đặt hoặc xóa biến `fasti_completedBy_…` của process instance (`PUT`, `POST`, `DELETE` trên biến của tác vụ, process instance hoặc execution; `variables` của `complete`, `submit-form`, message, modification, …) | Bị từ chối với `403` và `{"type": "AuthorizationException", "message": "Four-eyes control: variable … is written by the engine only; …"}`, xem [Giới hạn](#limits) |
 

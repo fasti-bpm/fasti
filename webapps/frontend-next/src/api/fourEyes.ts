@@ -49,11 +49,6 @@ export async function getFourEyesStatus(taskId: string, signal?: AbortSignal): P
   }
 }
 
-/** Whether an error is the refusal of the four-eyes control. */
-export function isFourEyesViolation(error: unknown): boolean {
-  return isApiError(error, 'forbidden') && error.serverType === FOUR_EYES_VIOLATION;
-}
-
 /** The names of the given steps, as the model has them (the id where a step has no name). */
 export function stepNames(status: FourEyesStatus, ids: string[]): string[] {
   return ids.map((id) => status.earlierSteps.find((step) => step.id === id)?.name || id);

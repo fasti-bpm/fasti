@@ -56,7 +56,10 @@ public class FastiEngineMetricsProperties {
     private boolean enabled = true;
 
     /**
-     * How long the values of the gauges are reused before the database is queried again.
+     * How long the values of the gauges are reused before the database is queried again. The
+     * queries run on a background thread, started by a scrape that finds the values older than
+     * this; a scrape never waits for them. Zero reads the database on every scrape, in the
+     * scraping thread.
      */
     private Duration refreshInterval = Duration.ofSeconds(30);
 

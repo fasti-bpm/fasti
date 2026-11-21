@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
  * The counters only move while the metrics of the engine are enabled
  * ({@code camunda.bpm.metrics.enabled}, on by default).
  */
-public class FastiEngineMetricsPlugin extends AbstractProcessEnginePlugin {
+public class FastiEngineMetricsPlugin extends AbstractProcessEnginePlugin implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(FastiEngineMetricsPlugin.class);
 
@@ -108,6 +108,12 @@ public class FastiEngineMetricsPlugin extends AbstractProcessEnginePlugin {
 
   public Map<String, EngineGauges> getGauges() {
     return gauges;
+  }
+
+  /** Stops the gauges from reading the database; the application context calls it when it closes. */
+  @Override
+  public void close() {
+    gauges.values().forEach(EngineGauges::close);
   }
 
   /** The counters per metric name of the engine. */

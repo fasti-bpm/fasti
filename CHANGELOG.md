@@ -20,6 +20,8 @@ các mục dưới đây là khác biệt so với bản đó.
   engine, so its authorization check (revoked permissions included), tenant check and CMMN
   handling apply unchanged. Java: `dev.fasti.engine.workload.TaskWorkloads.query(engine)`.
   Documented in the OpenAPI document and the [REST guide](docs/api/README.md).
+- [Runtime tuning](docs/tuning-runtime.md): job executor and pool sizing, the audit trail under
+  load, the engine gauges, and the trade-off of the history removal time strategy `start`.
 
 ### Changed
 
@@ -38,6 +40,46 @@ các mục dưới đây là khác biệt so với bản đó.
   defaults; a stored language loads beside it. React and the router are a chunk of their own
   (entry chunk 397 kB to 92 kB), icons used by several pages one chunk (54 files under 1.5 kB
   to 13), and the case timeline of the task detail is loaded when its tab is opened.
+- Audit trail: a command whose transaction ends with it (every request and job of Run and the
+  container image, every command of a standalone engine) writes its records after the statements
+  of the engine, not before them, so the head row of a chain is locked for the audit statements
+  and the commit only and no longer while the engine sends its inserts, updates and deletes.
+  Transactions of one node that share a chain wait for each other for a shorter time
+  ([runtime tuning](docs/tuning-runtime.md#audit-trail)). A command that joins a transaction that
+  goes on after it (Spring `@Transactional` around engine calls) writes its records first, as
+  before, on chains of its own (`<node>/ext-<slot>`), so that the two kinds never wait for each
+  other's head while holding engine rows. Engines that cannot tell the two apart (JTA, Spring
+  without the starter) write as before. The records, their hashes and the transaction they
+  belong to are unchanged. `AuditTrailPlugin.setTransactionActive` tells the plugin whether a
+  transaction is active; the starter sets it.
+- Audit trail purge: each chain is purged in a transaction of its own, which locks the head of
+  the chain before it reads what to purge. A purge holds one head at a time and can no longer
+  wait for a transaction that waits for it; one that fails half-way leaves the chains done so far
+  purged, each with its purge record.
+- Audit trail pages are ordered by time, chain and position in one direction (newest first:
+  all descending), served by the new index `FASTI_IDX_AUDIT_ORDER (TIME_, CHAIN_ID_, SEQ_)`, which
+  replaces `FASTI_IDX_AUDIT_TIME`. Records of the same millisecond in different chains change
+  their relative order when the newest are listed first. **Existing audit tables** need
+  `fasti.<database>.upgrade.audit.after_1.1.sql` (engine jar, `dev/fasti/engine/audit/db/upgrade`)
+  once to get the index; without it pages are read as before.
+- `GET /audit/event/count` takes `maxCount` (1 to 1,000,000): the database stops counting there,
+  and a result equal to `maxCount` means "that many or more". `AuditEventQuery.count(long limit)`
+  does the same in Java.
+- The gauges of the engine state (`fasti.engine.*.active`, `.open`, `.executable`, `.failed`) are
+  read on a background thread. A Prometheus scrape returns the values read last and never waits
+  for the six count queries; a value is up to one refresh interval plus one scrape interval old,
+  and `NaN` until the first round has finished.
+- Fasti BPM Run and the container image: the job executor acquires 10 jobs per cycle (3 before)
+  into a queue of 10 (3) for 10 threads (3 core, 10 maximum), and the connection pool holds 20
+  connections (10), so that job threads cannot use up every connection. One node may now open
+  20 database connections: check the connection limit of the database before upgrading many
+  replicas, or set the former values ([runtime tuning](docs/tuning-runtime.md)). Applications
+  that embed the starter keep their defaults.
+- Statement parameters are bound through a plain statement wrapper instead of a dynamic proxy
+  (no reflective call per parameter).
+- Absence substitution: the second absence lookup of a command reads all absences with one
+  statement, which answers every later lookup of the command (a chain of three substitutes sends
+  two statements instead of four).
 
 ## [1.1.0] - 2026-11-21
 

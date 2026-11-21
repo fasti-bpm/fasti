@@ -5,7 +5,7 @@
 import type { Page } from '@playwright/test';
 import { expect, open, test } from '../support/test';
 import { PREFIX } from '../support/env';
-import { dialog } from '../support/ui';
+import { answered, dialog } from '../support/ui';
 import { waitFor } from '../support/api';
 
 function main(page: Page) {
@@ -69,6 +69,22 @@ test.describe('Team work and incident help', () => {
     await expect(app.getByText('Candidate group: ')).toBeVisible();
     await expect(app.getByRole('option', { name: /E2E review/ }).or(app.getByText('E2E review')).first()).toBeVisible();
     await api.delete(`process-instance/${instance.id}?skipCustomListeners=true`);
+  });
+
+  test('reads the numbers of the board with one request', async ({ app }) => {
+    const calls: string[] = [];
+    app.on('request', (request) => {
+      // below the engine of the API: /task/count, /task/workload, ...
+      const path = new URL(request.url()).pathname.split('/api/engine/engine/')[1]?.replace(/^[^/]+/, '') ?? '';
+      if (path === '/task' || path.startsWith('/task/')) calls.push(`${request.method()} ${path}`);
+    });
+    const counted = answered(app, 'POST', /\/task\/workload$/);
+    await open(app, 'cockpit/workload');
+    expect((await counted).ok()).toBe(true);
+    await expect(main(app).getByRole('table', { name: 'By person' })).toBeVisible();
+    await expect(main(app).getByRole('link', { name: /^Open tasks/ }).first()).toBeVisible();
+    // the totals and every row come with the aggregate: no task query per group or person
+    expect(calls).toEqual(['POST /task/workload']);
   });
 
   test('offers variable columns on the history once a process is chosen', async ({ app, api }) => {

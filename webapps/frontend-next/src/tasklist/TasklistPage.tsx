@@ -16,7 +16,7 @@ import { Button, EmptyState, IconButton, Kbd, cx } from '../ui';
 import { useToast } from '../ui/toast';
 import { refreshTasks, useTaskActions } from './actions';
 import { FilterEditor } from './FilterEditor';
-import { useCountedFilters, useTaskFilters } from './filterCounts';
+import { FILTER_COUNTS_KEY, useCountedFilters, useTaskFilters } from './filterCounts';
 import { FilterList, FilterSelect } from './FilterList';
 import { NotifyToggle, useNewTaskNotices, useNotifyPreference } from './notifications';
 import { toTaskQuery, type Criterion } from './search';
@@ -486,7 +486,15 @@ export function TasklistPage() {
             filters={countedFilters}
             selectedId={filterId}
             onSelect={selectFilter}
-            onUse={() => setFilterMenuUsed(true)}
+            onUse={() => {
+              setFilterMenuUsed(true);
+              // behind the closed pane the counts follow no timer: every use of the menu reads old ones again
+              void queryClient.refetchQueries(
+                { queryKey: FILTER_COUNTS_KEY, exact: true, type: 'active', stale: true },
+                // focus and pointer arrive together: one read
+                { cancelRefetch: false },
+              );
+            }}
           />
           {filter && (
             <IconButton

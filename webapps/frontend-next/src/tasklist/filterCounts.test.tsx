@@ -60,11 +60,13 @@ function backend(routes: Record<string, FakeHandler> = {}) {
 
 function renderApp(path: string) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
+  const queryClient = createQueryClient();
   render(
-    <Providers queryClient={createQueryClient()} locale="en">
+    <Providers queryClient={queryClient} locale="en">
       <RouterProvider router={router} />
     </Providers>,
   );
+  return queryClient;
 }
 
 const counted = (server: ReturnType<typeof backend>) =>
@@ -105,7 +107,7 @@ describe('filters and their task counts', () => {
     writePreference('tasklist.demo', { filtersCollapsed: true });
     const server = backend();
     const user = userEvent.setup();
-    renderApp('/tasklist?filter=f1');
+    const queryClient = renderApp('/tasklist?filter=f1');
 
     const menu = await screen.findByRole('combobox', { name: 'Filters' });
     await screen.findByText('Task t1');
@@ -117,6 +119,15 @@ describe('filters and their task counts', () => {
     await user.click(menu);
     expect(await within(menu).findByRole('option', { name: 'All tasks (7)' })).toBeInTheDocument();
     expect(counted(server)).toHaveLength(1);
+
+    // used again while the counts are fresh: no request; once they are old: read again
+    await user.tab();
+    await user.click(menu);
+    expect(counted(server)).toHaveLength(1);
+    await queryClient.invalidateQueries({ queryKey: FILTER_COUNTS_KEY, exact: true, refetchType: 'none' });
+    await user.tab();
+    await user.click(menu);
+    await waitFor(() => expect(counted(server)).toHaveLength(2));
   });
 
   it('asks for the tasks of the filter used last beside the filters, not after them', async () => {

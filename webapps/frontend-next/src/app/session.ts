@@ -58,6 +58,8 @@ function loadPreferences(userId: string): Promise<void> {
 /** Forgets everything that was loaded for the user. */
 function endSession(queryClient: QueryClient): void {
   disconnectPreferences();
+  // read with the permissions of this user: the next one asks for them anew
+  api.resetBusinessKeys();
   queryClient.setQueryData(sessionKey, null);
   queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'session' });
 }

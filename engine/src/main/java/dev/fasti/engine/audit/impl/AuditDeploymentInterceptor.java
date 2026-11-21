@@ -36,7 +36,8 @@ import org.camunda.bpm.engine.impl.persistence.entity.DeploymentEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.ResourceEntity;
 
 /**
- * Records deployments, which produce no history event: after each command, a deployment the
+ * Opens the audit session of a command before the command runs (see {@link AuditSession#open}) and
+ * records deployments, which produce no history event: after each command, a deployment the
  * command created or deleted (as the entity cache shows before it is flushed) becomes an audit
  * record, with the SHA-256 of every resource of a new deployment. Deploying unchanged resources
  * with duplicate filtering creates nothing and records nothing.
@@ -51,8 +52,12 @@ public class AuditDeploymentInterceptor extends CommandInterceptor {
 
   @Override
   public <T> T execute(Command<T> command) {
-    T result = next.execute(command);
     CommandContext commandContext = Context.getCommandContext();
+    if (commandContext != null) {
+      // before the engine opens its sessions: the records are then written after its statements
+      AuditSession.open(commandContext);
+    }
+    T result = next.execute(command);
     if (commandContext != null && settings.isRecorded(AuditService.TYPE_DEPLOYMENT)) {
       record(commandContext);
     }
@@ -60,8 +65,18 @@ public class AuditDeploymentInterceptor extends CommandInterceptor {
   }
 
   protected void record(CommandContext commandContext) {
+    if (!commandContext.getSessions().containsKey(DbEntityManager.class)) {
+      // the command touched no entity
+      return;
+    }
     DbEntityManager entityManager = commandContext.getDbEntityManager();
     DbEntityCache cache = entityManager.getDbEntityCache();
+    DbOperationManager operations = entityManager.getDbOperationManager();
+    if (cache.getEntitiesByType(DeploymentEntity.class).isEmpty() && operations.bulkOperationsInsertionOrder.isEmpty()
+        && !operations.bulkOperations.containsKey(DeploymentEntity.class)) {
+      // as after most commands: no deployment in the cache and no bulk statement
+      return;
+    }
     Map<String, DeploymentEntity> created = new LinkedHashMap<>();
     Map<String, DeploymentEntity> deleted = new LinkedHashMap<>();
     for (DeploymentEntity deployment : cache.getEntitiesByType(DeploymentEntity.class)) {
@@ -72,7 +87,6 @@ public class AuditDeploymentInterceptor extends CommandInterceptor {
       }
     }
     // a deployment is deleted by a bulk statement, with its entity (if loaded) left in the cache
-    DbOperationManager operations = entityManager.getDbOperationManager();
     List<DbBulkOperation> bulk = new ArrayList<>(operations.bulkOperationsInsertionOrder);
     SortedSet<DbBulkOperation> deploymentBulk = operations.bulkOperations.get(DeploymentEntity.class);
     if (deploymentBulk != null) {

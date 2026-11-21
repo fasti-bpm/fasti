@@ -39,6 +39,15 @@ import org.slf4j.LoggerFactory;
  * The audit records of one command context. They are collected while the command runs and
  * appended to a chain when the command context flushes, in its transaction.
  *
+ * <p>When: after the engine has sent its own statements. Appending locks the head of the chain
+ * until the transaction ends, so every other transaction of that chain waits meanwhile; written
+ * last, the records hold the head for their own statements and the commit only. The sessions of a
+ * command context are flushed in the reverse order of their opening, so the audit session is
+ * opened {@linkplain #open(CommandContext) first}, by the interceptor of the plugin, before the
+ * command runs. A session that is opened later (in a command context that did not pass the
+ * interceptor) still writes its records in the transaction of the command, only before the
+ * statements of the engine, holding the head while they run.</p>
+ *
  * <p>Which chain: one of the {@code chains} slots of this node, chosen by the thread, so that one
  * transaction that spans several commands (an outer Spring transaction) keeps appending to the
  * chain it already locked. A transaction that starts on a thread while outer ones of the same
@@ -86,6 +95,15 @@ public class AuditSession implements Session {
 
   public AuditSession(AuditSettings settings) {
     this.settings = settings;
+  }
+
+  /**
+   * The audit session of the command context, opened if the command context has none yet. Call
+   * it before the command runs: the sessions of a command context are flushed in the reverse order
+   * of their opening, and the records are to be written after everything the engine writes.
+   */
+  public static AuditSession open(CommandContext commandContext) {
+    return commandContext.getSession(AuditSession.class);
   }
 
   /** Adds a record, stamped with the clock of the engine, the authenticated user (unless set) and the engine. */

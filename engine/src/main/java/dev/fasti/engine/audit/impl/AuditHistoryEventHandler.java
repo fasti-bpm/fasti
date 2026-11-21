@@ -77,11 +77,12 @@ public class AuditHistoryEventHandler implements HistoryEventHandler {
     }
   }
 
-  /** The audit session of the command, opened after the sessions of the engine. */
+  /**
+   * The audit session of the command. The interceptor of the plugin opened it before the command
+   * ran, so that it is flushed after the sessions of the engine; see {@link AuditSession#open}.
+   */
   public static AuditSession session(CommandContext commandContext) {
-    commandContext.getDbEntityManager();
-    commandContext.getDbSqlSession();
-    return commandContext.getSession(AuditSession.class);
+    return AuditSession.open(commandContext);
   }
 
   protected AuditRecord toRecord(CommandContext commandContext, HistoryEvent event) {

@@ -4,6 +4,7 @@
  */
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { config } from '../config';
 import { AWAY_AFTER, IDLE_AFTER, onReturn, paced, usePacedInterval, usePresence } from './activity';
 
 const input = () => window.dispatchEvent(new Event('pointerdown'));
@@ -23,6 +24,42 @@ describe('presence of the user', () => {
     expect(paced(30_000, 'away')).toBe(300_000);
     // a refresh that is switched off stays off
     expect(paced(false, 'away')).toBe(false);
+  });
+
+  it('does not stretch them where the installation or the address turns the pacing off', () => {
+    config.idlePacing = false;
+    expect(paced(30_000, 'away')).toBe(30_000);
+    config.idlePacing = true;
+    window.history.replaceState(null, '', '/fasti/app/next/default/?idlePacing=false#/cockpit');
+    expect(paced(30_000, 'away')).toBe(30_000);
+    window.history.replaceState(null, '', '/fasti/app/next/default/?idlePacing=true#/cockpit');
+    expect(paced(30_000, 'away')).toBe(300_000);
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('takes the keyboard focus in a frame of the page, e.g. an embedded form, as presence', () => {
+    const frame = document.createElement('iframe');
+    const button = document.createElement('button');
+    document.body.append(frame, button);
+    const hasFocus = vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+    const { result, unmount } = renderHook(() => usePresence());
+    try {
+      frame.focus();
+      expect(document.activeElement).toBe(frame);
+
+      act(() => void vi.advanceTimersByTime(AWAY_AFTER * 2));
+      expect(result.current).toBe('active');
+
+      // the focus leaves the frame: the pause counts from then
+      button.focus();
+      act(() => void vi.advanceTimersByTime(AWAY_AFTER + IDLE_AFTER));
+      expect(result.current).toBe('away');
+    } finally {
+      unmount();
+      hasFocus.mockRestore();
+      frame.remove();
+      button.remove();
+    }
   });
 
   it('takes a user without input as idle, then as away, and as active again with the next input', () => {

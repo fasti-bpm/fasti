@@ -3,6 +3,7 @@
  * Copyright Fasti BPM contributors
  */
 import { useSyncExternalStore } from 'react';
+import { config } from '../config';
 
 /**
  * Whether someone is at the screen, so that pages that refresh themselves ask
@@ -16,6 +17,12 @@ import { useSyncExternalStore } from 'react';
  * The first input after that makes the user `active` again and tells the
  * listeners of `onReturn`, which read at once what has become old. A hidden
  * tab is a separate matter: there the pages do not refresh at all.
+ *
+ * Input inside a frame (an embedded or external task form) does not reach this
+ * page; while the keyboard focus is in such a frame of the shown page, the user
+ * counts as present. A wall display that nobody touches turns the pacing off:
+ * `"idlePacing": false` in `config.json` for an installation, or
+ * `?idlePacing=false` in the address (before the `#`) for one screen.
  */
 export type Presence = 'active' | 'idle' | 'away';
 
@@ -47,7 +54,17 @@ function schedule(): void {
   timer = setTimeout(update, Math.max(0, next - Date.now()));
 }
 
+/** Whether the keyboard focus is in a frame of the shown page, e.g. an embedded form. */
+function focusInFrame(): boolean {
+  return (
+    document.visibilityState === 'visible' &&
+    document.activeElement instanceof HTMLIFrameElement &&
+    document.hasFocus()
+  );
+}
+
 function update(): void {
+  if (focusInFrame()) lastInput = Date.now();
   const next = presenceAt(Date.now());
   if (next !== presence) {
     const returned = next === 'active';
@@ -70,10 +87,23 @@ function onVisibility(): void {
   if (document.visibilityState === 'visible') onInput();
 }
 
+let blurTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** The page loses the focus, maybe to one of its frames: that is input too. */
+function onBlur(): void {
+  clearTimeout(blurTimer);
+  // the frame holds the focus only once the event is over
+  blurTimer = setTimeout(() => {
+    blurTimer = undefined;
+    if (focusInFrame()) onInput();
+  }, 0);
+}
+
 function attach(): void {
   if (attached || typeof window === 'undefined') return;
   attached = true;
   for (const name of INPUT_EVENTS) window.addEventListener(name, onInput, { passive: true, capture: true });
+  window.addEventListener('blur', onBlur);
   document.addEventListener('visibilitychange', onVisibility);
   lastInput = Date.now();
   presence = 'active';
@@ -83,9 +113,12 @@ function detach(): void {
   if (!attached || listeners.size + returnListeners.size > 0) return;
   attached = false;
   for (const name of INPUT_EVENTS) window.removeEventListener(name, onInput, { capture: true });
+  window.removeEventListener('blur', onBlur);
   document.removeEventListener('visibilitychange', onVisibility);
   clearTimeout(timer);
   timer = undefined;
+  clearTimeout(blurTimer);
+  blurTimer = undefined;
 }
 
 function subscribe(listener: () => void): () => void {
@@ -117,9 +150,20 @@ export function usePresence(): Presence {
   return useSyncExternalStore(subscribe, getPresence, () => 'active' as const);
 }
 
+/**
+ * Whether pages refresh less often while nobody is at the screen: on unless `config.json` or
+ * the address of the page turns it off.
+ */
+export function idlePacing(): boolean {
+  if (!config.idlePacing) return false;
+  const flag = new URLSearchParams(window.location.search).get('idlePacing');
+  return flag === null || !['false', 'off', '0', 'no'].includes(flag.toLowerCase());
+}
+
 /** The time between two refreshes for a user who is `presence`; `false` stays off. */
 export function paced(interval: number | false, current: Presence): number | false {
-  return interval === false ? false : interval * FACTOR[current];
+  if (interval === false) return false;
+  return idlePacing() ? interval * FACTOR[current] : interval;
 }
 
 /**

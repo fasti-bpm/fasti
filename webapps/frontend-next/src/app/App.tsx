@@ -385,6 +385,23 @@ export function createQueryClient(): QueryClient {
   });
 }
 
+/**
+ * Reads again what has become old while nobody was at the screen: the shown queries that refresh
+ * themselves. A list whose refresh the user paused, or one that never refreshes by itself, is
+ * left as it is.
+ */
+export function refreshAfterReturn(queryClient: QueryClient): Promise<void> {
+  return queryClient.refetchQueries({
+    type: 'active',
+    stale: true,
+    predicate: (query) =>
+      query.observers.some((observer) => {
+        const interval = observer.options.refetchInterval;
+        return typeof interval === 'function' ? interval(query) !== false : !!interval;
+      }),
+  });
+}
+
 export function Providers({
   children,
   queryClient,
@@ -396,10 +413,7 @@ export function Providers({
 }) {
   // pages refresh themselves less often while nobody is at the screen; back from that,
   // the user sees current data at once instead of after the next interval
-  useEffect(
-    () => onReturn(() => void queryClient.refetchQueries({ type: 'active', stale: true })),
-    [queryClient],
-  );
+  useEffect(() => onReturn(() => void refreshAfterReturn(queryClient)), [queryClient]);
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider initial={locale}>

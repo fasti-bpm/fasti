@@ -47,9 +47,13 @@ function implemented(element: Element): boolean {
  * `null` without one.
  */
 function fourEyesSteps(task: Element): string[] | null {
-  const properties = Array.from(task.getElementsByTagNameNS(CAMUNDA, 'property')).filter(
-    (property) => property.getAttribute('name') === 'fasti:fourEyes',
-  );
+  // the properties of the task itself, not those of its form fields
+  const direct = (parent: Element, uri: string, name: string) =>
+    Array.from(parent.children).filter((child) => child.namespaceURI === uri && child.localName === name);
+  const properties = children(task, 'extensionElements')
+    .flatMap((extensions) => direct(extensions, CAMUNDA, 'properties'))
+    .flatMap((container) => direct(container, CAMUNDA, 'property'))
+    .filter((property) => property.getAttribute('name') === 'fasti:fourEyes');
   if (properties.length === 0) return null;
   return properties.flatMap((property) =>
     (property.getAttribute('value') ?? '')

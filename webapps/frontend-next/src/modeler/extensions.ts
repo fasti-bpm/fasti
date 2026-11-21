@@ -188,12 +188,27 @@ export function writeFormFields(values: Generic[], fields: FormField[], create: 
 /** The extension property of a user task that names the earlier user tasks it checks. */
 export const FOUR_EYES_PROPERTY = 'fasti:fourEyes';
 
-const isFourEyes = (child: Generic) => isA(child, 'property') && child.name === FOUR_EYES_PROPERTY;
+const CAMUNDA_NS = 'http://camunda.org/schema/1.0/bpmn';
+
+/**
+ * Whether an element is the Camunda element of that name. `properties` and `property` are names
+ * other vendors use as well, so the namespace counts: the one the editor resolved for the
+ * element, or the conventional prefix where it is not known.
+ */
+function isCamunda(element: Generic, name: string): boolean {
+  if (!isA(element, name)) return false;
+  const descriptor = element.$descriptor as { ns?: { uri?: unknown } } | undefined;
+  const uri = descriptor?.ns?.uri;
+  return typeof uri === 'string' ? uri === CAMUNDA_NS : element.$type.startsWith('camunda:');
+}
+
+const isProperties = (value: Generic) => isCamunda(value, 'properties');
+const isFourEyes = (child: Generic) => isCamunda(child, 'property') && child.name === FOUR_EYES_PROPERTY;
 
 /** The ids of the earlier user tasks a user task checks, in the order written. */
 export function readFourEyes(values: Generic[]): string[] {
   const ids: string[] = [];
-  for (const properties of values.filter((value) => isA(value, 'properties'))) {
+  for (const properties of values.filter(isProperties)) {
     for (const child of (properties.$children ?? []).filter(isFourEyes)) {
       for (const part of text(child.value).split(',')) {
         const id = part.trim();
@@ -207,7 +222,8 @@ export function readFourEyes(values: Generic[]): string[] {
 /**
  * Writes the four-eyes property into the first `camunda:properties` (created if needed); other
  * extension properties stay where they are, in every `camunda:properties` of the element. An
- * empty list removes the property, and a `camunda:properties` that held nothing else.
+ * empty list removes the property, and a `camunda:properties` that held nothing else. Elements
+ * of other namespaces, also ones called `properties`, are not touched.
  */
 export function writeFourEyes(values: Generic[], ids: string[], create: CreateGeneric): Generic[] {
   const rebuild = (properties: Generic, extra: Generic[]): Generic | null => {
@@ -223,7 +239,7 @@ export function writeFourEyes(values: Generic[], ids: string[], create: CreateGe
   let placed = false;
   const next: Generic[] = [];
   for (const value of values) {
-    if (!isA(value, 'properties')) {
+    if (!isProperties(value)) {
       next.push(value);
       continue;
     }

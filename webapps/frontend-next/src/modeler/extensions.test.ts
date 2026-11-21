@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright Fasti BPM contributors
  */
+import { BpmnModdle } from 'bpmn-moddle';
 import { describe, expect, it } from 'vitest';
 import {
   listenerEvents,
@@ -20,6 +21,8 @@ import {
   type Generic,
   type Listener,
 } from './extensions';
+
+const CAMUNDA = 'http://camunda.org/schema/1.0/bpmn';
 
 const create = (name: string, properties: Record<string, unknown>): Generic => ({ $type: `camunda:${name}`, ...properties });
 
@@ -192,6 +195,95 @@ describe('four-eyes rule', () => {
       { $type: 'camunda:inputOutput' },
       { $type: 'camunda:properties', $children: [{ $type: 'camunda:property', name: 'b', value: '2' }] },
     ]);
+  });
+
+  it('leaves the properties of another vendor alone', () => {
+    const foreign: Generic = {
+      $type: 'acme:properties',
+      $children: [
+        { $type: 'acme:property', name: 'fasti:fourEyes', value: 'ghost' },
+        { $type: 'acme:property', name: 'colour', value: 'red' },
+      ],
+    };
+    expect(readFourEyes([foreign])).toEqual([]);
+
+    const added = writeFourEyes([foreign], ['draft'], create);
+    expect(added[0]).toBe(foreign);
+    expect(added[1]).toEqual({
+      $type: 'camunda:properties',
+      $children: [{ $type: 'camunda:property', name: 'fasti:fourEyes', value: 'draft' }],
+    });
+
+    const mixed: Generic[] = [foreign, { $type: 'camunda:properties', $children: [{ $type: 'camunda:property', name: 'fasti:fourEyes', value: 'a' }] }];
+    expect(readFourEyes(mixed)).toEqual(['a']);
+    expect(writeFourEyes(mixed, [], create)).toEqual([foreign]);
+    // a foreign property inside the Camunda container is not the rule either
+    const nested: Generic[] = [{ $type: 'camunda:properties', $children: [{ $type: 'acme:property', name: 'fasti:fourEyes', value: 'x' }] }];
+    expect(readFourEyes(nested)).toEqual([]);
+    expect(writeFourEyes(nested, [], create)).toEqual(nested);
+  });
+
+  it('goes by the namespace the editor resolved rather than by the prefix', () => {
+    const ns = (uri: string) => ({ $descriptor: { ns: { uri } } });
+    const aliased: Generic[] = [
+      { $type: 'c7:properties', ...ns(CAMUNDA), $children: [{ $type: 'c7:property', ...ns(CAMUNDA), name: 'fasti:fourEyes', value: 'draft' }] },
+    ];
+    expect(readFourEyes(aliased)).toEqual(['draft']);
+    const shadowed: Generic[] = [
+      { $type: 'camunda:properties', ...ns('urn:other'), $children: [{ $type: 'camunda:property', ...ns('urn:other'), name: 'fasti:fourEyes', value: 'draft' }] },
+    ];
+    expect(readFourEyes(shadowed)).toEqual([]);
+  });
+
+  it('keeps a foreign properties element through a round trip of real XML', async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:camunda="${CAMUNDA}" xmlns:acme="http://acme.example/bpmn" id="d" targetNamespace="http://fasti.dev/test">
+  <bpmn:process id="p" isExecutable="true">
+    <bpmn:userTask id="draft" />
+    <bpmn:userTask id="approve">
+      <bpmn:extensionElements>
+        <acme:properties owner="acme">
+          <acme:property name="fasti:fourEyes" value="ghost" />
+          <acme:property name="colour" value="red" />
+        </acme:properties>
+        <camunda:properties>
+          <camunda:property name="sla" value="2d" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+  </bpmn:process>
+</bpmn:definitions>`;
+    interface Process {
+      flowElements: { id: string; extensionElements: { values: Generic[] } }[];
+    }
+    const approve = (root: { rootElements: unknown[] }) => {
+      const task = (root.rootElements[0] as Process).flowElements.find((element) => element.id === 'approve');
+      if (!task) throw new Error('no task');
+      return task.extensionElements;
+    };
+    const moddle = new BpmnModdle();
+    const { rootElement } = await moddle.fromXML(xml);
+    const extensions = approve(rootElement);
+    const createAny = (name: string, properties: Record<string, unknown>) =>
+      moddle.createAny(`camunda:${name}`, CAMUNDA, properties) as Generic;
+
+    expect(readFourEyes(extensions.values)).toEqual([]);
+    const foreign = extensions.values[0];
+    extensions.values = writeFourEyes(extensions.values, ['draft'], createAny);
+    expect(extensions.values[0]).toBe(foreign);
+    expect(readFourEyes(extensions.values)).toEqual(['draft']);
+
+    const { xml: saved } = await moddle.toXML(rootElement, { format: false });
+    expect(saved).toContain(
+      '<acme:properties owner="acme"><acme:property name="fasti:fourEyes" value="ghost" /><acme:property name="colour" value="red" /></acme:properties>',
+    );
+    expect(saved).toContain(
+      '<camunda:properties><camunda:property name="sla" value="2d" /><camunda:property name="fasti:fourEyes" value="draft" /></camunda:properties>',
+    );
+    // and read again, the rule is the one written
+    const reread = approve((await new BpmnModdle().fromXML(saved)).rootElement);
+    expect(readFourEyes(reread.values)).toEqual(['draft']);
+    expect(reread.values.map((value) => value.$type)).toEqual(['acme:properties', 'camunda:properties']);
   });
 
   it('offers the user tasks of the process, also in sub-processes', () => {

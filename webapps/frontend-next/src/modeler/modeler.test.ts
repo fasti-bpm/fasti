@@ -108,6 +108,28 @@ describe('checks before deploying', () => {
     expect(messages('bpmn', model(' , '))).toEqual(['error readiness.fourEyesSteps Approve']);
   });
 
+  it('reads a four-eyes rule from the properties of the task only', () => {
+    const model = (extensions: string) =>
+      process(`<startEvent id="s" /><sequenceFlow id="f1" sourceRef="s" targetRef="approve" />
+        <userTask id="approve" name="Approve" camunda:candidateGroups="sales"><extensionElements>${extensions}</extensionElements></userTask>
+        <sequenceFlow id="f2" sourceRef="approve" targetRef="e" /><endEvent id="e" />`);
+    const property = '<camunda:property name="fasti:fourEyes" value="ghost" />';
+    // a property of a form field is not a rule of the task
+    expect(
+      messages(
+        'bpmn',
+        model(`<camunda:formData><camunda:formField id="a" type="string"><camunda:properties>${property}</camunda:properties></camunda:formField></camunda:formData>`),
+      ),
+    ).toEqual([]);
+    // nor is the element of another vendor
+    expect(
+      messages('bpmn', model(`<acme:properties xmlns:acme="http://acme.example/bpmn">${property}</acme:properties>`)),
+    ).toEqual([]);
+    expect(messages('bpmn', model(`<camunda:properties>${property}</camunda:properties>`))).toEqual([
+      'error readiness.fourEyesSteps Approve',
+    ]);
+  });
+
   it('warns about a gateway that may find no way out', () => {
     expect(
       messages(

@@ -6,10 +6,18 @@
 // its diagram interchange (CMMNDI) and, for each shape, the element it draws.
 // Only reading: the file is never changed or written.
 
-export const CMMN_MODEL = 'http://www.omg.org/spec/CMMN/20151109/MODEL';
-const CMMN_DI = 'http://www.omg.org/spec/CMMN/20151109/CMMNDI';
-const CMMN_DC = 'http://www.omg.org/spec/CMMN/20151109/DC';
-const CMMN_DI_BASE = 'http://www.omg.org/spec/CMMN/20151109/DI';
+/** CMMN 1.1 and CMMN 1.0, which the engine accepts as well. */
+export const CMMN_MODELS = ['http://www.omg.org/spec/CMMN/20151109/MODEL', 'http://www.omg.org/spec/CMMN/20131201/MODEL'];
+
+/** Elements of the model, whichever of the two versions it is written in. */
+function modelElements(root: Document | Element, localName: string): Element[] {
+  return CMMN_MODELS.flatMap((namespace) => Array.from(root.getElementsByTagNameNS(namespace, localName)));
+}
+
+/** Elements of the diagram interchange, found by their local name in any namespace. */
+function diagramElements(root: Document | Element, localName: string): Element[] {
+  return Array.from(root.getElementsByTagNameNS('*', localName));
+}
 
 export type ShapeKind =
   | 'casePlanModel'
@@ -101,7 +109,7 @@ const number = (element: Element | undefined | null, name: string): number => {
 };
 
 function boundsOf(element: Element): Bounds | null {
-  const bounds = Array.from(element.children).find((child) => child.namespaceURI === CMMN_DC && child.localName === 'Bounds');
+  const bounds = Array.from(element.children).find((child) => child.localName === 'Bounds');
   if (!bounds) return null;
   return { x: number(bounds, 'x'), y: number(bounds, 'y'), width: number(bounds, 'width'), height: number(bounds, 'height') };
 }
@@ -143,18 +151,18 @@ export function parseCaseDiagram(xml: string, caseKey?: string | null): CaseDiag
     throw new Error('The case model could not be read');
   }
   const elements = new Map<string, Element>();
-  for (const element of Array.from(document.getElementsByTagNameNS(CMMN_MODEL, '*'))) {
+  for (const element of modelElements(document, '*')) {
     const id = element.getAttribute('id');
     if (id) elements.set(id, element);
   }
-  const cases = Array.from(document.getElementsByTagNameNS(CMMN_MODEL, 'case'));
+  const cases = modelElements(document, 'case');
   const theCase = cases.find((candidate) => candidate.getAttribute('id') === caseKey) ?? cases[0];
   const planModel = theCase ? child(theCase, 'casePlanModel') : undefined;
-  const diagrams = Array.from(document.getElementsByTagNameNS(CMMN_DI, 'CMMNDiagram'));
+  const diagrams = diagramElements(document, 'CMMNDiagram');
   const planModelId = planModel?.getAttribute('id');
   const diagram =
     diagrams.find((candidate) =>
-      Array.from(candidate.getElementsByTagNameNS(CMMN_DI, 'CMMNShape')).some(
+      diagramElements(candidate, 'CMMNShape').some(
         (shape) => shape.getAttribute('cmmnElementRef') === planModelId,
       ),
     ) ?? diagrams[0];
@@ -163,7 +171,7 @@ export function parseCaseDiagram(xml: string, caseKey?: string | null): CaseDiag
   result.caseName = cleanName(theCase?.getAttribute('name'));
   if (!diagram) return result;
 
-  for (const shape of Array.from(diagram.getElementsByTagNameNS(CMMN_DI, 'CMMNShape'))) {
+  for (const shape of diagramElements(diagram, 'CMMNShape')) {
     const ref = shape.getAttribute('cmmnElementRef') ?? '';
     const element = elements.get(ref);
     const bounds = boundsOf(shape);
@@ -194,8 +202,8 @@ export function parseCaseDiagram(xml: string, caseKey?: string | null): CaseDiag
     });
   }
 
-  for (const edge of Array.from(diagram.getElementsByTagNameNS(CMMN_DI, 'CMMNEdge'))) {
-    const points = Array.from(edge.getElementsByTagNameNS(CMMN_DI_BASE, 'waypoint')).map((point) => ({
+  for (const edge of diagramElements(diagram, 'CMMNEdge')) {
+    const points = diagramElements(edge, 'waypoint').map((point) => ({
       x: number(point, 'x'),
       y: number(point, 'y'),
     }));

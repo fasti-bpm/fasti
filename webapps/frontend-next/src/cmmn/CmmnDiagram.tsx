@@ -282,6 +282,29 @@ const LAYER: Partial<Record<DiagramShape['kind'], number>> = {
   exitCriterion: 3,
 };
 
+/** How many containers (plan model, stages, plan fragments) enclose a shape. */
+function depthOf(shape: DiagramShape, containers: DiagramShape[]): number {
+  const { x, y, width, height } = shape.bounds;
+  return containers.filter(
+    (other) =>
+      other !== shape &&
+      other.bounds.x <= x &&
+      other.bounds.y <= y &&
+      other.bounds.x + other.bounds.width >= x + width &&
+      other.bounds.y + other.bounds.height >= y + height,
+  ).length;
+}
+
+/** Containers first, outer before inner, so that a stage never covers what it contains; criteria last. */
+export function drawingOrder(shapes: DiagramShape[]): DiagramShape[] {
+  const containers = shapes.filter((shape) => (LAYER[shape.kind] ?? 2) <= 1);
+  const key = (shape: DiagramShape) => {
+    const layer = LAYER[shape.kind] ?? 2;
+    return layer <= 1 ? depthOf(shape, containers) / (containers.length + 1) : layer;
+  };
+  return [...shapes].sort((a, b) => key(a) - key(b));
+}
+
 /**
  * Shows a case diagram, read only, drawn from the diagram interchange of the
  * model: plan items with the symbols of CMMN, their states as markers and
@@ -429,7 +452,7 @@ export default function CmmnDiagram({ xml, caseKey, markers, badges, selected, o
   if (parsed.error) {
     return <ErrorState error={parsed.error} />;
   }
-  const shapes = [...(diagram?.shapes ?? [])].sort((a, b) => (LAYER[a.kind] ?? 2) - (LAYER[b.kind] ?? 2));
+  const shapes = drawingOrder(diagram?.shapes ?? []);
   const empty = shapes.length === 0;
 
   return (

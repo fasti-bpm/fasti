@@ -283,6 +283,32 @@ describe('a case instance', () => {
     expect(await screen.findByRole('table', { name: 'History' })).toHaveTextContent('Claim approved');
   });
 
+  it('shows the case read only from the history once it is closed on the page', async () => {
+    const user = userEvent.setup();
+    let closed = false;
+    const completed = { id: 'c1', caseDefinitionId: DEFINITION, businessKey: 'CL-1', tenantId: null, active: false, completed: true, terminated: false };
+    backend({
+      [`GET ${ENGINE}/case-instance/c1`]: () => (closed ? json({ type: 'InvalidRequestException', message: 'not found' }, 404) : json(completed)),
+      [`GET ${ENGINE}/case-execution`]: () => json(closed ? [] : [EXECUTIONS[0]]),
+      [`POST ${ENGINE}/case-instance/c1/close`]: () => {
+        closed = true;
+        return empty();
+      },
+      [`GET ${ENGINE}/history/variable-instance`]: () => json([]),
+    });
+    renderApp('/cockpit/cases/instance/c1');
+
+    await user.click(await screen.findByRole('button', { name: 'Close case' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Close the case instance' });
+    await user.click(within(dialog).getByRole('button', { name: 'Close case' }));
+    // the data read before the case was closed is not shown as if it were still running
+    expect(await screen.findByText(/This case instance is closed/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Close case' })).toBeNull();
+    await user.click(screen.getByRole('tab', { name: 'Variables' }));
+    expect(await screen.findByText(/a closed case cannot be changed/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add variable' })).toBeNull();
+  });
+
   it('says when a case instance does not exist', async () => {
     backend({
       [`GET ${ENGINE}/case-instance/c1`]: () => json({ type: 'InvalidRequestException', message: 'not found' }, 404),

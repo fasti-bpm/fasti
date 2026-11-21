@@ -422,7 +422,9 @@ export function CaseInstancePage() {
     refetchInterval,
   });
   const closed = runtime.isError && isApiError(runtime.error, 'notFound');
-  const definitionId = runtime.data?.caseDefinitionId ?? history.data?.caseDefinitionId;
+  // a refetch that finds the instance closed keeps the data read before: it is not used any more
+  const live = closed ? undefined : runtime.data;
+  const definitionId = live?.caseDefinitionId ?? history.data?.caseDefinitionId;
   const definition = useQuery({
     queryKey: [COCKPIT, 'case-definition', definitionId],
     queryFn: () => getCaseDefinition(definitionId ?? ''),
@@ -437,7 +439,7 @@ export function CaseInstancePage() {
   const executions = useQuery({
     queryKey: [COCKPIT, 'case-executions', id],
     queryFn: ({ signal }) => getCaseExecutions(id, signal),
-    enabled: !!runtime.data,
+    enabled: !!live,
     refetchInterval,
   });
   const activities = useQuery({
@@ -447,8 +449,8 @@ export function CaseInstancePage() {
   });
 
   const states = useMemo(
-    () => itemStates(runtime.data ? (executions.data ?? []) : [], activities.data ?? []),
-    [runtime.data, executions.data, activities.data],
+    () => itemStates(live ? (executions.data ?? []) : [], activities.data ?? []),
+    [live, executions.data, activities.data],
   );
   const names = useMemo(() => scopeNames(executions.data), [executions.data]);
   const markers = useMemo(() => [...states].map(([item, state]) => ({ id: item, marker: stateMarker(state) })), [states]);
@@ -478,7 +480,7 @@ export function CaseInstancePage() {
       </div>
     );
   }
-  if (!runtime.data && !(closed && history.data)) {
+  if (!live && !(closed && history.data)) {
     return (
       <div className="page">
         <Loading label={t('state.loading')}>
@@ -489,11 +491,11 @@ export function CaseInstancePage() {
   }
 
   const past = history.data ?? null;
-  const state: CaseInstanceState = runtime.data ? caseInstanceState(runtime.data) : past ? historicCaseState(past) : 'closed';
-  const businessKey = runtime.data?.businessKey ?? past?.businessKey ?? null;
-  const tenantId = runtime.data?.tenantId ?? past?.tenantId ?? null;
+  const state: CaseInstanceState = live ? caseInstanceState(live) : past ? historicCaseState(past) : 'closed';
+  const businessKey = live?.businessKey ?? past?.businessKey ?? null;
+  const tenantId = live?.tenantId ?? past?.tenantId ?? null;
   const name = definition.data?.name ?? definition.data?.key ?? past?.caseDefinitionName ?? past?.caseDefinitionKey ?? t('cmmn.instance');
-  const actions = runtime.data ? caseInstanceActions(state) : [];
+  const actions = live ? caseInstanceActions(state) : [];
   const describe = (planItem: string) => {
     const known = states.get(planItem);
     return known ? t(caseStateLabel(known)) : null;
@@ -560,7 +562,7 @@ export function CaseInstancePage() {
         }
       />
 
-      {!runtime.data && <Notice tone="info">{t('cmmn.instance.closedNote')}</Notice>}
+      {!live && <Notice tone="info">{t('cmmn.instance.closedNote')}</Notice>}
 
       <Card flush className="model">
         {xml.isError ? (
@@ -605,7 +607,7 @@ export function CaseInstancePage() {
             </Tabs.List>
           </OverflowRow>
           <Tabs.Content className="ctabs__content" value="items">
-            {runtime.data ? (
+            {live ? (
               <ItemsTab
                 executions={executions.data}
                 error={executions.error}
@@ -618,10 +620,10 @@ export function CaseInstancePage() {
             )}
           </Tabs.Content>
           <Tabs.Content className="ctabs__content" value="tasks">
-            <TasksTab caseInstanceId={id} open={!!runtime.data} />
+            <TasksTab caseInstanceId={id} open={!!live} />
           </Tabs.Content>
           <Tabs.Content className={cx('ctabs__content')} value="variables">
-            {runtime.data ? <VariablesTab caseInstanceId={id} scopeNames={names} /> : <ClosedVariables caseInstanceId={id} />}
+            {live ? <VariablesTab caseInstanceId={id} scopeNames={names} /> : <ClosedVariables caseInstanceId={id} />}
           </Tabs.Content>
           <Tabs.Content className="ctabs__content" value="history">
             <HistoryTab activities={activities.data} error={activities.error} onRetry={() => void activities.refetch()} />

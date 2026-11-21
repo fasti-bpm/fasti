@@ -9,7 +9,7 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 import { Providers } from '../app/App';
-import CmmnDiagram from './CmmnDiagram';
+import CmmnDiagram, { drawingOrder } from './CmmnDiagram';
 import { isPlanItem, parseCaseDiagram, planItemsOf, wrapText } from './model';
 
 // the case of the end-to-end tests: two human tasks, a stage with a task and a milestone
@@ -63,6 +63,27 @@ describe('reading a case diagram', () => {
     </definitions>`;
     const [shape] = parseCaseDiagram(xml).shapes;
     expect(shape).toMatchObject({ name: 'Approve', required: true, repeatable: true, manual: false, nonBlocking: true });
+  });
+
+  it('reads models of CMMN 1.0, which the engine accepts as well', () => {
+    const xml = `<definitions xmlns="http://www.omg.org/spec/CMMN/20131201/MODEL"
+        xmlns:cmmndi="http://www.omg.org/spec/CMMN/20151109/CMMNDI" xmlns:dc="http://www.omg.org/spec/CMMN/20151109/DC">
+      <case id="old" name="Old case"><casePlanModel id="m"><planItem id="p" definitionRef="t" /><humanTask id="t" name="Check" /></casePlanModel></case>
+      <cmmndi:CMMNDI><cmmndi:CMMNDiagram id="d">
+        <cmmndi:CMMNShape id="s" cmmnElementRef="p"><dc:Bounds x="0" y="0" width="100" height="80" /></cmmndi:CMMNShape>
+      </cmmndi:CMMNDiagram></cmmndi:CMMNDI>
+    </definitions>`;
+    const diagram = parseCaseDiagram(xml, 'old');
+    expect(diagram.caseName).toBe('Old case');
+    expect(diagram.shapes).toEqual([expect.objectContaining({ id: 'p', kind: 'humanTask', name: 'Check' })]);
+  });
+
+  it('draws outer containers before what they contain, whatever the order of the file', () => {
+    const diagram = parseCaseDiagram(FIXTURE);
+    const byId = new Map(diagram.shapes.map((shape) => [shape.id, shape]));
+    const inner = { ...(byId.get('PI_settle') as (typeof diagram.shapes)[number]), id: 'inner', bounds: { x: 450, y: 110, width: 100, height: 60 } };
+    const order = drawingOrder([byId.get('Entry_settle'), byId.get('PI_pay'), inner, byId.get('PI_settle'), byId.get('CasePlanModel_e2e')].filter((shape) => !!shape) as typeof diagram.shapes).map((shape) => shape.id);
+    expect(order).toEqual(['CasePlanModel_e2e', 'PI_settle', 'inner', 'PI_pay', 'Entry_settle']);
   });
 
   it('yields no shapes for a model without layout and refuses what is no XML', () => {

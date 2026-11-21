@@ -30,11 +30,18 @@ camunda.bpm:
     deployment-aware: false
     # an acquisition fetches up to max-jobs-per-acquisition due jobs, the queue holds one
     # acquisition and max-pool-size threads execute them (docs/tuning-runtime.md). In Spring Boot
-    # notation: CAMUNDA_BPM_JOB_EXECUTION_MAX_POOL_SIZE and so on.
-    core-pool-size: 10
+    # notation: CAMUNDA_BPM_JOB_EXECUTION_MAX_POOL_SIZE and so on. The core threads follow
+    # max-pool-size unless CAMUNDA_BPM_JOB_EXECUTION_CORE_POOL_SIZE is set (never above it).
+    core-pool-size: ${camunda.bpm.job-execution.max-pool-size:10}
     max-pool-size: 10
     queue-capacity: 10
     max-jobs-per-acquisition: 10
+    # the exclusive jobs of one process instance acquired together run one after the other in
+    # one thread under one lock of this length (5 minutes, as in Camunda 7.24): keep
+    # max-jobs-per-acquisition x the slowest such job below it, or raise it
+    # (CAMUNDA_BPM_JOB_EXECUTION_LOCK_TIME_IN_MILLIS); a lock that ran out lets another node
+    # execute the job a second time
+    lock-time-in-millis: 300000
   run:
     auth:
       enabled: true
@@ -123,12 +130,15 @@ server:
 
 spring:
   # room for every job executor thread plus the requests that use the database at the same time
-  # (HikariCP alone defaults to 10, as many as there are job threads). DB_CONN_MAXACTIVE or
-  # SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE change it; all nodes together must stay below the
-  # connection limit of the database.
+  # (HikariCP alone defaults to 10, as many as there are job threads). An idle node keeps 10
+  # connections open and grows to 20 under load (unused ones close after 10 idle minutes).
+  # DB_CONN_MAXACTIVE / DB_CONN_MINIDLE (or SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE /
+  # _MINIMUM_IDLE) change them; the maxima of all nodes together, plus other clients, must stay
+  # below the connection limit of the database.
   datasource:
     hikari:
       maximum-pool-size: 20
+      minimum-idle: 10
   lifecycle:
     timeout-per-shutdown-phase: 30s
   web.resources:

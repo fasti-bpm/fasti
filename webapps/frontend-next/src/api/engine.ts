@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright Fasti BPM contributors
  */
+import { getCaseBusinessKeys } from './cases';
 import { tenantFilter, tenantFilterBody } from '../lib/userPrefs';
 import { env } from '../env';
 import { apiUrl, isApiError, request, seg, type QueryValue } from './http';
@@ -277,6 +278,7 @@ interface HalTaskList {
     task?: HalTask[];
     assignee?: HalUser[];
     processDefinition?: HalDefinition[];
+    caseDefinition?: HalDefinition[];
   } | null;
 }
 
@@ -317,15 +319,18 @@ export async function getFilterTasks(
     signal: options.signal,
   });
   const users = new Map((result._embedded?.assignee ?? []).map((user) => [user.id, user]));
+  // tasks of processes and of cases (CMMN) are named by their definition alike
   const definitions = new Map(
-    (result._embedded?.processDefinition ?? []).map((definition) => [definition.id, definition]),
+    [...(result._embedded?.processDefinition ?? []), ...(result._embedded?.caseDefinition ?? [])].map((definition) => [
+      definition.id,
+      definition,
+    ]),
   );
   const tasks: TaskListItem[] = (result._embedded?.task ?? []).map((halTask) => {
     const { _embedded, ...task } = halTask;
     const assignee = task.assignee ? users.get(task.assignee) : undefined;
-    const definition = task.processDefinitionId
-      ? definitions.get(task.processDefinitionId)
-      : undefined;
+    const definitionId = task.processDefinitionId ?? task.caseDefinitionId;
+    const definition = definitionId ? definitions.get(definitionId) : undefined;
     return {
       ...task,
       variables: _embedded?.variable ?? [],
@@ -344,6 +349,14 @@ export async function getFilterTasks(
     const keys = new Map(instances.map((instance) => [instance.id, instance.businessKey]));
     for (const task of tasks) {
       task.businessKey = task.processInstanceId ? (keys.get(task.processInstanceId) ?? null) : null;
+    }
+  }
+  // the business keys of cases (CMMN) come from the history, which knows several at once
+  const caseIds = [...new Set(tasks.map((task) => task.caseInstanceId).filter((id): id is string => !!id))];
+  if (caseIds.length > 0) {
+    const keys = await getCaseBusinessKeys(caseIds, options.signal).catch(() => new Map<string, string | null>());
+    for (const task of tasks) {
+      if (task.caseInstanceId && !task.processInstanceId) task.businessKey = keys.get(task.caseInstanceId) ?? null;
     }
   }
   return { count: result.count, tasks };

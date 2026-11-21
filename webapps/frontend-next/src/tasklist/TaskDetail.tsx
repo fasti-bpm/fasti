@@ -6,8 +6,10 @@ import { Suspense, lazy, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Tabs } from 'radix-ui';
-import { ArrowLeft, BookOpen, CheckCheck, FileText, Hand, MessageSquare, Undo2, Workflow } from 'lucide-react';
+import { ArrowLeft, BookOpen, CheckCheck, FileText, FolderKanban, Hand, MessageSquare, Undo2, Workflow } from 'lucide-react';
+import { Link } from 'react-router';
 import { getProcessDefinition, getProcessXml, getTask, getTaskComments, getTaskOperations } from '../api/engine';
+import { getCaseDefinition, getCaseXml } from '../api/cases';
 import { isApiError } from '../api/http';
 import type { Task, TaskListItem } from '../api/types';
 import { useSession } from '../app/session';
@@ -28,7 +30,10 @@ import { keyOfDefinitionId } from '../bpmn/diagrams';
 import { OverflowRow } from '../app/OverflowMenu';
 import { SubstituteNotice } from '../absence/SubstituteNotice';
 import { FourEyesNotice, useFourEyes } from './FourEyesNotice';
+import { caseInstancePath } from '../cockpit/paths';
+import { planItemsOf, parseCaseDiagram } from '../cmmn/model';
 const BpmnDiagram = lazy(() => import('../bpmn/BpmnDiagram'));
+const CmmnDiagram = lazy(() => import('../cmmn/CmmnDiagram'));
 
 const OPERATIONS: Record<string, MessageKey> = {
   Claim: 'history.op.claim',
@@ -171,6 +176,36 @@ function HistoryTab({ task, actions }: { task: Task; actions: TaskActions }) {
 
 const firstLine = (text: string): string => text.split(/\r?\n/)[0] ?? '';
 
+/** The case diagram of a task of a case (CMMN), its plan item marked. */
+function CaseDiagramTab({ task }: { task: Task }) {
+  const { t } = useI18n();
+  const definitionId = task.caseDefinitionId ?? '';
+  const xml = useQuery({
+    queryKey: ['case-xml', definitionId],
+    queryFn: () => getCaseXml(definitionId),
+    staleTime: Infinity,
+  });
+  const selected = useMemo(() => {
+    if (!xml.data) return [];
+    try {
+      return planItemsOf(parseCaseDiagram(xml.data, keyOfDefinitionId(definitionId)), task.taskDefinitionKey);
+    } catch {
+      return [];
+    }
+  }, [xml.data, definitionId, task.taskDefinitionKey]);
+  if (xml.isPending) {
+    return <Loading label={t('diagram.loading')} />;
+  }
+  if (xml.isError) {
+    return <ErrorState error={xml.error} onRetry={() => void xml.refetch()} />;
+  }
+  return (
+    <Suspense fallback={<Loading label={t('diagram.loading')} />}>
+      <CmmnDiagram xml={xml.data} caseKey={keyOfDefinitionId(definitionId)} selected={selected} label={t('cmmn.task.diagramLabel')} />
+    </Suspense>
+  );
+}
+
 function DiagramTab({ task }: { task: Task }) {
   const { t } = useI18n();
   const definitionId = task.processDefinitionId;
@@ -181,7 +216,7 @@ function DiagramTab({ task }: { task: Task }) {
     staleTime: Infinity,
   });
   if (!definitionId) {
-    return <EmptyState icon={Workflow} title={t('diagram.none')} />;
+    return task.caseDefinitionId ? <CaseDiagramTab task={task} /> : <EmptyState icon={Workflow} title={t('diagram.none')} />;
   }
   if (xml.isPending) {
     return <Loading label={t('diagram.loading')} />;
@@ -240,6 +275,13 @@ export function TaskDetail({
     enabled: !!task?.processDefinitionId && !preview?.processDefinitionName,
     staleTime: Infinity,
   });
+  // a task of a case (CMMN) is named by its case definition
+  const caseDefinition = useQuery({
+    queryKey: ['case-definition', task?.caseDefinitionId],
+    queryFn: () => getCaseDefinition(task?.caseDefinitionId ?? ''),
+    enabled: !!task?.caseDefinitionId && !task?.processDefinitionId && !preview?.processDefinitionName,
+    staleTime: Infinity,
+  });
   const tabPlugins = pluginsFor('tasklist.task.tab');
   // what the modeler wrote about the step and the process, shared with the diagram tab
   const xml = useQuery({
@@ -289,7 +331,14 @@ export function TaskDetail({
   // resolving a delegated task hands it back to its owner, which the control allows
   const fourEyesBlocked = !!fourEyes.data?.blocked && !resolving;
   const processName =
-    preview?.processDefinitionName ?? definition.data?.name ?? definition.data?.key ?? null;
+    preview?.processDefinitionName ??
+    definition.data?.name ??
+    definition.data?.key ??
+    caseDefinition.data?.name ??
+    caseDefinition.data?.key ??
+    null;
+  // the case instance of a task of a case, for those who may open the monitoring pages
+  const caseLink = task.caseInstanceId && session.authorizedApps.includes('cockpit') ? caseInstancePath(task.caseInstanceId) : null;
   // the description tab only when there is something to read; kept while the model loads for a link to it
   const describable =
     !!(task.description || documentation.step || documentation.process) || (tab === 'description' && xml.isPending);
@@ -313,6 +362,12 @@ export function TaskDetail({
         <div className="detail__titles">
           <h1 className="detail__title" id="task-detail-title" tabIndex={-1}>{task.name ?? task.taskDefinitionKey ?? task.id}</h1>
           {processName && <p className="detail__process">{processName}</p>}
+          {caseLink && (
+            <Link className="link link--subtle detail__case" to={caseLink}>
+              <FolderKanban aria-hidden size={13} />
+              {t('cmmn.task.openCase')}
+            </Link>
+          )}
         </div>
         <div className="detail__actions">
           {mine ? (

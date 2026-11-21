@@ -1064,6 +1064,64 @@ describe('tasklist', () => {
     await user.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('No tasks')).toBeVisible();
   });
+
+  it('names a task of a case (CMMN) by its case, links the case instance and draws the case', async () => {
+    const user = userEvent.setup();
+    const caseTask = {
+      ...task('c9', 'Review claim'),
+      executionId: null,
+      processDefinitionId: null,
+      processInstanceId: null,
+      caseDefinitionId: 'claim:1:a',
+      caseInstanceId: 'ci1',
+      caseExecutionId: 'cx1',
+      taskDefinitionKey: 'PI_review',
+    };
+    const CASE_MODEL = `<definitions xmlns="http://www.omg.org/spec/CMMN/20151109/MODEL"
+        xmlns:cmmndi="http://www.omg.org/spec/CMMN/20151109/CMMNDI" xmlns:dc="http://www.omg.org/spec/CMMN/20151109/DC">
+      <case id="claim"><casePlanModel id="m" name="Claim">
+        <planItem id="PI_review" definitionRef="t" /><humanTask id="t" name="Review claim" />
+      </casePlanModel></case>
+      <cmmndi:CMMNDI><cmmndi:CMMNDiagram id="d">
+        <cmmndi:CMMNShape id="s1" cmmnElementRef="m"><dc:Bounds x="0" y="30" width="300" height="200" /></cmmndi:CMMNShape>
+        <cmmndi:CMMNShape id="s2" cmmnElementRef="PI_review"><dc:Bounds x="40" y="80" width="100" height="80" /></cmmndi:CMMNShape>
+      </cmmndi:CMMNDiagram></cmmndi:CMMNDI>
+    </definitions>`;
+    const server = backend({
+      routes: {
+        [`POST ${ENGINE}/filter/f1/list`]: () =>
+          json({
+            count: 1,
+            _embedded: {
+              task: [{ ...caseTask, _embedded: { variable: [] } }],
+              caseDefinition: [{ id: 'claim:1:a', key: 'claim', name: 'Claim case' }],
+            },
+          }),
+        [`GET ${ENGINE}/history/case-instance`]: () => json([{ id: 'ci1', businessKey: 'CL-1' }]),
+        [`GET ${ENGINE}/task/c9`]: () => json(caseTask),
+        [`GET ${ENGINE}/task/c9/identity-links`]: () => json([]),
+        [`GET ${ENGINE}/task/c9/form`]: () => json({ key: null, contextPath: null }),
+        [`GET ${ENGINE}/task/c9/form-variables`]: () => json({}),
+        [`GET ${ENGINE}/task/c9/comment`]: () => json([]),
+        [`GET ${ENGINE}/case-definition/claim:1:a/xml`]: () => json({ id: 'claim:1:a', cmmnXml: CASE_MODEL }),
+      },
+    });
+    renderApp('/tasklist?filter=f1&task=c9');
+
+    const card = await screen.findByRole('option', { name: /Review claim/ });
+    expect(await within(card).findByText('Claim case')).toBeVisible();
+    expect(await within(card).findByText(/CL-1/)).toBeVisible();
+    expect(server.find('GET', `${ENGINE}/history/case-instance`)[0]?.query.get('caseInstanceIds')).toBe('ci1');
+
+    const details = await screen.findByRole('region', { name: 'Task details' });
+    expect(within(details).getByRole('link', { name: 'Open the case in Cockpit' })).toHaveAttribute('href', '/cockpit/cases/instance/ci1');
+    // a case task has no case tab of a process
+    expect(within(details).queryByRole('tab', { name: 'Case' })).toBeNull();
+
+    await user.click(within(details).getByRole('tab', { name: 'Diagram' }));
+    const diagram = await within(details).findByRole('img', { name: 'Case diagram, the plan item of the task is highlighted' });
+    expect(diagram.querySelector('[data-element-id="PI_review"]')).toHaveClass('is-selected');
+  });
 });
 
 describe('start process', () => {

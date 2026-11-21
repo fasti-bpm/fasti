@@ -29,6 +29,9 @@ export interface BrokerContext {
   /** the process instance and definition of the task, if known */
   processInstanceId?: string | null;
   processDefinitionId?: string | null;
+  /** the case instance and definition of a task of a case (CMMN), if known */
+  caseInstanceId?: string | null;
+  caseDefinitionId?: string | null;
 }
 
 export type BrokerMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -48,8 +51,17 @@ export type BrokerDecision =
 const TASK = Symbol('task');
 const INSTANCE = Symbol('processInstance');
 const DEFINITION = Symbol('processDefinition');
+const CASE_INSTANCE = Symbol('caseInstance');
+const CASE_DEFINITION = Symbol('caseDefinition');
 const ANY = Symbol('any');
-type Token = string | typeof TASK | typeof INSTANCE | typeof DEFINITION | typeof ANY;
+type Token =
+  | string
+  | typeof TASK
+  | typeof INSTANCE
+  | typeof DEFINITION
+  | typeof CASE_INSTANCE
+  | typeof CASE_DEFINITION
+  | typeof ANY;
 
 type Rule = readonly [BrokerMethod, readonly Token[]];
 
@@ -79,6 +91,13 @@ const TASK_RULES: readonly Rule[] = [
   ['GET', ['process-instance', INSTANCE, 'variables', ANY, 'data']],
   ['GET', ['process-definition', DEFINITION]],
   ['GET', ['process-definition', DEFINITION, 'xml']],
+  // a task of a case reads its case instance and definition, as the forms SDK does
+  ['GET', ['case-instance', CASE_INSTANCE]],
+  ['GET', ['case-instance', CASE_INSTANCE, 'variables']],
+  ['GET', ['case-instance', CASE_INSTANCE, 'variables', ANY]],
+  ['GET', ['case-instance', CASE_INSTANCE, 'variables', ANY, 'data']],
+  ['GET', ['case-definition', CASE_DEFINITION]],
+  ['GET', ['case-definition', CASE_DEFINITION, 'xml']],
 ];
 
 const START_RULES: readonly Rule[] = [
@@ -157,6 +176,10 @@ function matches(rule: readonly Token[], rest: string[], context: BrokerContext)
         return target.type === 'task' && segment === target.taskId;
       case INSTANCE:
         return !!context.processInstanceId && segment === context.processInstanceId;
+      case CASE_INSTANCE:
+        return target.type === 'task' && !!context.caseInstanceId && segment === context.caseInstanceId;
+      case CASE_DEFINITION:
+        return target.type === 'task' && !!context.caseDefinitionId && segment === context.caseDefinitionId;
       case DEFINITION:
         return target.type === 'start'
           ? segment === target.processDefinitionId

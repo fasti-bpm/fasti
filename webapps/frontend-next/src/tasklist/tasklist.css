@@ -457,6 +457,15 @@
   color: var(--text-muted);
 }
 
+/* the case instance (CMMN) of a task, in the monitoring pages */
+.detail__case {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  margin-top: 2px;
+  font-size: var(--fs-sm);
+}
+
 .detail__actions {
   display: flex;
   flex: none;

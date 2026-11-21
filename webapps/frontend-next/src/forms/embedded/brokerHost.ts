@@ -56,7 +56,7 @@ export class FormBroker {
     private readonly origin: string = window.location.origin,
   ) {}
 
-  /** The process instance and definition of a task, needed by the allow-list. */
+  /** The process or case instance and definition of a task, needed by the allow-list. */
   private loadContext(): Promise<BrokerContext> {
     this.context ??= (async () => {
       const context: BrokerContext = {
@@ -71,6 +71,8 @@ export class FormBroker {
           const task = await getTask(this.target.taskId);
           context.processInstanceId = task.processInstanceId ?? null;
           context.processDefinitionId = task.processDefinitionId ?? null;
+          context.caseInstanceId = task.caseInstanceId ?? null;
+          context.caseDefinitionId = task.caseDefinitionId ?? null;
         } catch {
           // the requests of the task itself are allowed nevertheless
         }

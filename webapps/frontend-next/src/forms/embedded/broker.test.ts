@@ -220,6 +220,28 @@ describe('broker allow-list of a task form', () => {
     expect(allowed(unknown, 'GET', `${API}/task/task-1/form`)).toBe(true);
   });
 
+  it('lets the form of a task of a case read its own case instance and definition only', () => {
+    const caseTask: BrokerContext = {
+      ...taskContext,
+      processInstanceId: null,
+      processDefinitionId: null,
+      caseInstanceId: 'ci-1',
+      caseDefinitionId: 'claim:1:2',
+    };
+    expect(allowed(caseTask, 'GET', `${API}/case-instance/ci-1`)).toBe(true);
+    expect(allowed(caseTask, 'GET', `${API}/case-instance/ci-1/variables?deserializeValues=false`)).toBe(true);
+    expect(allowed(caseTask, 'GET', `${API}/case-instance/ci-1/variables/amount/data`)).toBe(true);
+    expect(allowed(caseTask, 'GET', `${API}/case-definition/claim%3A1%3A2/xml`)).toBe(true);
+    // reading only, and nothing of other cases
+    expect(allowed(caseTask, 'POST', `${API}/case-instance/ci-1/variables`)).toBe(false);
+    expect(allowed(caseTask, 'POST', `${API}/case-instance/ci-1/terminate`)).toBe(false);
+    expect(allowed(caseTask, 'GET', `${API}/case-instance/ci-2/variables`)).toBe(false);
+    expect(allowed(caseTask, 'GET', `${API}/case-definition/other:1:1`)).toBe(false);
+    // unknown while the task is not loaded, and never for a start form
+    expect(allowed(taskContext, 'GET', `${API}/case-instance/ci-1`)).toBe(false);
+    expect(allowed({ ...startContext, caseInstanceId: 'ci-1' }, 'GET', `${API}/case-instance/ci-1`)).toBe(false);
+  });
+
   it('respects an empty application root', () => {
     const root = { ...taskContext, appRoot: '' };
     expect(allowed(root, 'GET', '/api/engine/engine/default/task/task-1/form')).toBe(true);

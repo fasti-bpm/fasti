@@ -194,7 +194,7 @@ public class AuditServiceImpl implements AuditService {
       throw new BadUserRequestException("Records younger than " + settings.getRetentionDays()
           + " days are kept (fasti.audit.retention-days); choose a date before " + new Date(cutoff).toInstant() + ".");
     }
-    if (AuditSession.holdsChain()) {
+    if (AuditSession.holdsChain(settings)) {
       // it locks the heads of all chains in order; inside a transaction that already holds one, two
       // purges could wait for each other
       throw new BadUserRequestException("Purge the audit trail in a transaction of its own, not inside one that has "

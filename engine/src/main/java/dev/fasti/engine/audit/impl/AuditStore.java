@@ -44,7 +44,9 @@ import org.slf4j.LoggerFactory;
  * <p>Appending to a chain first locks the row of the chain in {@code FASTI_AUDIT_HEAD} with an
  * update (which every database supports the same way), reads the last position and hash, inserts
  * the records and moves the head. The lock is held until the transaction ends, so appends to one
- * chain are serialized while other chains (other slots, other nodes) are not affected.</p>
+ * chain are serialized while other chains (other slots, other nodes) are not affected. The wait
+ * for the lock is limited ({@code lockTimeoutSeconds}), so that a transaction that cannot get the
+ * head fails instead of hanging.</p>
  *
  * <p>Queries page in the database and exports read one forward-only cursor, so that neither holds
  * more than a page of records in memory. Messages of the database never reach the caller: they are
@@ -105,6 +107,12 @@ public final class AuditStore {
     return new ProcessEngineException("The audit trail could not " + what + ". The cause is in the log of the server.", e);
   }
 
+  static boolean isTimeout(SQLException e) {
+    // query cancelled (PostgreSQL, H2: 57014), lock wait timeout (H2: HYT00, MySQL and MariaDB: 1205 / 3024 / 1969)
+    return e instanceof SQLTimeoutException || "57014".equals(e.getSQLState()) || "HYT00".equals(e.getSQLState())
+        || "HYT01".equals(e.getSQLState()) || e.getErrorCode() == 1205 || e.getErrorCode() == 3024 || e.getErrorCode() == 1969;
+  }
+
   static void timeout(PreparedStatement statement, int seconds) throws SQLException {
     if (seconds > 0) {
       statement.setQueryTimeout(seconds);
@@ -156,6 +164,13 @@ public final class AuditStore {
         update.executeUpdate();
       }
     } catch (SQLException e) {
+      if (isTimeout(e)) {
+        LOG.error("The audit trail could not lock chain {} within {} seconds: {}", chainId, settings.getLockTimeoutSeconds(),
+            e.getMessage());
+        throw new ProcessEngineException("The audit trail could not write its records: the chain is held by another "
+            + "transaction for longer than " + settings.getLockTimeoutSeconds() + " seconds (fasti.audit.lock-timeout-seconds). "
+            + "Nothing was changed; try again.");
+      }
       throw failure("write its records", "chain " + chainId, e);
     }
     return checkpoints;
@@ -211,10 +226,23 @@ public final class AuditStore {
 
   /** Locks the head row of the chain until the end of the transaction and reads it; creates it if missing. */
   static Head lockHead(Connection connection, AuditSettings settings, String chainId) throws SQLException {
+    // the statement waits for the transaction that holds the head; not for ever. H2 does not end a
+    // wait for a row when the statement times out, only when the lock timeout of the session is
+    // over, so that is set for this statement.
+    Integer sessionLockTimeout = null;
+    if (settings.getLockTimeoutSeconds() > 0 && "h2".equals(settings.getDatabaseType())) {
+      sessionLockTimeout = h2LockTimeout(connection, null);
+      h2LockTimeout(connection, settings.getLockTimeoutSeconds() * 1000);
+    }
     try (PreparedStatement lock = connection.prepareStatement(
         "update " + heads(settings) + " set SEQ_ = SEQ_ where CHAIN_ID_ = ?")) {
       lock.setString(1, chainId);
+      timeout(lock, settings.getLockTimeoutSeconds());
       lock.executeUpdate();
+    } finally {
+      if (sessionLockTimeout != null) {
+        h2LockTimeout(connection, sessionLockTimeout);
+      }
     }
     Head head = readHead(connection, settings, chainId);
     if (head == null) {
@@ -234,6 +262,20 @@ public final class AuditStore {
       }
     }
     return head;
+  }
+
+  /** Sets the lock timeout of the H2 session in milliseconds, or reads it with {@code null}. */
+  static Integer h2LockTimeout(Connection connection, Integer milliseconds) throws SQLException {
+    if (milliseconds == null) {
+      try (PreparedStatement select = connection.prepareStatement("call LOCK_TIMEOUT()");
+          ResultSet result = select.executeQuery()) {
+        return result.next() ? result.getInt(1) : null;
+      }
+    }
+    try (PreparedStatement set = connection.prepareStatement("set LOCK_TIMEOUT " + milliseconds.intValue())) {
+      set.execute();
+    }
+    return milliseconds;
   }
 
   static Head lastRecord(Connection connection, AuditSettings settings, String chainId) throws SQLException {

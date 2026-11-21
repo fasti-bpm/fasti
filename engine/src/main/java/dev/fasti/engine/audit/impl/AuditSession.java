@@ -21,10 +21,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.camunda.bpm.engine.impl.cfg.TransactionState;
 import org.camunda.bpm.engine.impl.context.Context;
@@ -41,24 +41,37 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Which chain: one of the {@code chains} slots of this node, chosen by the thread, so that one
  * transaction that spans several commands (an outer Spring transaction) keeps appending to the
- * chain it already locked. A transaction that starts on a thread while an outer one of the same
- * thread holds a chain (a nested "requires new") takes another slot, so it cannot wait for the
- * lock of its own outer transaction.</p>
+ * chain it already locked. A transaction that starts on a thread while outer ones of the same
+ * thread hold chains (a nested "requires new") takes a slot of the next band: with {@code n}
+ * chains, the outermost transactions use the slots {@code 0..n-1}, transactions nested in them
+ * {@code n..2n-1}, and so on. A transaction therefore only ever waits for transactions of its own
+ * nesting depth, never for a suspended outer one (which would wait for it in turn), so nested
+ * transactions of several threads cannot block each other in a ring that the database cannot see.</p>
  */
 public class AuditSession implements Session {
 
   private static final Logger LOG = LoggerFactory.getLogger(AuditSession.class);
 
-  /** The chains held by the open transactions of this thread, by their connection. */
-  static final ThreadLocal<List<Held>> HELD = ThreadLocal.withInitial(ArrayList::new);
+  /**
+   * The chains held by the open transactions of this thread. The list is safe for concurrent use,
+   * because a transaction manager may complete a transaction on another thread (a timeout).
+   */
+  static final ThreadLocal<List<Held>> HELD = ThreadLocal.withInitial(CopyOnWriteArrayList::new);
 
+  /** A chain held by a transaction: of one engine (its settings) on one connection. */
   static final class Held {
+    final AuditSettings settings;
     final Object connection;
     final String chainId;
+    final int depth;
+    final List<Held> owner;
 
-    Held(Object connection, String chainId) {
+    Held(AuditSettings settings, Object connection, String chainId, int depth, List<Held> owner) {
+      this.settings = settings;
       this.connection = connection;
       this.chainId = chainId;
+      this.depth = depth;
+      this.owner = owner;
     }
   }
 
@@ -115,55 +128,56 @@ public class AuditSession implements Session {
     }
   }
 
-  /** Whether a transaction of this thread holds a chain (has written records not yet committed). */
-  public static boolean holdsChain() {
+  /** Whether a transaction of this thread holds a chain of the engine (has written records not yet committed). */
+  public static boolean holdsChain(AuditSettings settings) {
     List<Held> held = HELD.get();
-    boolean holds = !held.isEmpty();
-    if (!holds) {
+    if (held.isEmpty()) {
       HELD.remove();
+      return false;
     }
-    return holds;
+    for (Held entry : held) {
+      if (entry.settings == settings) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** The chain of the transaction of the command context, taken on its first use. */
   protected String chainFor(CommandContext commandContext) {
     Object connection = physical(AuditStore.connection(commandContext));
     List<Held> held = HELD.get();
+    // below the deepest transaction of this thread that holds a chain of this engine (not their
+    // number: an outer one may have been ended from another thread while its nested one goes on)
+    int depth = 0;
     for (Held entry : held) {
-      if (entry.connection == connection) {
-        return entry.chainId;
+      if (entry.settings == settings) {
+        if (entry.connection == connection) {
+          return entry.chainId;
+        }
+        depth = Math.max(depth, entry.depth + 1);
       }
     }
-    int preferred = Math.floorMod(Long.hashCode(Thread.currentThread().getId()), settings.getChains());
-    String chainId = null;
-    for (int i = 0; chainId == null; i++) {
-      // the slots of the node first, from the one of the thread; with more nested transactions on
-      // this thread than slots, extra slots (created on first use), as sharing one with a suspended
-      // outer transaction would wait for it forever
-      String candidate = settings.chainId(i < settings.getChains() ? (preferred + i) % settings.getChains() : i);
-      boolean taken = false;
-      for (Held entry : held) {
-        taken |= entry.chainId.equals(candidate);
-      }
-      if (!taken) {
-        chainId = candidate;
-      }
-    }
-    Held entry = new Held(connection, chainId);
+    String chainId = settings.chainId(slot(Thread.currentThread().getId(), settings.getChains(), depth));
+    Held entry = new Held(settings, connection, chainId, depth, held);
     held.add(entry);
     commandContext.getTransactionContext().addTransactionListener(TransactionState.COMMITTED, context -> release(entry));
     commandContext.getTransactionContext().addTransactionListener(TransactionState.ROLLED_BACK, context -> release(entry));
     return chainId;
   }
 
+  /**
+   * The slot of a transaction of the thread at a nesting depth (0 for the outermost that holds a
+   * chain): the slot of the thread in the band of the depth.
+   */
+  static int slot(long threadId, int chains, int depth) {
+    return depth * chains + Math.floorMod(Long.hashCode(threadId), chains);
+  }
+
+  /** Lets go of the chain when its transaction ended, on whichever thread that is reported. */
   static void release(Held entry) {
-    List<Held> held = HELD.get();
-    for (Iterator<Held> iterator = held.iterator(); iterator.hasNext();) {
-      if (iterator.next() == entry) {
-        iterator.remove();
-      }
-    }
-    if (held.isEmpty()) {
+    entry.owner.remove(entry);
+    if (HELD.get().isEmpty()) {
       HELD.remove();
     }
   }

@@ -19,6 +19,7 @@ package dev.fasti.engine.audit.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.sql.SQLException;
+import java.sql.SQLTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -98,5 +99,13 @@ public class AuditStoreSqlTest {
     ProcessEngineException failure = AuditStore.failure("read records", "chain node/0", cause);
     assertThat(failure.getMessage()).isEqualTo("The audit trail could not read records. The cause is in the log of the server.");
     assertThat(failure.getCause()).isSameAs(cause);
+  }
+
+  @Test
+  public void shouldTellATimeoutFromOtherFailures() {
+    assertThat(AuditStore.isTimeout(new SQLTimeoutException("timed out"))).isTrue();
+    assertThat(AuditStore.isTimeout(new SQLException("canceling statement due to user request", "57014"))).isTrue();
+    assertThat(AuditStore.isTimeout(new SQLException("Lock wait timeout exceeded", "HY000", 1205))).isTrue();
+    assertThat(AuditStore.isTimeout(new SQLException("duplicate key", "23505"))).isFalse();
   }
 }

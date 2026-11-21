@@ -79,6 +79,7 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
   protected int retentionDays = AuditSettings.DEFAULT_RETENTION_DAYS;
   protected String retiredHmacKeys;
   protected String retiredKeyIds;
+  protected int lockTimeoutSeconds = AuditSettings.DEFAULT_LOCK_TIMEOUT_SECONDS;
   protected int queryTimeoutSeconds = AuditSettings.DEFAULT_QUERY_TIMEOUT_SECONDS;
 
   protected AuditSettings settings;
@@ -97,6 +98,7 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
     }
     settings.setRetiredKeys(retired);
     settings.setRetiredKeyIds(retiredKeyIds);
+    settings.setLockTimeoutSeconds(lockTimeoutSeconds);
     settings.setQueryTimeoutSeconds(queryTimeoutSeconds);
     if (configuration.getCustomSessionFactories() == null) {
       configuration.setCustomSessionFactories(new ArrayList<>());
@@ -301,6 +303,15 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
    */
   public void setRetiredKeyIds(String retiredKeyIds) {
     this.retiredKeyIds = retiredKeyIds;
+  }
+
+  public int getLockTimeoutSeconds() {
+    return lockTimeoutSeconds;
+  }
+
+  /** Seconds a command waits for the head of its chain before it fails (default 60, 0 for the limit of the database). */
+  public void setLockTimeoutSeconds(int lockTimeoutSeconds) {
+    this.lockTimeoutSeconds = lockTimeoutSeconds;
   }
 
   public int getQueryTimeoutSeconds() {

@@ -52,6 +52,8 @@ public class AuditSettings implements AuditStatus {
   public static final int DEFAULT_RETENTION_DAYS = 365;
   /** HMAC keys shorter than this are refused. */
   public static final int MIN_KEY_BYTES = 32;
+  /** Seconds an append waits for the head of its chain before it fails. */
+  public static final int DEFAULT_LOCK_TIMEOUT_SECONDS = 60;
   /** Seconds a query of the audit trail may run. */
   public static final int DEFAULT_QUERY_TIMEOUT_SECONDS = 120;
   /**
@@ -79,6 +81,7 @@ public class AuditSettings implements AuditStatus {
   protected volatile Map<String, byte[]> retiredKeys = Collections.emptyMap();
   /** Ids of retired keys this engine does not hold: their signatures are accepted unchecked. */
   protected volatile Set<String> retiredKeyIds = Collections.emptySet();
+  protected volatile int lockTimeoutSeconds = DEFAULT_LOCK_TIMEOUT_SECONDS;
   protected volatile int queryTimeoutSeconds = DEFAULT_QUERY_TIMEOUT_SECONDS;
   /** Set while a verification of this engine runs: one at a time. */
   protected final AtomicBoolean verifying = new AtomicBoolean();
@@ -303,6 +306,18 @@ public class AuditSettings implements AuditStatus {
       result.add(normalized);
     }
     this.retiredKeyIds = Collections.unmodifiableSet(result);
+  }
+
+  public int getLockTimeoutSeconds() {
+    return lockTimeoutSeconds;
+  }
+
+  /** Seconds an append waits for the head of its chain; 0 for as long as the database allows. */
+  public void setLockTimeoutSeconds(int lockTimeoutSeconds) {
+    if (lockTimeoutSeconds < 0) {
+      throw new IllegalArgumentException("lockTimeoutSeconds must not be negative");
+    }
+    this.lockTimeoutSeconds = lockTimeoutSeconds;
   }
 
   public int getQueryTimeoutSeconds() {

@@ -55,8 +55,9 @@ public interface AbsenceService {
    *
    * @param from start, {@code null} for now
    * @param until end, after {@code from} and in the future
-   * @param substituteId an existing user other than {@code userId}; the substitutes of absent
-   *        substitutes are followed, but never back to {@code userId}
+   * @param substituteId an existing user other than {@code userId}, whom the caller may see
+   *        ({@code READ} on the user); the substitutes of absent substitutes are followed, but
+   *        never back to {@code userId}
    * @param note optional, at most 255 characters
    * @throws org.camunda.bpm.engine.BadUserRequestException if a value is invalid or absences are not enabled
    */
@@ -73,13 +74,19 @@ public interface AbsenceService {
 
   /**
    * The present user who takes over the tasks of the given user now, or {@code null} if the user
-   * is not absent or no present substitute can be found.
+   * is not absent or no present substitute can be found. Absent substitutes are followed as far
+   * as the caller may see them ({@code READ} on each user); otherwise the answer is the substitute
+   * of the absence itself.
    */
   String resolveSubstitute(String userId);
 
   /**
    * Hands the open (active) tasks assigned to the user over to the substitute of the absence of the
    * user, which may also be upcoming. At most {@code maxTasks} tasks are handed over per call.
+   * Besides the permission to manage the absence, the caller needs the permission to assign each
+   * task, as with the task API ({@code TASK_ASSIGN} or {@code UPDATE}); tasks without it stay
+   * with the user and are counted in {@link Handover#getNotAllowed()}. Administrators may hand
+   * over every task.
    */
   Handover handOverTasks(String userId, int maxTasks);
 
@@ -88,11 +95,17 @@ public interface AbsenceService {
     private final String substituteId;
     private final int handedOver;
     private final long remaining;
+    private final int notAllowed;
 
     public Handover(String substituteId, int handedOver, long remaining) {
+      this(substituteId, handedOver, remaining, 0);
+    }
+
+    public Handover(String substituteId, int handedOver, long remaining, int notAllowed) {
       this.substituteId = substituteId;
       this.handedOver = handedOver;
       this.remaining = remaining;
+      this.notAllowed = notAllowed;
     }
 
     /** Who got the tasks. */
@@ -105,9 +118,17 @@ public interface AbsenceService {
       return handedOver;
     }
 
-    /** How many tasks are still assigned to the user (suspended ones, or beyond the limit). */
+    /**
+     * How many tasks are still assigned to the user (suspended ones, ones beyond the limit, ones
+     * the caller may not assign).
+     */
     public long getRemaining() {
       return remaining;
+    }
+
+    /** How many of the tasks this call looked at stayed because the caller may not assign them. */
+    public int getNotAllowed() {
+      return notAllowed;
     }
   }
 }

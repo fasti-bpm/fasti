@@ -109,6 +109,6 @@ public class AbsenceReadOnlyIdentityTest {
   @Test
   public void shouldStillCheckThatTheSubstituteExists() {
     assertThatThrownBy(() -> absences.setAbsence("alice", null, Date.from(NOW.plus(Duration.ofDays(1))), "carol", null))
-        .isInstanceOf(BadUserRequestException.class).hasMessageContaining("does not exist");
+        .isInstanceOf(BadUserRequestException.class).hasMessageContaining("'carol' cannot be chosen");
   }
 }

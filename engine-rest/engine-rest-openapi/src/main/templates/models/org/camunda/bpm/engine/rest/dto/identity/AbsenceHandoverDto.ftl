@@ -16,8 +16,16 @@
         name = "remaining"
         type = "integer"
         format = "int64"
+        desc = "How many tasks are still assigned to the user: suspended ones, more than `maxTasks`, or
+                ones the caller may not assign." />
+
+    <@lib.property
+        name = "notAllowed"
+        type = "integer"
+        format = "int32"
         last = true
-        desc = "How many tasks are still assigned to the user: suspended ones, or more than `maxTasks`." />
+        desc = "How many of the tasks this call looked at stayed with the user because the caller may not
+                assign them (`TASK_ASSIGN` or `UPDATE` on the task or its process definition)." />
 
 </@lib.dto>
 </#macro>

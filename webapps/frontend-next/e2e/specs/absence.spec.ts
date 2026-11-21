@@ -145,7 +145,7 @@ test.describe('Absence', () => {
     try {
       const until = engineDate(new Date(Date.now() + 24 * 60 * 60 * 1000));
       await api.put(`user/${first}/absence`, { until, substituteId: second });
-      await expect(api.put(`user/${second}/absence`, { until, substituteId: first })).rejects.toThrow(/failed with 400: .*lead back/);
+      await expect(api.put(`user/${second}/absence`, { until, substituteId: first })).rejects.toThrow(/failed with 400: .*cannot be chosen/);
     } finally {
       await api.delete(`user/${first}`);
       await api.delete(`user/${second}`);

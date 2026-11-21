@@ -35,7 +35,9 @@ cho hoặc giao cho người đó sẽ chuyển sang người thay thế. Nhu c�
   `{"taskVariables": [{"name": "fasti_absentAssignee", "operator": "eq", "value": "alice"}]}`;
   cú pháp `GET` dạng `name_operator_value` không chứa được dấu gạch dưới trong tên biến) và chúng
   còn lại trong lịch sử (`includeDeleted`). Chúng bị xóa khi công việc rời khỏi người thay thế, ví dụ quay về người vắng mặt sau
-  khi họ trở lại.
+  khi họ trở lại. Hai biến này chỉ để hiển thị và truy vấn: ai được sửa biến của công việc đều
+  sửa được chúng, và không quyết định phân quyền hay kiểm soát bốn mắt nào dựa vào chúng (engine
+  chỉ đọc `fasti_absenceSubstitute` để biết công việc đã được chuyển cho người thay thế).
 - **Công việc người dùng đã có trước khi vắng mặt** không tự động chuyển: người dùng (hoặc quản
   trị viên) bàn giao một cách tường minh bằng **Bàn giao ngay công việc đang mở của tôi**. Công
   việc đang tạm dừng (suspended) ở lại. Khi có người dùng đăng nhập, mỗi lần bàn giao được ghi
@@ -60,23 +62,33 @@ Tất cả nằm dưới `/engine-rest/user/{id}/absence` (cũng có trong tài 
 
 | Phương thức và đường dẫn | Chức năng |
 |---|---|
-| `GET /user/{id}/absence` | Lịch vắng mặt (`status`: `none`, `upcoming`, `active`, `ended`), `enabled` và, khi đang hiệu lực, `effectiveSubstituteId` |
+| `GET /user/{id}/absence` | Lịch vắng mặt (`status`: `none`, `upcoming`, `active`, `ended`), `enabled` và, khi đang hiệu lực, `effectiveSubstituteId`: người đang nhận việc. Chuỗi người thay thế đang vắng chỉ được đi tiếp tới những người mà người gọi có quyền `READ`; nếu không thì đó là người thay thế của chính lịch này |
 | `PUT /user/{id}/absence` | Đặt lịch: `{"from": "...", "until": "...", "substituteId": "bob", "note": "..."}`; `from` không bắt buộc |
 | `DELETE /user/{id}/absence` | Kết thúc |
-| `POST /user/{id}/absence/handover?maxTasks=500` | Bàn giao ngay công việc đang mở: `{"substituteId", "handedOver", "remaining"}` |
+| `POST /user/{id}/absence/handover?maxTasks=500` | Bàn giao ngay công việc đang mở: `{"substituteId", "handedOver", "remaining", "notAllowed"}`; `notAllowed` đếm công việc người gọi không được giao lại, chúng ở lại |
 | `GET /user/{id}/absence/substituting` | Các lịch vắng mặt đang hiệu lực mà công việc chuyển sang người dùng này |
 
 Ngày giờ dùng định dạng của REST API (`yyyy-MM-dd'T'HH:mm:ss.SSSZ`, có múi giờ). Engine so sánh
 theo đồng hồ của nó ở UTC, nên lịch vắng mặt đúng ở mọi múi giờ.
 
 Kiểm tra dữ liệu (`400`): bắt buộc có thời điểm kết thúc, sau thời điểm bắt đầu và ở tương lai;
-người thay thế phải tồn tại và khác người dùng; từ chối người thay thế vắng mặt cùng thời gian mà
-chuỗi người thay thế quay lại người dùng; ghi chú tối đa 255 ký tự.
+người thay thế phải khác người dùng, tồn tại, và là người mà người gọi được xem (quyền `READ`
+trên người dùng đó, như khi tìm kiếm người dùng); từ chối người thay thế mà chuỗi người thay thế
+của họ quay lại người dùng trong lúc tất cả cùng vắng mặt; ghi chú tối đa 255 ký tự. Người thay
+thế không tồn tại, người mà người gọi không được xem và người dẫn vòng lại đều nhận cùng một
+câu trả lời ("… cannot be chosen …"), nên yêu cầu không tiết lộ gì về người dùng khác hay lịch
+vắng mặt của họ.
 
 **Phân quyền**: người dùng tự quản lý lịch vắng mặt của mình. Lịch của người khác cần quyền
 `READ` (để xem) hoặc `UPDATE` (để sửa, bàn giao) trên người dùng đó (tài nguyên `USER`), là quyền
-mà thành viên nhóm `camunda-admin` có. Thao tác bàn giao kiểm tra quyền này, không kiểm tra quyền
-trên từng công việc. Khi tắt kiểm tra phân quyền thì, như mọi nơi trong engine, ai cũng làm được.
+mà thành viên nhóm `camunda-admin` có. Thao tác bàn giao còn cần quyền giao lại từng công việc,
+như task API (`TASK_ASSIGN` hoặc `UPDATE` trên công việc, hoặc `TASK_ASSIGN` hoặc `UPDATE_TASK`
+trên process definition của nó): công việc không có quyền đó ở lại với người dùng và được đếm
+trong `notAllowed`. Công việc thuộc tenant mà người gọi không tham gia thì không được xét; chúng
+cũng ở lại và chỉ tính vào `remaining`. Với quyền mặc định trên công việc (`UPDATE`), người
+xử lý bàn giao được công việc của mình; với `defaultUserPermissionForTask=TASK_WORK` thì không,
+và người có `TASK_ASSIGN` hoặc quản trị viên (thành viên nhóm quản trị) thực hiện việc đó. Khi
+tắt kiểm tra phân quyền thì, như mọi nơi trong engine, ai cũng làm được.
 
 Java: `Absences.of(processEngine)` trả về `AbsenceService` với các thao tác tương tự.
 

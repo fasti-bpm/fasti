@@ -46,8 +46,9 @@
         code = "400"
         dto = "ExceptionDto"
         desc = "Absences are not enabled, or a value is invalid: no end, an end before the start or in the past,
-                a substitute that does not exist, is the user, or is absent at the same time with substitutes
-                that lead back to the user, or a note longer than 255 characters. See the
+                a substitute that is the user, or a substitute that cannot be chosen (one answer for a user
+                that does not exist, one the caller has no `READ` permission on, and one whose substitutes
+                lead back to the user while they are absent), or a note longer than 255 characters. See the
                 [Introduction](${docsUrl}/reference/rest/overview/#error-handling)
                 for the error response format." />
 

@@ -35,6 +35,7 @@ import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.authorization.Authorization;
+import org.camunda.bpm.engine.authorization.Permission;
 import org.camunda.bpm.engine.authorization.Permissions;
 import org.camunda.bpm.engine.authorization.Resources;
 import org.camunda.bpm.engine.history.UserOperationLogEntry;
@@ -398,7 +399,7 @@ public class AbsenceSubstitutionTest {
     assertThatThrownBy(() -> absences.setAbsence("alice", from, until, "alice", null))
         .isInstanceOf(BadUserRequestException.class).hasMessageContaining("own substitute");
     assertThatThrownBy(() -> absences.setAbsence("alice", from, until, "nobody", null))
-        .isInstanceOf(BadUserRequestException.class).hasMessageContaining("does not exist");
+        .isInstanceOf(BadUserRequestException.class).hasMessageContaining("'nobody' cannot be chosen");
     assertThatThrownBy(() -> absences.setAbsence("nobody", from, until, "bob", null))
         .isInstanceOf(BadUserRequestException.class).hasMessageContaining("does not exist");
     assertThatThrownBy(() -> absences.setAbsence("alice", at(Duration.ofDays(2)), until, "bob", null))
@@ -420,9 +421,9 @@ public class AbsenceSubstitutionTest {
     setAbsence("bob", "carol");
 
     assertThatThrownBy(() -> absences.setAbsence("carol", at(Duration.ofHours(2)), at(Duration.ofDays(2)), "alice", null))
-        .isInstanceOf(BadUserRequestException.class).hasMessageContaining("lead back");
+        .isInstanceOf(BadUserRequestException.class).hasMessageContaining("cannot be chosen");
     assertThatThrownBy(() -> absences.setAbsence("bob", null, at(Duration.ofDays(2)), "alice", null))
-        .isInstanceOf(BadUserRequestException.class).hasMessageContaining("lead back");
+        .isInstanceOf(BadUserRequestException.class).hasMessageContaining("cannot be chosen");
 
     // not at the same time: fine
     absences.setAbsence("carol", at(Duration.ofDays(5)), at(Duration.ofDays(6)), "alice", null);
@@ -493,13 +494,22 @@ public class AbsenceSubstitutionTest {
   }
 
   @Test
-  public void shouldHandOverTasksOfEveryTenant() {
+  public void shouldHandOverTasksOfTheTenantsOfTheCaller() {
     testRule.deployForTenant("tenant1", userTask("alice"));
     String processInstanceId = runtimeService.createProcessInstanceByKey("process").processDefinitionTenantId("tenant1")
         .execute().getId();
     setAbsence("alice", "bob");
 
+    // as with the task API, a task of a tenant the caller does not belong to is out of reach
     identityService.setAuthentication("alice", null, null);
+    Handover outside = absences.handOverTasks("alice", 10);
+    identityService.clearAuthentication();
+    assertThat(outside.getHandedOver()).isZero();
+    assertThat(outside.getRemaining()).isEqualTo(1);
+    assertThat(taskService.createTaskQuery().processInstanceId(processInstanceId).singleResult().getAssignee())
+        .isEqualTo("alice");
+
+    identityService.setAuthentication("alice", null, List.of("tenant1"));
     assertThat(absences.handOverTasks("alice", 10).getHandedOver()).isEqualTo(1);
     identityService.clearAuthentication();
     assertThat(taskService.createTaskQuery().processInstanceId(processInstanceId).singleResult().getAssignee())
@@ -522,6 +532,7 @@ public class AbsenceSubstitutionTest {
 
   @Test
   public void shouldLetUsersManageTheirOwnAbsenceOnly() {
+    grantOnUser("alice", "bob", Permissions.READ);
     configuration.setAuthorizationEnabled(true);
     identityService.setAuthentication("alice", null);
 
@@ -537,13 +548,8 @@ public class AbsenceSubstitutionTest {
 
   @Test
   public void shouldLetUserAdministratorsManageAbsencesOfOthers() {
-    Authorization grant = authorizationService.createNewAuthorization(Authorization.AUTH_TYPE_GRANT);
-    grant.setUserId("carol");
-    grant.setResource(Resources.USER);
-    grant.setResourceId("dave");
-    grant.addPermission(Permissions.READ);
-    grant.addPermission(Permissions.UPDATE);
-    authorizationService.saveAuthorization(grant);
+    grantOnUser("carol", "dave", Permissions.READ, Permissions.UPDATE);
+    grantOnUser("carol", "bob", Permissions.READ);
     configuration.setAuthorizationEnabled(true);
     identityService.setAuthentication("carol", null);
 
@@ -551,6 +557,17 @@ public class AbsenceSubstitutionTest {
 
     assertThat(absences.getAbsence("dave").getSubstituteId()).isEqualTo("bob");
     assertThatThrownBy(() -> setAbsence("alice", "bob")).isInstanceOf(AuthorizationException.class);
+  }
+
+  void grantOnUser(String userId, String onUserId, Permission... permissions) {
+    Authorization grant = authorizationService.createNewAuthorization(Authorization.AUTH_TYPE_GRANT);
+    grant.setUserId(userId);
+    grant.setResource(Resources.USER);
+    grant.setResourceId(onUserId);
+    for (Permission permission : permissions) {
+      grant.addPermission(permission);
+    }
+    authorizationService.saveAuthorization(grant);
   }
 
   void store(Absence absence) {

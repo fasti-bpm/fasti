@@ -24,12 +24,14 @@ public class AbsenceHandoverDto {
   protected String substituteId;
   protected int handedOver;
   protected long remaining;
+  protected int notAllowed;
 
   public static AbsenceHandoverDto fromHandover(Handover handover) {
     AbsenceHandoverDto dto = new AbsenceHandoverDto();
     dto.substituteId = handover.getSubstituteId();
     dto.handedOver = handover.getHandedOver();
     dto.remaining = handover.getRemaining();
+    dto.notAllowed = handover.getNotAllowed();
     return dto;
   }
 
@@ -43,8 +45,16 @@ public class AbsenceHandoverDto {
     return handedOver;
   }
 
-  /** How many tasks are still assigned to the user (suspended ones, or beyond the limit). */
+  /**
+   * How many tasks are still assigned to the user (suspended ones, ones beyond the limit, ones the
+   * caller may not assign).
+   */
   public long getRemaining() {
     return remaining;
+  }
+
+  /** How many of the tasks looked at stayed because the caller may not assign them. */
+  public int getNotAllowed() {
+    return notAllowed;
   }
 }

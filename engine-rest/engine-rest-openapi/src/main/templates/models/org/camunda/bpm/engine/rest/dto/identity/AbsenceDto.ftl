@@ -52,7 +52,8 @@
         type = "string"
         last = true
         desc = "While the absence is active: who gets the tasks now, which is the substitute or, if that user is
-                absent too, their substitute. Ignored in requests." />
+                absent too, their substitute. Absent substitutes are only followed as far as the caller has the
+                `READ` permission on them; otherwise this is the substitute of the absence. Ignored in requests." />
 
 </@lib.dto>
 </#macro>

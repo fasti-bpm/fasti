@@ -23,16 +23,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 import dev.fasti.engine.absence.Absence;
 import dev.fasti.engine.absence.AbsenceService.Handover;
+import org.camunda.bpm.engine.AuthorizationException;
 import org.camunda.bpm.engine.BadUserRequestException;
+import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.authorization.Permission;
 import org.camunda.bpm.engine.authorization.Permissions;
 import org.camunda.bpm.engine.authorization.Resources;
 import org.camunda.bpm.engine.history.UserOperationLogEntry;
 import org.camunda.bpm.engine.impl.TaskQueryImpl;
+import org.camunda.bpm.engine.impl.cfg.CommandChecker;
+import org.camunda.bpm.engine.impl.identity.Authentication;
 import org.camunda.bpm.engine.impl.interceptor.Command;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.persistence.entity.TaskEntity;
@@ -55,6 +58,19 @@ public final class AbsenceCommands {
       return;
     }
     commandContext.getAuthorizationManager().checkAuthorization(permission, Resources.USER, userId);
+  }
+
+  /**
+   * Whether the current user may see the given user: themselves, or with {@code READ} on the user.
+   * Without an authenticated user or with authorization off, anyone may.
+   */
+  static boolean mayRead(CommandContext commandContext, String userId) {
+    try {
+      checkPermission(commandContext, Permissions.READ, userId);
+      return true;
+    } catch (AuthorizationException e) {
+      return false;
+    }
   }
 
   static void requireUserId(String userId) {
@@ -154,12 +170,13 @@ public final class AbsenceCommands {
       if (!AbsenceResolver.userExists(commandContext, userId)) {
         throw new BadUserRequestException("User '" + userId + "' does not exist.");
       }
-      if (!AbsenceResolver.userExists(commandContext, substituteId)) {
-        throw new BadUserRequestException("The substitute '" + substituteId + "' does not exist.");
-      }
-      if (leadsBack(commandContext, start.before(now) ? now : start)) {
-        throw new BadUserRequestException("The substitute '" + substituteId + "' is absent at the same time and "
-            + "their substitutes lead back to '" + userId + "'; choose someone else.");
+      // one answer for a substitute the caller may not see, one that does not exist and one whose
+      // own substitutes lead back: it tells nothing about other users or their absences
+      if (!mayRead(commandContext, substituteId) || !AbsenceResolver.userExists(commandContext, substituteId)
+          || leadsBack(commandContext, start.before(now) ? now : start)) {
+        throw new BadUserRequestException("The substitute '" + substituteId + "' cannot be chosen: there is no "
+            + "such user you may see, or tasks would come back to '" + userId + "' through the substitutes "
+            + "of absent substitutes. Choose someone else.");
       }
       AbsenceStore.deleteEnded(commandContext, now);
 
@@ -260,7 +277,11 @@ public final class AbsenceCommands {
     }
   }
 
-  /** The present substitute of a user who is absent now. */
+  /**
+   * The present substitute of a user who is absent now. Absent substitutes are followed as far as
+   * the caller may see them ({@code READ} on each); from there on the answer is the direct
+   * substitute, so that it tells nothing about the absence of a user the caller may not see.
+   */
   public static class ResolveSubstituteCmd implements Command<String> {
     protected final AbsenceSettings settings;
     protected final String userId;
@@ -277,21 +298,32 @@ public final class AbsenceCommands {
       if (settings == null || !settings.isAvailable()) {
         return null;
       }
-      return AbsenceResolver.resolve(commandContext, settings.getMaxHops(), userId, ClockUtil.getCurrentTime());
+      Date now = ClockUtil.getCurrentTime();
+      Absence absence = AbsenceStore.find(commandContext, userId);
+      if (absence == null || !absence.isActiveAt(now)) {
+        return null;
+      }
+      return AbsenceResolver.follow(commandContext, settings.getMaxHops(), userId, absence.getSubstituteId(), now,
+          user -> mayRead(commandContext, user));
     }
   }
 
   /**
    * Hands the active tasks of a user over to the substitute of their absence (also an upcoming
-   * one). The tasks are those assigned to the user; the check is that the caller may manage the
-   * absence of the user, not the permissions on each task. Each task is assigned like with the
-   * task API (operation log entry "Assign" when a user is authenticated) and gets a comment and
-   * the substitution marks.
+   * one). The caller must be allowed to manage the absence of the user and, like with the task
+   * API, to assign each task ({@code TASK_ASSIGN} or {@code UPDATE} on the task or its process
+   * definition, and a tenant of the caller); tasks the caller may not assign stay and are
+   * counted. Administrators may assign every task. Each task is assigned like with the task API
+   * (operation log entry "Assign" when a user is authenticated) and gets a comment and the
+   * substitution marks.
    */
   public static class HandOverTasksCmd implements Command<Handover> {
     protected final AbsenceSettings settings;
     protected final String userId;
     protected final int maxTasks;
+
+    /** How many pages of tasks one call looks at when the caller may not assign some of them. */
+    protected static final int MAX_PAGES = 20;
 
     public HandOverTasksCmd(AbsenceSettings settings, String userId, int maxTasks) {
       this.settings = settings;
@@ -316,33 +348,73 @@ public final class AbsenceCommands {
 
       TaskQueryImpl all = new TaskQueryImpl();
       all.taskAssignee(userId);
-      long assigned = withoutChecks(commandContext, () -> all.executeCount(commandContext));
+      long assigned = countWithoutChecks(commandContext, all);
+      // found regardless of READ on the task (so that the ones left behind can be counted), but
+      // only in the tenants of the caller; whether the caller may assign is checked per task
       TaskQueryImpl active = new TaskQueryImpl();
-      active.taskAssignee(userId).active().orderByTaskCreateTime().asc();
-      // the task manager pages with the values of the query
-      active.setFirstResult(0);
-      active.setMaxResults(Math.max(1, maxTasks));
-      List<Task> tasks = withoutChecks(commandContext, () -> active.executeList(commandContext, null));
+      // the id makes the order total, so that the pages below neither repeat nor skip a task
+      active.taskAssignee(userId).active().orderByTaskCreateTime().asc().orderByTaskId().asc();
+      int limit = Math.max(1, maxTasks);
+      boolean checkEachTask = !isAdmin(commandContext);
       String message = "Handed over to " + substitute + " as substitute for " + userId + ", who is absent from "
           + absence.getFrom().toInstant() + " until " + absence.getUntil().toInstant() + ".";
       int count = 0;
-      for (Task each : tasks) {
-        TaskEntity task = (TaskEntity) each;
-        SubstitutionRecorder.markSubstituted(task, userId, substitute);
-        SubstitutionRecorder.comment(commandContext, task, message);
-        task.setAssignee(substitute);
-        task.triggerUpdateEvent();
-        task.logUserOperation(UserOperationLogEntry.OPERATION_TYPE_ASSIGN);
-        count++;
+      int notAllowed = 0;
+      for (int page = 0; page < MAX_PAGES && count < limit; page++) {
+        // the task manager pages with the values of the query; the assignments of this command
+        // are not flushed yet, so the pages do not shift
+        active.setFirstResult(page * limit);
+        active.setMaxResults(limit);
+        List<Task> tasks = commandContext.runWithoutAuthorization(() -> active.executeList(commandContext, null));
+        for (Task each : tasks) {
+          if (count == limit) {
+            break;
+          }
+          TaskEntity task = (TaskEntity) each;
+          if (checkEachTask && !mayAssign(commandContext, task)) {
+            notAllowed++;
+            continue;
+          }
+          SubstitutionRecorder.markSubstituted(task, userId, substitute);
+          SubstitutionRecorder.comment(commandContext, task, message);
+          task.setAssignee(substitute);
+          task.triggerUpdateEvent();
+          task.logUserOperation(UserOperationLogEntry.OPERATION_TYPE_ASSIGN);
+          count++;
+        }
+        if (tasks.size() < limit || !checkEachTask) {
+          break;
+        }
       }
-      return new Handover(substitute, count, Math.max(0, assigned - count));
+      return new Handover(substitute, count, Math.max(0, assigned - count), notAllowed);
     }
 
-    protected <T> T withoutChecks(CommandContext commandContext, Callable<T> callable) {
+    /** Whether the checks of the engine (authorization, tenant) let the current user assign the task. */
+    protected boolean mayAssign(CommandContext commandContext, TaskEntity task) {
+      try {
+        for (CommandChecker checker : commandContext.getProcessEngineConfiguration().getCommandCheckers()) {
+          checker.checkTaskAssign(task);
+        }
+        return true;
+      } catch (ProcessEngineException e) {
+        // the tenant check refuses with a plain ProcessEngineException
+        if (e instanceof AuthorizationException || e.getClass() == ProcessEngineException.class) {
+          return false;
+        }
+        throw e;
+      }
+    }
+
+    protected boolean isAdmin(CommandContext commandContext) {
+      Authentication authentication = commandContext.getAuthentication();
+      return authentication != null && commandContext.getAuthorizationManager().isCamundaAdmin(authentication);
+    }
+
+    protected long countWithoutChecks(CommandContext commandContext, TaskQueryImpl query) {
       boolean tenantCheck = commandContext.isTenantCheckEnabled();
       commandContext.disableTenantCheck();
       try {
-        return commandContext.runWithoutAuthorization(callable);
+        return commandContext.runWithoutAuthorization(() -> query.executeCount(commandContext));
       } finally {
         if (tenantCheck) {
           commandContext.enableTenantCheck();

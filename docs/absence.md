@@ -35,7 +35,10 @@ user go to the substitute. Asked for on the forum in
   `{"taskVariables": [{"name": "fasti_absentAssignee", "operator": "eq", "value": "alice"}]}`;
   the `GET` syntax `name_operator_value` cannot hold the underscores of the names) and stay in
   the history (`includeDeleted`). They are removed once the task moves on from the substitute, for example back to
-  the absent user after their return.
+  the absent user after their return. The two variables are for display and queries: anyone
+  who may change the variables of the task can change them, and no permission or four-eyes
+  decision depends on them (the engine only reads `fasti_absenceSubstitute` to see that a task
+  already went to a substitute).
 - **Tasks the user had before the absence** are not moved automatically: the user (or an
   administrator) hands them over explicitly with **Hand over my open tasks now**. Suspended
   tasks stay. When a user is authenticated, each handover is in the operation log as
@@ -59,23 +62,32 @@ All below `/engine-rest/user/{id}/absence` (also in the OpenAPI document):
 
 | Method and path | What it does |
 |---|---|
-| `GET /user/{id}/absence` | The absence (`status`: `none`, `upcoming`, `active`, `ended`), `enabled` and, while active, `effectiveSubstituteId` |
+| `GET /user/{id}/absence` | The absence (`status`: `none`, `upcoming`, `active`, `ended`), `enabled` and, while active, `effectiveSubstituteId`: who gets the tasks now. Absent substitutes are followed as far as the caller has `READ` on them; otherwise it is the substitute of the absence itself |
 | `PUT /user/{id}/absence` | Sets it: `{"from": "...", "until": "...", "substituteId": "bob", "note": "..."}`; `from` optional |
 | `DELETE /user/{id}/absence` | Ends it |
-| `POST /user/{id}/absence/handover?maxTasks=500` | Hands the open tasks over now: `{"substituteId", "handedOver", "remaining"}` |
+| `POST /user/{id}/absence/handover?maxTasks=500` | Hands the open tasks over now: `{"substituteId", "handedOver", "remaining", "notAllowed"}`; `notAllowed` counts tasks the caller may not assign, which stay |
 | `GET /user/{id}/absence/substituting` | The absences active now whose tasks go to this user |
 
 Dates use the date format of the REST API (`yyyy-MM-dd'T'HH:mm:ss.SSSZ`, with time zone). The
 engine compares them with its clock in UTC, so absences work across time zones.
 
 Validation (`400`): an end is required, after the start and in the future; the substitute
-must exist and differ from the user; a substitute who is absent at the same time with
-substitutes leading back to the user is refused; the note has at most 255 characters.
+must differ from the user, exist, and be a user the caller may see (`READ` on the user, as the
+user search needs); a substitute whose own substitutes lead back to the user while they are
+all absent is refused; the note has at most 255 characters. A substitute that does not exist,
+one the caller may not see and one that leads back get the same answer ("… cannot be
+chosen …"), so the request tells nothing about other users or their absences.
 
 **Authorization**: a user manages their own absence. The absence of another user needs
 `READ` (to see) or `UPDATE` (to change, hand over) on that user (resource `USER`), which
-members of `camunda-admin` have. The handover checks this permission, not the permissions on
-each task. Without authorization checks, as everywhere in the engine, anyone may.
+members of `camunda-admin` have. The handover also needs the permission to assign each task,
+as the task API does (`TASK_ASSIGN` or `UPDATE` on the task, or `TASK_ASSIGN` or `UPDATE_TASK`
+on its process definition): a task without it stays with the user and is counted in
+`notAllowed`. Tasks of a tenant the caller does not belong to are not looked at; they stay as
+well and only count in `remaining`. With the default task permission (`UPDATE`) an assignee may
+hand over their own tasks; with `defaultUserPermissionForTask=TASK_WORK` they may not, and
+someone with `TASK_ASSIGN` or an administrator (member of an admin group) does it. Without
+authorization checks, as everywhere in the engine, anyone may.
 
 Java: `Absences.of(processEngine)` returns the `AbsenceService` with the same operations.
 

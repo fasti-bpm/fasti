@@ -266,7 +266,7 @@ public class UserAbsenceRestServiceTest extends AbstractRestServiceTest {
     given().pathParam("id", "alice").contentType(ContentType.JSON).body(absence(NEXT_WEEK, "nobody", null))
     .then().expect()
         .statusCode(Status.BAD_REQUEST.getStatusCode())
-        .body("message", containsString("does not exist"))
+        .body("message", containsString("'nobody' cannot be chosen"))
     .when().put(ABSENCE_URL);
 
     given().pathParam("id", "alice").contentType(ContentType.JSON).body(absence(null, "bob", null))
@@ -300,6 +300,7 @@ public class UserAbsenceRestServiceTest extends AbstractRestServiceTest {
         .statusCode(Status.OK.getStatusCode())
         .body("substituteId", equalTo("bob"))
         .body("handedOver", equalTo(1))
+        .body("notAllowed", equalTo(0))
         .body("remaining", equalTo(1))
     .when().post(HANDOVER_URL);
 
@@ -328,6 +329,7 @@ public class UserAbsenceRestServiceTest extends AbstractRestServiceTest {
 
   @Test
   public void shouldLetUsersManageOnlyTheirOwnAbsence() {
+    grant("carol", Resources.USER, "bob", Permissions.READ);
     configuration(engine).setAuthorizationEnabled(true);
     requestAuthentication = new Authentication("carol", Collections.emptyList());
 
@@ -352,6 +354,112 @@ public class UserAbsenceRestServiceTest extends AbstractRestServiceTest {
     given().pathParam("id", "alice")
     .then().expect().statusCode(Status.FORBIDDEN.getStatusCode())
     .when().post(HANDOVER_URL);
+  }
+
+  protected void grant(String userId, org.camunda.bpm.engine.authorization.Resource resource, String resourceId,
+      org.camunda.bpm.engine.authorization.Permission... permissions) {
+    Authorization grant = engine.getAuthorizationService().createNewAuthorization(Authorization.AUTH_TYPE_GRANT);
+    grant.setUserId(userId);
+    grant.setResource(resource);
+    grant.setResourceId(resourceId);
+    for (org.camunda.bpm.engine.authorization.Permission permission : permissions) {
+      grant.addPermission(permission);
+    }
+    engine.getAuthorizationService().saveAuthorization(grant);
+  }
+
+  @Test
+  public void shouldAnswerASubstituteTheCallerMayNotSeeLikeOneThatDoesNotExist() {
+    configuration(engine).setAuthorizationEnabled(true);
+    requestAuthentication = new Authentication("carol", Collections.emptyList());
+    String message = "The substitute '%s' cannot be chosen: there is no such user you may see, or tasks would come "
+        + "back to 'carol' through the substitutes of absent substitutes. Choose someone else.";
+
+    // bob exists, but carol has no READ on him
+    given().pathParam("id", "carol").contentType(ContentType.JSON).body(absence(NEXT_WEEK, "bob", null))
+    .then().expect()
+        .statusCode(Status.BAD_REQUEST.getStatusCode())
+        .body("type", equalTo("BadUserRequestException"))
+        .body("message", equalTo(String.format(message, "bob")))
+    .when().put(ABSENCE_URL);
+
+    given().pathParam("id", "carol").contentType(ContentType.JSON).body(absence(NEXT_WEEK, "nobody", null))
+    .then().expect()
+        .statusCode(Status.BAD_REQUEST.getStatusCode())
+        .body("type", equalTo("BadUserRequestException"))
+        .body("message", equalTo(String.format(message, "nobody")))
+    .when().put(ABSENCE_URL);
+
+    assertThat(engine.getIdentityService().getUserInfoKeys("carol")).isEmpty();
+  }
+
+  @Test
+  public void shouldFollowAbsentSubstitutesOnlyAsFarAsTheCallerMaySee() {
+    // alice -> bob (absent as well) -> carol
+    engine.getIdentityService().clearAuthentication();
+    given().pathParam("id", "alice").contentType(ContentType.JSON).body(absence(NEXT_WEEK, "bob", null))
+    .then().expect().statusCode(Status.OK.getStatusCode()).body("effectiveSubstituteId", equalTo("bob"))
+    .when().put(ABSENCE_URL);
+    given().pathParam("id", "bob").contentType(ContentType.JSON).body(absence(NEXT_WEEK, "carol", null))
+    .then().expect().statusCode(Status.OK.getStatusCode())
+    .when().put(ABSENCE_URL);
+    configuration(engine).setAuthorizationEnabled(true);
+    requestAuthentication = new Authentication("alice", Collections.emptyList());
+
+    // alice may not see bob: her substitute, nothing about his absence
+    given().pathParam("id", "alice")
+    .then().expect()
+        .statusCode(Status.OK.getStatusCode())
+        .body("substituteId", equalTo("bob"))
+        .body("effectiveSubstituteId", equalTo("bob"))
+    .when().get(ABSENCE_URL);
+
+    requestAuthentication = null;
+    configuration(engine).setAuthorizationEnabled(false);
+    grant("alice", Resources.USER, "bob", Permissions.READ);
+    grant("alice", Resources.USER, "carol", Permissions.READ);
+    configuration(engine).setAuthorizationEnabled(true);
+    requestAuthentication = new Authentication("alice", Collections.emptyList());
+
+    given().pathParam("id", "alice")
+    .then().expect()
+        .statusCode(Status.OK.getStatusCode())
+        .body("effectiveSubstituteId", equalTo("carol"))
+    .when().get(ABSENCE_URL);
+  }
+
+  @Test
+  public void shouldLeaveTasksTheCallerMayNotAssign() {
+    org.camunda.bpm.engine.authorization.Permission defaultPermission = configuration(engine).getDefaultUserPermissionForTask();
+    // assignees may work on their tasks but not reassign them
+    configuration(engine).setDefaultUserPermissionForTask(Permissions.TASK_WORK);
+    try {
+      grant("alice", Resources.USER, "bob", Permissions.READ);
+      configuration(engine).setAuthorizationEnabled(true);
+      engine.getRepositoryService().createDeployment().addModelInstance("process.bpmn",
+          Bpmn.createExecutableProcess("process").camundaHistoryTimeToLive(180)
+              .startEvent().userTask().camundaAssignee("alice").endEvent().done()).deploy();
+      engine.getRuntimeService().startProcessInstanceByKey("process");
+      requestAuthentication = new Authentication("alice", Collections.emptyList());
+      given().pathParam("id", "alice").contentType(ContentType.JSON).body(absence(NEXT_WEEK, "bob", null))
+      .then().expect().statusCode(Status.OK.getStatusCode())
+      .when().put(ABSENCE_URL);
+
+      given().pathParam("id", "alice")
+      .then().expect()
+          .statusCode(Status.OK.getStatusCode())
+          .body("substituteId", equalTo("bob"))
+          .body("handedOver", equalTo(0))
+          .body("notAllowed", equalTo(1))
+          .body("remaining", equalTo(1))
+      .when().post(HANDOVER_URL);
+
+      requestAuthentication = null;
+      configuration(engine).setAuthorizationEnabled(false);
+      assertThat(engine.getTaskService().createTaskQuery().taskAssignee("alice").count()).isEqualTo(1);
+    } finally {
+      configuration(engine).setDefaultUserPermissionForTask(defaultPermission);
+    }
   }
 
   @Test
@@ -410,12 +518,8 @@ public class UserAbsenceRestServiceTest extends AbstractRestServiceTest {
 
   @Test
   public void shouldAnswerASetWithUpdatePermissionOnly() {
-    Authorization grant = engine.getAuthorizationService().createNewAuthorization(Authorization.AUTH_TYPE_GRANT);
-    grant.setUserId("carol");
-    grant.setResource(Resources.USER);
-    grant.setResourceId("alice");
-    grant.addPermission(Permissions.UPDATE);
-    engine.getAuthorizationService().saveAuthorization(grant);
+    grant("carol", Resources.USER, "alice", Permissions.UPDATE);
+    grant("carol", Resources.USER, "bob", Permissions.READ);
     configuration(engine).setAuthorizationEnabled(true);
     requestAuthentication = new Authentication("carol", Collections.emptyList());
 

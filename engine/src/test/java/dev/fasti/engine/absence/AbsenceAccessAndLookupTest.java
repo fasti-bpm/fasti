@@ -18,6 +18,7 @@ package dev.fasti.engine.absence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -25,6 +26,7 @@ import java.util.Date;
 import java.util.List;
 
 import ch.qos.logback.classic.Level;
+import dev.fasti.engine.absence.AbsenceService.Handover;
 import dev.fasti.engine.absence.impl.AbsenceStore;
 import org.camunda.bpm.engine.AuthorizationService;
 import org.camunda.bpm.engine.BadUserRequestException;
@@ -32,6 +34,7 @@ import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.authorization.Authorization;
+import org.camunda.bpm.engine.authorization.Groups;
 import org.camunda.bpm.engine.authorization.Permission;
 import org.camunda.bpm.engine.authorization.Permissions;
 import org.camunda.bpm.engine.authorization.Resource;
@@ -54,8 +57,8 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 
 /**
- * When substitutes lead back to the absent user, and how often the absence service reads the
- * user info table.
+ * What a caller learns and may do through the absence service (other users, their absences, the
+ * tasks handed over), and how often the service reads the user info table.
  */
 public class AbsenceAccessAndLookupTest {
 
@@ -151,6 +154,79 @@ public class AbsenceAccessAndLookupTest {
     loggingRule.getLog(IDENTITY_INFO_LOGGER).clear();
   }
 
+  // what setting an absence tells about other users ////////////////////////
+
+  @Test
+  public void shouldNotTellWhetherASubstituteExistsThatTheCallerMayNotSee() {
+    grant("alice", Resources.USER, "bob", Permissions.READ);
+    configuration.setAuthorizationEnabled(true);
+    identityService.setAuthentication("alice", null);
+
+    // bob may be seen
+    setAbsence("alice", "bob");
+    // carol exists but may not be seen, nobody does not exist: the same answer
+    Throwable hidden = catchThrowable(() -> setAbsence("alice", "carol"));
+    Throwable missing = catchThrowable(() -> setAbsence("alice", "nobody"));
+
+    assertThat(hidden).isInstanceOf(BadUserRequestException.class)
+        .hasMessage("The substitute 'carol' cannot be chosen: there is no such user you may see, or tasks would "
+            + "come back to 'alice' through the substitutes of absent substitutes. Choose someone else.");
+    assertThat(missing).isInstanceOf(BadUserRequestException.class)
+        .hasMessage(hidden.getMessage().replace("'carol'", "'nobody'"));
+    assertThat(absences.getAbsence("alice").getSubstituteId()).isEqualTo("bob");
+  }
+
+  @Test
+  public void shouldAnswerASubstituteThatLeadsBackLikeOneThatDoesNotExist() {
+    setAbsence("bob", "alice");
+
+    Throwable leadsBack = catchThrowable(() -> setAbsence("alice", "bob"));
+    Throwable missing = catchThrowable(() -> setAbsence("alice", "nobody"));
+
+    assertThat(leadsBack).isInstanceOf(BadUserRequestException.class)
+        .hasMessage(missing.getMessage().replace("'nobody'", "'bob'"));
+    // nothing about when bob is away or who stands in for him
+    assertThat(leadsBack.getMessage()).doesNotContain("absent at").doesNotContain("2026");
+  }
+
+  @Test
+  public void shouldOnlyFollowAbsentSubstitutesTheCallerMaySee() {
+    // alice -> bob (absent) -> carol
+    setAbsence("alice", "bob");
+    setAbsence("bob", "carol");
+    grant("alice", Resources.USER, "bob", Permissions.READ);
+    grant("dave", Resources.USER, "alice", Permissions.READ);
+    configuration.setAuthorizationEnabled(true);
+
+    // alice may see bob, but not carol: whether carol is there is not hers to know
+    identityService.setAuthentication("alice", null);
+    assertThat(absences.resolveSubstitute("alice")).isEqualTo("bob");
+    identityService.clearAuthentication();
+    // she may see both: the answer follows the absence of bob
+    grant("alice", Resources.USER, "carol", Permissions.READ);
+    identityService.setAuthentication("alice", null);
+    assertThat(absences.resolveSubstitute("alice")).isEqualTo("carol");
+    // dave may see alice but not bob: the substitute of alice, nothing about bob
+    identityService.setAuthentication("dave", null);
+    assertThat(absences.resolveSubstitute("alice")).isEqualTo("bob");
+    identityService.clearAuthentication();
+
+    // the same answer whether bob is absent or not, or no longer exists
+    absences.clearAbsence("bob");
+    identityService.setAuthentication("dave", null);
+    assertThat(absences.resolveSubstitute("alice")).isEqualTo("bob");
+    identityService.clearAuthentication();
+    configuration.setAuthorizationEnabled(false);
+    identityService.deleteUser("bob");
+    configuration.setAuthorizationEnabled(true);
+    identityService.setAuthentication("dave", null);
+    assertThat(absences.resolveSubstitute("alice")).isEqualTo("bob");
+    identityService.clearAuthentication();
+    // the engine itself (assigning tasks) is not restricted
+    configuration.setAuthorizationEnabled(false);
+    assertThat(absences.resolveSubstitute("alice")).isNull();
+  }
+
   // cycles /////////////////////////////////////////////////////////////////
 
   @Test
@@ -167,7 +243,7 @@ public class AbsenceAccessAndLookupTest {
     absences.clearAbsence("alice");
     absences.setAbsence("carol", at(Duration.ofDays(3)), at(Duration.ofDays(10)), "alice", null);
     assertThatThrownBy(() -> absences.setAbsence("alice", at(Duration.ofDays(1)), at(Duration.ofDays(10)), "bob", null))
-        .isInstanceOf(BadUserRequestException.class).hasMessageContaining("lead back");
+        .isInstanceOf(BadUserRequestException.class).hasMessageContaining("cannot be chosen");
   }
 
   @Test
@@ -179,6 +255,92 @@ public class AbsenceAccessAndLookupTest {
     absences.setAbsence("alice", at(Duration.ofDays(-1)), at(Duration.ofDays(3)), "bob", null);
 
     assertThat(absences.getAbsence("alice").getSubstituteId()).isEqualTo("bob");
+  }
+
+  // handover ///////////////////////////////////////////////////////////////
+
+  @Test
+  public void shouldNotHandOverTasksTheCallerMayNotAssign() {
+    // a hardened setup: assignees may work on their tasks but not reassign them
+    configuration.setDefaultUserPermissionForTask(Permissions.TASK_WORK);
+    configuration.setAuthorizationEnabled(true);
+    testRule.deploy(userTask("alice"));
+    String first = runtimeService.startProcessInstanceByKey("process").getId();
+    String second = runtimeService.startProcessInstanceByKey("process").getId();
+    Task assignable = taskService.createTaskQuery().processInstanceId(second).singleResult();
+    grant("alice", Resources.TASK, assignable.getId(), Permissions.TASK_ASSIGN);
+    grant("alice", Resources.USER, "bob", Permissions.READ);
+    identityService.setAuthentication("alice", null);
+    setAbsence("alice", "bob");
+
+    // delegating is refused by the task API, and so is handing over
+    String firstTask = withoutAuthorization(() -> taskService.createTaskQuery().processInstanceId(first).singleResult().getId());
+    assertThatThrownBy(() -> taskService.setAssignee(firstTask, "bob"))
+        .isInstanceOf(org.camunda.bpm.engine.AuthorizationException.class);
+    Handover handover = absences.handOverTasks("alice", 100);
+    identityService.clearAuthentication();
+    configuration.setAuthorizationEnabled(false);
+
+    assertThat(handover.getHandedOver()).isEqualTo(1);
+    assertThat(handover.getNotAllowed()).isEqualTo(1);
+    assertThat(handover.getRemaining()).isEqualTo(1);
+    assertThat(taskService.createTaskQuery().taskId(firstTask).singleResult().getAssignee()).isEqualTo("alice");
+    assertThat(taskService.createTaskQuery().taskId(assignable.getId()).singleResult().getAssignee()).isEqualTo("bob");
+  }
+
+  @Test
+  public void shouldReachTasksBehindTheOnesTheCallerMayNotAssign() {
+    configuration.setDefaultUserPermissionForTask(Permissions.TASK_WORK);
+    configuration.setAuthorizationEnabled(true);
+    testRule.deploy(userTask("alice"));
+    for (int i = 0; i < 3; i++) {
+      ClockUtil.setCurrentTime(at(Duration.ofSeconds(i * 10)));
+      runtimeService.startProcessInstanceByKey("process");
+    }
+    ClockUtil.setCurrentTime(at(Duration.ofMinutes(5)));
+    // only the newest task may be assigned
+    List<Task> tasks = taskService.createTaskQuery().orderByTaskCreateTime().asc().list();
+    grant("alice", Resources.TASK, tasks.get(2).getId(), Permissions.TASK_ASSIGN);
+    grant("alice", Resources.USER, "bob", Permissions.READ);
+    identityService.setAuthentication("alice", null);
+    setAbsence("alice", "bob");
+
+    Handover handover = absences.handOverTasks("alice", 1);
+    identityService.clearAuthentication();
+    configuration.setAuthorizationEnabled(false);
+
+    assertThat(handover.getHandedOver()).isEqualTo(1);
+    assertThat(handover.getNotAllowed()).isEqualTo(2);
+    assertThat(taskService.createTaskQuery().taskId(tasks.get(2).getId()).singleResult().getAssignee()).isEqualTo("bob");
+  }
+
+  @Test
+  public void shouldLetAdministratorsHandOverEveryTask() {
+    configuration.setDefaultUserPermissionForTask(Permissions.TASK_WORK);
+    configuration.setAuthorizationEnabled(true);
+    testRule.deploy(userTask("alice"));
+    runtimeService.startProcessInstanceByKey("process");
+    configuration.setAuthorizationEnabled(false);
+    setAbsence("alice", "bob");
+    configuration.setAuthorizationEnabled(true);
+
+    // erin is an administrator (by group) who may change alice, without a permission on the task
+    grant("erin", Resources.USER, "alice", Permissions.UPDATE);
+    identityService.setAuthentication("erin", List.of(Groups.CAMUNDA_ADMIN));
+    Handover handover = absences.handOverTasks("alice", 100);
+    identityService.clearAuthentication();
+
+    assertThat(handover.getHandedOver()).isEqualTo(1);
+    assertThat(handover.getNotAllowed()).isZero();
+  }
+
+  <T> T withoutAuthorization(java.util.function.Supplier<T> action) {
+    configuration.setAuthorizationEnabled(false);
+    try {
+      return action.get();
+    } finally {
+      configuration.setAuthorizationEnabled(true);
+    }
   }
 
   // lookups ////////////////////////////////////////////////////////////////

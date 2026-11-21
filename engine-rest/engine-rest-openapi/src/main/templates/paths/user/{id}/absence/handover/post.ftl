@@ -8,8 +8,9 @@
       desc = "Fasti: hands the open (active) tasks assigned to the user over to the substitute of their current or
               upcoming absence, or to the substitute of that substitute if they are absent too. Each task gets a
               comment and the local variables `fasti_absentAssignee` and `fasti_absenceSubstitute`. The caller
-              needs to be the user or have the permission `UPDATE` on the user; the permissions on the single
-              tasks are not checked." />
+              needs to be the user or have the permission `UPDATE` on the user, and the permission to assign
+              each task (`TASK_ASSIGN` or `UPDATE`, as for `POST /task/{id}/assignee`); tasks without it stay
+              and are counted in `notAllowed`. Administrators may hand over every task." />
 
   "parameters" : [
 
@@ -41,7 +42,8 @@
                        "value": {
                          "substituteId": "bob",
                          "handedOver": 12,
-                         "remaining": 1
+                         "remaining": 1,
+                         "notAllowed": 0
                        }
                      }'] />
 

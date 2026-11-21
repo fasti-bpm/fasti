@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SPDX-License-Identifier: Apache-2.0
+  Copyright Fasti BPM contributors
+
+  A case for the end-to-end tests of the CMMN pages: a human task that starts
+  by itself, a human task that is started by hand, a stage and a milestone
+  that both wait for the first task.
+-->
+<cmmn:definitions xmlns:cmmn="http://www.omg.org/spec/CMMN/20151109/MODEL"
+                  xmlns:cmmndi="http://www.omg.org/spec/CMMN/20151109/CMMNDI"
+                  xmlns:dc="http://www.omg.org/spec/CMMN/20151109/DC"
+                  xmlns:di="http://www.omg.org/spec/CMMN/20151109/DI"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:camunda="http://camunda.org/schema/1.0/cmmn"
+                  id="Definitions_e2e_case" targetNamespace="http://fasti.dev/e2e">
+  <cmmn:case id="e2e_case" name="E2E claim case" camunda:historyTimeToLive="P1D">
+    <cmmn:casePlanModel id="CasePlanModel_e2e" name="Claim">
+      <cmmn:planItem id="PI_review" name="Review claim" definitionRef="HumanTask_review" />
+      <cmmn:planItem id="PI_check" name="Check documents" definitionRef="HumanTask_check">
+        <cmmn:itemControl id="ItemControl_check">
+          <cmmn:manualActivationRule id="ManualActivation_check" />
+        </cmmn:itemControl>
+      </cmmn:planItem>
+      <cmmn:planItem id="PI_settle" name="Settlement" definitionRef="Stage_settle">
+        <cmmn:entryCriterion id="Entry_settle" sentryRef="Sentry_settle" />
+      </cmmn:planItem>
+      <cmmn:planItem id="PI_approved" name="Claim approved" definitionRef="Milestone_approved">
+        <cmmn:entryCriterion id="Entry_approved" sentryRef="Sentry_approved" />
+      </cmmn:planItem>
+      <cmmn:sentry id="Sentry_settle">
+        <cmmn:planItemOnPart id="OnPart_settle" sourceRef="PI_review">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      <cmmn:sentry id="Sentry_approved">
+        <cmmn:planItemOnPart id="OnPart_approved" sourceRef="PI_review">
+          <cmmn:standardEvent>complete</cmmn:standardEvent>
+        </cmmn:planItemOnPart>
+      </cmmn:sentry>
+      <cmmn:humanTask id="HumanTask_review" name="Review claim" />
+      <cmmn:humanTask id="HumanTask_check" name="Check documents" />
+      <cmmn:stage id="Stage_settle" name="Settlement">
+        <cmmn:planItem id="PI_pay" name="Pay out" definitionRef="HumanTask_pay">
+          <cmmn:itemControl id="ItemControl_pay">
+            <cmmn:manualActivationRule id="ManualActivation_pay" />
+          </cmmn:itemControl>
+        </cmmn:planItem>
+        <cmmn:humanTask id="HumanTask_pay" name="Pay out" />
+      </cmmn:stage>
+      <cmmn:milestone id="Milestone_approved" name="Claim approved" />
+    </cmmn:casePlanModel>
+  </cmmn:case>
+  <cmmndi:CMMNDI>
+    <cmmndi:CMMNDiagram id="CMMNDiagram_e2e">
+      <cmmndi:Size xsi:type="dc:Dimension" width="800" height="520" />
+      <cmmndi:CMMNShape id="DI_CasePlanModel_e2e" cmmnElementRef="CasePlanModel_e2e">
+        <dc:Bounds x="150" y="60" width="640" height="440" />
+        <cmmndi:CMMNLabel />
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="DI_PI_review" cmmnElementRef="PI_review">
+        <dc:Bounds x="200" y="130" width="120" height="80" />
+        <cmmndi:CMMNLabel />
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="DI_PI_check" cmmnElementRef="PI_check">
+        <dc:Bounds x="200" y="300" width="120" height="80" />
+        <cmmndi:CMMNLabel />
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="DI_PI_settle" cmmnElementRef="PI_settle">
+        <dc:Bounds x="440" y="100" width="300" height="200" />
+        <cmmndi:CMMNLabel />
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="DI_Entry_settle" cmmnElementRef="Entry_settle">
+        <dc:Bounds x="430" y="156" width="20" height="28" />
+        <cmmndi:CMMNLabel />
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="DI_PI_pay" cmmnElementRef="PI_pay">
+        <dc:Bounds x="530" y="160" width="120" height="80" />
+        <cmmndi:CMMNLabel />
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="DI_PI_approved" cmmnElementRef="PI_approved">
+        <dc:Bounds x="500" y="380" width="160" height="50" />
+        <cmmndi:CMMNLabel />
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNShape id="DI_Entry_approved" cmmnElementRef="Entry_approved">
+        <dc:Bounds x="490" y="391" width="20" height="28" />
+        <cmmndi:CMMNLabel />
+      </cmmndi:CMMNShape>
+      <cmmndi:CMMNEdge id="DI_OnPart_settle" cmmnElementRef="OnPart_settle" targetCMMNElementRef="Entry_settle" isStandardEventVisible="true">
+        <di:waypoint xsi:type="dc:Point" x="320" y="170" />
+        <di:waypoint xsi:type="dc:Point" x="430" y="170" />
+        <cmmndi:CMMNLabel>
+          <dc:Bounds x="350" y="152" width="50" height="12" />
+        </cmmndi:CMMNLabel>
+      </cmmndi:CMMNEdge>
+      <cmmndi:CMMNEdge id="DI_OnPart_approved" cmmnElementRef="OnPart_approved" targetCMMNElementRef="Entry_approved" isStandardEventVisible="true">
+        <di:waypoint xsi:type="dc:Point" x="290" y="210" />
+        <di:waypoint xsi:type="dc:Point" x="290" y="250" />
+        <di:waypoint xsi:type="dc:Point" x="400" y="250" />
+        <di:waypoint xsi:type="dc:Point" x="400" y="405" />
+        <di:waypoint xsi:type="dc:Point" x="490" y="405" />
+        <cmmndi:CMMNLabel>
+          <dc:Bounds x="410" y="388" width="50" height="12" />
+        </cmmndi:CMMNLabel>
+      </cmmndi:CMMNEdge>
+    </cmmndi:CMMNDiagram>
+  </cmmndi:CMMNDI>
+</cmmn:definitions>

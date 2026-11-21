@@ -524,6 +524,7 @@ const messages: Catalog = {
   'absence.from': 'ตั้งแต่',
   'absence.fromHint': 'เว้นว่างไว้เพื่อเริ่มทันที',
   'absence.until': 'ถึง',
+  'absence.timeZone': 'เวลาเป็นไปตามเขตเวลาของเบราว์เซอร์นี้ ({zone})',
   'absence.substitute': 'ผู้ปฏิบัติงานแทน',
   'absence.substituteHint': 'พิมพ์ชื่อหรือ ID ผู้ใช้',
   'absence.note': 'บันทึกถึงผู้ปฏิบัติงานแทนของคุณ',

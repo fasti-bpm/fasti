@@ -538,6 +538,7 @@ const messages: Catalog = {
   'absence.from': 'Du',
   'absence.fromHint': 'Laissez vide pour commencer maintenant.',
   'absence.until': 'Au',
+  'absence.timeZone': 'Les heures sont dans le fuseau horaire de ce navigateur ({zone}).',
   'absence.substitute': 'Remplaçant',
   'absence.substituteHint': 'Saisissez un nom ou un identifiant d’utilisateur.',
   'absence.note': 'Note pour votre remplaçant',

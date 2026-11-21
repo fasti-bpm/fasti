@@ -524,6 +524,7 @@ const messages: Catalog = {
   'absence.from': 'Dari',
   'absence.fromHint': 'Biarkan kosong untuk mulai sekarang.',
   'absence.until': 'Sampai',
+  'absence.timeZone': 'Waktu mengikuti zona waktu browser ini ({zone}).',
   'absence.substitute': 'Pengganti',
   'absence.substituteHint': 'Ketik nama atau ID pengguna.',
   'absence.note': 'Catatan untuk pengganti Anda',

@@ -524,6 +524,7 @@ const messages: Catalog = {
   'absence.from': '开始',
   'absence.fromHint': '留空则立即开始。',
   'absence.until': '结束',
+  'absence.timeZone': '时间按此浏览器的时区（{zone}）显示。',
   'absence.substitute': '代理人',
   'absence.substituteHint': '输入姓名或用户 ID。',
   'absence.note': '给代理人的备注',

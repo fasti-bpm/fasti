@@ -538,6 +538,7 @@ const messages: Catalog = {
   'absence.from': 'Von',
   'absence.fromHint': 'Leer lassen, um sofort zu beginnen.',
   'absence.until': 'Bis',
+  'absence.timeZone': 'Zeiten gelten in der Zeitzone dieses Browsers ({zone}).',
   'absence.substitute': 'Vertretung',
   'absence.substituteHint': 'Namen oder Benutzer-ID eingeben.',
   'absence.note': 'Hinweis für Ihre Vertretung',

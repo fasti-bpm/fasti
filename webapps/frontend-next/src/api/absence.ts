@@ -46,8 +46,26 @@ export interface Handover {
   remaining: number;
 }
 
-export function getAbsence(userId: string, signal?: AbortSignal): Promise<Absence> {
-  return request<Absence>(absenceApi(userId), { signal });
+/** The absence of a user; `enabled: false` also for a server that does not know absences (an older one). */
+export async function getAbsence(userId: string, signal?: AbortSignal): Promise<Absence> {
+  try {
+    return await request<Absence>(absenceApi(userId), { signal });
+  } catch (error) {
+    if (isApiError(error, 'notFound')) {
+      return {
+        userId,
+        enabled: false,
+        unavailableReason: null,
+        status: 'none',
+        from: null,
+        until: null,
+        substituteId: null,
+        note: null,
+        effectiveSubstituteId: null,
+      };
+    }
+    throw error;
+  }
 }
 
 export function setAbsence(userId: string, absence: AbsenceInput): Promise<Absence> {

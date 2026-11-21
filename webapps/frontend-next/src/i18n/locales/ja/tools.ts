@@ -524,6 +524,7 @@ const messages: Catalog = {
   'absence.from': '開始',
   'absence.fromHint': '空欄のままにすると今すぐ開始します。',
   'absence.until': '終了',
+  'absence.timeZone': '時刻はこのブラウザーのタイムゾーン（{zone}）のものです。',
   'absence.substitute': '代理人',
   'absence.substituteHint': '名前またはユーザー ID を入力してください。',
   'absence.note': '代理人へのメモ',

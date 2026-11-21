@@ -524,6 +524,7 @@ const messages: Catalog = {
   'absence.from': '시작',
   'absence.fromHint': '비워 두면 지금 바로 시작합니다.',
   'absence.until': '종료',
+  'absence.timeZone': '시간은 이 브라우저의 시간대({zone}) 기준입니다.',
   'absence.substitute': '대리인',
   'absence.substituteHint': '이름 또는 사용자 ID를 입력하세요.',
   'absence.note': '대리인에게 남길 메모',

@@ -536,6 +536,7 @@ const messages = {
   'absence.from': 'From',
   'absence.fromHint': 'Leave empty to start now.',
   'absence.until': 'Until',
+  'absence.timeZone': 'Times are in the time zone of this browser ({zone}).',
   'absence.substitute': 'Substitute',
   'absence.substituteHint': 'Type a name or a user ID.',
   'absence.note': 'Note for your substitute',

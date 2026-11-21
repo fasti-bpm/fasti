@@ -524,6 +524,7 @@ const messages: Catalog = {
   'absence.from': 'Từ',
   'absence.fromHint': 'Để trống để bắt đầu ngay.',
   'absence.until': 'Đến',
+  'absence.timeZone': 'Thời gian theo múi giờ của trình duyệt này ({zone}).',
   'absence.substitute': 'Người thay thế',
   'absence.substituteHint': 'Nhập tên hoặc mã người dùng.',
   'absence.note': 'Ghi chú cho người thay thế của bạn',

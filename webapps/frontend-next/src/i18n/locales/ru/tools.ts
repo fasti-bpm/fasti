@@ -556,6 +556,7 @@ const messages: Catalog = {
   'absence.from': 'С',
   'absence.fromHint': 'Оставьте пустым, чтобы начать сейчас.',
   'absence.until': 'По',
+  'absence.timeZone': 'Время указано в часовом поясе этого браузера ({zone}).',
   'absence.substitute': 'Заместитель',
   'absence.substituteHint': 'Введите имя или ID пользователя.',
   'absence.note': 'Примечание для вашего заместителя',

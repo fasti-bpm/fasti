@@ -105,6 +105,14 @@ export function AbsenceSettings({ userId, self }: { userId: string; self: boolea
   );
 }
 
+/** The time zone the date fields are in, with its offset now: `Asia/Ho_Chi_Minh, GMT+7`. */
+export function browserTimeZone(now: Date = new Date()): string {
+  const format = new Intl.DateTimeFormat('en', { timeZoneName: 'shortOffset' });
+  const offset = format.formatToParts(now).find((part) => part.type === 'timeZoneName')?.value;
+  const zone = format.resolvedOptions().timeZone;
+  return offset && offset !== zone ? `${zone}, ${offset}` : zone;
+}
+
 function AbsenceStatusLine({ absence }: { absence: Absence }) {
   const { t, dateTime } = useI18n();
   const substitute = useUserName(absence.substituteId);
@@ -253,6 +261,7 @@ function AbsenceForm({ absence, userId, self }: { absence: Absence; userId: stri
           )}
         </Field>
       </div>
+      <p className="field__hint absence__zone">{t('absence.timeZone', { zone: browserTimeZone() })}</p>
       <Field label={t('absence.substitute')} required hint={t('absence.substituteHint')} error={message('substituteId')}>
         {(props) => (
           <IdentityInput

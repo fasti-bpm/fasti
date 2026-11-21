@@ -62,6 +62,13 @@ public interface AuditEventQuery {
 
   long count();
 
+  /**
+   * The number of records, counted up to {@code limit}: the database stops counting there, so
+   * counting a large result costs no more than reading {@code limit} records. A result equal to
+   * {@code limit} means "that many or more". A limit of zero or less counts all records.
+   */
+  long count(long limit);
+
   List<AuditEvent> list();
 
   /** A page of the result; the page is cut in the database. */

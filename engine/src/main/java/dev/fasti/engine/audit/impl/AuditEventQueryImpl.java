@@ -147,9 +147,14 @@ public class AuditEventQueryImpl implements AuditEventQuery {
 
   @Override
   public long count() {
+    return count(0);
+  }
+
+  @Override
+  public long count(long limit) {
     return commandExecutor.execute(commandContext -> {
       AuditAuthorization.checkRead(commandContext);
-      return AuditStore.count(commandContext, settings, this, AuditAuthorization.readableTenants(commandContext));
+      return AuditStore.count(commandContext, settings, this, AuditAuthorization.readableTenants(commandContext), limit);
     });
   }
 

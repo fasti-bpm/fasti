@@ -44,7 +44,7 @@ public class AuditStoreSqlTest {
     for (String type : List.of("h2", "postgres", "mysql", "mariadb")) {
       List<Object> parameters = new ArrayList<>();
       String sql = AuditStore.selectSql(settings(type), query(), null, 2_000_000_000L, 50, parameters);
-      assertThat(sql).as(type).endsWith(" order by TIME_ desc, CHAIN_ID_ asc, SEQ_ desc limit ? offset ?");
+      assertThat(sql).as(type).endsWith(" order by TIME_ desc, CHAIN_ID_ desc, SEQ_ desc limit ? offset ?");
       assertThat(parameters).as(type).containsExactly(50L, 2_000_000_000L);
     }
   }
@@ -74,8 +74,37 @@ public class AuditStoreSqlTest {
   public void shouldNotPageAnUnlimitedList() {
     List<Object> parameters = new ArrayList<>();
     assertThat(AuditStore.selectSql(settings("h2"), query(), null, 0, Integer.MAX_VALUE, parameters))
-        .endsWith(" order by TIME_ desc, CHAIN_ID_ asc, SEQ_ desc");
+        .endsWith(" order by TIME_ desc, CHAIN_ID_ desc, SEQ_ desc");
     assertThat(parameters).isEmpty();
+  }
+
+  @Test
+  public void shouldStopCountingAtALimit() {
+    for (String type : List.of("h2", "postgres", "mysql", "mariadb")) {
+      List<Object> parameters = new ArrayList<>();
+      AuditEventQueryImpl query = query();
+      query.actor("alice");
+      assertThat(AuditStore.countSql(settings(type), query, null, 10_000, parameters)).as(type)
+          .isEqualTo("select count(*) from (select 1 as X_ from FASTI_AUDIT_EVENT where ACTOR_ = ? limit 10000) T_");
+      assertThat(parameters).as(type).containsExactly("alice");
+    }
+    List<Object> parameters = new ArrayList<>();
+    assertThat(AuditStore.countSql(settings("mssql"), query(), List.of("t1"), 500, parameters))
+        .isEqualTo("select count(*) from (select top 500 1 as X_ from FASTI_AUDIT_EVENT"
+            + " where (TENANT_ID_ is null or TENANT_ID_ in (?))) T_");
+    assertThat(parameters).containsExactly("t1");
+    for (String type : List.of("oracle", "db2")) {
+      assertThat(AuditStore.countSql(settings(type), query(), null, 500, new ArrayList<>())).as(type)
+          .isEqualTo("select count(*) from (select 1 as X_ from FASTI_AUDIT_EVENT fetch first 500 rows only) T_");
+    }
+  }
+
+  @Test
+  public void shouldCountEverythingWithoutALimit() {
+    for (long limit : new long[] { 0, -1 }) {
+      assertThat(AuditStore.countSql(settings("postgres"), query(), null, limit, new ArrayList<>()))
+          .isEqualTo("select count(*) from FASTI_AUDIT_EVENT");
+    }
   }
 
   @Test

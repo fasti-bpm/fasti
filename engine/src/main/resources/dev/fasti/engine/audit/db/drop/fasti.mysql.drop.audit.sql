@@ -18,7 +18,7 @@
 -- Drops the tables of the Fasti audit trail, with all audit records. Export them first.
 
 drop index FASTI_IDX_AUDIT_CHAIN on FASTI_AUDIT_EVENT;
-drop index FASTI_IDX_AUDIT_TIME on FASTI_AUDIT_EVENT;
+drop index FASTI_IDX_AUDIT_ORDER on FASTI_AUDIT_EVENT;
 drop index FASTI_IDX_AUDIT_PROCINST on FASTI_AUDIT_EVENT;
 drop index FASTI_IDX_AUDIT_BUSKEY on FASTI_AUDIT_EVENT;
 drop index FASTI_IDX_AUDIT_ACTOR on FASTI_AUDIT_EVENT;

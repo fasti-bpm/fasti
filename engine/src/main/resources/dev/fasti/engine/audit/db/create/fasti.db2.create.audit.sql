@@ -45,7 +45,8 @@ create table FASTI_AUDIT_EVENT (
 );
 
 create unique index FASTI_IDX_AUDIT_CHAIN on FASTI_AUDIT_EVENT(CHAIN_ID_, SEQ_);
-create index FASTI_IDX_AUDIT_TIME on FASTI_AUDIT_EVENT(TIME_);
+-- the order of a page (newest or oldest first), and the records of a time range
+create index FASTI_IDX_AUDIT_ORDER on FASTI_AUDIT_EVENT(TIME_, CHAIN_ID_, SEQ_);
 create index FASTI_IDX_AUDIT_PROCINST on FASTI_AUDIT_EVENT(PROC_INST_ID_);
 create index FASTI_IDX_AUDIT_BUSKEY on FASTI_AUDIT_EVENT(BUSINESS_KEY_);
 create index FASTI_IDX_AUDIT_ACTOR on FASTI_AUDIT_EVENT(ACTOR_);

@@ -94,6 +94,32 @@ public class AuditQueryTest {
   // paging ///////////////////////////////////////////////////////////////////////////////////
 
   @Test
+  public void shouldListNewestFirstInTheReverseOrderOfOldestFirst() {
+    // the same order in both directions, also for records of the same millisecond in several chains
+    List<String> oldestFirst = ids(audit.createQuery().oldestFirst().list());
+    List<String> newestFirst = new ArrayList<>(ids(audit.createQuery().list()));
+    java.util.Collections.reverse(newestFirst);
+    assertThat(newestFirst).isEqualTo(oldestFirst);
+    List<AuditEvent> events = audit.createQuery().list();
+    for (int i = 1; i < events.size(); i++) {
+      assertThat(events.get(i).getTimestamp()).isBeforeOrEqualTo(events.get(i - 1).getTimestamp());
+    }
+  }
+
+  @Test
+  public void shouldStopCountingAtALimit() {
+    long all = audit.createQuery().count();
+    assertThat(all).isGreaterThan(2 * INSTANCES);
+    assertThat(audit.createQuery().count(10)).isEqualTo(10);
+    assertThat(audit.createQuery().count(all)).isEqualTo(all);
+    assertThat(audit.createQuery().count(all + 100)).isEqualTo(all);
+    assertThat(audit.createQuery().count(0)).isEqualTo(all);
+    long starts = audit.createQuery().types(AuditService.TYPE_PROCESS).action("start").count();
+    assertThat(audit.createQuery().types(AuditService.TYPE_PROCESS).action("start").count(5)).isEqualTo(5);
+    assertThat(audit.createQuery().types(AuditService.TYPE_PROCESS).action("start").count(1000)).isEqualTo(starts);
+  }
+
+  @Test
   public void shouldCutPagesInTheDatabase() {
     List<String> all = ids(audit.createQuery().oldestFirst().list());
     assertThat(all.size()).isGreaterThan(2 * INSTANCES);

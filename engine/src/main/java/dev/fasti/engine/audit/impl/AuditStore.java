@@ -420,7 +420,9 @@ public final class AuditStore {
   static String selectSql(AuditSettings settings, AuditEventQueryImpl query, List<String> tenants, long firstResult,
       long maxResults, List<Object> parameters) {
     String where = where(query, tenants, parameters);
-    String order = query.isOldestFirst() ? "TIME_ asc, CHAIN_ID_ asc, SEQ_ asc" : "TIME_ desc, CHAIN_ID_ asc, SEQ_ desc";
+    // one direction for all three columns, so that the index FASTI_IDX_AUDIT_ORDER(TIME_, CHAIN_ID_, SEQ_)
+    // gives the order (read forwards or backwards) and the database stops after the page
+    String order = query.isOldestFirst() ? "TIME_ asc, CHAIN_ID_ asc, SEQ_ asc" : "TIME_ desc, CHAIN_ID_ desc, SEQ_ desc";
     String sql = "select " + COLUMNS + " from " + events(settings) + where + " order by " + order;
     if (firstResult <= 0 && maxResults >= Integer.MAX_VALUE) {
       return sql;
@@ -513,10 +515,41 @@ public final class AuditStore {
     return FETCH_SIZE;
   }
 
+  /**
+   * The statement that counts the records of a query. With a positive {@code limit} the database
+   * stops at that many records, so the count of a large result costs no more than reading
+   * {@code limit} index entries or rows; the result is then at most {@code limit}.
+   */
+  static String countSql(AuditSettings settings, AuditEventQueryImpl query, List<String> tenants, long limit,
+      List<Object> parameters) {
+    String where = where(query, tenants, parameters);
+    if (limit <= 0) {
+      return "select count(*) from " + events(settings) + where;
+    }
+    String type = settings.getDatabaseType() == null ? "" : settings.getDatabaseType().toLowerCase(Locale.ROOT);
+    // the limit is a number of the engine, not text of a request: written into the statement, as
+    // not every database takes a parameter there
+    String rows;
+    if (type.equals("mssql")) {
+      rows = "select top " + limit + " 1 as X_ from " + events(settings) + where;
+    } else if (type.equals("oracle") || type.equals("db2")) {
+      rows = "select 1 as X_ from " + events(settings) + where + " fetch first " + limit + " rows only";
+    } else {
+      rows = "select 1 as X_ from " + events(settings) + where + " limit " + limit;
+    }
+    return "select count(*) from (" + rows + ") T_";
+  }
+
   public static long count(CommandContext commandContext, AuditSettings settings, AuditEventQueryImpl query,
       List<String> tenants) {
+    return count(commandContext, settings, query, tenants, 0);
+  }
+
+  /** The number of records the query selects; counted up to {@code limit} if that is positive. */
+  public static long count(CommandContext commandContext, AuditSettings settings, AuditEventQueryImpl query,
+      List<String> tenants, long limit) {
     List<Object> parameters = new ArrayList<>();
-    String sql = "select count(*) from " + events(settings) + where(query, tenants, parameters);
+    String sql = countSql(settings, query, tenants, limit, parameters);
     try (PreparedStatement select = connection(commandContext).prepareStatement(sql)) {
       bind(select, parameters);
       timeout(select, settings.getQueryTimeoutSeconds());

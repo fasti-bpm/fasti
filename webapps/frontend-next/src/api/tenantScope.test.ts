@@ -6,7 +6,9 @@ import { describe, expect, it } from 'vitest';
 import { setTenantScope } from '../lib/userPrefs';
 import { fakeServer, json } from '../test/server';
 import {
+  getAttention,
   getDashboardNumbers,
+  getDefinitionNumbers,
   getDefinitionStatistics,
   getFailedJobs,
   getInstances,
@@ -15,6 +17,7 @@ import {
   queryExternalTasks,
   setFailedJobsRetriesAsync,
 } from './cockpit';
+import { getTaskTotals } from './workload';
 import { getHistoricDecisions, getHistoricInstances, historicQueryBody, runtimeQuery } from './operations';
 
 const ENGINE = '/engine/engine/default';
@@ -38,6 +41,8 @@ describe('tenant scope', () => {
       [`GET ${ENGINE}/history/decision-instance/count`]: () => json({ count: 0 }),
       [`GET ${ENGINE}/history/decision-instance`]: () => json([]),
       [`GET ${ENGINE}/batch/statistics`]: () => json([]),
+      [`GET ${ENGINE}/batch/statistics/count`]: () => json({ count: 0 }),
+      [`GET ${ENGINE}/incident`]: () => json([]),
       [`GET ${ENGINE}/process-instance/count`]: () => json({ count: 0 }),
       [`GET ${ENGINE}/incident/count`]: () => json({ count: 0 }),
       [`GET ${ENGINE}/task/count`]: () => json({ count: 0 }),
@@ -56,6 +61,10 @@ describe('tenant scope', () => {
     await getHistoricDecisions({ query: {}, paging });
     await getRunningBatches();
     await getDashboardNumbers();
+    await getDefinitionNumbers();
+    await getAttention();
+    // an older server: the totals are five task counts
+    await getTaskTotals(new Date());
     await getLatestDefinition('order');
 
     for (const path of [
@@ -66,6 +75,8 @@ describe('tenant scope', () => {
       `${ENGINE}/external-task`,
       `${ENGINE}/history/decision-instance`,
       `${ENGINE}/batch/statistics`,
+      `${ENGINE}/batch/statistics/count`,
+      `${ENGINE}/incident`,
       `${ENGINE}/process-instance/count`,
       `${ENGINE}/incident/count`,
       `${ENGINE}/task/count`,

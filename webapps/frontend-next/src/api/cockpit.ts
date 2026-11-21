@@ -53,27 +53,36 @@ async function optional<T>(call: Promise<T>): Promise<T | null> {
 
 // --- dashboard --------------------------------------------------------------
 
+/** What moves all the time: read with every refresh. The open tasks come with the task totals (`getTaskTotals`). */
 export interface DashboardNumbers {
   instances: number;
   incidents: number;
-  tasks: number;
+}
+
+export async function getDashboardNumbers(signal?: AbortSignal): Promise<DashboardNumbers> {
+  const api = engineApi();
+  const [instances, incidents] = await Promise.all([
+    count(`${api}/process-instance/count`, tenantFilter(), signal),
+    count(`${api}/incident/count`, tenantFilter(), signal),
+  ]);
+  return { instances, incidents };
+}
+
+/** What only a deployment changes: read every few minutes. */
+export interface DefinitionNumbers {
   processDefinitions: number;
   decisionDefinitions: number;
   deployments: number;
 }
 
-export async function getDashboardNumbers(signal?: AbortSignal): Promise<DashboardNumbers> {
+export async function getDefinitionNumbers(signal?: AbortSignal): Promise<DefinitionNumbers> {
   const api = engineApi();
-  const [instances, incidents, tasks, processDefinitions, decisionDefinitions, deployments] =
-    await Promise.all([
-      count(`${api}/process-instance/count`, tenantFilter(), signal),
-      count(`${api}/incident/count`, tenantFilter(), signal),
-      count(`${api}/task/count`, tenantFilter(), signal),
-      count(`${api}/process-definition/count`, { latestVersion: true, ...tenantFilter() }, signal),
-      count(`${api}/decision-definition/count`, { latestVersion: true, ...tenantFilter() }, signal),
-      count(`${api}/deployment/count`, tenantFilter(), signal),
-    ]);
-  return { instances, incidents, tasks, processDefinitions, decisionDefinitions, deployments };
+  const [processDefinitions, decisionDefinitions, deployments] = await Promise.all([
+    count(`${api}/process-definition/count`, { latestVersion: true, ...tenantFilter() }, signal),
+    count(`${api}/decision-definition/count`, { latestVersion: true, ...tenantFilter() }, signal),
+    count(`${api}/deployment/count`, tenantFilter(), signal),
+  ]);
+  return { processDefinitions, decisionDefinitions, deployments };
 }
 
 export interface TaskAssignment {
@@ -85,14 +94,9 @@ export interface TaskAssignment {
   unassigned: number;
 }
 
-export async function getTaskAssignment(signal?: AbortSignal): Promise<TaskAssignment> {
-  const path = `${engineApi()}/task/count`;
-  const [assigned, withGroups, unassigned] = await Promise.all([
-    count(path, { assigned: true, ...tenantFilter() }, signal),
-    count(path, { unassigned: true, withCandidateGroups: true, ...tenantFilter() }, signal),
-    count(path, { unassigned: true, withoutCandidateGroups: true, ...tenantFilter() }, signal),
-  ]);
-  return { assigned, withGroups, unassigned };
+/** Who has the open tasks, from the totals the dashboard reads anyway. */
+export function taskAssignment(totals: { assigned: number; unassigned: number; orphaned: number }): TaskAssignment {
+  return { assigned: totals.assigned, withGroups: totals.unassigned - totals.orphaned, unassigned: totals.orphaned };
 }
 
 /** Unassigned open tasks of one candidate group; `null` for tasks without a candidate group. */
@@ -131,11 +135,20 @@ export async function getDefinitionStatistics(options: {
   search?: string;
   sorting: Sorting<DefinitionSortBy>;
   paging: Paging;
+  /** `false` for a top list that is not paged: the total is not asked for, `count` is the length of the list */
+  total?: boolean;
   signal?: AbortSignal;
 }): Promise<Page<DefinitionStatistics>> {
   const path = `${pluginApi()}/process-definition`;
   const like = options.search ? `%${options.search}%` : undefined;
   const byName = { nameLike: like, ...tenantFilter() };
+  if (options.total === false && !like) {
+    const items = await request<DefinitionStatistics[]>(`${path}/statistics`, {
+      query: { ...byName, ...options.sorting, ...options.paging },
+      signal: options.signal,
+    });
+    return { count: items.length, items };
+  }
   const [total, items] = await Promise.all([
     count(`${path}/statistics-count`, byName, options.signal),
     request<DefinitionStatistics[]>(`${path}/statistics`, {
@@ -1398,9 +1411,11 @@ export async function countDefinitions(signal?: AbortSignal): Promise<number> {
   return result.count;
 }
 
-/** What needs someone now: overdue tasks, the oldest open incident, jobs out of retries, batches with failures. */
+/**
+ * What needs someone now: the oldest open incident, jobs out of retries, batches with failures.
+ * The overdue tasks belong to it as well; they come with the task totals (`getTaskTotals`).
+ */
 export interface Attention {
-  overdueTasks: number | null;
   oldestIncident: { message: string | null; time: string; processInstanceId: string | null } | null;
   failedJobs: number | null;
   failingBatches: number | null;
@@ -1409,32 +1424,31 @@ export interface Attention {
 }
 
 /** Reads what needs attention; a part the user may not read is `null`, the rest is still shown. */
-export async function getAttention(now: string, signal?: AbortSignal): Promise<Attention> {
+export async function getAttention(signal?: AbortSignal): Promise<Attention> {
   const api = engineApi();
   const optionalCount = (path: string, query: Record<string, QueryValue>) =>
     request<{ count: number }>(`${api}${path}`, { query: { ...query, ...tenantFilter() }, signal }).then(
       (result) => result.count,
       () => null,
     );
-  const [overdueTasks, incidents, failedJobs, batches] = await Promise.all([
-    optionalCount('/task/count', { dueBefore: now }),
+  const [incidents, failedJobs, failingBatches] = await Promise.all([
     request<{ incidentMessage: string | null; incidentTimestamp: string; processInstanceId: string | null }[]>(`${api}/incident`, {
       query: { sortBy: 'incidentTimestamp', sortOrder: 'asc', maxResults: 1, ...tenantFilter() },
       signal,
     }).catch(() => null),
     optionalCount('/job/count', { withException: true, noRetriesLeft: true }),
-    request<{ failedJobs: number }[]>(`${api}/batch/statistics`, { query: { ...tenantFilter() }, signal }).catch(() => null),
+    // counted by the server: the list of all batches is not needed for one number
+    optionalCount('/batch/statistics/count', { withFailures: true }),
   ]);
-  if (overdueTasks === null && incidents === null && failedJobs === null && batches === null) {
+  if (incidents === null && failedJobs === null && failingBatches === null) {
     // nothing could be read: a failure, not a calm day
     throw new Error('attention unavailable');
   }
   const oldest = incidents?.[0];
   return {
-    overdueTasks,
     oldestIncident: oldest ? { message: oldest.incidentMessage, time: oldest.incidentTimestamp, processInstanceId: oldest.processInstanceId } : null,
     failedJobs,
-    failingBatches: batches ? batches.filter((batch) => batch.failedJobs > 0).length : null,
+    failingBatches,
     incidentsUnknown: incidents === null,
   };
 }

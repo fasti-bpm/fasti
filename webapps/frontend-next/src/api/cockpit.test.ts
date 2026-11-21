@@ -32,35 +32,51 @@ describe('dashboard', () => {
     const server = fakeServer({
       [`GET ${ENGINE}/process-instance/count`]: () => json({ count: 12 }),
       [`GET ${ENGINE}/incident/count`]: () => json({ count: 3 }),
-      [`GET ${ENGINE}/task/count`]: () => json({ count: 7 }),
       [`GET ${ENGINE}/process-definition/count`]: () => json({ count: 4 }),
       [`GET ${ENGINE}/decision-definition/count`]: () => json({ count: 2 }),
       [`GET ${ENGINE}/deployment/count`]: () => json({ count: 5 }),
     });
 
-    expect(await api.getDashboardNumbers()).toEqual({
-      instances: 12,
-      incidents: 3,
-      tasks: 7,
-      processDefinitions: 4,
-      decisionDefinitions: 2,
-      deployments: 5,
-    });
+    // what moves all the time is read apart from what only a deployment changes
+    expect(await api.getDashboardNumbers()).toEqual({ instances: 12, incidents: 3 });
+    expect(server.requests).toHaveLength(2);
+    expect(await api.getDefinitionNumbers()).toEqual({ processDefinitions: 4, decisionDefinitions: 2, deployments: 5 });
+    expect(server.requests).toHaveLength(5);
     // definitions are counted once, not once per version
     expect(server.find('GET', `${ENGINE}/process-definition/count`)[0]?.query.get('latestVersion')).toBe('true');
     expect(server.find('GET', `${ENGINE}/decision-definition/count`)[0]?.query.get('latestVersion')).toBe('true');
   });
 
-  it('splits the open tasks by assignment', async () => {
+  it('splits the open tasks by assignment without a request of its own', () => {
+    // 7 open: 4 claimed, 3 not, of which 1 is offered to no group
+    expect(api.taskAssignment({ assigned: 4, unassigned: 3, orphaned: 1 })).toEqual({ assigned: 4, withGroups: 2, unassigned: 1 });
+  });
+
+  it('asks for what needs attention with three bounded requests', async () => {
     const server = fakeServer({
-      [`GET ${ENGINE}/task/count`]: (request) =>
-        json({
-          count: request.query.get('assigned') ? 4 : request.query.get('withCandidateGroups') ? 2 : 1,
-        }),
+      [`GET ${ENGINE}/incident`]: () =>
+        json([{ incidentMessage: 'boom', incidentTimestamp: '2026-03-01T09:00:00.000+0000', processInstanceId: 'p1' }]),
+      [`GET ${ENGINE}/job/count`]: () => json({ count: 2 }),
+      [`GET ${ENGINE}/batch/statistics/count`]: () => json({ count: 1 }),
     });
 
-    expect(await api.getTaskAssignment()).toEqual({ assigned: 4, withGroups: 2, unassigned: 1 });
+    expect(await api.getAttention()).toEqual({
+      oldestIncident: { message: 'boom', time: '2026-03-01T09:00:00.000+0000', processInstanceId: 'p1' },
+      failedJobs: 2,
+      failingBatches: 1,
+      incidentsUnknown: false,
+    });
     expect(server.requests).toHaveLength(3);
+    // the server counts the batches with failures; the list of all batches is not read
+    expect(server.find('GET', `${ENGINE}/batch/statistics/count`)[0]?.query.get('withFailures')).toBe('true');
+    expect(server.find('GET', `${ENGINE}/incident`)[0]?.query.get('maxResults')).toBe('1');
+  });
+
+  it('takes a part it may not read as unknown and fails when nothing can be read', async () => {
+    const server = fakeServer({ [`GET ${ENGINE}/job/count`]: () => json({ count: 0 }) });
+    expect(await api.getAttention()).toMatchObject({ failedJobs: 0, failingBatches: null, incidentsUnknown: true });
+    server.on(`GET ${ENGINE}/job/count`, () => json({ type: 'x', message: 'no' }, 403));
+    await expect(api.getAttention()).rejects.toThrow('attention unavailable');
   });
 });
 
@@ -106,6 +122,22 @@ describe('process definitions', () => {
 
     expect(page).toEqual({ count: 1, items: [{ id: 'a:1:x', key: 'a', name: null }] });
     expect(server.find('GET', `${PLUGIN}/process-definition/statistics`)).toHaveLength(2);
+  });
+
+  it('does not count the definitions for a top list', async () => {
+    const server = fakeServer({
+      [`GET ${PLUGIN}/process-definition/statistics`]: () => json([{ id: 'a:1:x', key: 'a', name: 'A', instances: 3, incidents: 0 }]),
+    });
+
+    const page = await api.getDefinitionStatistics({
+      sorting: { sortBy: 'instances', sortOrder: 'desc' },
+      paging: { firstResult: 0, maxResults: 8 },
+      total: false,
+    });
+
+    expect(page.items).toHaveLength(1);
+    expect(page.count).toBe(1);
+    expect(server.requests).toHaveLength(1);
   });
 
   it('suspends a definition with its instances at a given time', async () => {

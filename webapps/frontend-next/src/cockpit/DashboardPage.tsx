@@ -22,9 +22,10 @@ import {
 import type { LucideProps } from 'lucide-react';
 import {
   getDashboardNumbers,
+  getDefinitionNumbers,
   getDefinitionStatistics,
-  getTaskAssignment,
   getTasksByGroup,
+  taskAssignment,
   type DefinitionStatistics,
 } from '../api/cockpit';
 import { useSession } from '../app/session';
@@ -37,7 +38,8 @@ import { Time, formatNumber } from '../ui/format';
 import { useRemembered } from '../ui/hooks';
 import { Card, PageHeader } from '../ui/page';
 import { TREND_RANGES, getAttention, getTrends, trendPeriods, type Trend, type TrendRange } from '../api/cockpit';
-import { toDateTimeInput, toEngineDate } from '../lib/dates';
+import { toDateTimeInput } from '../lib/dates';
+import { useTaskTotals } from './taskTotals';
 
 const TOP = 8;
 
@@ -100,9 +102,12 @@ function Attention({ tasklist }: { tasklist: boolean }) {
   const refetchInterval = useRefreshInterval();
   const attention = useQuery({
     queryKey: [COCKPIT, 'dashboard', 'attention'],
-    queryFn: ({ signal }) => getAttention(toEngineDate(new Date()), signal),
+    queryFn: ({ signal }) => getAttention(signal),
     refetchInterval,
   });
+  // the overdue tasks come with the totals the page reads anyway
+  const totals = useTaskTotals();
+  const overdueTasks = totals.data?.overdue;
   const data = attention.data;
   if (!data) {
     // a check that failed is no sign that nothing needs attention
@@ -134,13 +139,18 @@ function Attention({ tasklist }: { tasklist: boolean }) {
   if (data.failingBatches) {
     items.push({ key: 'batches', to: '/cockpit/batches', text: t('attention.batches', { count: data.failingBatches }) });
   }
-  if (data.overdueTasks && tasklist) {
-    items.push({ key: 'tasks', to: '/tasklist', text: t('attention.tasks', { count: data.overdueTasks }) });
+  if (overdueTasks && tasklist) {
+    items.push({ key: 'tasks', to: '/tasklist', text: t('attention.tasks', { count: overdueTasks }) });
   }
   // a part that could not be read is not a part without problems
-  const partial = data.overdueTasks === null || data.failedJobs === null || data.failingBatches === null || data.incidentsUnknown;
+  const partial =
+    (totals.isError && overdueTasks === undefined) || data.failedJobs === null || data.failingBatches === null || data.incidentsUnknown;
   // a failed refresh leaves the last answer, which may be out of date
-  const stale = attention.isError;
+  const stale = attention.isError || (totals.isError && overdueTasks !== undefined);
+  const retry = () => {
+    void attention.refetch();
+    void totals.refetch();
+  };
   const calm = items.length === 0 && !partial && !stale;
   return (
     <section className={cx('attention', calm && 'attention--calm')} aria-labelledby="attention-title">
@@ -151,7 +161,7 @@ function Attention({ tasklist }: { tasklist: boolean }) {
       {stale && (
         <div className="table-stale" role="alert">
           <span>{t('attention.failed')}</span>
-          <Button size="sm" variant="ghost" onClick={() => void attention.refetch()}>
+          <Button size="sm" variant="ghost" onClick={retry}>
             {t('action.retry')}
           </Button>
         </div>
@@ -159,7 +169,7 @@ function Attention({ tasklist }: { tasklist: boolean }) {
       {partial && !stale && (
         <p className="attention__detail">
           {t('attention.partial')}{' '}
-          <Button size="sm" variant="ghost" onClick={() => void attention.refetch()}>
+          <Button size="sm" variant="ghost" onClick={retry}>
             {t('action.retry')}
           </Button>
         </p>
@@ -216,7 +226,8 @@ export function trendChange(trend: Trend): { delta: number; percent: number | nu
 /** How the work went in a chosen range, each number beside the one of the range before. */
 function Trends() {
   const { t, locale } = useI18n();
-  const refetchInterval = useRefreshInterval();
+  // counts over days of history: they hardly move within minutes and cost the most to read
+  const refetchInterval = useRefreshInterval('slow');
   const [range, setRange] = useRemembered<TrendRange>('dashboard.range', '7d');
   const current = TREND_RANGES.includes(range) ? range : '7d';
   const trends = useQuery({
@@ -306,12 +317,24 @@ export function DashboardPage() {
     queryFn: ({ signal }) => getDashboardNumbers(signal),
     refetchInterval,
   });
+  // definitions and deployments only change with a deployment
+  const slowInterval = useRefreshInterval('slow');
+  const definitions = useQuery({
+    queryKey: [COCKPIT, 'dashboard', 'definitions'],
+    queryFn: ({ signal }) => getDefinitionNumbers(signal),
+    staleTime: 60_000,
+    refetchInterval: slowInterval,
+  });
+  const totals = useTaskTotals();
+  const assignment = totals.data ? taskAssignment(totals.data) : undefined;
   const busiest = useQuery({
     queryKey: [COCKPIT, 'dashboard', 'busiest'],
     queryFn: ({ signal }) =>
       getDefinitionStatistics({
         sorting: { sortBy: 'instances', sortOrder: 'desc' },
         paging: { firstResult: 0, maxResults: TOP },
+        // a top list: how many processes there are in all is not shown
+        total: false,
         signal,
       }),
     refetchInterval,
@@ -322,16 +345,11 @@ export function DashboardPage() {
       getDefinitionStatistics({
         sorting: { sortBy: 'incidents', sortOrder: 'desc' },
         paging: { firstResult: 0, maxResults: TOP },
+        total: false,
         signal,
       }),
     refetchInterval,
   });
-  const assignment = useQuery({
-    queryKey: [COCKPIT, 'dashboard', 'assignment'],
-    queryFn: ({ signal }) => getTaskAssignment(signal),
-    refetchInterval,
-  });
-
   const byGroup = useQuery({
     queryKey: [COCKPIT, 'dashboard', 'tasks-by-group'],
     queryFn: ({ signal }) => getTasksByGroup(signal),
@@ -389,25 +407,25 @@ export function DashboardPage() {
             to={session.authorizedApps.includes('tasklist') ? '/tasklist' : '/cockpit/processes'}
             icon={ListChecks}
             label={t('cockpit.dashboard.tasks')}
-            value={data?.tasks}
+            value={totals.data?.open}
           />
           <Tile
             to="/cockpit/processes"
             icon={GitBranch}
             label={t('cockpit.dashboard.processDefinitions')}
-            value={data?.processDefinitions}
+            value={definitions.data?.processDefinitions}
           />
           <Tile
             to="/cockpit/decisions"
             icon={Table2}
             label={t('cockpit.dashboard.decisionDefinitions')}
-            value={data?.decisionDefinitions}
+            value={definitions.data?.decisionDefinitions}
           />
           <Tile
             to="/cockpit/deployments"
             icon={PackageOpen}
             label={t('cockpit.dashboard.deployments')}
-            value={data?.deployments}
+            value={definitions.data?.deployments}
           />
         </div>
       )}
@@ -465,13 +483,13 @@ export function DashboardPage() {
         </Card>
 
         <Card title={t('cockpit.dashboard.assignment')} className="dashboard__wide">
-          {assignment.isError && !assignment.data ? (
-            <ErrorState error={assignment.error} onRetry={() => void assignment.refetch()} />
-          ) : !assignment.data ? (
+          {totals.isError && !assignment ? (
+            <ErrorState error={totals.error} onRetry={() => void totals.refetch()} />
+          ) : !assignment ? (
             <Loading label={t('state.loading')}>
               <Skeleton lines={3} />
             </Loading>
-          ) : assignment.data.assigned + assignment.data.withGroups + assignment.data.unassigned === 0 ? (
+          ) : assignment.assigned + assignment.withGroups + assignment.unassigned === 0 ? (
             <EmptyState icon={ListChecks} title={t('cockpit.dashboard.noTasks')} />
           ) : (
             <PartsBar
@@ -480,19 +498,19 @@ export function DashboardPage() {
                 {
                   key: 'assigned',
                   label: t('cockpit.dashboard.tasksAssigned'),
-                  value: assignment.data.assigned,
+                  value: assignment.assigned,
                   series: 1,
                 },
                 {
                   key: 'groups',
                   label: t('cockpit.dashboard.tasksWithGroups'),
-                  value: assignment.data.withGroups,
+                  value: assignment.withGroups,
                   series: 2,
                 },
                 {
                   key: 'unassigned',
                   label: t('cockpit.dashboard.tasksUnassigned'),
-                  value: assignment.data.unassigned,
+                  value: assignment.unassigned,
                   series: 3,
                 },
               ]}

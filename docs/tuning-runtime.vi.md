@@ -20,15 +20,19 @@ Mỗi job đang chạy giữ một kết nối cơ sở dữ liệu, như mọi 
 
 | Thiết lập | Đến 1.1 (Run, image) | Sau 1.1 (Run, image) | Mặc định của engine / starter |
 |---|---|---|---|
-| `camunda.bpm.job-execution.core-pool-size` | 3 | 10 | 3 |
+| `camunda.bpm.job-execution.core-pool-size` | 3 | 10 (theo `max-pool-size`) | 3 |
 | `camunda.bpm.job-execution.max-pool-size` | 10 | 10 | 10 |
 | `camunda.bpm.job-execution.queue-capacity` | 3 | 10 | 3 |
 | `camunda.bpm.job-execution.max-jobs-per-acquisition` | 3 | 10 | 3 |
+| `camunda.bpm.job-execution.lock-time-in-millis` | 300000 (5 phút) | 300000 | 300000 |
 | `spring.datasource.hikari.maximum-pool-size` | 10 (mặc định HikariCP) | 20 | 10 |
+| `spring.datasource.hikari.minimum-idle` | 10 (= số tối đa) | 10 | = số tối đa |
 
 Giá trị mới được đặt trong `configuration/default.yml` và `production.yml` của Fasti BPM Run và
 trong cấu hình của container image; ứng dụng nhúng starter giữ mặc định ở cột cuối và tự đặt thứ
-mình cần.
+mình cần. **Bản cài Run giữ lại các tệp cấu hình từ 1.1** thì vẫn dùng giá trị cũ: chép khối
+`camunda.bpm.job-execution` và các dòng `hikari` của `spring.datasource` từ tệp mới sang tệp được
+giữ lại.
 
 Vì sao chọn các giá trị này:
 
@@ -39,11 +43,17 @@ Vì sao chọn các giá trị này:
   bị khóa cho đến khi được thử lại); hàng đợi quá lớn khiến một node khóa những job nó chưa chạy
   ngay được, và node khác không lấy được chúng.
 - **Số luồng lõi bằng số tối đa.** Pool luồng chỉ tăng quá `core-pool-size` khi hàng đợi đầy, nên
-  với số lõi nhỏ hơn thì phần lớn luồng không bao giờ được tạo.
+  với số lõi nhỏ hơn thì phần lớn luồng không bao giờ được tạo. Các tệp đi kèm đặt
+  `core-pool-size: ${camunda.bpm.job-execution.max-pool-size:10}`, nên chỉ hạ số tối đa (ví dụ
+  `CAMUNDA_BPM_JOB_EXECUTION_MAX_POOL_SIZE=4` cho một cơ sở dữ liệu nhỏ) là hạ cả hai. Một
+  `core-pool-size` lớn hơn `max-pool-size` (pool luồng không thể có nhiều luồng lõi hơn số tối đa)
+  được starter hạ xuống bằng số tối đa, kèm một cảnh báo, thay vì làm node không khởi động được.
 - **Pool = luồng job + phần dự trữ.** Với mười luồng job và pool mười kết nối, mười job chạy lâu
   có thể giữ hết kết nối trong khi các yêu cầu và kiểm tra readiness (`db`) phải chờ. Tính pool
   bằng `max-pool-size` + số yêu cầu dùng cơ sở dữ liệu cùng lúc + 2 (lấy job và việc nền); 20 để
-  chỗ cho khoảng tám yêu cầu đồng thời.
+  chỗ cho khoảng tám yêu cầu đồng thời. Node đang rảnh giữ mở `minimum-idle` kết nối (10, bằng số
+  kết nối đến 1.1) và chỉ mở thêm, tối đa 20, khi có tải; HikariCP đóng các kết nối dư sau
+  `idle-timeout` (10 phút).
 
 Số job async mỗi giây của một node Run trên PostgreSQL 16 (2.000 phiên bản của một quy trình có
 một service task bất đồng bộ, các job được thả cùng lúc; mỗi cấu hình chạy ba lần, xen kẽ nhau, mỗi
@@ -63,10 +73,37 @@ Muốn nhiều hơn:
 - Thêm luồng job chỉ có ích khi cơ sở dữ liệu và CPU của node còn dư. Tăng `max-pool-size`,
   `core-pool-size`, `queue-capacity` và `max-jobs-per-acquisition` cùng nhau, và tăng
   `maximum-pool-size` thêm từng đó.
-- **Kết nối:** tổng của mọi node phải thấp hơn giới hạn kết nối của cơ sở dữ liệu
-  (`max_connections` × số node). Image nhận `DB_CONN_MAXACTIVE` hoặc
-  `SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE`. Pool 20 thay vì 10 nghĩa là một node có thể mở gấp
-  đôi số kết nối; kiểm tra giới hạn trước khi nâng cấp nhiều bản sao.
+- **Kết nối:** cơ sở dữ liệu phải nhận được mọi kết nối mà tất cả client của nó có thể mở cùng
+  lúc:
+
+  ```
+  tổng maximum-pool-size của mọi node (node Fasti và node Camunda 7.24)
+    + các client khác (công cụ quản trị, sao lưu, giám sát, migration)
+    + phần dự trữ của cơ sở dữ liệu (PostgreSQL: superuser_reserved_connections, mặc định 3)
+    < giới hạn kết nối của cơ sở dữ liệu (PostgreSQL, MySQL/MariaDB: max_connections)
+  ```
+
+  Tính số node ở mức cao nhất: khi tự co giãn là số bản sao tối đa, cộng các pod thêm của một lần
+  cập nhật cuốn chiếu (`maxSurge`). Ví dụ trên PostgreSQL với `max_connections=100`: bốn node
+  Fasti × 20 + một node Camunda 7.24 × 10 + 5 cho công cụ + 3 dự trữ = 98, vừa đủ. Pool 20 thay vì
+  10 nghĩa là một node có thể mở gấp đôi số kết nối khi có tải (lúc rảnh nó giữ `minimum-idle`);
+  kiểm tra giới hạn trước khi nâng cấp nhiều bản sao. Image nhận `DB_CONN_MAXACTIVE` /
+  `DB_CONN_MINIDLE` hoặc `SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE` /
+  `SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE`.
+- **Job độc quyền và thời gian khóa.** Các job của một lần lấy được khóa trong
+  `camunda.bpm.job-execution.lock-time-in-millis` (5 phút, như trên node Camunda 7.24). Các job
+  độc quyền (exclusive) của cùng một phiên bản quy trình trong số đó (continuation bất đồng bộ mặc
+  định là độc quyền) chạy lần lượt trong một luồng, và engine không kiểm tra lại khóa trước mỗi
+  job. Với 10 job mỗi lần lấy, một lô như vậy có thể dài tới 10 job thay vì 3, nên quỹ thời gian
+  cho mỗi job giảm từ khoảng 100 xuống khoảng 30 giây: khi khóa hết hạn mà lô vẫn đang chạy, một
+  node khác (Fasti hoặc Camunda 7.24) lấy phần còn lại và thực thi lần thứ hai; xung đột khóa lạc
+  quan hoàn tác một lần thực thi, nhưng các tác dụng bên ngoài cơ sở dữ liệu (gọi HTTP, gửi mail)
+  xảy ra hai lần. Quỹ thời gian đó cũng tính cả lúc lô chờ trong hàng đợi. Giữ
+  `max-jobs-per-acquisition` × job độc quyền chậm nhất (cộng thời gian chờ hàng đợi) dưới thời
+  gian khóa, hoặc tăng thời gian khóa (ví dụ 600000), hoặc giảm `max-jobs-per-acquisition`. Job
+  mất hàng chục giây nên là external task. Giá trị đi kèm vẫn là 5 phút: khóa dài hơn cũng khiến
+  các job mà một node đã khóa nhưng chưa chạy khi nó bị sập hoặc bị dừng cưỡng bức phải chờ chừng
+  ấy thời gian rồi node khác mới lấy được.
 - **Nhiều node:** mọi node lấy job từ cùng một bảng. Lần lấy càng lớn thì hai node càng dễ chọn
   trùng job; node thua khi khóa sẽ bỏ qua job đó (xung đột khóa lạc quan, vô hại). Giữ
   `max-jobs-per-acquisition` từ 16 trở xuống và đặt
@@ -115,8 +152,11 @@ liệu nằm trên máy khác:
 | PostgreSQL 16, +1 ms | 93 | 240 | +158 % (hai vòng) |
 | MariaDB 11.4 | 94 | 167 | +79 % |
 | MariaDB 11.4, +1 ms | 51 | 85 | +69 % |
-| H2 (tệp, trong JVM) | 711 | 645 | −9 % |
+| H2 (tệp, trong JVM) | 735 | 655 | −11 % |
 | H2, +1 ms | 150 | 397 | +166 % |
+
+Mức tăng phụ thuộc vào tải của máy: một loạt đo trước đó gồm ba vòng, không thêm thời gian chờ,
+cho PostgreSQL 208 → 355 (+71 %) và MariaDB 81 → 116 (+43 %). Hãy tính theo mức thấp.
 
 H2 chạy trong JVM và không có lượt đi về: khi nhiều giao dịch gửi lệnh engine cùng lúc hơn, nó tốn
 thời gian vào khóa nội bộ của chính nó. Đó là cơ sở dữ liệu cho phát triển.
@@ -147,15 +187,16 @@ mới thay thế). Chưa chạy thì mọi thứ vẫn hoạt động như trư�
 phải đọc cả bảng một lần; với bảng lớn hãy chạy ngoài giờ cao điểm.
 
 Thời gian cơ sở dữ liệu dành cho một câu lệnh, 2 triệu bản ghi kiểm toán trong 4 chuỗi (500 người
-thực hiện), trước (chỉ mục của 1.1, thứ tự hỗn hợp) và sau script nâng cấp (EXPLAIN ANALYZE;
-MariaDB với buffer pool mặc định 128 MB, trung vị của ba lần chạy khi bộ đệm đã nóng):
+thực hiện), trước (chỉ mục của 1.1, thứ tự hỗn hợp) và sau script nâng cấp (PostgreSQL
+`EXPLAIN ANALYZE`, MariaDB `ANALYZE FORMAT=JSON` với buffer pool mặc định 128 MB; mỗi câu lệnh chạy
+một lần sau khi `ANALYZE` bảng, nên hãy xem các giá trị như bậc độ lớn):
 
 | Câu lệnh | PostgreSQL 16 trước | sau | MariaDB 11.4 trước | sau |
 |---|---|---|---|---|
-| Trang đầu, mới nhất trước (25 bản ghi) | 0,13 ms | 0,05 ms | 28,9 s (sắp xếp cả 2 triệu) | 0,6 ms |
+| Trang đầu, mới nhất trước (25 bản ghi) | 0,13 ms | 0,05 ms | 25,3 s (sắp xếp cả 2 triệu) | 9 ms |
 | Trang ở vị trí 10.000 | 6,5 ms | 4,1 ms | – | – |
 | Trang đầu lọc theo loại | 0,07 ms | 0,06 ms | – | – |
-| Trang đầu lọc theo một người thực hiện (0,2 % số bản ghi) | 2,8 ms | 2,9 ms | 1,4 s | 4,3 s |
+| Trang đầu lọc theo một người thực hiện (0,2 % số bản ghi) | 2,8 ms | 2,9 ms | 1,3 s | 3,2 s |
 | Đếm mọi bản ghi | 202 ms | 176 ms | 2,3 s | 2,9 s |
 | Đếm với `maxCount=10000` | – | 1,8 ms | – | 17 ms |
 | Tạo chỉ mục (script nâng cấp) | | 5,9 s | | 26,7 s |
@@ -184,8 +225,14 @@ trị cũ hơn `fasti.metrics.engine.gauges.refresh-interval` (mặc định 30 
 lượt truy vấn trên luồng nền, kết quả dành cho lần scrape sau. Vì vậy một giá trị có thể cũ đến
 một chu kỳ làm mới cộng một chu kỳ scrape; trước khi lượt đầu xong, các gauge báo `NaN`. Một lệnh
 đếm chậm (bảng `ACT_RU_*` lớn không có chỉ mục phù hợp) không còn làm chậm hay làm quá hạn lần
-scrape.
+scrape. Lượt đầu chạy khi engine khởi động, kể cả trên node không bao giờ được scrape; sau đó node
+chỉ chạy các lệnh đếm trong lúc được scrape. Khi ứng dụng dừng, các gauge dừng trước khi engine
+đóng và giữ các giá trị cuối.
 
+- Một lượt đã chạy quá ba chu kỳ (một lệnh đếm chờ khóa, hoặc một kết nối đã chết mà không báo
+  lỗi) khiến mọi gauge báo `NaN` cho đến khi nó kết thúc, thay vì các giá trị cuối: trong cảnh báo,
+  hãy coi `NaN` như một lần scrape thất bại. Trong lúc đó lượt này giữ một kết nối của pool;
+  `camunda.bpm.generic-properties.properties.jdbc-statement-timeout` (giây) kết thúc nó.
 - Với cơ sở dữ liệu lớn, tăng chu kỳ (`60s` đến `5m`): mỗi node chạy sáu lệnh đếm một lần mỗi chu
   kỳ trong lúc nó được scrape.
 - `fasti.metrics.engine.gauges.enabled: false` trên mọi node trừ một node tránh N lượt giống hệt
@@ -196,7 +243,8 @@ scrape.
 Với chiến lược mặc định `end`, engine ghi thời điểm xóa cho toàn bộ lịch sử của một phiên bản quy
 trình gốc khi phiên bản đó kết thúc: một lệnh `update ACT_HI_… set REMOVAL_TIME_ = ? where
 ROOT_PROC_INST_ID_ = ?` cho mỗi bảng lịch sử, 16 câu lệnh trong giao dịch kết thúc phiên bản, phần
-lớn không khớp dòng nào.
+lớn không khớp dòng nào (17 khi bật `enableHistoricInstancePermissions`, vì khi đó
+`ACT_RU_AUTHORIZATION` cũng được cập nhật).
 
 `historyRemovalTimeStrategy: start` ghi thời điểm xóa cùng với từng dòng lịch sử ngay khi dòng
 được tạo (thời điểm bắt đầu của phiên bản gốc + thời gian lưu) và không gửi lệnh update nào trong
@@ -210,7 +258,7 @@ camunda.bpm:
 
 | | `end` (mặc định) | `start` |
 |---|---|---|
-| Câu lệnh khi một phiên bản gốc kết thúc | +16 lệnh update (mỗi bảng lịch sử một lệnh) | không có |
+| Câu lệnh khi một phiên bản gốc kết thúc | +16 lệnh update (mỗi bảng lịch sử một lệnh; 17 khi bật quyền trên phiên bản lịch sử) | không có |
 | Thời điểm xóa | lúc phiên bản gốc kết thúc + thời gian lưu | lúc phiên bản gốc bắt đầu + thời gian lưu |
 | Lịch sử của phiên bản chạy lâu hơn thời gian lưu | được giữ đến khi phiên bản kết thúc và hết thời gian lưu | **bị dọn lịch sử xóa trong khi phiên bản vẫn đang chạy** |
 | Thời gian lưu đổi sau khi bắt đầu | áp dụng khi phiên bản kết thúc | không áp dụng cho phiên bản đã bắt đầu (dùng batch "Set removal time") |
@@ -246,7 +294,9 @@ còn lại.
   `ParameterBindingBenchmark` (trong test của engine) gán 24 tham số của một lệnh insert trên H2:
   lớp bọc thường tốn ít hơn 13 đến 18 % thời gian so với proxy trong ba lần chạy, tức 0,2 đến
   0,4 µs mỗi câu lệnh. Nhỏ với từng câu lệnh, nhưng áp dụng cho mọi tham số của mọi câu lệnh và mọi
-  dòng của một lô JDBC.
+  dòng của một lô JDBC. Trong lúc MyBatis ghi log các câu lệnh của một mapper ở mức `DEBUG` (ví dụ
+  `org.camunda.bpm.engine.impl.persistence.entity`), lớp bọc ghi log của nó trông như một lời gọi
+  stored procedure, và các câu lệnh đó được gán tham số qua proxy như trước.
 
 - **Lệnh không ghi nhận gì** (truy vấn) không còn sao chép các thao tác hàng loạt của lệnh để tìm
   deployment khi bật nhật ký kiểm toán.
@@ -262,5 +312,5 @@ còn lại.
 | `jdbcBatchProcessing` | `true` | giữ nguyên: các câu lệnh của một lệnh được gửi đến cơ sở dữ liệu theo lô |
 | Mức lịch sử | `full` trong Run và starter | `full` ghi khoảng gấp đôi số dòng lịch sử so với `audit`; quy tắc bốn mắt và nhật ký thao tác người dùng cần `full` |
 | `historyCleanupBatchWindowStartTime` / `…EndTime` | chưa đặt | không có khung giờ thì dọn lịch sử chỉ chạy khi khởi động bằng tay; hãy đặt khung giờ, và thời gian lưu cho mọi định nghĩa |
-| `camunda.bpm.generic-properties.properties.jdbc-statement-timeout` | chưa đặt | số giây sau đó một câu lệnh bị hủy, để một truy vấn bất thường không giữ mãi một kết nối |
+| `camunda.bpm.generic-properties.properties.jdbc-statement-timeout` | chưa đặt | số giây sau đó một câu lệnh bị hủy, để một truy vấn bất thường (hoặc một lượt gauge bị treo) không giữ mãi một kết nối |
 | `fasti.absence.enabled` | bật trong Run, tắt trong image | thêm một lần đọc thông tin vắng mặt của người dùng cho mỗi lần giao việc cho người khác |

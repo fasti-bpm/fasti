@@ -23,6 +23,20 @@ forum Camunda dan GitHub, misalnya:
 | Mengunduh BPMN XML yang telah di-deploy | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Ya |
 | Label yang konsisten, beberapa bahasa | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 bahasa; di dalam editor BPMN, DMN, dan formulir, label bawaan editor hanya tersedia dalam bahasa Inggris dan Vietnam |
 
+<a id="cases-cmmn"></a>
+
+## Kasus (CMMN)
+
+Kasus yang dimodelkan dalam CMMN 1.1 dan di-deploy sebagai berkas `.cmmn` dipantau dan dikerjakan
+di antarmuka baru: Cockpit → Kasus (CMMN) menampilkan definisi kasus dengan versi, diagram, dan
+instans terbukanya; sebuah instans kasus menampilkan status setiap item rencana dan menyediakan
+transisi manual mulai, selesaikan, nonaktifkan, aktifkan lagi, dan hentikan (tindakan yang tidak
+dapat dibatalkan meminta konfirmasi), serta tugas, variabel, dan riwayat; Cockpit → Riwayat kasus
+mencantumkan instans kasus yang terbuka maupun ditutup. Di Tasklist, tugas dari sebuah kasus
+menampilkan kasusnya, menautkan instans kasus, dan menggambar diagram kasus. Fasti menggambar
+diagram dari CMMNDI model; pustaka cmmn-js tidak dipakai karena tidak lagi
+dipelihara (rilis terakhir 0.20.0).
+
 <a id="web-application-path-fasti"></a>
 
 ## Path aplikasi web: `/fasti`

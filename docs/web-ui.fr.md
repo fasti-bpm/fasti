@@ -23,6 +23,21 @@ forum Camunda et sur GitHub, par exemple :
 | Télécharger le XML BPMN déployé | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Oui |
 | Libellés cohérents, plusieurs langues | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 langues ; dans les éditeurs BPMN, DMN et de formulaires, les libellés intégrés ne sont qu’en anglais et en vietnamien |
 
+<a id="cases-cmmn"></a>
+
+## Dossiers (CMMN)
+
+Les dossiers modélisés en CMMN 1.1 et déployés sous forme de fichiers `.cmmn` sont suivis et
+traités dans la nouvelle interface : Cockpit → Dossiers (CMMN) affiche les définitions de dossier
+avec leurs versions, leur diagramme et leurs instances ouvertes ; une instance de dossier montre
+l’état de chaque élément de plan et propose les transitions manuelles démarrer, achever,
+désactiver, réactiver et interrompre (les actions irréversibles demandent confirmation), ainsi
+que les tâches, variables et l’historique ; Cockpit → Historique des dossiers liste les instances
+ouvertes et clôturées. Dans la Tasklist, une tâche d’un dossier affiche son dossier, renvoie à
+l’instance de dossier et dessine le diagramme. Fasti dessine les diagrammes à partir du CMMNDI du
+modèle ; la bibliothèque cmmn-js, qui n’est plus maintenue
+(dernière version 0.20.0), n’est pas utilisée.
+
 <a id="web-application-path-fasti"></a>
 
 ## Chemin des applications web : `/fasti`

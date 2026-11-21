@@ -21,6 +21,30 @@ trên diễn đàn Camunda và GitHub, ví dụ:
 | Tải XML BPMN đã triển khai | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Có |
 | Nhãn nhất quán, nhiều ngôn ngữ | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 ngôn ngữ; bên trong trình soạn BPMN, DMN và biểu mẫu, nhãn có sẵn của trình soạn chỉ có tiếng Anh và tiếng Việt |
 
+<a id="cases-cmmn"></a>
+
+## Hồ sơ (CMMN)
+
+Hồ sơ mô hình hóa bằng CMMN 1.1 và triển khai dưới dạng tệp `.cmmn` được giám sát và xử lý ngay
+trong giao diện web mới; không cần đến các ứng dụng cổ điển nữa:
+
+- **Giám sát → Hồ sơ (CMMN):** mọi định nghĩa hồ sơ với các phiên bản, tenant và số lượt chạy
+  chưa đóng; một phiên bản với sơ đồ (số trên các mục kế hoạch đang hoạt động hoặc chờ bắt đầu)
+  và các lượt chạy chưa đóng, tìm theo mã nghiệp vụ. Có thể tạo lượt chạy hồ sơ mới tại đây.
+- **Một lượt chạy hồ sơ:** trạng thái, sơ đồ với trạng thái từng mục kế hoạch, các mục kế hoạch
+  cùng các thao tác thủ công mà engine cho phép (bắt đầu, hoàn tất, vô hiệu hóa, bật lại, chấm
+  dứt), công việc, biến và lịch sử. Hoàn tất, chấm dứt và đóng đều hỏi xác nhận trước. Lượt chạy
+  đã đóng được hiển thị chỉ đọc từ lịch sử.
+- **Giám sát → Lịch sử hồ sơ:** các lượt chạy hồ sơ, chưa đóng hoặc đã đóng, tìm theo mã nghiệp vụ.
+- **Tasklist:** công việc của hồ sơ hiển thị tên hồ sơ và mã nghiệp vụ, liên kết đến lượt chạy hồ
+  sơ và vẽ sơ đồ hồ sơ với mục kế hoạch của công việc được tô sáng; biểu mẫu được hoàn tất như
+  mọi công việc khác.
+- Ô tìm kiếm (Ctrl K) tìm lượt chạy hồ sơ theo ID hoặc mã nghiệp vụ; trang triển khai vẽ các tệp
+  `.cmmn`.
+
+Sơ đồ hồ sơ do chính Fasti vẽ (chỉ đọc) từ phần diagram interchange (CMMNDI) của mô hình; không
+dùng thư viện cmmn-js vì nó không còn được bảo trì (bản phát hành cuối là 0.20.0).
+
 <a id="web-application-path-fasti"></a>
 
 ## Đường dẫn web app: `/fasti`

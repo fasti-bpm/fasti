@@ -21,6 +21,31 @@ Camunda forum and on GitHub, for example:
 | Download the deployed BPMN XML | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Yes |
 | Consistent labels, several languages | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 languages; inside the BPMN, DMN and form editors the built-in labels are in English and Vietnamese only |
 
+<a id="cases-cmmn"></a>
+
+## Cases (CMMN)
+
+Cases modelled in CMMN 1.1 and deployed as `.cmmn` files are monitored and worked on in the new
+web UI; the classic applications are no longer needed for them:
+
+- **Cockpit → Cases (CMMN):** every case definition with its versions, tenant and open
+  instances; a version with its diagram (numbers on the plan items that are active or wait to be
+  started) and its open instances, found by business key. A new case instance can be created
+  there.
+- **A case instance:** its state, the diagram with the state of every plan item, the plan items
+  with the manual transitions the engine allows (start, complete, disable, enable again,
+  terminate), its tasks, variables and history. Completing, terminating and closing ask first.
+  A closed case instance is shown read only from the history.
+- **Cockpit → Case history:** case instances, open or closed, by business key.
+- **Tasklist:** a task of a case shows its case and business key, links to the case instance and
+  draws the case diagram with its plan item marked; its form is completed like any other.
+- The search (Ctrl K) finds case instances by ID or business key, and the deployment page draws
+  `.cmmn` resources.
+
+The case diagrams are drawn read only from the diagram interchange (CMMNDI) of the model by Fasti
+itself; the cmmn-js library is not used, as it is no
+longer maintained (last release 0.20.0).
+
 <a id="web-application-path-fasti"></a>
 
 ## Web application path: `/fasti`

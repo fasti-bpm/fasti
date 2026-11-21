@@ -23,6 +23,19 @@
 | 배포된 BPMN XML 다운로드 | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | 지원 |
 | 일관된 레이블, 다국어 지원 | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13개 언어. BPMN, DMN, 폼 편집기 안의 기본 제공 레이블은 영어와 베트남어만 지원 |
 
+<a id="cases-cmmn"></a>
+
+## 케이스 (CMMN)
+
+CMMN 1.1로 모델링하고 `.cmmn` 파일로 배포한 케이스를 새 UI에서 모니터링하고 처리합니다.
+Cockpit → 케이스 (CMMN)는 케이스 정의를 버전, 다이어그램, 닫히지 않은 인스턴스와 함께 보여 줍니다.
+케이스 인스턴스는 각 계획 항목의 상태를 보여 주고 수동 전환(시작, 완료, 비활성화, 다시 활성화,
+종료)을 제공하며(되돌릴 수 없는 작업은 확인을 요청), 태스크, 변수, 이력도 보여 줍니다.
+Cockpit → 케이스 이력은 열린 케이스와 닫힌 케이스 인스턴스를 나열합니다. Tasklist에서 케이스의
+태스크는 케이스를 표시하고 케이스 인스턴스로 연결하며 케이스 다이어그램을 그립니다. 다이어그램은
+모델의 CMMNDI로부터 Fasti가 직접 그리며, 더 이상 유지 관리되지 않는 cmmn-js
+라이브러리(마지막 릴리스 0.20.0)는 사용하지 않습니다.
+
 <a id="web-application-path-fasti"></a>
 
 ## 웹 애플리케이션 경로: `/fasti`

@@ -23,6 +23,20 @@ foro de Camunda y en GitHub, por ejemplo:
 | Descargar el XML BPMN desplegado | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Sí |
 | Etiquetas coherentes, varios idiomas | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 idiomas; dentro de los editores de BPMN, DMN y formularios, las etiquetas integradas solo están en inglés y vietnamita |
 
+<a id="cases-cmmn"></a>
+
+## Casos (CMMN)
+
+Los casos modelados en CMMN 1.1 y desplegados como archivos `.cmmn` se supervisan y trabajan en
+la nueva interfaz: Cockpit → Casos (CMMN) muestra las definiciones de caso con sus versiones,
+diagrama e instancias abiertas; una instancia de caso muestra el estado de cada elemento del plan
+y ofrece las transiciones manuales iniciar, completar, deshabilitar, volver a habilitar y
+terminar (las acciones irreversibles piden confirmación), además de tareas, variables e
+historial; Cockpit → Historial de casos lista las instancias abiertas y cerradas. En la Tasklist,
+una tarea de un caso muestra su caso, enlaza la instancia de caso y dibuja el diagrama del caso.
+Fasti dibuja los diagramas a partir del CMMNDI del modelo; no se usa la biblioteca cmmn-js,
+que ya no se mantiene (última versión 0.20.0).
+
 <a id="web-application-path-fasti"></a>
 
 ## Ruta de la aplicación web: `/fasti`

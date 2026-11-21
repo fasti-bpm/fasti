@@ -136,6 +136,21 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   retry failed jobs exist only with `fasti.mcp.write-tools.enabled=true`; no tool deploys
   models or evaluates expressions or scripts of the caller. Requests with a foreign `Origin`
   are refused (DNS rebinding), results are paged and limited. Off by default everywhere.
+- Cases (CMMN) in the new web UI ([docs](docs/web-ui.md#cases-cmmn)): **Cockpit → Cases (CMMN)**
+  lists the case definitions with their versions, tenant and open instances; a version shows its
+  diagram with the number of active or enabled plan items and its open instances, and creates new
+  ones; a case instance shows the state of every plan item on the diagram and in a list with the
+  manual transitions the engine allows (start, complete, disable, enable again, terminate), its
+  tasks, variables (editable) and the history of its plan items, and completes, terminates or
+  closes the case. Irreversible actions ask first, refusals of the engine name their reason, and
+  closed instances are shown read only from the history. **Cockpit → Case history** lists open
+  and closed case instances. In the Tasklist a task of a case is named by its case and business
+  key, links to its case instance and draws the case diagram; embedded forms of such tasks may read
+  their own case instance. The search finds case instances by ID or business key, and deployments
+  draw `.cmmn` resources. The diagrams are drawn read only by Fasti from the CMMNDI of the model
+  (no cmmn-js), loaded with the case pages only. The classic Cockpit only counted case
+  definitions and drew `.cmmn` resources of deployments; this is a step towards retiring the
+  AngularJS applications.
 
 ### Changed
 

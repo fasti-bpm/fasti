@@ -23,6 +23,17 @@ Camunda 论坛和 GitHub 上公开提出的需求，例如：
 | 下载已部署的 BPMN XML | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | 支持 |
 | 一致的标签、多语言支持 | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 种语言；BPMN、DMN 和表单编辑器内置的标签仅有英语和越南语 |
 
+<a id="cases-cmmn"></a>
+
+## 案例 (CMMN)
+
+使用 CMMN 1.1 建模并以 `.cmmn` 文件部署的案例可在新界面中监控和处理：Cockpit → 案例 (CMMN)
+显示案例定义及其版本、案例图和未关闭的实例；案例实例显示每个计划项的状态，并提供手动转换
+（启动、完成、禁用、重新启用、终止，不可撤销的操作会先确认），以及任务、变量和历史；
+Cockpit → 案例历史列出未关闭和已关闭的案例实例。在 Tasklist 中，案例的任务会显示其案例、链接到
+案例实例并绘制案例图。案例图由 Fasti 根据模型的 CMMNDI 自行绘制，不使用已停止维护的
+cmmn-js 库（最后版本 0.20.0）。
+
 <a id="web-application-path-fasti"></a>
 
 ## Web 应用路径：`/fasti`

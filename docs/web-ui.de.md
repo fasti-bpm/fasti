@@ -23,6 +23,20 @@ Camunda-Forum und auf GitHub ausgewählt, zum Beispiel:
 | Bereitgestelltes BPMN-XML herunterladen | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | Ja |
 | Einheitliche Bezeichnungen, mehrere Sprachen | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 Sprachen; in den BPMN-, DMN- und Formular-Editoren sind die eingebauten Bezeichnungen nur auf Englisch und Vietnamesisch |
 
+<a id="cases-cmmn"></a>
+
+## Fälle (CMMN)
+
+In CMMN 1.1 modellierte und als `.cmmn`-Dateien deployte Fälle werden in der neuen Oberfläche
+überwacht und bearbeitet: Cockpit → Fälle (CMMN) zeigt Falldefinitionen mit Versionen, Diagramm
+und offenen Instanzen; eine Fallinstanz zeigt den Zustand jedes Planelements und bietet die
+manuellen Übergänge Starten, Abschließen, Deaktivieren, Wieder aktivieren und Beenden (nicht
+umkehrbare Aktionen werden bestätigt), dazu Aufgaben, Variablen und Historie; Cockpit →
+Fallhistorie listet offene und geschlossene Fallinstanzen. In der Tasklist zeigt eine Aufgabe
+eines Falls den Fall, verlinkt die Fallinstanz und zeichnet das Falldiagramm. Die Diagramme
+zeichnet Fasti selbst aus dem CMMNDI des Modells; die nicht mehr gepflegte Bibliothek cmmn-js
+(letzte Version 0.20.0) wird nicht verwendet.
+
 <a id="web-application-path-fasti"></a>
 
 ## Pfad der Webanwendung: `/fasti`

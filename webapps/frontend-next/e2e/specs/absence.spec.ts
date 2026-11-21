@@ -3,7 +3,7 @@
  * Copyright Fasti BPM contributors
  */
 import type { Page } from '@playwright/test';
-import { expect, open, test } from '../support/test';
+import { expect, open, requireFeature, test } from '../support/test';
 import { PREFIX, user } from '../support/env';
 import { dialog } from '../support/ui';
 import { createFilter } from '../support/data';
@@ -39,7 +39,7 @@ async function noHorizontalScroll(page: Page): Promise<boolean> {
 test.describe('Absence', () => {
   test.beforeEach(async ({ api }) => {
     const status = await api.get<{ enabled: boolean }>(`user/${user}/absence`);
-    test.skip(!status.enabled, 'absences are not enabled on this server (fasti.absence.enabled)');
+    requireFeature(status.enabled, 'absences are not enabled on this server (fasti.absence.enabled)');
   });
 
   test('a user records an absence in the preferences and sees it in the tasklist', async ({ app, api }) => {

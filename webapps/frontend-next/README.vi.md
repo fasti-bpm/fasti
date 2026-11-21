@@ -74,6 +74,11 @@ E2E_BASE_URL=http://localhost:18800/fasti/ npm run e2e  # mặc định là đ�
 Biến khác: `E2E_USER`, `E2E_PASSWORD`, `E2E_ENGINE`, `E2E_KEEP_DATA=1` (giữ dữ liệu thử).
 Báo cáo HTML và dấu vết nằm trong `target/e2e/`.
 
+Các kiểm thử về người thay thế khi vắng mặt, kiểm soát bốn mắt và nhật ký kiểm toán được bỏ qua
+trên máy chủ tắt tính năng đó (`fasti.absence.enabled`, `fasti.four-eyes.enabled`,
+`fasti.audit.enabled`). Khi biến `CI` được đặt, chúng thất bại thay vì bị bỏ qua, để pipeline
+không báo một tính năng là đã kiểm thử khi chưa hề chạy; container của CI bật cả ba.
+
 #### Đăng nhập một lần (SSO)
 
 Bộ riêng `e2e/sso/` kiểm thử đăng nhập qua nhà cung cấp OpenID Connect thật (ví dụ Keycloak)

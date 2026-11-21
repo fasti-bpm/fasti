@@ -77,6 +77,11 @@ E2E_BASE_URL=http://localhost:18800/fasti/ npm run e2e  # this address is the de
 Other variables: `E2E_USER`, `E2E_PASSWORD`, `E2E_ENGINE`, `E2E_KEEP_DATA=1` (keeps the test
 data). The HTML report and traces are written to `target/e2e/`.
 
+The tests of substitutes during absence, the four-eyes control and the audit trail are skipped
+on a server that has the feature off (`fasti.absence.enabled`, `fasti.four-eyes.enabled`,
+`fasti.audit.enabled`). With `CI` set they fail instead, so that a pipeline cannot report a
+feature as tested that was never exercised; the CI container is started with all three on.
+
 #### Single sign-on (SSO)
 
 The separate suite `e2e/sso/` tests the login through a real OpenID Connect provider (for

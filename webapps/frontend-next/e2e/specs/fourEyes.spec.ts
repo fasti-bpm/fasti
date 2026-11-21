@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright Fasti BPM contributors
  */
-import { expect, open, test } from '../support/test';
+import { expect, open, requireFeature, test } from '../support/test';
 import { PREFIX, user } from '../support/env';
 import { Api, waitFor, type Task } from '../support/api';
 import { createFilter } from '../support/data';
@@ -30,7 +30,7 @@ test.describe('Four-eyes control', () => {
     const instance = await api.startProcess('e2e_four_eyes', { drafter: user, approver: user }, `${PREFIX}-four-eyes`);
     const draft = await onlyTask(api, instance.id, 'draft');
     const probe = await api.get<FourEyesStatus>(`task/${draft.id}/four-eyes`);
-    test.skip(!probe.enabled, 'the four-eyes control is not enabled on this server (fasti.four-eyes.enabled)');
+    requireFeature(probe.enabled, 'the four-eyes control is not enabled on this server (fasti.four-eyes.enabled)');
     let other: Api | null = null;
     const filterId = await createFilter(api, `${PREFIX} four eyes ${Date.now()}`, 'e2e_four_eyes');
     try {

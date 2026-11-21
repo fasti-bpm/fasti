@@ -17,6 +17,18 @@ const BENIGN_CONSOLE_ERRORS: RegExp[] = [
   /Failed to load resource: the server responded with a status of (401|404)/,
 ];
 
+/**
+ * For a test of a feature the server may have off: skipped there, as the suite also runs against
+ * servers set up otherwise. Not in CI, where the server is started with these features on and a
+ * skipped test would be reported like one that passed.
+ */
+export function requireFeature(enabled: boolean, reason: string): void {
+  if (!enabled && process.env.CI) {
+    throw new Error(`${reason}; the server the tests run against in CI must have it on`);
+  }
+  base.skip(!enabled, reason);
+}
+
 interface Problems {
   messages: string[];
 }

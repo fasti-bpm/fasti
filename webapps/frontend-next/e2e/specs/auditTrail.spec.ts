@@ -3,7 +3,7 @@
  * Copyright Fasti BPM contributors
  */
 import { readFileSync } from 'node:fs';
-import { expect, open, test } from '../support/test';
+import { expect, open, requireFeature, test } from '../support/test';
 import { PREFIX, user } from '../support/env';
 import { waitFor } from '../support/api';
 
@@ -22,7 +22,7 @@ interface AuditEvent {
 test.describe('Audit trail', () => {
   test('records who did what to a case, verifies it and exports it', async ({ app, api }) => {
     const status = await api.get<AuditStatus>('audit');
-    test.skip(!status.enabled, 'the audit trail is not enabled on this server (fasti.audit.enabled)');
+    requireFeature(status.enabled, 'the audit trail is not enabled on this server (fasti.audit.enabled)');
     const businessKey = `${PREFIX}-audit-${Date.now()}`;
     await api.deploy(`${PREFIX}-audit`, ['e2e-audit.bpmn']);
     const instance = await api.startProcess('e2e_audit', { assignee: user }, businessKey);
@@ -48,7 +48,10 @@ test.describe('Audit trail', () => {
 
     // verifying finds the trail intact
     await app.getByRole('button', { name: 'Verify integrity' }).click();
-    await expect(app.getByText(/^Intact: \d+ records in \d+ chains verified$/)).toBeVisible();
+    const intact = /^Intact: [\d,]+ records? in [\d,]+ chains? verified$/;
+    await expect(app.getByRole('note').getByText(intact)).toBeVisible();
+    // and it is announced: by a live region, next to the notice
+    await expect(app.getByRole('status').getByText(intact)).toHaveCount(1);
 
     // the export is a file of the server and is itself recorded
     const download = app.waitForEvent('download');

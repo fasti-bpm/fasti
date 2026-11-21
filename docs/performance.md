@@ -66,8 +66,8 @@ A second group is in the scripts as comments. Create those only for the usage na
   `ACT_RU_EXECUTION` (`LOCK_OWNER_`, `LOCK_EXP_TIME_`, `REV_`).
 - To roll back, run the drop script. It can run while nodes are running, but like the create
   script it needs a short exclusive lock on each table (see [On a busy cluster](#busy-cluster)).
-  On PostgreSQL and MariaDB the schema after the drop script was compared with the schema before
-  the create script (`pg_dump --schema-only`, `mariadb-dump --no-data`): identical. On H2 an
+  On PostgreSQL and MariaDB (first version of the scripts) the schema after the drop script was
+  compared with the schema before the create script (`pg_dump --schema-only`, `mariadb-dump --no-data`): identical. On H2 an
   automated test runs both scripts twice, with the second group, and compares the indexes.
 
 ### Applying them
@@ -113,13 +113,16 @@ When a timeout hits, nothing is half done: run the script again later (it skips 
 Prefer a quiet period for the first run on a large production database.
 
 **Verified**: PostgreSQL 16 and MariaDB 11.4 (both scripts run twice each, plans and write cost
-measured below). **Not verified**: MySQL (only MariaDB was run), Oracle, SQL Server and Db2.
+measured below; this was done with the first version of the scripts, before the lock timeouts,
+the job index without partial index support and the re-runnable second group were added, which
+so far ran on H2 only). **Not verified**: MySQL (only MariaDB was run), Oracle, SQL Server and Db2.
 Those scripts were reviewed for syntax only and say so in their header; run them on a test system
 first. On Oracle and Db2 check in particular that job acquisition with
 `jobExecutorAcquireByDueDate=true` does not scan the whole new index when nothing is due (see
-[Job acquisition](#job-acquisition)). The startup check (below) was run against PostgreSQL 16,
-MariaDB 11.4 and H2; its catalog queries for MySQL 8, Oracle, SQL Server and Db2 have not been
-run.
+[Job acquisition](#job-acquisition)). The startup check (below) runs against H2 in the automated
+tests; its first version was also run against PostgreSQL 16 and MariaDB 11.4 (the current catalog
+queries of those two, with access method, null order and the predicate without functions, not
+yet). Its catalog queries for MySQL 8, Oracle, SQL Server and Db2 have not been run.
 
 ## Hints at engine start
 

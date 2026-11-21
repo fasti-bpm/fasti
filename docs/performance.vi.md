@@ -64,7 +64,7 @@ Nhóm thứ hai nằm trong script dưới dạng chú thích. Chỉ tạo khi c
   `ACT_RU_JOB` và `ACT_RU_EXECUTION` (`LOCK_OWNER_`, `LOCK_EXP_TIME_`, `REV_`).
 - Muốn quay lui, chạy script xóa. Nó chạy được khi các node đang chạy, nhưng cũng như script tạo,
   nó cần một khóa độc quyền ngắn trên từng bảng (xem [Trên cụm đang bận](#cum-dang-ban)). Trên
-  PostgreSQL và MariaDB, schema sau script xóa đã được so với schema trước script tạo
+  PostgreSQL và MariaDB (phiên bản đầu của script), schema sau script xóa đã được so với schema trước script tạo
   (`pg_dump --schema-only`, `mariadb-dump --no-data`): giống hệt. Trên H2, một test tự động chạy
   cả hai script hai lần, kèm nhóm thứ hai, và so sánh các chỉ mục.
 
@@ -110,12 +110,16 @@ Khi gặp timeout, không có gì bị làm dở: chạy lại script sau (nó b
 liệu production lớn, nên chạy lần đầu vào lúc vắng tải.
 
 **Đã kiểm chứng**: PostgreSQL 16 và MariaDB 11.4 (mỗi script chạy hai lần, kế hoạch truy vấn và chi
-phí ghi đo ở dưới). **Chưa kiểm chứng**: MySQL (mới chỉ chạy trên MariaDB), Oracle, SQL Server và
+phí ghi đo ở dưới; việc này làm với phiên bản đầu của script, trước khi thêm timeout chờ khóa, chỉ mục
+job cho cơ sở dữ liệu không có partial index và nhóm hai chạy lại được, những phần mà đến nay mới chạy
+trên H2). **Chưa kiểm chứng**: MySQL (mới chỉ chạy trên MariaDB), Oracle, SQL Server và
 Db2. Các script đó mới chỉ được rà cú pháp và ghi rõ điều này ở phần đầu; hãy chạy thử trên hệ thống
 kiểm thử trước. Riêng Oracle và Db2, kiểm tra rằng việc lấy job với
 `jobExecutorAcquireByDueDate=true` không quét toàn bộ chỉ mục mới khi không có job nào đến hạn (xem
-[Lấy job](#lay-job)). Phần kiểm tra khi khởi động (bên dưới) đã chạy trên PostgreSQL 16, MariaDB 11.4
-và H2; các truy vấn danh mục của nó cho MySQL 8, Oracle, SQL Server và Db2 chưa từng được chạy.
+[Lấy job](#lay-job)). Phần kiểm tra khi khởi động (bên dưới) chạy trên H2 trong các test tự động; phiên
+bản đầu của nó cũng đã chạy trên PostgreSQL 16 và MariaDB 11.4 (các truy vấn danh mục hiện tại của hai
+hệ này, có phương thức truy cập, thứ tự NULL và điều kiện không bọc hàm, thì chưa). Các truy vấn danh
+mục của nó cho MySQL 8, Oracle, SQL Server và Db2 chưa từng được chạy.
 
 ## Cảnh báo khi engine khởi động
 

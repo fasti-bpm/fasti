@@ -77,18 +77,66 @@ export function useNewTaskNotices(listKey: string, tasks: TaskListItem[] | undef
   }, [listKey, tasks, enabled, t, toast]);
 }
 
-/** The switch for notices about new tasks; turning it on asks the browser for permission. */
-export function useNotifyPreference(): [boolean, () => void] {
+/** Whether the browser shows notifications of this page. */
+export function notificationsAllowed(): boolean {
+  return supported() && Notification.permission === 'granted';
+}
+
+/**
+ * The switch for notices about new tasks; turning it on asks the browser for permission. The
+ * third value says whether system notifications are allowed, so that the list is also read while
+ * the tab is in the background.
+ */
+export function useNotifyPreference(): [boolean, () => void, boolean] {
   const [on, setOn] = useState(() => readPreference<boolean>(PREFERENCE, false));
+  const [allowed, setAllowed] = useState(notificationsAllowed);
   const toggle = () => {
     const next = !on;
     setOn(next);
     writePreference(PREFERENCE, next);
     if (next && supported() && Notification.permission === 'default') {
-      void Notification.requestPermission();
+      void Notification.requestPermission().then(
+        () => setAllowed(notificationsAllowed()),
+        () => undefined,
+      );
     }
   };
-  return [on, toggle];
+  return [on, toggle, on && allowed];
+}
+
+/** With notices on, a new task is reported within this time, also by a list left alone. */
+export const NOTIFY_INTERVAL = 60_000;
+
+/**
+ * How often the task list is read again by itself, and whether also while the tab is hidden.
+ *
+ * - `interval` is the refresh of the page, already stretched while nobody is at the screen;
+ *   `minute` the same for once a minute.
+ * - A filter with refresh off is not read again, except for an urgency view (overdue, due
+ *   soon): it compares with now, and moves along once a minute as it always did.
+ * - With notices on, a list left alone is still read at least every minute, else a new task
+ *   would be reported minutes late; with system notifications allowed also while the tab is
+ *   hidden, which is when they are shown.
+ */
+export function taskListRefresh(options: {
+  interval: number | false;
+  minute: number | false;
+  refreshOff: boolean;
+  urgency: boolean;
+  notify: boolean;
+  notifyInBackground: boolean;
+}): { refetchInterval: number | false; refetchIntervalInBackground: boolean } {
+  if (options.refreshOff) {
+    return { refetchInterval: options.urgency ? options.minute : false, refetchIntervalInBackground: false };
+  }
+  const interval = options.interval;
+  if (!options.notify || interval === false) {
+    return { refetchInterval: interval, refetchIntervalInBackground: false };
+  }
+  return {
+    refetchInterval: Math.min(interval, NOTIFY_INTERVAL),
+    refetchIntervalInBackground: options.notifyInBackground,
+  };
 }
 
 export function NotifyToggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {

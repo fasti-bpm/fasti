@@ -388,26 +388,34 @@ export async function getFilterTasks(
   // the business key of an instance rarely changes after it starts, so a key read once is not
   // asked for again with every refresh of the list (for a few minutes)
   const generation = businessKeyGeneration;
-  const unknownIds = instanceIds.filter((id) => !knownBusinessKey(id));
+  // taken before the request: a key that expires while it runs is still shown this time
+  const known = new Map<string, string | null>();
+  for (const id of instanceIds) {
+    const entry = knownBusinessKey(id);
+    if (entry) known.set(id, entry.key);
+  }
+  const unknownIds = instanceIds.filter((id) => !known.has(id));
   const [instances, caseKeys] = await Promise.all([
     unknownIds.length > 0
       ? request<{ id: string; businessKey: string | null }[]>(`${engineApi()}/process-instance`, {
           query: { processInstanceIds: unknownIds.join(','), maxResults: unknownIds.length },
           signal: options.signal,
-        }).catch((): { id: string; businessKey: string | null }[] => [])
+        }).catch(() => null)
       : [],
     // the business keys of cases come from the history, which knows several at once
     caseIds.length > 0
       ? getCaseBusinessKeys(caseIds, options.signal).catch(() => new Map<string, string | null>())
       : null,
   ]);
-  const read = new Map(instances.map((instance) => [instance.id, instance.businessKey]));
-  if (generation === businessKeyGeneration) {
-    for (const [id, key] of read) rememberBusinessKey(id, key);
+  const read = new Map((instances ?? []).map((instance) => [instance.id, instance.businessKey]));
+  if (instances && generation === businessKeyGeneration) {
+    // an instance asked for and not returned is one the user may not read (a task permission
+    // does not cover the process instance): asking again with every refresh would not change that
+    for (const id of unknownIds) rememberBusinessKey(id, read.get(id) ?? null);
   }
   for (const task of tasks) {
     const id = task.processInstanceId;
-    task.businessKey = id ? (read.has(id) ? (read.get(id) ?? null) : (knownBusinessKey(id)?.key ?? null)) : null;
+    task.businessKey = id ? (read.get(id) ?? known.get(id) ?? null) : null;
   }
   if (caseKeys) {
     for (const task of tasks) {

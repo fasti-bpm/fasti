@@ -18,7 +18,7 @@ import { refreshTasks, useTaskActions } from './actions';
 import { FilterEditor } from './FilterEditor';
 import { FILTER_COUNTS_KEY, useCountedFilters, useTaskFilters } from './filterCounts';
 import { FilterList, FilterSelect } from './FilterList';
-import { NotifyToggle, useNewTaskNotices, useNotifyPreference } from './notifications';
+import { NotifyToggle, taskListRefresh, useNewTaskNotices, useNotifyPreference } from './notifications';
 import { toTaskQuery, type Criterion } from './search';
 import { isQueueView, minuteOf, queueQuery, queueSorting } from './queue';
 import { PAGE_SIZE, useTasklistLocation, useTasklistPreferences } from './state';
@@ -54,6 +54,8 @@ export function TasklistPage() {
   const [editing, setEditing] = useState<{ filterId: string | null } | null>(null);
 
   const refreshInterval = usePacedInterval(REFRESH_INTERVAL);
+  const minuteInterval = usePacedInterval(60_000);
+  const [notify, toggleNotify, notifyInBackground] = useNotifyPreference();
   /** the filter menu of narrow screens was opened: its entries show the task counts */
   const [filterMenuUsed, setFilterMenuUsed] = useState(false);
   const { filters, counts: filterCounts } = useTaskFilters({ collapsed: preferences.filtersCollapsed, menuUsed: filterMenuUsed });
@@ -116,7 +118,17 @@ export function TasklistPage() {
     [search.criteria, search.onlyMine, session.userId],
   );
   const taskQuery = useMemo(() => ({ search: searchQuery, queue }), [searchQuery, queue]);
-  const listInterval = filter?.properties?.refresh === false ? false : refreshInterval;
+  const refreshOff = filter?.properties?.refresh === false;
+  // what is read along with the list: the values on the cards, the substitution marks
+  const listInterval = refreshOff ? false : refreshInterval;
+  const listRefresh = taskListRefresh({
+    interval: refreshInterval,
+    minute: minuteInterval,
+    refreshOff,
+    urgency: queue !== 'all' && queue !== 'unclaimed',
+    notify,
+    notifyInBackground,
+  });
   const tasks = useQuery({
     queryKey: ['tasks', filterId, location.page, preferences.sorting, taskQuery],
     queryFn: ({ signal }) =>
@@ -132,7 +144,7 @@ export function TasklistPage() {
     // also before the filters are known: the list of the filter used last loads beside them
     enabled: !!filterId,
     placeholderData: keepPreviousData,
-    refetchInterval: listInterval,
+    ...listRefresh,
   });
   // the task list counts the tasks of its filter with every page: unless a search narrows the
   // list, that is the number the filter shows, without a request of its own
@@ -238,7 +250,6 @@ export function TasklistPage() {
       { replace: true },
     );
   }, [linked, setUrlParams, setPreferences]);
-  const [notify, toggleNotify] = useNotifyPreference();
   // only the first page shows the newest tasks of a filter sorted by creation
   useNewTaskNotices(
     JSON.stringify([filterId, taskQuery]),
@@ -495,6 +506,8 @@ export function TasklistPage() {
                 { cancelRefetch: false },
               );
             }}
+            // the counts of a closed menu are not read after every burst of task actions
+            onLeave={() => setFilterMenuUsed(false)}
           />
           {filter && (
             <IconButton

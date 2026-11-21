@@ -13,8 +13,8 @@ import { usePacedInterval } from '../lib/activity';
  * rarely changes and costs one request; the counts cost the server a task
  * query per filter, so they are read
  *
- * - only while they are shown (the filter pane is open, or the user opened the
- *   filter menu of a narrow screen),
+ * - only while they are shown (the filter pane is open, or the filter menu of a
+ *   narrow screen is in use),
  * - every two minutes instead of with every refresh of the task list,
  * - once after a burst of task actions, not after each of them.
  *
@@ -47,7 +47,7 @@ function useMediaQuery(query: string): boolean {
 export function useTaskFilters(options: {
   /** the user closed the filter pane */
   collapsed: boolean;
-  /** the user opened the filter menu that replaces the pane */
+  /** the filter menu that replaces the pane is in use (has the focus) */
   menuUsed: boolean;
 }) {
   const paneHidden = useMediaQuery(PANE_HIDDEN);

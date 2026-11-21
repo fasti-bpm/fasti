@@ -94,9 +94,12 @@ export function FilterSelect({
   selectedId,
   onSelect,
   onUse,
+  onLeave,
 }: Pick<FilterListProps, 'filters' | 'selectedId' | 'onSelect'> & {
   /** the user turns to the menu: its entries are about to be seen */
   onUse?: () => void;
+  /** the user turned away from the menu: its entries are not seen any more */
+  onLeave?: () => void;
 }) {
   const { t } = useI18n();
   if (!filters || filters.length === 0) {
@@ -111,6 +114,7 @@ export function FilterSelect({
         value={selectedId ?? ''}
         onFocus={onUse}
         onPointerDown={onUse}
+        onBlur={onLeave}
         onChange={(event) => onSelect(event.target.value)}
       >
         {filters.map((filter) => (

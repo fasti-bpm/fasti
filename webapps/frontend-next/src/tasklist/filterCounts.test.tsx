@@ -164,6 +164,42 @@ describe('filters and their task counts', () => {
     expect(server.find('POST', `${ENGINE}/filter/gone/list`)).toHaveLength(1);
   });
 
+  it('does not read the counts of a menu that was left after task actions', async () => {
+    writePreference('tasklist.demo', { filtersCollapsed: true });
+    const server = backend();
+    const user = userEvent.setup();
+    const queryClient = renderApp('/tasklist?filter=f1');
+    const menu = await screen.findByRole('combobox', { name: 'Filters' });
+    await screen.findByText('Task t1');
+    await user.click(menu);
+    await waitFor(() => expect(counted(server)).toHaveLength(1));
+
+    // the user turns away from the menu, then works on tasks
+    await user.tab();
+    refreshFilterCountsSoon(queryClient, 10);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(counted(server)).toHaveLength(1);
+
+    // back to the menu: the counts are old and read again
+    await user.click(menu);
+    await waitFor(() => expect(counted(server)).toHaveLength(2));
+  });
+
+  it('reads the task list at least every minute, also in the background, while notices are on', async () => {
+    vi.stubGlobal('Notification', { permission: 'granted' });
+    writePreference('tasklist.notify', true);
+    backend();
+    const queryClient = renderApp('/tasklist?filter=f1');
+    await screen.findByText('Task t1');
+
+    const options = queryClient
+      .getQueryCache()
+      .findAll({ queryKey: ['tasks', 'f1'] })
+      .flatMap((query) => query.observers.map((observer) => observer.options))
+      .map(({ refetchInterval, refetchIntervalInBackground }) => ({ refetchInterval, refetchIntervalInBackground }));
+    expect(options).toContainEqual({ refetchInterval: 30_000, refetchIntervalInBackground: true });
+  });
+
   it('reads the counts once after a burst of task actions, and the filters not at all', async () => {
     vi.useFakeTimers();
     const server = backend();
@@ -230,6 +266,54 @@ describe('filters and their task counts', () => {
     const third = await getFilterTasks('f1', options);
     expect(third.tasks.map((task) => task.businessKey)).toEqual(['key-p1', 'key-p3']);
     expect(server.find('GET', `${ENGINE}/process-instance`)[1]?.query.get('processInstanceIds')).toBe('p3');
+  });
+
+  it('remembers that a business key cannot be read, for a user without permission on the instance', async () => {
+    // a task permission does not cover the process instance: the lookup answers nothing
+    const server = backend({ [`GET ${ENGINE}/process-instance`]: () => json([]) });
+    const options = { firstResult: 0, maxResults: 25, sorting: [{ sortBy: 'created' as const, sortOrder: 'desc' as const }] };
+
+    const first = await getFilterTasks('f1', options);
+    const second = await getFilterTasks('f1', options);
+
+    expect(first.tasks.map((task) => task.businessKey)).toEqual([null, null, null]);
+    expect(second.tasks.map((task) => task.businessKey)).toEqual([null, null, null]);
+    expect(server.find('GET', `${ENGINE}/process-instance`)).toHaveLength(1);
+  });
+
+  it('asks again for business keys after a failed lookup', async () => {
+    let fail = true;
+    const server = backend({
+      [`GET ${ENGINE}/process-instance`]: (request) =>
+        fail
+          ? json({ type: 'ProcessEngineException', message: 'down' }, 500)
+          : json((request.query.get('processInstanceIds') ?? '').split(',').map((id) => ({ id, businessKey: `key-${id}` }))),
+    });
+    const options = { firstResult: 0, maxResults: 25, sorting: [{ sortBy: 'created' as const, sortOrder: 'desc' as const }] };
+
+    expect((await getFilterTasks('f1', options)).tasks.map((task) => task.businessKey)).toEqual([null, null, null]);
+    fail = false;
+    expect((await getFilterTasks('f1', options)).tasks.map((task) => task.businessKey)).toEqual(['key-p1', 'key-p1', 'key-p2']);
+    expect(server.find('GET', `${ENGINE}/process-instance`)).toHaveLength(2);
+  });
+
+  it('shows a known business key that expires while other keys are being read', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    const start = new Date('2026-03-01T10:00:00Z').getTime();
+    vi.setSystemTime(start);
+    const server = backend();
+    const options = { firstResult: 0, maxResults: 25, sorting: [{ sortBy: 'created' as const, sortOrder: 'desc' as const }] };
+    await getFilterTasks('f1', options);
+
+    // the next list has an instance not seen before; while its key is read, the others expire
+    server.on(`POST ${ENGINE}/filter/f1/list`, () => json({ count: 2, _embedded: { task: [halTask('t1', 'p1'), halTask('t4', 'p3')] } }));
+    server.on(`GET ${ENGINE}/process-instance`, (request) => {
+      vi.setSystemTime(start + 5 * 60_000 + 1);
+      return json((request.query.get('processInstanceIds') ?? '').split(',').map((id) => ({ id, businessKey: `key-${id}` })));
+    });
+    const next = await getFilterTasks('f1', options);
+
+    expect(next.tasks.map((task) => task.businessKey)).toEqual(['key-p1', 'key-p3']);
   });
 
   it('does not keep business keys answered after the session ended', async () => {

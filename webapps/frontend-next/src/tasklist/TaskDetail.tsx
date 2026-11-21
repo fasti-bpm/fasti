@@ -23,7 +23,6 @@ import { useToast } from '../ui/toast';
 import { refreshTasks, taskChangesSettled, useTaskChangePending, type TaskActions } from './actions';
 import { AttachmentsTab } from './Attachments';
 import { TaskMeta } from './TaskMeta';
-import { CaseTimeline } from './CaseTimeline';
 import { DocumentationText, modelDocumentation } from '../lib/documentation';
 
 import { keyOfDefinitionId } from '../bpmn/diagrams';
@@ -34,6 +33,8 @@ import { caseInstancePath } from '../cockpit/paths';
 import { planItemsOf, parseCaseDiagram } from '../cmmn/model';
 const BpmnDiagram = lazy(() => import('../bpmn/BpmnDiagram'));
 const CmmnDiagram = lazy(() => import('../cmmn/CmmnDiagram'));
+// the timeline of the case is behind a tab of its own: loaded when that tab is opened
+const CaseTimeline = lazy(() => import('./CaseTimeline').then((module) => ({ default: module.CaseTimeline })));
 
 const OPERATIONS: Record<string, MessageKey> = {
   Claim: 'history.op.claim',
@@ -485,7 +486,9 @@ export function TaskDetail({
         </Tabs.Content>
         {task.processInstanceId && (
           <Tabs.Content className="tabs__panel" value="case">
-            <CaseTimeline processInstanceId={task.processInstanceId} currentTaskId={task.id} />
+            <Suspense fallback={<Loading label={t('state.loading')} />}>
+              <CaseTimeline processInstanceId={task.processInstanceId} currentTaskId={task.id} />
+            </Suspense>
           </Tabs.Content>
         )}
         <Tabs.Content className="tabs__panel" value="attachments">

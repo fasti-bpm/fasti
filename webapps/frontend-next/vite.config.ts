@@ -77,6 +77,21 @@ export default defineConfig(({ command }) => ({
     target: 'es2022',
     sourcemap: false,
     chunkSizeWarningLimit: 1200,
+    rolldownOptions: {
+      output: {
+        // Two chunks beside those the routes make by themselves:
+        // - React and the router change with a dependency update only, not with every release
+        //   of the application, so they are a chunk of their own that browsers keep across
+        //   releases instead of a part of the entry chunk;
+        // - icons that several pages use are one chunk instead of one small file each.
+        codeSplitting: {
+          groups: [
+            { name: 'react', test: /node_modules[\\/](react|react-dom|scheduler|react-router)[\\/]/, priority: 30 },
+            { name: 'icons', test: /node_modules[\\/]lucide-react[\\/]/, priority: 20, minShareCount: 2 },
+          ],
+        },
+      },
+    },
   },
   server: {
     port: 5173,

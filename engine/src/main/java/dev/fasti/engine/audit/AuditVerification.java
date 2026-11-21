@@ -20,7 +20,25 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-/** The result of verifying the audit trail: per chain, whether it is intact and where it first breaks. */
+/**
+ * The result of verifying the audit trail: per chain, whether it is intact and where it first breaks.
+ *
+ * <p>Two verdicts:</p>
+ * <ul>
+ * <li><b>intact</b>: nothing that can be checked with the configuration of the engine failed. The
+ * hashes of the records are consistent from the first record to the head of the chain; with a
+ * signing key, every checkpoint and every purge record that explains a removed start carries a
+ * valid signature (or one that the configuration lists as retired), and no checkpoint is missing.</li>
+ * <li><b>authenticated</b>: intact, a key is configured, and every checkpoint and the purge record
+ * of a removed start were checked with a key the engine holds. Only this verdict rules out that
+ * someone with write access to the database rewrote the chain or removed its start. It is
+ * {@code false} without a key, and while signatures are accepted unchecked (retired key ids).</li>
+ * </ul>
+ * <p>A signature covers the records before its checkpoint. The records after the last checkpoint
+ * of a chain ({@link Chain#getAuthenticatedThrough()}) are protected by the hash chain and the head
+ * only, until the next checkpoint is written; a chain shorter than the checkpoint interval has no
+ * checkpoint yet. Keep the reported last hashes outside the database to cover them.</p>
+ */
 public class AuditVerification {
 
   protected final Date verifiedAt;
@@ -47,6 +65,19 @@ public class AuditVerification {
       }
     }
     return true;
+  }
+
+  /**
+   * Whether every chain verified and every signature it needs was checked with a key of the engine;
+   * {@code false} without a signing key.
+   */
+  public boolean isAuthenticated() {
+    for (Chain chain : chains) {
+      if (!chain.isAuthenticated()) {
+        return false;
+      }
+    }
+    return !chains.isEmpty();
   }
 
   public long getRecords() {
@@ -77,10 +108,20 @@ public class AuditVerification {
     protected final long checkpoints;
     protected final long checkpointsVerified;
     protected final long purgedThrough;
+    protected final boolean purgeAttested;
+    protected final boolean authenticated;
+    protected final long authenticatedThrough;
     protected final Break firstBreak;
 
     public Chain(String chainId, long records, long firstSequence, long lastSequence, String lastHash,
         long checkpoints, long checkpointsVerified, long purgedThrough, Break firstBreak) {
+      this(chainId, records, firstSequence, lastSequence, lastHash, checkpoints, checkpointsVerified, purgedThrough, false,
+          false, 0, firstBreak);
+    }
+
+    public Chain(String chainId, long records, long firstSequence, long lastSequence, String lastHash,
+        long checkpoints, long checkpointsVerified, long purgedThrough, boolean purgeAttested, boolean authenticated,
+        long authenticatedThrough, Break firstBreak) {
       this.chainId = chainId;
       this.records = records;
       this.firstSequence = firstSequence;
@@ -89,6 +130,9 @@ public class AuditVerification {
       this.checkpoints = checkpoints;
       this.checkpointsVerified = checkpointsVerified;
       this.purgedThrough = purgedThrough;
+      this.purgeAttested = purgeAttested;
+      this.authenticated = authenticated;
+      this.authenticatedThrough = authenticatedThrough;
       this.firstBreak = firstBreak;
     }
 
@@ -118,14 +162,40 @@ public class AuditVerification {
       return checkpoints;
     }
 
-    /** Checkpoints whose HMAC was checked with the configured key. */
+    /** Checkpoints whose HMAC was checked with the configured key or a retired key the engine holds. */
     public long getCheckpointsVerified() {
       return checkpointsVerified;
     }
 
-    /** Position up to which records were purged (attested by a purge record); 0 if none. */
+    /** Position up to which records were purged (named by a purge record); 0 if none. */
     public long getPurgedThrough() {
       return purgedThrough;
+    }
+
+    /**
+     * Whether the purge record that names the removed start carries a signature that was checked.
+     * {@code false} without a key or for a record accepted unchecked: the chain may then have lost
+     * its start to someone with write access to the database. Meaningless without a purge.
+     */
+    public boolean isPurgeAttested() {
+      return purgeAttested;
+    }
+
+    /**
+     * Whether the chain is intact and every signature it needs was checked with a key of the engine.
+     * What the signatures cover ends at {@link #getAuthenticatedThrough()}.
+     */
+    public boolean isAuthenticated() {
+      return authenticated;
+    }
+
+    /**
+     * The position of the last record that a checked signature covers: the record before the last
+     * checkpoint of an authenticated chain. 0 if the chain is not authenticated or has no checkpoint
+     * yet. The records after it are protected by the hash chain and the head only.
+     */
+    public long getAuthenticatedThrough() {
+      return authenticatedThrough;
     }
 
     public Break getFirstBreak() {
@@ -154,6 +224,14 @@ public class AuditVerification {
     public static final String HEAD_MISSING = "head-missing";
     /** A checkpoint's HMAC does not match: the chain before it was rewritten. */
     public static final String CHECKPOINT_MISMATCH = "checkpoint-mismatch";
+    /** A key is configured and a checkpoint carries no signature. */
+    public static final String CHECKPOINT_UNSIGNED = "checkpoint-unsigned";
+    /** A key is configured and a checkpoint names a key that is neither the configured nor a retired one. */
+    public static final String CHECKPOINT_UNKNOWN_KEY = "checkpoint-unknown-key";
+    /** A key is configured and a checkpoint is not where the interval puts it: checkpoints were removed. */
+    public static final String CHECKPOINT_MISSING = "checkpoint-missing";
+    /** A key is configured, the chain does not start at 1 and the purge record that names the removal is not signed with it. */
+    public static final String PURGE_UNATTESTED = "purge-unattested";
 
     protected final String chainId;
     protected final long sequence;

@@ -105,6 +105,9 @@ public final class AuditStore {
       List<AuditRecord> written = new ArrayList<>();
       for (AuditRecord record : records) {
         sequence++;
+        if (record.getPurgedThroughHash() != null) {
+          attestPurge(settings, record, chainId, sequence);
+        }
         seal(record, chainId, sequence, previous);
         previous = record.getHash();
         written.add(record);
@@ -132,8 +135,27 @@ public final class AuditStore {
     return checkpoints;
   }
 
+  /**
+   * Completes the details of a purge record once its position is known: what was removed and, with
+   * a key, the signature over it, the chain and the id and position of the record.
+   */
+  static void attestPurge(AuditSettings settings, AuditRecord purge, String chainId, long sequence) {
+    purge.setId(UUID.randomUUID().toString());
+    AuditJson details = purge.getPurgeDetails()
+        .put("purgedThroughSeq", purge.getPurgedThroughSequence())
+        .put("purgedThroughHash", purge.getPurgedThroughHash());
+    if (settings.isSigned()) {
+      details.put("keyId", settings.getKeyId())
+          .put("hmac", AuditChain.hmacHex(settings.getHmacKey(), AuditChain.purgeText(chainId,
+              purge.getPurgedThroughSequence(), purge.getPurgedThroughHash(), purge.getId(), sequence)));
+    }
+    purge.setDetails(details.toJson());
+  }
+
   static void seal(AuditRecord record, String chainId, long sequence, String previous) {
-    record.setId(UUID.randomUUID().toString());
+    if (record.getId() == null) {
+      record.setId(UUID.randomUUID().toString());
+    }
     record.setChainId(chainId);
     record.setSequence(sequence);
     record.setPreviousHash(previous);
@@ -149,10 +171,12 @@ public final class AuditStore {
     checkpoint.setEntityName(chainId);
     AuditJson details = AuditJson.object()
         .put("signedSequence", sequence - 1)
-        .put("signedHash", previous);
+        .put("signedHash", previous)
+        .put("interval", settings.getCheckpointInterval());
     if (settings.isSigned()) {
       details.put("keyId", settings.getKeyId())
-          .put("hmac", AuditChain.hmacHex(settings.getHmacKey(), AuditChain.checkpointText(chainId, sequence - 1, previous)));
+          .put("hmac", AuditChain.hmacHex(settings.getHmacKey(),
+              AuditChain.checkpointText(chainId, sequence - 1, previous, settings.getCheckpointInterval())));
     }
     checkpoint.setDetails(details.toJson());
     seal(checkpoint, chainId, sequence, previous);

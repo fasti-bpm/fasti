@@ -43,6 +43,13 @@ public interface AuditStatus {
   /** First characters of the SHA-256 of the HMAC key, to tell keys apart; {@code null} without key. */
   String getKeyId();
 
+  /**
+   * Ids of earlier keys whose signatures are still accepted: of retired keys the engine holds
+   * (checked) and of keys that are only listed (not checked); {@code unsigned} if records without
+   * signature are accepted.
+   */
+  List<String> getRetiredKeyIds();
+
   /** Records between two checkpoints of a chain; 0 for none. */
   int getCheckpointInterval();
 

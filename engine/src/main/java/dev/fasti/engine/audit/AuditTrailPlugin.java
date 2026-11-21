@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import dev.fasti.engine.audit.impl.AuditDeploymentInterceptor;
@@ -76,6 +77,8 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
   protected String hmacKeyFile;
   protected int checkpointInterval = AuditSettings.DEFAULT_CHECKPOINT_INTERVAL;
   protected int retentionDays = AuditSettings.DEFAULT_RETENTION_DAYS;
+  protected String retiredHmacKeys;
+  protected String retiredKeyIds;
 
   protected AuditSettings settings;
 
@@ -83,6 +86,16 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
   public void preInit(ProcessEngineConfigurationImpl configuration) {
     settings = new AuditSettings(nodeId, chains, types, variableValues, maskedVariables, resolveKey(), checkpointInterval,
         retentionDays);
+    List<byte[]> retired = new ArrayList<>();
+    if (retiredHmacKeys != null) {
+      for (String key : retiredHmacKeys.split(",")) {
+        if (!key.isBlank()) {
+          retired.add(key.trim().getBytes(StandardCharsets.UTF_8));
+        }
+      }
+    }
+    settings.setRetiredKeys(retired);
+    settings.setRetiredKeyIds(retiredKeyIds);
     if (configuration.getCustomSessionFactories() == null) {
       configuration.setCustomSessionFactories(new ArrayList<>());
     }
@@ -263,6 +276,28 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
   /** Records younger than this many days cannot be purged (default 365). */
   public void setRetentionDays(int retentionDays) {
     this.retentionDays = retentionDays;
+  }
+
+  /**
+   * Earlier HMAC keys, comma separated (so a key holds no comma): checkpoints and purge records they
+   * signed are still checked after the key was replaced.
+   */
+  public void setRetiredHmacKeys(String retiredHmacKeys) {
+    this.retiredHmacKeys = retiredHmacKeys;
+  }
+
+  public String getRetiredKeyIds() {
+    return retiredKeyIds;
+  }
+
+  /**
+   * Ids (12 hex characters) of earlier keys that are no longer at hand, comma separated, and
+   * {@code unsigned} for checkpoints and purge records written before a key was set: with a key
+   * configured they are accepted without being checked, before the first checkpoint of the current
+   * key. Chains that hold them verify as intact, but not as authenticated.
+   */
+  public void setRetiredKeyIds(String retiredKeyIds) {
+    this.retiredKeyIds = retiredKeyIds;
   }
 
   @Override

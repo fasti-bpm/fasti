@@ -18,9 +18,11 @@ package dev.fasti.engine.audit.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -49,6 +51,11 @@ public class AuditSettings implements AuditStatus {
   public static final int DEFAULT_RETENTION_DAYS = 365;
   /** HMAC keys shorter than this are refused. */
   public static final int MIN_KEY_BYTES = 32;
+  /**
+   * In the list of retired key ids: accepts checkpoints and purge records without a signature,
+   * written before a key was configured.
+   */
+  public static final String UNSIGNED_KEY_ID = "unsigned";
 
   protected volatile String nodeId;
   protected final int chains;
@@ -64,6 +71,10 @@ public class AuditSettings implements AuditStatus {
   protected volatile String historyLevel;
   protected volatile String tablePrefix = "";
   protected volatile boolean nationalCharacterColumns;
+  /** Retired keys this engine still holds, by key id: their signatures are checked. */
+  protected volatile Map<String, byte[]> retiredKeys = Collections.emptyMap();
+  /** Ids of retired keys this engine does not hold: their signatures are accepted unchecked. */
+  protected volatile Set<String> retiredKeyIds = Collections.emptySet();
 
   public AuditSettings(String nodeId, int chains, String types, String variableValues, String maskedVariables,
       byte[] hmacKey, int checkpointInterval, int retentionDays) {
@@ -88,7 +99,7 @@ public class AuditSettings implements AuditStatus {
       throw new IllegalArgumentException("The HMAC key of the audit trail must have at least " + MIN_KEY_BYTES + " bytes");
     }
     this.hmacKey = hmacKey;
-    this.keyId = hmacKey == null ? null : AuditChain.sha256Hex(hmacKey).substring(0, 12);
+    this.keyId = hmacKey == null ? null : keyId(hmacKey);
     if (checkpointInterval < 0) {
       throw new IllegalArgumentException("checkpointInterval must not be negative");
     }
@@ -97,6 +108,11 @@ public class AuditSettings implements AuditStatus {
       throw new IllegalArgumentException("retentionDays must not be negative");
     }
     this.retentionDays = retentionDays;
+  }
+
+  /** The id of a key: the first characters of its SHA-256, which tell keys apart without revealing them. */
+  public static String keyId(byte[] key) {
+    return AuditChain.sha256Hex(key).substring(0, 12);
   }
 
   static Set<String> parseTypes(String value) {
@@ -223,6 +239,63 @@ public class AuditSettings implements AuditStatus {
 
   public void setHistoryLevel(String historyLevel) {
     this.historyLevel = historyLevel;
+  }
+
+  /** The key with the id, the current one or a retired one this engine holds; {@code null} if it holds none. */
+  public byte[] keyOf(String id) {
+    if (id == null || hmacKey == null) {
+      return null;
+    }
+    return id.equals(keyId) ? hmacKey : retiredKeys.get(id);
+  }
+
+  /** Whether signatures of the key id are accepted without being checked ({@code null}: no signature). */
+  public boolean isRetiredKeyId(String id) {
+    return retiredKeyIds.contains(id == null ? UNSIGNED_KEY_ID : id);
+  }
+
+  /** Whether some signatures are accepted without being checked (ids of retired keys are listed). */
+  public boolean acceptsUncheckedSignatures() {
+    return !retiredKeyIds.isEmpty();
+  }
+
+  @Override
+  public List<String> getRetiredKeyIds() {
+    List<String> ids = new ArrayList<>(retiredKeys.keySet());
+    for (String id : retiredKeyIds) {
+      if (!ids.contains(id)) {
+        ids.add(id);
+      }
+    }
+    return Collections.unmodifiableList(ids);
+  }
+
+  /** Retired keys (each at least {@value #MIN_KEY_BYTES} bytes): what they signed is still checked. */
+  public void setRetiredKeys(List<byte[]> keys) {
+    Map<String, byte[]> byId = new LinkedHashMap<>();
+    if (keys != null) {
+      for (byte[] key : keys) {
+        if (key.length < MIN_KEY_BYTES) {
+          throw new IllegalArgumentException("A retired HMAC key of the audit trail must have at least " + MIN_KEY_BYTES + " bytes");
+        }
+        byId.put(keyId(key), key);
+      }
+    }
+    this.retiredKeys = Collections.unmodifiableMap(byId);
+  }
+
+  /** Ids of retired keys that are no longer at hand, comma separated; {@value #UNSIGNED_KEY_ID} for no signature. */
+  public void setRetiredKeyIds(String ids) {
+    Set<String> result = new LinkedHashSet<>();
+    for (String id : split(ids)) {
+      String normalized = id.toLowerCase(Locale.ROOT);
+      if (!normalized.equals(UNSIGNED_KEY_ID) && !normalized.matches("[0-9a-f]{12}")) {
+        throw new IllegalArgumentException("A retired key id of the audit trail is 12 hex characters (as verification "
+            + "and the settings show it) or '" + UNSIGNED_KEY_ID + "', not '" + id + "'");
+      }
+      result.add(normalized);
+    }
+    this.retiredKeyIds = Collections.unmodifiableSet(result);
   }
 
   public String getEngineName() {

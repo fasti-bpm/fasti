@@ -114,9 +114,23 @@ public final class AuditChain {
     }
   }
 
-  /** What a checkpoint signs: the chain, the position and hash of the record before the checkpoint. */
-  public static String checkpointText(String chainId, long sequence, String previousHash) {
-    return FORMAT + "-checkpoint\n" + chainId + "\n" + sequence + "\n" + previousHash;
+  /**
+   * What a checkpoint signs: the chain, the position and hash of the record before the checkpoint
+   * (and through the hashes every record before that), and the interval it was written with: how
+   * many records may follow it without another checkpoint.
+   */
+  public static String checkpointText(String chainId, long sequence, String previousHash, long interval) {
+    return FORMAT + "-checkpoint\n" + chainId + "\n" + sequence + "\n" + previousHash + "\n" + interval;
+  }
+
+  /**
+   * What a purge record signs: the chain, the position and hash of the last removed record, and the
+   * id and position of the purge record itself, so that the signature cannot be moved to another record.
+   */
+  public static String purgeText(String chainId, long purgedThroughSequence, String purgedThroughHash, String recordId,
+      long recordSequence) {
+    return FORMAT + "-purge\n" + chainId + "\n" + purgedThroughSequence + "\n" + purgedThroughHash + "\n" + recordId
+        + "\n" + recordSequence;
   }
 
   /** Compares two hex strings in constant time. */

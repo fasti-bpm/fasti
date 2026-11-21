@@ -52,6 +52,11 @@ public class AuditRecord implements AuditEvent {
   protected String previousHash;
   protected String hash;
 
+  /** Of a purge record that is not written yet: what it removes, and its other details. Not stored as such. */
+  protected transient long purgedThroughSequence;
+  protected transient String purgedThroughHash;
+  protected transient AuditJson purgeDetails;
+
   public AuditRecord() {
   }
 
@@ -249,6 +254,25 @@ public class AuditRecord implements AuditEvent {
 
   public void setHash(String hash) {
     this.hash = hash;
+  }
+
+  /** Makes this a purge record of the records up to the position; its details are completed when it is appended. */
+  public void setPurge(long purgedThroughSequence, String purgedThroughHash, AuditJson details) {
+    this.purgedThroughSequence = purgedThroughSequence;
+    this.purgedThroughHash = purgedThroughHash;
+    this.purgeDetails = details;
+  }
+
+  public long getPurgedThroughSequence() {
+    return purgedThroughSequence;
+  }
+
+  public String getPurgedThroughHash() {
+    return purgedThroughHash;
+  }
+
+  public AuditJson getPurgeDetails() {
+    return purgeDetails;
   }
 
   @Override

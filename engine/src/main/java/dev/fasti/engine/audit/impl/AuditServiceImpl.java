@@ -129,7 +129,9 @@ public class AuditServiceImpl implements AuditService {
       LOG.warn("The verification of the audit trail could not be recorded: {}", e.getMessage());
     }
     if (verification.isIntact()) {
-      LOG.info("Audit trail verified: {} records in {} chains are intact", verification.getRecords(), results.size());
+      LOG.info("Audit trail verified: {} records in {} chains are intact{}", verification.getRecords(),
+          verification.getChains().size(), verification.isAuthenticated() ? " and authenticated"
+              : settings.isSigned() ? ", but not every signature could be checked" : " (not signed)");
     } else {
       LOG.warn("Audit trail verification found a break: {}", verification.getFirstBreak().getMessage());
     }
@@ -139,6 +141,7 @@ public class AuditServiceImpl implements AuditService {
   static AuditJson verifyDetails(AuditVerification verification, String chainId) {
     AuditJson details = AuditJson.object()
         .put("intact", verification.isIntact())
+        .put("authenticated", verification.isAuthenticated())
         .put("chains", verification.getChains().size())
         .put("records", verification.getRecords())
         .put("chainId", chainId);
@@ -213,13 +216,10 @@ public class AuditServiceImpl implements AuditService {
       purge.setActor(commandContext.getAuthenticatedUserId());
       purge.setEntityType("chain");
       purge.setEntityName(chainId);
-      purge.setDetails(AuditJson.object()
+      purge.setPurge(through, last.getHash(), AuditJson.object()
           .put("before", before.toInstant().toString())
           .put("purgedFromSeq", first.get(0).getSequence())
-          .put("purgedThroughSeq", through)
-          .put("purgedThroughHash", last.getHash())
-          .put("removed", count)
-          .toJson());
+          .put("removed", count));
       // the purge record first: appending locks the head of the chain
       AuditStore.append(commandContext, settings, chainId, List.of(purge));
       long deleted = AuditStore.deleteThrough(commandContext, settings, chainId, through);

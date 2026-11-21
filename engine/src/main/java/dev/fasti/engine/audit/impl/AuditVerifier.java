@@ -29,6 +29,26 @@ import org.camunda.bpm.engine.impl.interceptor.CommandExecutor;
  * Recomputes the chains. Each chain is read in pages, each page in its own read-only command, so
  * that a long chain does not hold one long transaction. Records appended while the verification
  * runs are followed up to the head, which is read after the records.
+ *
+ * <p>Without a key, a chain is intact when its hashes are consistent from its first record to its
+ * head; a start that a purge record names as removed is accepted, but reported as not attested,
+ * because anyone who can write to the database can write such a record.</p>
+ *
+ * <p>With a key, what the key signs must be there and must match. A checkpoint signs the hash of
+ * the record before it, and through the hashes every record before that, so a change of a record
+ * needs every later checkpoint changed or removed. Therefore every checkpoint must carry a valid
+ * signature of a key this engine holds (the current one or a retired one); checkpoints must
+ * follow each other, from the first record on, at the distance of the interval they were written
+ * with, and no more records than that may follow the last one, so that removed checkpoints are
+ * missed even after the engine has written new ones over a rewritten chain; and a removed start
+ * needs a purge record signed with such a key. A signature that is missing or of an unknown key
+ * is a break, unless its key id is listed as retired ({@code unsigned} for none); what is accepted
+ * that way is not checked, so the chain is intact but not authenticated, and it is accepted only
+ * before the first checkpoint of the current key.</p>
+ *
+ * <p>Not covered by a signature: the records after the last checkpoint of a chain
+ * ({@link AuditVerification.Chain#getAuthenticatedThrough()}), which only the hash chain and the
+ * head protect until the next checkpoint.</p>
  */
 public class AuditVerifier {
 
@@ -51,6 +71,16 @@ public class AuditVerifier {
     long checkpoints = 0;
     long checkpointsVerified = 0;
     long purgedThrough = 0;
+    boolean purgeAttested = false;
+    // with a key: the last checkpoint (or the position before the first record), its interval, and
+    // whether a missing checkpoint after it is a break
+    long anchor = 0;
+    long anchorInterval = 0;
+    long authenticatedThrough = 0;
+    boolean spacing = settings.isSigned() && !settings.acceptsUncheckedSignatures();
+    boolean currentKeySeen = false;
+    // no checkpoint where one is due, in a chain where that is tolerated: not authenticated
+    boolean gap = false;
     long firstSequence = 0;
     long expected = 0;
     String previous = null;
@@ -64,13 +94,22 @@ public class AuditVerifier {
       firstSequence = first.getSequence();
       if (first.getSequence() == 1) {
         previous = AuditChain.GENESIS;
-      } else if (isAttestedPurge(chainId, first)) {
-        purgedThrough = first.getSequence() - 1;
-        previous = first.getPreviousHash();
       } else {
-        found = new Break(chainId, 1, null, Break.MISSING_START, "The chain starts at record " + first.getSequence()
-            + " and no purge record names the records before it: records at the start were removed.");
+        Purge purge = purgeBefore(chainId, first);
+        if (purge == Purge.SIGNED || purge == Purge.UNATTESTED) {
+          purgedThrough = first.getSequence() - 1;
+          purgeAttested = purge == Purge.SIGNED;
+          previous = first.getPreviousHash();
+        } else if (purge == Purge.REJECTED) {
+          found = new Break(chainId, 1, null, Break.PURGE_UNATTESTED, "The chain starts at record " + first.getSequence()
+              + " and the purge record that names the records before it carries no valid signature of a key of this "
+              + "engine: records at the start were removed, or the purge was signed with a key that is not configured.");
+        } else {
+          found = new Break(chainId, 1, null, Break.MISSING_START, "The chain starts at record " + first.getSequence()
+              + " and no purge record names the records before it: records at the start were removed.");
+        }
       }
+      anchor = first.getSequence() - 1;
       expected = first.getSequence();
     }
 
@@ -96,18 +135,51 @@ public class AuditVerifier {
           checkpoints++;
           String hmac = text(record.getDetails(), "hmac");
           String keyId = text(record.getDetails(), "keyId");
-          // a checkpoint of the current key must carry its signature; one without signature or of
-          // another key cannot be checked and is reported as unverified (written before the key was
-          // set, with an earlier key, or with its signature removed)
-          if (settings.isSigned() && settings.getKeyId().equals(keyId)) {
-            String expectedHmac = AuditChain.hmacHex(settings.getHmacKey(),
-                AuditChain.checkpointText(chainId, record.getSequence() - 1, record.getPreviousHash()));
+          Long interval = number(record.getDetails(), "interval");
+          byte[] key = settings.keyOf(keyId);
+          if (key != null) {
+            // of a key this engine holds: the signature must match
+            String expectedHmac = AuditChain.hmacHex(key, AuditChain.checkpointText(chainId, record.getSequence() - 1,
+                record.getPreviousHash(), interval == null ? 0 : interval));
             if (hmac == null || !AuditChain.same(expectedHmac, hmac)) {
               found = new Break(chainId, record.getSequence(), record.getId(), Break.CHECKPOINT_MISMATCH, "The signature of "
                   + "checkpoint " + record.getSequence() + " does not match: the chain before it was rewritten.");
               break;
             }
+            // written an interval after the checkpoint before it (or the start of the chain); if the
+            // interval was changed in between, up to both intervals after it
+            long allowed = interval == null || interval <= 0 ? Long.MAX_VALUE
+                : anchorInterval == 0 || anchorInterval == interval ? interval + 1 : anchorInterval + interval;
+            boolean late = record.getSequence() - anchor > allowed;
+            gap |= late;
+            if (spacing && late) {
+              found = new Break(chainId, anchor + allowed, null, Break.CHECKPOINT_MISSING, "No checkpoint between record "
+                  + anchor + " and checkpoint " + record.getSequence() + ", which was written with one every " + interval
+                  + " records: checkpoints were removed.");
+              break;
+            }
             checkpointsVerified++;
+            spacing = true;
+            currentKeySeen |= settings.getKeyId().equals(keyId);
+            anchorInterval = interval == null ? 0 : interval;
+            authenticatedThrough = record.getSequence() - 1;
+          } else if (settings.isSigned()) {
+            // no signature, or of a key this engine does not hold: only if listed as retired, and
+            // not after a checkpoint of the current key (keys follow each other)
+            if (!settings.isRetiredKeyId(keyId) || currentKeySeen) {
+              found = keyId == null
+                  ? new Break(chainId, record.getSequence(), record.getId(), Break.CHECKPOINT_UNSIGNED, "Checkpoint "
+                      + record.getSequence() + " carries no signature, although a key is configured: its signature was "
+                      + "removed, or it was written before the key was set (see fasti.audit.retired-key-ids).")
+                  : new Break(chainId, record.getSequence(), record.getId(), Break.CHECKPOINT_UNKNOWN_KEY, "Checkpoint "
+                      + record.getSequence() + " names key " + keyId + ", which is neither the configured key nor a "
+                      + "retired one: its signature was replaced, or the key was changed (see fasti.audit.retired-key-ids).");
+              break;
+            }
+          }
+          anchor = record.getSequence();
+          if (key == null) {
+            anchorInterval = 0;
           }
         }
         records++;
@@ -150,13 +222,29 @@ public class AuditVerifier {
       }
       break;
     }
+    long due = Math.max(anchorInterval, settings.getCheckpointInterval());
+    // a record at a multiple of the interval is written together with its checkpoint, so fewer than
+    // an interval of records can follow the last checkpoint (or the start of the chain). The
+    // interval: the one the last checkpoint was written with, or the one of this engine if larger.
+    // Before the first checked checkpoint of a chain this is a break only if no signature is
+    // accepted unchecked: such a chain may have had other settings.
+    boolean overdue = settings.isSigned() && settings.getCheckpointInterval() > 0 && last - anchor >= due;
+    gap |= overdue;
+    if (found == null && spacing && overdue) {
+      found = new Break(chainId, anchor + due + 1, null, Break.CHECKPOINT_MISSING, "No checkpoint after record " + anchor
+          + ", although the chain goes on to record " + last + " and one is written every " + due
+          + " records: checkpoints were removed.");
+    }
     if (found != null && attempt < 2 && (Break.SEQUENCE_GAP.equals(found.getReason())
-        || Break.MISSING_START.equals(found.getReason())) && purgedSince(chainId, purgedThrough)) {
+        || Break.MISSING_START.equals(found.getReason()) || Break.PURGE_UNATTESTED.equals(found.getReason()))
+        && purgedSince(chainId, purgedThrough)) {
       // a purge removed records while the chain was read: verify what is left
       return verifyChain(chainId, attempt + 1);
     }
+    boolean authenticated = found == null && settings.isSigned() && checkpointsVerified == checkpoints && !gap
+        && (purgedThrough == 0 || purgeAttested);
     return new AuditVerification.Chain(chainId, records, firstSequence, last, lastHash, checkpoints, checkpointsVerified,
-        purgedThrough, found);
+        purgedThrough, purgeAttested, authenticated, authenticated ? authenticatedThrough : 0, found);
   }
 
   /** Whether a purge record now names more removed records than the verification started from. */
@@ -175,17 +263,45 @@ public class AuditVerifier {
     return commandExecutor.execute(commandContext -> AuditStore.readChain(commandContext, settings, chainId, after, PAGE));
   }
 
-  /** Whether a purge record of the chain names the record before the first one as the last removed one. */
-  protected boolean isAttestedPurge(String chainId, AuditRecord first) {
+  /** What the purge records of a chain say about the records before its first one. */
+  enum Purge {
+    /** No purge record names them. */
+    NONE,
+    /** A purge record names them and carries a valid signature of a key of this engine. */
+    SIGNED,
+    /** A purge record names them, without a signature that can be checked; accepted, but it proves nothing. */
+    UNATTESTED,
+    /** A purge record names them, but a key is configured and the record is not signed with an accepted one. */
+    REJECTED
+  }
+
+  /** Whether a purge record of the chain names the record before the first one as the last removed one, and how. */
+  protected Purge purgeBefore(String chainId, AuditRecord first) {
     List<AuditRecord> purges = commandExecutor.execute(commandContext -> AuditStore.purges(commandContext, settings, chainId));
+    Purge result = Purge.NONE;
     for (AuditRecord purge : purges) {
       Long through = number(purge.getDetails(), "purgedThroughSeq");
       String hash = text(purge.getDetails(), "purgedThroughHash");
-      if (through != null && through == first.getSequence() - 1 && AuditChain.same(hash, first.getPreviousHash())) {
-        return true;
+      if (through == null || through != first.getSequence() - 1 || !AuditChain.same(hash, first.getPreviousHash())) {
+        continue;
+      }
+      if (!settings.isSigned()) {
+        return Purge.UNATTESTED;
+      }
+      String keyId = text(purge.getDetails(), "keyId");
+      String hmac = text(purge.getDetails(), "hmac");
+      byte[] key = settings.keyOf(keyId);
+      if (key != null && hmac != null && AuditChain.same(hmac, AuditChain.hmacHex(key,
+          AuditChain.purgeText(chainId, through, hash, purge.getId(), purge.getSequence())))) {
+        return Purge.SIGNED;
+      }
+      if (key == null && settings.isRetiredKeyId(keyId)) {
+        result = Purge.UNATTESTED;
+      } else if (result == Purge.NONE) {
+        result = Purge.REJECTED;
       }
     }
-    return false;
+    return result;
   }
 
   /** A text value of the details, as {@link AuditJson} writes them (hex values need no unescaping). */

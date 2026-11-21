@@ -23,11 +23,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Date;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import dev.fasti.engine.audit.AuditVerification.Break;
 import dev.fasti.engine.audit.impl.AuditChain;
 import dev.fasti.engine.audit.impl.AuditRecord;
+import dev.fasti.engine.audit.impl.AuditSettings;
 import org.camunda.bpm.engine.BadUserRequestException;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.impl.util.ClockUtil;
@@ -41,23 +43,44 @@ import org.junit.Test;
 public class AuditTamperTest {
 
   static final String KEY = "a-key-that-is-long-enough-for-hmac-sha256!";
+  static final String OTHER_KEY = "another-key-that-is-long-enough-for-hmac!";
 
   ProcessEngine engine;
   AuditService audit;
   static int engines;
 
   void start(int checkpointInterval, String key) {
-    engine = AuditTestSupport.engine("tamper" + (++engines), plugin -> {
-      plugin.setChains(1);
-      plugin.setCheckpointInterval(checkpointInterval);
-      plugin.setHmacKey(key);
-      plugin.setRetentionDays(0);
-    });
-    audit = AuditTrail.of(engine);
+    engines++;
+    build(checkpointInterval, key, plugin -> { });
     engine.getRepositoryService().createDeployment().addModelInstance("t.bpmn", userTaskProcess("t")).deploy();
     for (int i = 0; i < 4; i++) {
       engine.getRuntimeService().startProcessInstanceByKey("t", "case-" + i);
     }
+  }
+
+  void build(int checkpointInterval, String key, Consumer<AuditTrailPlugin> more) {
+    engine = AuditTestSupport.engine("tamper" + engines, plugin -> {
+      plugin.setChains(1);
+      plugin.setCheckpointInterval(checkpointInterval);
+      plugin.setHmacKey(key);
+      plugin.setRetentionDays(0);
+      more.accept(plugin);
+    });
+    audit = AuditTrail.of(engine);
+  }
+
+  /** The node comes back with other settings, on the trail it wrote so far. */
+  void restart(int checkpointInterval, String key, Consumer<AuditTrailPlugin> more) {
+    engine.close();
+    build(checkpointInterval, key, more);
+  }
+
+  /** Purges everything before now and continues a minute later; what the purge removed. */
+  AuditPurgeResult purgeNow() {
+    Date cut = new Date(ClockUtil.getCurrentTime().getTime() + 1);
+    ClockUtil.setCurrentTime(new Date(cut.getTime() + 60_000));
+    engine.getRuntimeService().startProcessInstanceByKey("t", "kept");
+    return audit.purge(cut);
   }
 
   @After
@@ -240,19 +263,303 @@ public class AuditTamperTest {
   }
 
   @Test
-  public void shouldReportCheckpointsOfAnotherKeyAsUnverified() {
+  public void shouldFindACheckpointRelabelledWithAnotherKey() {
     start(5, KEY);
     // the last checkpoint: a rewrite before a later one would break that one's signature
-    AuditEvent checkpoint = chain().stream().filter(e -> AuditService.ACTION_CHECKPOINT.equals(e.getAction()))
-        .reduce((first, second) -> second).orElseThrow();
+    AuditEvent checkpoint = lastCheckpoint();
     AuditRecord other = copy(checkpoint);
     other.setDetails(checkpoint.getDetails().replaceAll("\"keyId\":\"[0-9a-f]+\"", "\"keyId\":\"000000000000\""));
     rewriteFrom(other);
+    // the hashes are consistent, but the checkpoint is not signed with a key of the engine
+    Break found = firstBreak();
+    assertThat(found.getReason()).isEqualTo(Break.CHECKPOINT_UNKNOWN_KEY);
+    assertThat(found.getSequence()).isEqualTo(checkpoint.getSequence());
+  }
+
+  @Test
+  public void shouldFindACheckpointWhoseSignatureAndKeyWereRemoved() {
+    start(5, KEY);
+    AuditEvent checkpoint = lastCheckpoint();
+    AuditRecord stripped = copy(checkpoint);
+    stripped.setDetails(checkpoint.getDetails().replaceAll(",?\"hmac\":\"[0-9a-f]+\"", "")
+        .replaceAll(",?\"keyId\":\"[0-9a-f]+\"", ""));
+    rewriteFrom(stripped);
+    Break found = firstBreak();
+    assertThat(found.getReason()).isEqualTo(Break.CHECKPOINT_UNSIGNED);
+    assertThat(found.getSequence()).isEqualTo(checkpoint.getSequence());
+  }
+
+  @Test
+  public void shouldNotAcceptARetiredKeyAfterACheckpointOfTheCurrentKey() {
+    start(5, KEY);
+    for (int i = 0; i < 6; i++) {
+      engine.getRuntimeService().startProcessInstanceByKey("t", "more-" + i);
+    }
+    restart(5, KEY, plugin -> plugin.setRetiredKeyIds("000000000000, unsigned"));
+    assertThat(audit.verify().isAuthenticated()).isTrue();
+    // relabelling the last checkpoint with a retired key id does not help: keys follow each other
+    AuditEvent checkpoint = lastCheckpoint();
+    AuditRecord other = copy(checkpoint);
+    other.setDetails(checkpoint.getDetails().replaceAll("\"keyId\":\"[0-9a-f]+\"", "\"keyId\":\"000000000000\""));
+    rewriteFrom(other);
+    assertThat(firstBreak().getReason()).isEqualTo(Break.CHECKPOINT_UNKNOWN_KEY);
+  }
+
+  @Test
+  public void shouldFindARemovedCheckpoint() {
+    start(5, KEY);
+    // the intruder removes the last checkpoint, moves the later records up and fixes every hash
+    while (AuditService.ACTION_CHECKPOINT.equals(chain().get(chain().size() - 1).getAction())) {
+      engine.getRuntimeService().startProcessInstanceByKey("t", "after-the-checkpoint");
+    }
+    AuditEvent checkpoint = lastCheckpoint();
+    removeAndRewrite(checkpoint);
+    Break found = firstBreak();
+    assertThat(found.getReason()).isEqualTo(Break.CHECKPOINT_MISSING);
+    assertThat(found.getRecordId()).isNull();
+  }
+
+  @Test
+  public void shouldFindAChainWhoseCheckpointsWereAllTurnedIntoOtherRecords() {
+    start(5, KEY);
+    // rewrite of the whole chain: record 2 changed, no checkpoint left to contradict it
+    String previous = null;
+    for (AuditEvent event : chain()) {
+      AuditRecord record = copy(event);
+      if (event.getSequence() == 2) {
+        record.setActor("mallory");
+      }
+      if (AuditService.ACTION_CHECKPOINT.equals(event.getAction())) {
+        record.setAction(AuditService.ACTION_EXPORT);
+      }
+      if (previous != null) {
+        record.setPreviousHash(previous);
+      }
+      record.setHash(AuditChain.hash(record));
+      sql(engine, "update FASTI_AUDIT_EVENT set ACTOR_ = ?, ACTION_ = ?, PREV_HASH_ = ?, HASH_ = ? where ID_ = ?",
+          record.getActor(), record.getAction(), record.getPreviousHash(), record.getHash(), record.getId());
+      previous = record.getHash();
+    }
+    sql(engine, "update FASTI_AUDIT_HEAD set HASH_ = ?", previous);
+    Break found = firstBreak();
+    assertThat(found.getReason()).isEqualTo(Break.CHECKPOINT_MISSING);
+    assertThat(found.getSequence()).isEqualTo(6);
+
+    // the engine goes on and signs new checkpoints over the rewritten chain: the missing ones are still missed
+    more(6);
+    assertThat(chain()).anySatisfy(e -> assertThat(e.getAction()).isEqualTo(AuditService.ACTION_CHECKPOINT));
+    assertThat(firstBreak().getReason()).isEqualTo(Break.CHECKPOINT_MISSING);
+  }
+
+  @Test
+  public void shouldFindCheckpointsRemovedBeforeNewOnesWereWritten() {
+    start(5, KEY);
+    more(6);
+    // the intruder changes record 2, turns every checkpoint after the first into another record and fixes the hashes
+    AuditEvent kept = chain().stream().filter(e -> AuditService.ACTION_CHECKPOINT.equals(e.getAction())).findFirst()
+        .orElseThrow();
+    String previous = null;
+    for (AuditEvent event : chain()) {
+      if (event.getSequence() <= kept.getSequence()) {
+        previous = event.getHash();
+        continue;
+      }
+      AuditRecord record = copy(event);
+      if (event.getSequence() == kept.getSequence() + 1) {
+        record.setActor("mallory");
+      }
+      if (AuditService.ACTION_CHECKPOINT.equals(event.getAction())) {
+        record.setAction(AuditService.ACTION_EXPORT);
+      }
+      record.setPreviousHash(previous);
+      record.setHash(AuditChain.hash(record));
+      sql(engine, "update FASTI_AUDIT_EVENT set ACTOR_ = ?, ACTION_ = ?, PREV_HASH_ = ?, HASH_ = ? where ID_ = ?",
+          record.getActor(), record.getAction(), record.getPreviousHash(), record.getHash(), record.getId());
+      previous = record.getHash();
+    }
+    sql(engine, "update FASTI_AUDIT_HEAD set HASH_ = ?", previous);
+    // and waits until the engine has written a valid checkpoint again
+    more(6);
+    Break found = firstBreak();
+    assertThat(found.getReason()).isEqualTo(Break.CHECKPOINT_MISSING);
+    assertThat(found.getSequence()).isGreaterThan(kept.getSequence());
+  }
+
+  @Test
+  public void shouldKeepVerifyingWhenTheIntervalChanges() {
+    start(5, KEY);
+    restart(3, KEY, plugin -> { });
+    more(4);
+    assertThat(audit.verify().isAuthenticated()).isTrue();
+    restart(20, KEY, plugin -> { });
+    more(4);
+    assertThat(audit.verify().isAuthenticated()).isTrue();
+    more(12);
+    assertThat(audit.verify().isAuthenticated()).isTrue();
+    restart(4, KEY, plugin -> { });
+    more(3);
     AuditVerification verification = audit.verify();
-    // the hashes are consistent; the checkpoint cannot be checked, which the counts show
+    assertThat(verification.getFirstBreak()).isNull();
+    assertThat(verification.isAuthenticated()).isTrue();
+    assertThat(chain().stream().filter(e -> AuditService.ACTION_CHECKPOINT.equals(e.getAction()))
+        .map(e -> e.getDetails().replaceAll(".*\"interval\":(\\d+).*", "$1")).distinct()).contains("5", "3", "20", "4");
+  }
+
+  @Test
+  public void shouldNotAuthenticateAChainWithoutCheckpointsWhereTheyAreDue() {
+    // signed, but checkpoints were off
+    start(0, KEY);
+    assertThat(audit.verify().isAuthenticated()).isTrue();
+    restart(5, KEY, plugin -> { });
+    assertThat(firstBreak().getReason()).isEqualTo(Break.CHECKPOINT_MISSING);
+
+    // accepted as the part before signing started: intact, but not authenticated, also once checkpoints follow
+    restart(5, KEY, plugin -> plugin.setRetiredKeyIds("unsigned"));
+    AuditVerification verification = audit.verify();
+    assertThat(verification.getFirstBreak()).isNull();
+    assertThat(verification.isAuthenticated()).isFalse();
+    more(6);
+    verification = audit.verify();
+    assertThat(verification.getFirstBreak()).isNull();
+    assertThat(verification.getChains().get(0).getCheckpointsVerified()).isPositive();
+    assertThat(verification.isAuthenticated()).isFalse();
+    assertThat(verification.getChains().get(0).getAuthenticatedThrough()).isZero();
+  }
+
+  @Test
+  public void shouldAuthenticateAnUntouchedSignedChain() {
+    start(5, KEY);
+    long lastCheckpoint = lastCheckpoint().getSequence();
+    AuditVerification verification = audit.verify();
     assertThat(verification.isIntact()).isTrue();
+    assertThat(verification.isAuthenticated()).isTrue();
     AuditVerification.Chain chain = verification.getChains().get(0);
-    assertThat(chain.getCheckpointsVerified()).isLessThan(chain.getCheckpoints());
+    assertThat(chain.isAuthenticated()).isTrue();
+    assertThat(chain.getCheckpoints()).isPositive().isEqualTo(chain.getCheckpointsVerified());
+    // the signatures reach to the record before the last checkpoint; what follows has the hashes only
+    assertThat(chain.getAuthenticatedThrough()).isEqualTo(lastCheckpoint - 1).isLessThan(chain.getLastSequence());
+    // every verification adds a record: checkpoints keep their distance
+    for (int i = 0; i < 12; i++) {
+      assertThat(audit.verify().isAuthenticated()).isTrue();
+    }
+  }
+
+  @Test
+  public void shouldSayThatNoSignatureCoversAChainBeforeItsFirstCheckpoint() {
+    start(500, KEY);
+    AuditVerification verification = audit.verify();
+    assertThat(verification.isIntact()).isTrue();
+    // nothing is missing, but nothing is signed yet either
+    assertThat(verification.isAuthenticated()).isTrue();
+    assertThat(verification.getChains().get(0).getCheckpoints()).isZero();
+    assertThat(verification.getChains().get(0).getAuthenticatedThrough()).isZero();
+  }
+
+  @Test
+  public void shouldNotCallAnUnsignedChainAuthenticated() {
+    start(5, null);
+    AuditVerification verification = audit.verify();
+    assertThat(verification.isIntact()).isTrue();
+    assertThat(verification.isAuthenticated()).isFalse();
+    assertThat(verification.getChains().get(0).getCheckpointsVerified()).isZero();
+  }
+
+  @Test
+  public void shouldRefuseUnsignedCheckpointsOnceAKeyIsSetUnlessListed() {
+    start(5, null);
+    // the key is turned on later: the checkpoints so far carry no signature
+    restart(5, KEY, plugin -> { });
+    assertThat(firstBreak().getReason()).isEqualTo(Break.CHECKPOINT_UNSIGNED);
+
+    restart(5, KEY, plugin -> plugin.setRetiredKeyIds(AuditSettings.UNSIGNED_KEY_ID));
+    assertThat(audit.getStatus().getRetiredKeyIds()).containsExactly(AuditSettings.UNSIGNED_KEY_ID);
+    for (int i = 0; i < 6; i++) {
+      engine.getRuntimeService().startProcessInstanceByKey("t", "signed-" + i);
+    }
+    AuditVerification verification = audit.verify();
+    assertThat(verification.isIntact()).isTrue();
+    // accepted, not checked
+    assertThat(verification.isAuthenticated()).isFalse();
+    AuditVerification.Chain chain = verification.getChains().get(0);
+    assertThat(chain.getCheckpointsVerified()).isPositive().isLessThan(chain.getCheckpoints());
+
+    // after the first signed checkpoint, a checkpoint without signature is a break again
+    AuditEvent checkpoint = lastCheckpoint();
+    AuditRecord stripped = copy(checkpoint);
+    stripped.setDetails(checkpoint.getDetails().replaceAll(",?\"hmac\":\"[0-9a-f]+\"", "")
+        .replaceAll(",?\"keyId\":\"[0-9a-f]+\"", ""));
+    rewriteFrom(stripped);
+    assertThat(firstBreak().getReason()).isEqualTo(Break.CHECKPOINT_UNSIGNED);
+  }
+
+  @Test
+  public void shouldCheckCheckpointsOfARetiredKeyTheEngineHolds() {
+    start(5, OTHER_KEY);
+    String retiredId = audit.getStatus().getKeyId();
+
+    // the key is replaced and the old one forgotten
+    restart(5, KEY, plugin -> { });
+    assertThat(firstBreak().getReason()).isEqualTo(Break.CHECKPOINT_UNKNOWN_KEY);
+
+    // its id is listed: accepted, but nothing proves the old part
+    restart(5, KEY, plugin -> plugin.setRetiredKeyIds(retiredId));
+    AuditVerification listed = audit.verify();
+    assertThat(listed.isIntact()).isTrue();
+    assertThat(listed.isAuthenticated()).isFalse();
+
+    // the old key is still at hand: its checkpoints are checked
+    restart(5, KEY, plugin -> plugin.setRetiredHmacKeys(OTHER_KEY));
+    assertThat(audit.getStatus().getRetiredKeyIds()).containsExactly(retiredId);
+    for (int i = 0; i < 6; i++) {
+      engine.getRuntimeService().startProcessInstanceByKey("t", "rotated-" + i);
+    }
+    AuditVerification held = audit.verify();
+    assertThat(held.isIntact()).isTrue();
+    assertThat(held.isAuthenticated()).isTrue();
+
+    // and a rewrite before one of them is found
+    AuditEvent old = chain().stream().filter(e -> AuditService.ACTION_CHECKPOINT.equals(e.getAction())).findFirst()
+        .orElseThrow();
+    assertThat(old.getDetails()).contains(retiredId);
+    AuditRecord changed = copy(at(2));
+    changed.setDetails("{\"forged\":true}");
+    rewriteFrom(changed);
+    Break found = firstBreak();
+    assertThat(found.getReason()).isEqualTo(Break.CHECKPOINT_MISMATCH);
+    assertThat(found.getSequence()).isEqualTo(old.getSequence());
+  }
+
+  void more(int instances) {
+    for (int i = 0; i < instances; i++) {
+      engine.getRuntimeService().startProcessInstanceByKey("t", "more-" + i);
+    }
+  }
+
+  AuditEvent lastCheckpoint() {
+    return chain().stream().filter(e -> AuditService.ACTION_CHECKPOINT.equals(e.getAction()))
+        .reduce((first, second) -> second).orElseThrow();
+  }
+
+  /** Removes the record, moves every later record one position down and fixes their hashes and the head. */
+  void removeAndRewrite(AuditEvent removed) {
+    List<AuditEvent> chain = chain();
+    sql(engine, "delete from FASTI_AUDIT_EVENT where ID_ = ?", removed.getId());
+    String previous = removed.getPreviousHash();
+    long last = removed.getSequence() - 1;
+    for (AuditEvent event : chain) {
+      if (event.getSequence() <= removed.getSequence()) {
+        continue;
+      }
+      AuditRecord record = copy(event);
+      record.setSequence(event.getSequence() - 1);
+      record.setPreviousHash(previous);
+      record.setHash(AuditChain.hash(record));
+      sql(engine, "update FASTI_AUDIT_EVENT set SEQ_ = ?, PREV_HASH_ = ?, HASH_ = ? where ID_ = ?", record.getSequence(),
+          record.getPreviousHash(), record.getHash(), record.getId());
+      previous = record.getHash();
+      last = record.getSequence();
+    }
+    sql(engine, "update FASTI_AUDIT_HEAD set SEQ_ = ?, HASH_ = ?", last, previous);
   }
 
   /** Writes the record as given and fixes the hashes of it and of every record after it, and the head. */
@@ -296,27 +603,126 @@ public class AuditTamperTest {
     sql(engine, "update FASTI_AUDIT_HEAD set HASH_ = ?", previous);
     AuditVerification verification = audit.verify();
     assertThat(verification.isIntact()).isTrue();
+    assertThat(verification.isAuthenticated()).isFalse();
     assertThat(verification.getChains().get(0).getCheckpointsVerified()).isZero();
   }
 
   @Test
-  public void shouldKeepVerifyingAfterAPurgeAndFindAForgedPurge() {
+  public void shouldKeepVerifyingAfterAPurgeAndFindMoreRemovedRecords() {
     start(0, null);
-    Date cut = new Date(ClockUtil.getCurrentTime().getTime() + 1);
-    ClockUtil.setCurrentTime(new Date(cut.getTime() + 60_000));
-    engine.getRuntimeService().startProcessInstanceByKey("t", "kept");
-    AuditPurgeResult result = audit.purge(cut);
+    AuditPurgeResult result = purgeNow();
     assertThat(result.getRemoved()).isPositive();
     assertThat(result.getPurgedThrough()).hasSize(1);
     AuditVerification verification = audit.verify();
     assertThat(verification.isIntact()).isTrue();
     assertThat(verification.getChains().get(0).getPurgedThrough()).isEqualTo(result.getRemoved());
+    // without a key nothing proves that the purge record was written by the engine
+    assertThat(verification.getChains().get(0).isPurgeAttested()).isFalse();
+    assertThat(verification.isAuthenticated()).isFalse();
     assertThat(audit.createQuery().businessKey("kept").count()).isPositive();
 
     // removing more records at the start than the purge names is found
     long first = verification.getChains().get(0).getFirstSequence();
     sql(engine, "delete from FASTI_AUDIT_EVENT where SEQ_ = ?", first);
     assertThat(firstBreak().getReason()).isEqualTo(Break.MISSING_START);
+  }
+
+  @Test
+  public void shouldAttestAPurgeWithTheKey() {
+    start(5, KEY);
+    AuditPurgeResult result = purgeNow();
+    assertThat(result.getRemoved()).isPositive();
+    AuditEvent purge = audit.createQuery().types(AuditService.TYPE_AUDIT).action(AuditService.ACTION_PURGE).list().get(0);
+    assertThat(purge.getDetails()).contains("\"hmac\":\"", "\"keyId\":\"" + audit.getStatus().getKeyId() + "\"",
+        "\"purgedThroughSeq\":" + result.getRemoved());
+    AuditVerification verification = audit.verify();
+    assertThat(verification.isIntact()).isTrue();
+    assertThat(verification.isAuthenticated()).isTrue();
+    AuditVerification.Chain chain = verification.getChains().get(0);
+    assertThat(chain.getPurgedThrough()).isEqualTo(result.getRemoved());
+    assertThat(chain.isPurgeAttested()).isTrue();
+  }
+
+  /**
+   * What someone with access to the database, but without the key, does to hide the first records:
+   * removes them and appends a purge record that names them, with a correct hash and head.
+   */
+  void forgePurge(long through, String signatureOf) {
+    List<AuditEvent> chain = chain();
+    AuditEvent firstKept = chain.stream().filter(e -> e.getSequence() == through + 1).findFirst().orElseThrow();
+    AuditEvent last = chain.get(chain.size() - 1);
+    sql(engine, "delete from FASTI_AUDIT_EVENT where SEQ_ <= ?", through);
+    AuditRecord forged = new AuditRecord(AuditService.TYPE_AUDIT, AuditService.ACTION_PURGE);
+    forged.setId("forged-purge");
+    forged.setChainId(last.getChainId());
+    forged.setSequence(last.getSequence() + 1);
+    forged.setTime(last.getTimestamp().getTime());
+    forged.setEngineName(last.getEngineName());
+    forged.setEntityType("chain");
+    forged.setEntityName(last.getChainId());
+    forged.setDetails("{" + (signatureOf == null ? "" : signatureOf + ",") + "\"purgedThroughHash\":\""
+        + firstKept.getPreviousHash() + "\",\"purgedThroughSeq\":" + through + "}");
+    forged.setPreviousHash(last.getHash());
+    forged.setHash(AuditChain.hash(forged));
+    insert(forged);
+    sql(engine, "update FASTI_AUDIT_HEAD set SEQ_ = ?, HASH_ = ?", forged.getSequence(), forged.getHash());
+  }
+
+  @Test
+  public void shouldFindAForgedPurgeRecordThroughTheKey() {
+    start(5, KEY);
+    forgePurge(3, null);
+    // every checkpoint signature still matches, as the signed hashes were not touched
+    Break found = firstBreak();
+    assertThat(found.getReason()).isEqualTo(Break.PURGE_UNATTESTED);
+    assertThat(found.getSequence()).isEqualTo(1);
+  }
+
+  @Test
+  public void shouldNotAcceptTheSignatureOfAnotherPurge() {
+    start(5, KEY);
+    purgeNow();
+    AuditEvent purge = audit.createQuery().types(AuditService.TYPE_AUDIT).action(AuditService.ACTION_PURGE).list().get(0);
+    java.util.regex.Matcher signature = java.util.regex.Pattern.compile("\"hmac\":\"[0-9a-f]+\",\"keyId\":\"[0-9a-f]+\"")
+        .matcher(purge.getDetails());
+    assertThat(signature.find()).isTrue();
+    long first = audit.verify().getChains().get(0).getFirstSequence();
+    // more records removed, named by a forged purge record that carries the signature of the real one
+    forgePurge(first + 1, signature.group());
+    assertThat(firstBreak().getReason()).isEqualTo(Break.PURGE_UNATTESTED);
+  }
+
+  @Test
+  public void shouldReportAForgedPurgeAsUnattestedWithoutKey() {
+    // documented limit: without a key a purge record proves nothing, so the verdict says so
+    start(5, null);
+    forgePurge(3, null);
+    AuditVerification verification = audit.verify();
+    assertThat(verification.isIntact()).isTrue();
+    assertThat(verification.isAuthenticated()).isFalse();
+    AuditVerification.Chain chain = verification.getChains().get(0);
+    assertThat(chain.getPurgedThrough()).isEqualTo(3);
+    assertThat(chain.isPurgeAttested()).isFalse();
+  }
+
+  @Test
+  public void shouldAcceptAnUnsignedPurgeWithAKeyOnlyWhenListed() {
+    start(0, null);
+    purgeNow();
+    restart(0, KEY, plugin -> { });
+    assertThat(firstBreak().getReason()).isEqualTo(Break.PURGE_UNATTESTED);
+    restart(0, KEY, plugin -> plugin.setRetiredKeyIds("unsigned"));
+    AuditVerification verification = audit.verify();
+    assertThat(verification.isIntact()).isTrue();
+    assertThat(verification.isAuthenticated()).isFalse();
+    assertThat(verification.getChains().get(0).isPurgeAttested()).isFalse();
+    // the next purge is signed and attests the start again
+    purgeNow();
+    restart(0, KEY, plugin -> { });
+    AuditVerification signed = audit.verify();
+    assertThat(signed.isIntact()).isTrue();
+    assertThat(signed.getChains().get(0).isPurgeAttested()).isTrue();
+    assertThat(signed.isAuthenticated()).isTrue();
   }
 
   @Test

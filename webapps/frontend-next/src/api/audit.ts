@@ -24,6 +24,8 @@ export interface AuditStatus {
   maskedVariables: string[] | null;
   signed: boolean;
   keyId: string | null;
+  /** ids of earlier keys whose signatures are still accepted; `unsigned` for records without signature */
+  retiredKeyIds?: string[] | null;
   checkpointInterval: number;
   retentionDays: number;
   historyLevel: string | null;
@@ -77,6 +79,10 @@ export interface AuditBreak {
 export interface AuditChain {
   chainId: string;
   intact: boolean;
+  /** intact, and every checkpoint and purge record was checked with a signing key of the engine */
+  authenticated?: boolean;
+  /** the last record a checked signature covers; 0 if not authenticated or before the first checkpoint */
+  authenticatedThrough?: number;
   records: number;
   firstSequence: number;
   lastSequence: number;
@@ -84,11 +90,16 @@ export interface AuditChain {
   checkpoints: number;
   checkpointsVerified: number;
   purgedThrough: number;
+  /** whether a checked signature attests the purge that removed the start of the chain */
+  purgeAttested?: boolean;
   firstBreak: AuditBreak | null;
 }
 
 export interface AuditVerification {
+  /** nothing that can be checked with the settings of the engine failed */
   intact: boolean;
+  /** intact, and every signature a chain needs was checked with a key of the engine; false without a key */
+  authenticated?: boolean;
   verifiedAt: string;
   records: number;
   chains: AuditChain[];
@@ -137,10 +148,14 @@ export async function getAuditEvents(
   return { items, count: count.count };
 }
 
-/** The records a query selects as a file of the server (recorded there as an export). */
+/**
+ * The records a query selects as a file of the server (recorded there as an export). A POST, as it
+ * writes that record: the request carries the CSRF token of the session like every other change.
+ */
 export async function exportAudit(query: AuditQuery, format: 'csv' | 'json'): Promise<{ blob: Blob; filename: string }> {
   const params = auditParams({ ...query, sortOrder: undefined });
   const { blob, filename } = await requestBlob(`${engineApi()}/audit/event/export`, {
+    method: 'POST',
     query: { ...params, format },
     accept: format === 'csv' ? 'text/csv' : 'application/json',
   });

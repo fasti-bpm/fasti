@@ -20,6 +20,7 @@ import {
   type AuditType,
   type AuditVerification,
 } from '../api/audit';
+import { isApiError } from '../api/http';
 import { useI18n, type MessageKey } from '../i18n';
 import { downloadBlob } from '../lib/csv';
 import { fromDateTimeInput, toEngineDate } from '../lib/dates';
@@ -55,6 +56,10 @@ const REASON_LABELS: Record<string, MessageKey> = {
   'head-mismatch': 'audit.reason.head-mismatch',
   'head-missing': 'audit.reason.head-missing',
   'checkpoint-mismatch': 'audit.reason.checkpoint-mismatch',
+  'checkpoint-unsigned': 'audit.reason.checkpoint-unsigned',
+  'checkpoint-unknown-key': 'audit.reason.checkpoint-unknown-key',
+  'checkpoint-missing': 'audit.reason.checkpoint-missing',
+  'purge-unattested': 'audit.reason.purge-unattested',
 };
 
 export function auditTypeLabel(type: string, t: ReturnType<typeof useI18n>['t']): string {
@@ -221,9 +226,12 @@ function intactMessage(result: AuditVerification, t: ReturnType<typeof useI18n>[
 
 /**
  * The outcome of a verification, for every chain. A break is an alert; an intact trail is
- * announced by the live region of the page, which is there before the result.
+ * announced by the live region of the page, which is there before the result. Intact means that
+ * nothing the engine can check failed; only an authenticated trail (every signature checked with
+ * a key of the engine) rules out a rewrite by someone who can write to the database, so anything
+ * less is said.
  */
-export function VerificationResult({ result }: { result: AuditVerification }) {
+export function VerificationResult({ result, signed }: { result: AuditVerification; signed: boolean }) {
   const { t, number } = useI18n();
   const found = result.firstBreak;
   return (
@@ -237,8 +245,9 @@ export function VerificationResult({ result }: { result: AuditVerification }) {
           <p>{t('audit.brokenHint')}</p>
         </Notice>
       ) : (
-        <Notice tone="info" title={intactMessage(result, t)}>
+        <Notice tone={result.authenticated ? 'info' : 'warning'} title={intactMessage(result, t)}>
           <p>{t('audit.intactHint')}</p>
+          <p>{t(result.authenticated ? 'audit.authenticated' : signed ? 'audit.notAuthenticated' : 'audit.notSigned')}</p>
         </Notice>
       )}
       <div className="table-wrap">
@@ -256,10 +265,23 @@ export function VerificationResult({ result }: { result: AuditVerification }) {
               <tr key={chain.chainId} className={chain.intact ? undefined : 'audit-trail__broken'}>
                 <th scope="row">
                   {chain.intact ? <ShieldCheck aria-hidden size={14} /> : <ShieldOff aria-hidden size={14} />} {chain.chainId}
-                  {chain.purgedThrough > 0 && <div className="muted">{t('audit.chainPurged', { sequence: chain.purgedThrough })}</div>}
+                  {chain.purgedThrough > 0 && (
+                    <div className="muted">
+                      {t(chain.purgeAttested ? 'audit.chainPurged' : 'audit.chainPurgedUnattested', { sequence: chain.purgedThrough })}
+                    </div>
+                  )}
                 </th>
                 <td>{number(chain.records)}</td>
-                <td>{t('audit.checkpointsVerified', { verified: chain.checkpointsVerified, total: chain.checkpoints })}</td>
+                <td>
+                  {t('audit.checkpointsVerified', { verified: chain.checkpointsVerified, total: chain.checkpoints })}
+                  {chain.authenticated && (
+                    <div className="muted">
+                      {chain.authenticatedThrough
+                        ? t('audit.chainSignedThrough', { sequence: chain.authenticatedThrough })
+                        : t('audit.chainNotSignedYet')}
+                    </div>
+                  )}
+                </td>
                 <td>{chain.lastHash ? <Id value={chain.lastHash} copy /> : '—'}</td>
               </tr>
             ))}
@@ -328,7 +350,11 @@ export function AuditTrailPage() {
     try {
       setVerification(await verifyAudit());
     } catch (error) {
-      toast.error(error, t('audit.verifyFailed'));
+      if (isApiError(error) && error.status === 409) {
+        toast.show({ title: t('audit.verifyBusy') });
+      } else {
+        toast.error(error, t('audit.verifyFailed'));
+      }
     } finally {
       setVerifying(false);
     }
@@ -402,7 +428,7 @@ export function AuditTrailPage() {
       </p>
       {verification && (
         <Card>
-          <VerificationResult result={verification} />
+          <VerificationResult result={verification} signed={status.data.signed} />
         </Card>
       )}
       <Card flush>

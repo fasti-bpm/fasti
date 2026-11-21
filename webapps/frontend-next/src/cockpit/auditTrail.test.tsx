@@ -181,11 +181,13 @@ describe('the audit trail page', () => {
   it('reports an intact trail with the last hash of each chain', async () => {
     const result: AuditVerification = {
       intact: true,
+      authenticated: true,
       verifiedAt: '2026-11-21T08:00:00.000+0000',
       records: 12,
       firstBreak: null,
       chains: [
-        { chainId: 'node-1/0', intact: true, records: 12, firstSequence: 1, lastSequence: 12, lastHash: 'c'.repeat(64), checkpoints: 1, checkpointsVerified: 1, purgedThrough: 0, firstBreak: null },
+        { chainId: 'node-1/1', intact: true, authenticated: true, authenticatedThrough: 0, records: 3, firstSequence: 1, lastSequence: 3, lastHash: 'd'.repeat(64), checkpoints: 0, checkpointsVerified: 0, purgedThrough: 0, purgeAttested: false, firstBreak: null },
+        { chainId: 'node-1/0', intact: true, authenticated: true, authenticatedThrough: 10, records: 12, firstSequence: 1, lastSequence: 12, lastHash: 'c'.repeat(64), checkpoints: 1, checkpointsVerified: 1, purgedThrough: 0, purgeAttested: false, firstBreak: null },
       ],
     };
     const server = fakeServer({
@@ -202,9 +204,13 @@ describe('the audit trail page', () => {
     const status = within(screen.getByRole('status'));
     expect(screen.getByRole('status')).toBeEmptyDOMElement();
     await userEvent.click(verify);
-    expect(await status.findByText('Intact: 12 records in 1 chain verified')).toBeInTheDocument();
-    expect(screen.getByRole('note')).toHaveTextContent('Intact: 12 records in 1 chain verified');
+    expect(await status.findByText('Intact: 12 records in 2 chains verified')).toBeInTheDocument();
+    expect(screen.getByRole('note')).toHaveTextContent('Intact: 12 records in 2 chains verified');
     expect(screen.getByText('1 of 1 verified')).toBeInTheDocument();
+    expect(screen.getByText(/^Authenticated: every checkpoint and purge record was checked/)).toBeInTheDocument();
+    // how far the signatures reach, per chain
+    expect(screen.getByText('signatures cover records up to 10')).toBeInTheDocument();
+    expect(screen.getByText('no checkpoint yet: hashes only')).toBeInTheDocument();
     expect(server.find('POST', `${ENGINE}/audit/verify`)).toHaveLength(1);
 
     // verified again, the same outcome is announced again: the region is emptied meanwhile
@@ -218,7 +224,66 @@ describe('the audit trail page', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Verify integrity' }));
     await waitFor(() => expect(screen.getByRole('status')).toBeEmptyDOMElement());
     finish();
-    expect(await status.findByText('Intact: 1,234 records in 1 chain verified')).toBeInTheDocument();
+    expect(await status.findByText('Intact: 1,234 records in 2 chains verified')).toBeInTheDocument();
+  });
+
+  it('says when an intact trail is not authenticated, and when a purge is not attested', async () => {
+    const chain = { chainId: 'node-1/0', intact: true, authenticated: false, records: 12, firstSequence: 41, lastSequence: 52, lastHash: 'c'.repeat(64), checkpoints: 2, checkpointsVerified: 1, purgedThrough: 40, purgeAttested: false, firstBreak: null };
+    const result: AuditVerification = { intact: true, authenticated: false, verifiedAt: '2026-11-21T08:00:00.000+0000', records: 12, firstBreak: null, chains: [chain] };
+    fakeServer({
+      [`GET ${ENGINE}/audit`]: () => json(STATUS),
+      [`GET ${ENGINE}/audit/event`]: () => json([]),
+      [`GET ${ENGINE}/audit/event/count`]: () => json({ count: 0 }),
+      [`POST ${ENGINE}/audit/verify`]: () => json(result),
+    });
+    wrap(<AuditTrailPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Verify integrity' }));
+    expect(await screen.findByRole('note')).toHaveTextContent('Intact: 12 records in 1 chain verified');
+    expect(screen.getByText(/^Not authenticated: some checkpoints or purge records carry a signature the engine cannot check/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Authenticated:/)).not.toBeInTheDocument();
+    expect(screen.getByText('1 of 2 verified')).toBeInTheDocument();
+    expect(screen.getByText('Purged up to record 40; no checked signature attests it')).toBeInTheDocument();
+  });
+
+  it('says that hashes alone do not rule out a rewrite when the trail is not signed', async () => {
+    const chain = { chainId: 'node-1/0', intact: true, authenticated: false, records: 3, firstSequence: 1, lastSequence: 3, lastHash: 'c'.repeat(64), checkpoints: 0, checkpointsVerified: 0, purgedThrough: 0, purgeAttested: false, firstBreak: null };
+    fakeServer({
+      [`GET ${ENGINE}/audit`]: () => json({ ...STATUS, signed: false, keyId: null }),
+      [`GET ${ENGINE}/audit/event`]: () => json([]),
+      [`GET ${ENGINE}/audit/event/count`]: () => json({ count: 0 }),
+      [`POST ${ENGINE}/audit/verify`]: () => json({ intact: true, authenticated: false, verifiedAt: '2026-11-21T08:00:00.000+0000', records: 3, firstBreak: null, chains: [chain] }),
+    });
+    wrap(<AuditTrailPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Verify integrity' }));
+    expect(await screen.findByText(/^No signing key is set: the hashes are consistent/)).toBeInTheDocument();
+  });
+
+  it('names a removed start that no signed purge record explains', async () => {
+    const found = { chainId: 'node-1/0', sequence: 1, recordId: null, reason: 'purge-unattested', message: 'The chain starts at record 4.' };
+    fakeServer({
+      [`GET ${ENGINE}/audit`]: () => json(STATUS),
+      [`GET ${ENGINE}/audit/event`]: () => json([]),
+      [`GET ${ENGINE}/audit/event/count`]: () => json({ count: 0 }),
+      [`POST ${ENGINE}/audit/verify`]: () =>
+        json({ intact: false, authenticated: false, verifiedAt: '2026-11-21T08:00:00.000+0000', records: 0, firstBreak: found, chains: [] }),
+    });
+    wrap(<AuditTrailPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Verify integrity' }));
+    const alert = await screen.findByRole('alert');
+    expect(within(alert).getByText('Records at the start were removed without a signed purge record')).toBeInTheDocument();
+  });
+
+  it('tells that a verification is running already instead of failing', async () => {
+    fakeServer({
+      [`GET ${ENGINE}/audit`]: () => json(STATUS),
+      [`GET ${ENGINE}/audit/event`]: () => json([]),
+      [`GET ${ENGINE}/audit/event/count`]: () => json({ count: 0 }),
+      [`POST ${ENGINE}/audit/verify`]: () => json({ type: 'InvalidRequestException', message: 'A verification of the audit trail is running.' }, 409),
+    });
+    wrap(<AuditTrailPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Verify integrity' }));
+    expect(await screen.findByText('A verification is already running on the engine. Try again when it is done.')).toBeInTheDocument();
+    expect(screen.queryByText('Could not verify the audit trail')).not.toBeInTheDocument();
   });
 
   it('reports the first break as an alert', async () => {
@@ -255,12 +320,14 @@ describe('the audit trail page', () => {
       [`GET ${ENGINE}/audit`]: () => json(STATUS),
       [`GET ${ENGINE}/audit/event`]: () => json([event()]),
       [`GET ${ENGINE}/audit/event/count`]: () => json({ count: 1 }),
-      [`GET ${ENGINE}/audit/event/export`]: () => text('id,chainId\r\ne1,node-1/0\r\n', 'text/csv'),
+      [`POST ${ENGINE}/audit/event/export`]: () => text('id,chainId\r\ne1,node-1/0\r\n', 'text/csv'),
     });
     wrap(<AuditTrailPage />, '/cockpit/audit-trail?bk=order-4711');
     await userEvent.click(await screen.findByRole('button', { name: 'Export CSV' }));
     await waitFor(() => expect(created).toHaveBeenCalled());
-    const request = server.find('GET', `${ENGINE}/audit/event/export`)[0];
+    // a POST, so that the CSRF filter of the web application covers it; nothing is exported with a GET
+    expect(server.find('GET', `${ENGINE}/audit/event/export`)).toHaveLength(0);
+    const request = server.find('POST', `${ENGINE}/audit/event/export`)[0];
     expect(request?.query.get('format')).toBe('csv');
     expect(request?.query.get('businessKey')).toBe('order-4711');
     expect(await screen.findByText('Exported; the export is on record in the audit trail.')).toBeInTheDocument();

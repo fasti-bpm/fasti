@@ -2,9 +2,8 @@ English | [Tiếng Việt](absence.vi.md)
 
 # Substitutes during absence
 
-> **Coming in 1.1.0, not in the 1.0.1 release.** This feature is on the `main` branch and will be
-> released with Fasti 1.1.0. The 1.0.1 release and the published 1.0.1 image do not have it; its
-> settings have no effect there.
+> **New in 1.1.0.** The 1.0.x releases and images do not have this feature; its settings have no
+> effect there.
 
 Work should not wait for someone on leave. A user records an absence (from, until, a substitute
 and an optional note); while the absence is active, user tasks created for or assigned to that

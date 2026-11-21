@@ -7,8 +7,8 @@ database, either with the **Helm chart** (`distro/kubernetes/helm/fasti-bpm`) or
 **plain manifests** (`distro/kubernetes/manifests`, Kustomize). Fasti BPM is built on Camunda 7
 CE 7.24.0 and is an independent project, not affiliated with Camunda Services GmbH.
 
-> The Helm chart and the manifests are on the `main` branch and will be released with Fasti
-> 1.1.0; they are not part of the 1.0.1 release. They run the published 1.0.1 image.
+> **Since 1.1.0.** The Helm chart and the manifests are released with Fasti from 1.1.0 on and
+> run the image of the same version by default.
 
 References: [chart README](../distro/kubernetes/helm/fasti-bpm/README.md) (all values),
 [image reference](../distro/docker/README.md) (all environment variables),
@@ -61,7 +61,7 @@ Write the settings into a values file, for example `fasti-values.yaml`:
 
 ```yaml
 image:
-  tag: "1.0.1"
+  tag: "1.1.0"
   # digest: sha256:...            # recommended: pin the image
 database:
   url: jdbc:postgresql://postgres.db.svc.cluster.local:5432/fasti
@@ -129,7 +129,7 @@ resources:
   - ../fasti/distro/kubernetes/manifests
 images:
   - name: fastidev/fasti-bpm
-    newTag: "1.0.1"
+    newTag: "1.1.0"
 patches:
   - target: {kind: Deployment, name: fasti}
     patch: |

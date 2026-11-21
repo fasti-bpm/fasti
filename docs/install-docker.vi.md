@@ -25,17 +25,17 @@ Services GmbH.
 Image cho amd64 và arm64, có ở hai nơi:
 
 ```bash
-docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
-docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
+docker pull fastidev/fasti-bpm:1.1.0              # Docker Hub
+docker pull ghcr.io/fasti-bpm/fasti-bpm:1.1.0     # GitHub Container Registry
 ```
 
-Tag: `1.0.1` (đúng một bản), `1.0` (bản vá mới nhất của 1.0) và `latest` (bản phát hành được
+Tag: `1.1.0` (đúng một bản), `1.1` (bản vá mới nhất của 1.1) và `latest` (bản phát hành được
 công bố gần nhất). Image được ký bằng cosign (keyless, GitHub OIDC) và kèm SBOM và provenance.
 Từ 1.0.1, chữ ký dùng định dạng Sigstore bundle của cosign 3; image 1.0.0 mang chữ ký theo định
 dạng cũ của cosign 2.
 
 Cũng có thể build image từ mã nguồn (cần JDK 17+ và mạng tới Maven Central,
-nodejs.org, npm registry) rồi dùng tên `fasti-bpm:local` thay cho `fastidev/fasti-bpm:1.0.1` ở mọi
+nodejs.org, npm registry) rồi dùng tên `fasti-bpm:local` thay cho `fastidev/fasti-bpm:1.1.0` ở mọi
 lệnh bên dưới:
 
 ```bash
@@ -51,7 +51,7 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='đổi-mật-khẩu-này' \
   -v fasti-data:/fasti/data \
-  fastidev/fasti-bpm:1.0.1
+  fastidev/fasti-bpm:1.1.0
 ```
 
 - Mở <http://localhost:8080/fasti/> và đăng nhập bằng `admin`.
@@ -98,7 +98,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
   -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
-  fastidev/fasti-bpm:1.0.1 --production
+  fastidev/fasti-bpm:1.1.0 --production
 ```
 
 - `FASTI_DB_SCHEMA_UPDATE=true` chỉ tạo các bảng còn thiếu của một cơ sở dữ liệu mới; Fasti không
@@ -126,7 +126,7 @@ docker compose -f docker-compose.postgres.yml up -d
 docker compose -f docker-compose.postgres.yml ps      # cả hai dịch vụ "healthy"
 ```
 
-Biến có thể đặt khi chạy: `FASTI_IMAGE` (mặc định `fastidev/fasti-bpm:1.0.1`, ví dụ
+Biến có thể đặt khi chạy: `FASTI_IMAGE` (mặc định `fastidev/fasti-bpm:1.1.0`, ví dụ
 `FASTI_IMAGE=fasti-bpm:local`), `FASTI_HOST_PORT` (mặc định `8080`), `TZ` (mặc định `UTC`).
 
 <a id="6-connecting-to-an-existing-camunda-7-database"></a>
@@ -152,7 +152,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -v /đường/dẫn/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=UTC \
-  fastidev/fasti-bpm:1.0.1 --production
+  fastidev/fasti-bpm:1.1.0 --production
 ```
 
 - Cổng chỉ mở trên máy này; truy cập từ xa hãy đi qua reverse proxy có HTTPS.
@@ -227,12 +227,12 @@ Kubernetes: `livenessProbe` → `/actuator/health/liveness`, `readinessProbe` �
 
 ## 10. Nâng cấp và quay lại
 
-**Nâng cấp Fasti** (ví dụ `1.0.0` → `1.0.1`):
+**Nâng cấp Fasti** (ví dụ `1.0.1` → `1.1.0`):
 
 ```bash
-docker pull fastidev/fasti-bpm:1.0.1
+docker pull fastidev/fasti-bpm:1.1.0
 docker stop -t 60 fasti && docker rm fasti
-docker run -d --name fasti ... fastidev/fasti-bpm:1.0.1 --production   # cùng tham số như trước
+docker run -d --name fasti ... fastidev/fasti-bpm:1.1.0 --production   # cùng tham số như trước
 ```
 
 Với compose: đổi `FASTI_IMAGE` (hoặc dòng `image:`) rồi `docker compose -f docker-compose.postgres.yml up -d`.
@@ -286,10 +286,7 @@ Kiểm tra checksum trước khi giải nén, ví dụ `sha256sum -c fasti-bpm-t
 
 ## 13. Giám sát: log JSON, metrics, tracing
 
-> **Có từ 1.1.0, chưa có trong image 1.0.1.** Các thiết lập trong mục này đã có trên nhánh
-> `main` và sẽ được phát hành cùng Fasti 1.1.0; image 1.0.1 đã công bố chưa có chúng. Trong lúc
-> chờ 1.1.0, hãy thử bằng image build từ mã nguồn (`fasti-bpm:local`, xem
-> [mục 2](#2-pull-the-image)) thay cho `fastidev/fasti-bpm:1.1.0`.
+> **Có từ 1.1.0.** Các image 1.0.x chưa có các thiết lập trong mục này.
 
 Log JSON, metrics Prometheus và tracing OpenTelemetry đều **tắt theo mặc định**. Mỗi tính năng
 bật bằng một biến môi trường của image; cùng các thiết lập đó dùng được dưới dạng thuộc tính

@@ -24,7 +24,7 @@ Container Registry（`ghcr.io/fasti-bpm/fasti-bpm`）で公開しています。
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.0.1
+  fastidev/fasti-bpm:1.1.0
 ```
 
 <http://localhost:8080/fasti/> を開いてサインインしてください。`DB_URL` を指定しない場合、イメージは
@@ -113,12 +113,13 @@ Camunda 7 を引き継ぐ優れたプロジェクトはいくつもあります�
 
 ## ロードマップ
 
-これは計画であり、日程の約束ではありません。`1.1.0` で予定しており、すでに `main` ブランチにあるもの：
+これは計画であり、日程の約束ではありません。`1.1.0` でリリースしたもの：
 Helm チャートと Kubernetes マニフェスト、Prometheus メトリクス、OpenTelemetry トレーシング、構造化 JSON
 ログ、不在時の代理者設定、承認に対する四眼原則（フォーアイズ）による統制、改ざん不能な監査証跡、
-Maven アーティファクトを Maven Central で公開するための準備。`2.0` で予定しているもの：新しい
-インターフェースでの CMMN 対応。Camunda 7 CE の終了から 2027年の目標までの
-タイムライン：<https://fasti.dev/#timeline>。
+AI アシスタント向けの MCP サーバー、新しいインターフェースでのケース（CMMN）対応。`1.x` で次に
+予定しているもの：Maven アーティファクトの Maven Central での公開、DB2 での検証、ネイティブ
+スピーカーによる翻訳のレビュー、AngularJS アプリケーションの廃止。Camunda 7 CE の終了から
+2027年の目標までのタイムライン：<https://fasti.dev/#timeline>。
 
 <a id="documentation"></a>
 

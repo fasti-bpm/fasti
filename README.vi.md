@@ -22,7 +22,7 @@ Image có trên Docker Hub (`fastidev/fasti-bpm`) và GitHub Container Registry
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='đổi-mật-khẩu-này' \
-  fastidev/fasti-bpm:1.0.1
+  fastidev/fasti-bpm:1.1.0
 ```
 
 Mở <http://localhost:8080/fasti/> và đăng nhập. Không đặt `DB_URL` thì image dùng H2 bên trong
@@ -120,12 +120,13 @@ trợ cài đặt, chuyển đổi hoặc vận hành production, hay thống nh
 
 ## Lộ trình
 
-Đây là kế hoạch, không phải cam kết về ngày. Dự kiến cho `1.1.0`, đã có trên nhánh `main`: Helm
-chart và manifest Kubernetes, metrics cho Prometheus, tracing bằng OpenTelemetry, log có cấu trúc
-dạng JSON, người thay thế khi vắng mặt, nguyên tắc bốn mắt khi phê duyệt, nhật ký kiểm toán không
-thể sửa đổi, và phần chuẩn bị để phát hành artifact Maven lên Maven Central. Cho `2.0`: CMMN trong
-giao diện mới. Dòng thời gian, từ khi Camunda 7 CE kết thúc tới các mục tiêu năm 2027:
-<https://fasti.dev/#timeline>.
+Đây là kế hoạch, không phải cam kết về ngày. Đã phát hành trong `1.1.0`: Helm chart và manifest
+Kubernetes, metrics cho Prometheus, tracing bằng OpenTelemetry, log có cấu trúc dạng JSON, người
+thay thế khi vắng mặt, nguyên tắc bốn mắt khi phê duyệt, nhật ký kiểm toán không thể sửa đổi, MCP
+server cho trợ lý AI, và hồ sơ (CMMN) trong giao diện mới. Tiếp theo trong `1.x`: phát hành
+artifact Maven lên Maven Central, kiểm chứng trên DB2, người bản ngữ rà soát các bản dịch, và
+ngừng dùng các ứng dụng AngularJS. Dòng thời gian, từ khi Camunda 7 CE kết thúc tới các mục tiêu
+năm 2027: <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>
 

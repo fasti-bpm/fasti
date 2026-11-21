@@ -17,8 +17,8 @@ Hướng dẫn chuyển đổi đầy đủ (các bước, quay lại, chạy l�
 # 1. bản phân phối Run, driver JDBC và Dockerfile vào distro/docker/target/docker
 ./mvnw -pl distro/docker -am package -DskipTests
 # 2. image
-docker build -t fasti-bpm:1.0.1 \
-  --build-arg VERSION=1.0.1 --build-arg REVISION=$(git rev-parse --short HEAD) \
+docker build -t fasti-bpm:1.1.0 \
+  --build-arg VERSION=1.1.0 --build-arg REVISION=$(git rev-parse --short HEAD) \
   distro/docker/target/docker
 ```
 
@@ -95,7 +95,7 @@ docker run -d --name fasti -p 8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=UTC \
-  fasti-bpm:1.0.1
+  fasti-bpm:1.1.0
 ```
 
 `DB_PASSWORD_FILE` phải trỏ tới một file có trong container (ví dụ Docker/Kubernetes secret, hoặc
@@ -113,7 +113,7 @@ cấu hình riêng): image dùng H2 trong `/fasti/data`, chỉ để thử.
 Tên biến của image cũ và các bí danh `FASTI_*` đều được chấp nhận (khi đặt cả hai, giá trị `FASTI_*` được dùng;
 với `DEBUG` và `JMX_PROMETHEUS`, chỉ cần một trong hai tên là `true`). Mọi thuộc tính
 Spring Boot cũng đặt được bằng biến môi trường (ví dụ `CAMUNDA_BPM_RUN_AUTH_ENABLED=true`). Các
-mục ghi **từ 1.1.0** đã có trên nhánh `main` nhưng chưa có trong image 1.0.1 đã công bố.
+mục ghi **từ 1.1.0** chưa có trong các image 1.0.x.
 
 | Biến | Mặc định | Ý nghĩa |
 |---|---|---|
@@ -149,7 +149,7 @@ mục ghi **từ 1.1.0** đã có trên nhánh `main` nhưng chưa có trong ima
 | `FASTI_CONFIG` | | file YAML thêm (cách nhau dấu phẩy) |
 | `FASTI_EXTRA_LIB` | | thư mục jar thêm (driver, plugin) |
 | `FASTI_MARIADB_USE_MYSQL_DRIVER` | `true` | khi thiếu driver MariaDB, dùng MySQL Connector/J |
-| `FASTI_PORT` | 8080 | cổng HTTP; `HEALTHCHECK` của image dùng cùng cổng này. **Từ 1.1.0:** giá trị không phải số (Kubernetes đặt `FASTI_PORT=tcp://...` cho Service tên `fasti`) bị bỏ qua kèm cảnh báo; image 1.0.1 không khởi động được với giá trị đó |
+| `FASTI_PORT` | 8080 | cổng HTTP; `HEALTHCHECK` của image dùng cùng cổng này. **Từ 1.1.0:** giá trị không phải số (Kubernetes đặt `FASTI_PORT=tcp://...` cho Service tên `fasti`) bị bỏ qua kèm cảnh báo; các image 1.0.x không khởi động được với giá trị đó |
 | `FASTI_LOG_FORMAT` | `text` | **Từ 1.1.0.** `json`: mỗi dòng log là một đối tượng JSON (Elastic Common Schema); có thêm `logstash`, `gelf` |
 | `FASTI_METRICS_PROMETHEUS_ENABLED` | `false` | **Từ 1.1.0.** `true`: metrics Prometheus tại `/actuator/prometheus` (JVM, HTTP, pool, engine); cần token hoặc `FASTI_MANAGEMENT_PORT` |
 | `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | | **Từ 1.1.0.** Token scrape (`Authorization: Bearer <token>`) cho metrics trên cổng của ứng dụng; giá trị ngẫu nhiên ít nhất 16 ký tự (server không khởi động với token ngắn hơn hoặc với `change-me`) |
@@ -184,15 +184,15 @@ deployment ở `/camunda/configuration/resources`. Đường dẫn riêng của 
 | Oracle | không | giấy phép riêng: thêm `ojdbc11.jar` |
 | DB2 | không | giấy phép riêng: thêm `jcc.jar` |
 
-Thêm driver: image con (`FROM fasti-bpm:1.0.1` + `COPY ojdbc11.jar /fasti/configuration/userlib/`)
+Thêm driver: image con (`FROM fasti-bpm:1.1.0` + `COPY ojdbc11.jar /fasti/configuration/userlib/`)
 hoặc gắn thư mục và đặt `FASTI_EXTRA_LIB=/drivers`.
 
 MySQL và MariaDB lưu thời gian của engine đến từng giây (schema Camunda 7.24 không có phần lẻ của
 giây). **Từ 1.1.0** engine gửi mọi giá trị ngày giờ đã cắt về nguyên giây trên hai cơ sở dữ liệu
 này, nên bộ lọc thời gian như `createdAfter`, `startedAfter` hay `dueDate` của task tìm thấy cả
 dòng được lưu trong cùng giây, với driver nào cũng vậy; không cần tham số URL. MariaDB
-Connector/J không có tùy chọn bỏ phần lẻ của giây, nên image 1.0.1 dùng driver đó có thể bỏ sót
-các dòng như vậy; với 1.0.1, hãy kết nối qua MySQL Connector/J
+Connector/J không có tùy chọn bỏ phần lẻ của giây, nên các image 1.0.x dùng driver đó có thể bỏ sót
+các dòng như vậy; với 1.0.x, hãy kết nối qua MySQL Connector/J
 (`DB_DRIVER=com.mysql.cj.jdbc.Driver`, `DB_URL=jdbc:mysql://host:3306/db?sendFractionalSeconds=false`).
 
 ## Vận hành

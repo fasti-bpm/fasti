@@ -5,7 +5,7 @@ English | [Tiếng Việt](install-docker.vi.md) | [Deutsch](install-docker.de.m
 A step-by-step guide: a quick trial with H2, production with PostgreSQL (`docker run` or
 `docker compose`), connecting to an existing Camunda 7 database, side-by-side mode, health
 checks, upgrade, rollback, troubleshooting and observability (JSON logs, Prometheus metrics,
-tracing; coming in 1.1.0). Full image reference:
+tracing; since 1.1.0). Full image reference:
 [distro/docker/README.md](../distro/docker/README.md). Fasti BPM is built on Camunda 7 CE
 7.24.0 and is an independent project, not affiliated with Camunda Services GmbH.
 
@@ -27,18 +27,18 @@ tracing; coming in 1.1.0). Full image reference:
 The image is published for amd64 and arm64 in two places:
 
 ```bash
-docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
-docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
+docker pull fastidev/fasti-bpm:1.1.0              # Docker Hub
+docker pull ghcr.io/fasti-bpm/fasti-bpm:1.1.0     # GitHub Container Registry
 ```
 
-Tags: `1.0.1` (exactly that release), `1.0` (latest patch release of 1.0) and `latest` (the most
+Tags: `1.1.0` (exactly that release), `1.1` (latest patch release of 1.1) and `latest` (the most
 recently published release). The image is signed with cosign (keyless, GitHub OIDC) and carries
 an SBOM and a provenance attestation. From 1.0.1 on the signature is in the Sigstore bundle
 format of cosign 3; the 1.0.0 image carries a signature in the older cosign 2 format.
 
 You can also build the image from source (needs JDK 17+ and network access to Maven
 Central, nodejs.org and the npm registry) and use the name `fasti-bpm:local` instead of
-`fastidev/fasti-bpm:1.0.1` in every command below:
+`fastidev/fasti-bpm:1.1.0` in every command below:
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
@@ -53,7 +53,7 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
   -v fasti-data:/fasti/data \
-  fastidev/fasti-bpm:1.0.1
+  fastidev/fasti-bpm:1.1.0
 ```
 
 - Open <http://localhost:8080/fasti/> and sign in as `admin`.
@@ -101,7 +101,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
   -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
-  fastidev/fasti-bpm:1.0.1 --production
+  fastidev/fasti-bpm:1.1.0 --production
 ```
 
 - `FASTI_DB_SCHEMA_UPDATE=true` only creates missing tables in a new database; Fasti never
@@ -130,7 +130,7 @@ docker compose -f docker-compose.postgres.yml up -d
 docker compose -f docker-compose.postgres.yml ps      # both services "healthy"
 ```
 
-Variables you can set when starting: `FASTI_IMAGE` (default `fastidev/fasti-bpm:1.0.1`, for
+Variables you can set when starting: `FASTI_IMAGE` (default `fastidev/fasti-bpm:1.1.0`, for
 example `FASTI_IMAGE=fasti-bpm:local`), `FASTI_HOST_PORT` (default `8080`), `TZ` (default `UTC`).
 
 <a id="6-connecting-to-an-existing-camunda-7-database"></a>
@@ -158,7 +158,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=UTC \
-  fastidev/fasti-bpm:1.0.1 --production
+  fastidev/fasti-bpm:1.1.0 --production
 ```
 
 - The port is bound to this machine only; for remote access go through a reverse proxy with HTTPS.
@@ -232,12 +232,12 @@ Kubernetes: `livenessProbe` → `/actuator/health/liveness`, `readinessProbe` �
 
 ## 10. Upgrade and rollback
 
-**Upgrading Fasti** (for example `1.0.0` → `1.0.1`):
+**Upgrading Fasti** (for example `1.0.1` → `1.1.0`):
 
 ```bash
-docker pull fastidev/fasti-bpm:1.0.1
+docker pull fastidev/fasti-bpm:1.1.0
 docker stop -t 60 fasti && docker rm fasti
-docker run -d --name fasti ... fastidev/fasti-bpm:1.0.1 --production   # same options as before
+docker run -d --name fasti ... fastidev/fasti-bpm:1.1.0 --production   # same options as before
 ```
 
 With Docker Compose: change `FASTI_IMAGE` (or the `image:` line), then
@@ -290,10 +290,7 @@ Verify the checksum before extracting, for example `sha256sum -c fasti-bpm-tomca
 
 ## 13. Observability
 
-> **Coming in 1.1.0, not in the 1.0.1 image.** The settings in this section are on the `main`
-> branch and will be released with Fasti 1.1.0; the published 1.0.1 image does not have them.
-> Until 1.1.0 is published, try them with an image built from source (`fasti-bpm:local`, see
-> [section 2](#2-pull-the-image)) instead of `fastidev/fasti-bpm:1.1.0`.
+> **Since 1.1.0.** The 1.0.x images do not have the settings in this section.
 
 JSON logs, Prometheus metrics and OpenTelemetry tracing are all **off by default**. Each one is
 switched on by an environment variable of the image; the same settings work as Spring Boot

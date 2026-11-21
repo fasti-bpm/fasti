@@ -2,9 +2,8 @@
 
 # Nhật ký kiểm toán bất biến
 
-> **Có từ 1.1.0, chưa có trong bản phát hành 1.0.1.** Tính năng này đã có trên nhánh `main` và sẽ
-> được phát hành cùng Fasti 1.1.0. Bản phát hành 1.0.1 và image 1.0.1 đã công bố chưa có tính năng
-> này; các thiết lập của nó không có tác dụng ở đó.
+> **Có từ 1.1.0.** Các bản phát hành và image 1.0.x chưa có tính năng này; các thiết lập của nó
+> không có tác dụng ở đó.
 
 Kiểm toán viên muốn biết ai đã làm gì, khi nào, với hồ sơ nào, và rằng không ai sửa bản ghi đó
 về sau. Lịch sử và nhật ký thao tác của engine trả lời câu hỏi đầu, nhưng bất kỳ ai có quyền

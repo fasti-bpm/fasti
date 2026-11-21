@@ -5,13 +5,13 @@
   <parent>
     <groupId>dev.fasti.platform</groupId>
     <artifactId>fasti-root</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
     <relativePath>../../</relativePath>
   </parent>
 
   <groupId>dev.fasti.platform.dmn</groupId>
   <artifactId>fasti-engine-dmn-bom</artifactId>
-  <version>1.0.1</version>
+  <version>1.1.0</version>
   <name>Fasti BPM Platform - DMN - engine - bom</name>
   <packaging>pom</packaging>
 

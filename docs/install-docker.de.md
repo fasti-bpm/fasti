@@ -28,18 +28,18 @@ Upgrade, Rollback und Fehlerbehebung. Vollständige Image-Referenz:
 Das Image wird für amd64 und arm64 an zwei Stellen veröffentlicht:
 
 ```bash
-docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
-docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
+docker pull fastidev/fasti-bpm:1.1.0              # Docker Hub
+docker pull ghcr.io/fasti-bpm/fasti-bpm:1.1.0     # GitHub Container Registry
 ```
 
-Tags: `1.0.1` (genau diese Version), `1.0` (neueste Patch-Version von 1.0) und `latest` (die zuletzt
+Tags: `1.1.0` (genau diese Version), `1.1` (neueste Patch-Version von 1.1) und `latest` (die zuletzt
 veröffentlichte Version). Das Image ist mit cosign signiert (schlüssellos, GitHub OIDC) und enthält
 eine SBOM sowie einen Herkunftsnachweis. Ab 1.0.1 liegt die Signatur im Sigstore-Bundle-Format von
 cosign 3 vor; das Image 1.0.0 trägt eine Signatur im älteren Format von cosign 2.
 
 Sie können das Image auch aus dem Quellcode erstellen (erfordert JDK 17+ und Netzwerkzugriff auf Maven
 Central, nodejs.org und die npm-Registry) und in allen folgenden Befehlen den Namen `fasti-bpm:local` anstelle von
-`fastidev/fasti-bpm:1.0.1` verwenden:
+`fastidev/fasti-bpm:1.1.0` verwenden:
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
@@ -54,7 +54,7 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
   -v fasti-data:/fasti/data \
-  fastidev/fasti-bpm:1.0.1
+  fastidev/fasti-bpm:1.1.0
 ```
 
 - Öffnen Sie <http://localhost:8080/fasti/> und melden Sie sich als `admin` an.
@@ -102,7 +102,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
   -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
-  fastidev/fasti-bpm:1.0.1 --production
+  fastidev/fasti-bpm:1.1.0 --production
 ```
 
 - `FASTI_DB_SCHEMA_UPDATE=true` erstellt nur fehlende Tabellen in einer neuen Datenbank; Fasti aktualisiert niemals
@@ -131,7 +131,7 @@ docker compose -f docker-compose.postgres.yml up -d
 docker compose -f docker-compose.postgres.yml ps      # both services "healthy"
 ```
 
-Beim Start können Sie folgende Variablen setzen: `FASTI_IMAGE` (Standard: `fastidev/fasti-bpm:1.0.1`, zum
+Beim Start können Sie folgende Variablen setzen: `FASTI_IMAGE` (Standard: `fastidev/fasti-bpm:1.1.0`, zum
 Beispiel `FASTI_IMAGE=fasti-bpm:local`), `FASTI_HOST_PORT` (Standard: `8080`), `TZ` (Standard: `UTC`).
 
 <a id="6-connecting-to-an-existing-camunda-7-database"></a>
@@ -159,7 +159,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=UTC \
-  fastidev/fasti-bpm:1.0.1 --production
+  fastidev/fasti-bpm:1.1.0 --production
 ```
 
 - Der Port ist nur an diesen Rechner gebunden; verwenden Sie für den Fernzugriff einen Reverse-Proxy mit HTTPS.
@@ -232,12 +232,12 @@ Kubernetes: `livenessProbe` → `/actuator/health/liveness`, `readinessProbe` �
 
 ## 10. Upgrade und Rollback
 
-**Fasti aktualisieren** (zum Beispiel `1.0.0` → `1.0.1`):
+**Fasti aktualisieren** (zum Beispiel `1.0.1` → `1.1.0`):
 
 ```bash
-docker pull fastidev/fasti-bpm:1.0.1
+docker pull fastidev/fasti-bpm:1.1.0
 docker stop -t 60 fasti && docker rm fasti
-docker run -d --name fasti ... fastidev/fasti-bpm:1.0.1 --production   # same options as before
+docker run -d --name fasti ... fastidev/fasti-bpm:1.1.0 --production   # same options as before
 ```
 
 Mit Docker Compose: Ändern Sie `FASTI_IMAGE` (oder die Zeile `image:`), und führen Sie anschließend

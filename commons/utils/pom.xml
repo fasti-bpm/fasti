@@ -4,7 +4,7 @@
   <parent>
     <groupId>dev.fasti.platform.commons</groupId>
     <artifactId>fasti-commons-root</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
   </parent>
 
   <artifactId>fasti-commons-utils</artifactId>

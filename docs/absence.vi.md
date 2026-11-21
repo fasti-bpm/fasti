@@ -2,9 +2,8 @@
 
 # Người thay thế khi vắng mặt
 
-> **Có từ 1.1.0, chưa có trong bản phát hành 1.0.1.** Tính năng này đã có trên nhánh `main` và sẽ
-> được phát hành cùng Fasti 1.1.0. Bản phát hành 1.0.1 và image 1.0.1 đã công bố chưa có tính năng
-> này; các thiết lập của nó không có tác dụng ở đó.
+> **Có từ 1.1.0.** Các bản phát hành và image 1.0.x chưa có tính năng này; các thiết lập của nó
+> không có tác dụng ở đó.
 
 Công việc không nên phải chờ người đang nghỉ phép. Người dùng ghi lại lịch vắng mặt (từ, đến,
 người thay thế và ghi chú tùy chọn); trong thời gian vắng mặt, công việc (user task) được tạo

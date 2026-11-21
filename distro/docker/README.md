@@ -16,8 +16,8 @@ Full migration guide (steps, rollback, mixed operation, limits):
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
-docker build -t fasti-bpm:1.0.1 \
-  --build-arg VERSION=1.0.1 --build-arg REVISION=$(git rev-parse --short HEAD) \
+docker build -t fasti-bpm:1.1.0 \
+  --build-arg VERSION=1.1.0 --build-arg REVISION=$(git rev-parse --short HEAD) \
   distro/docker/target/docker
 ```
 
@@ -92,7 +92,7 @@ docker run -d --name fasti -p 8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=UTC \
-  fasti-bpm:1.0.1
+  fasti-bpm:1.1.0
 ```
 
 `DB_PASSWORD_FILE` must name a file inside the container (a Docker/Kubernetes secret, or
@@ -107,8 +107,8 @@ or a configuration file of your own) the image uses H2 in `/fasti/data`, for try
 The names of the former Camunda 7 Run image and `FASTI_*` aliases are accepted (when both are
 set, the `FASTI_*` value is used; `DEBUG` and `JMX_PROMETHEUS` are on if either name is `true`).
 Any Spring Boot property can be set as an environment variable too (for example
-`CAMUNDA_BPM_RUN_AUTH_ENABLED=true`). Entries marked **from 1.1.0** are on the `main` branch and
-not in the published 1.0.1 image.
+`CAMUNDA_BPM_RUN_AUTH_ENABLED=true`). Entries marked **from 1.1.0** are not in the 1.0.x
+images.
 
 | Variable | Default | Meaning |
 |---|---|---|
@@ -144,7 +144,7 @@ not in the published 1.0.1 image.
 | `FASTI_CONFIG` | | additional YAML files (comma-separated) |
 | `FASTI_EXTRA_LIB` | | directory with additional jars (drivers, plugins) |
 | `FASTI_MARIADB_USE_MYSQL_DRIVER` | `true` | uses MySQL Connector/J when the MariaDB driver is missing |
-| `FASTI_PORT` | 8080 | HTTP port; the image `HEALTHCHECK` follows it. **From 1.1.0:** a value that is not a number (Kubernetes sets `FASTI_PORT=tcp://...` for a Service named `fasti`) is ignored with a warning; the 1.0.1 image fails to start with it |
+| `FASTI_PORT` | 8080 | HTTP port; the image `HEALTHCHECK` follows it. **From 1.1.0:** a value that is not a number (Kubernetes sets `FASTI_PORT=tcp://...` for a Service named `fasti`) is ignored with a warning; the 1.0.x images fail to start with it |
 | `FASTI_LOG_FORMAT` | `text` | **From 1.1.0.** `json`: one JSON object per log line (Elastic Common Schema); also `logstash`, `gelf` |
 | `FASTI_METRICS_PROMETHEUS_ENABLED` | `false` | **From 1.1.0.** `true`: Prometheus metrics at `/actuator/prometheus` (JVM, HTTP, pool, engine); needs a token or `FASTI_MANAGEMENT_PORT` |
 | `FASTI_METRICS_PROMETHEUS_TOKEN` (+`_FILE`) | | **From 1.1.0.** Scrape token (`Authorization: Bearer <token>`) for the metrics on the application port; a random value of at least 16 characters (the server does not start with a shorter one or with `change-me`) |
@@ -182,8 +182,8 @@ MySQL and MariaDB keep the times of the engine to the whole second (the Camunda 
 no fractional seconds). **From 1.1.0** the engine binds every date truncated to whole seconds on
 these databases, so time filters such as `createdAfter`, `startedAfter` or a task's `dueDate`
 find a row stored in the same second with either driver; no URL option is needed. MariaDB
-Connector/J has no option to leave out fractional seconds, so the 1.0.1 image with that driver
-can miss such rows; with 1.0.1, connect through MySQL Connector/J instead
+Connector/J has no option to leave out fractional seconds, so the 1.0.x images with that driver
+can miss such rows; with 1.0.x, connect through MySQL Connector/J instead
 (`DB_DRIVER=com.mysql.cj.jdbc.Driver`, `DB_URL=jdbc:mysql://host:3306/db?sendFractionalSeconds=false`).
 
 ## Operations

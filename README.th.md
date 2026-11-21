@@ -24,7 +24,7 @@ Container Registry (`ghcr.io/fasti-bpm/fasti-bpm`) สำหรับ amd64 แ�
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.0.1
+  fastidev/fasti-bpm:1.1.0
 ```
 
 เปิด <http://localhost:8080/fasti/> แล้วเข้าสู่ระบบ หากไม่ได้กำหนด `DB_URL` อิมเมจจะใช้ฐานข้อมูล H2
@@ -114,11 +114,12 @@ external task worker ต้องส่งข้อมูลรับรอง�
 
 ## แผนงาน
 
-นี่คือแผน ไม่ใช่คำมั่นเรื่องวันที่ วางแผนไว้สำหรับ `1.1.0` และมีอยู่แล้วใน branch `main`: Helm chart
-และ manifest ของ Kubernetes, metrics ของ Prometheus, tracing ของ OpenTelemetry, log
-แบบมีโครงสร้างในรูปแบบ JSON, ผู้ปฏิบัติงานแทนระหว่างที่ไม่อยู่, การควบคุมแบบ four-eyes สำหรับการอนุมัติ,
-audit trail ที่แก้ไขไม่ได้ และการเตรียมเผยแพร่อาร์ติแฟกต์ Maven บน Maven Central สำหรับ `2.0`: CMMN
-ในอินเทอร์เฟซใหม่ ไทม์ไลน์ตั้งแต่การสิ้นสุดของ Camunda 7 CE ไปจนถึงเป้าหมายปี 2027:
+นี่คือแผน ไม่ใช่คำมั่นเรื่องวันที่ เผยแพร่แล้วใน `1.1.0`: Helm chart และ manifest ของ Kubernetes,
+metrics ของ Prometheus, tracing ของ OpenTelemetry, log แบบมีโครงสร้างในรูปแบบ JSON,
+ผู้ปฏิบัติงานแทนระหว่างที่ไม่อยู่, การควบคุมแบบ four-eyes สำหรับการอนุมัติ, audit trail ที่แก้ไขไม่ได้,
+MCP server สำหรับผู้ช่วย AI และเคส (CMMN) ในอินเทอร์เฟซใหม่ ลำดับถัดไปใน `1.x`: การเผยแพร่อาร์ติแฟกต์
+Maven บน Maven Central, การตรวจสอบกับ DB2, การตรวจทานคำแปลโดยเจ้าของภาษา และการเลิกใช้แอปพลิเคชัน
+AngularJS ไทม์ไลน์ตั้งแต่การสิ้นสุดของ Camunda 7 CE ไปจนถึงเป้าหมายปี 2027:
 <https://fasti.dev/#timeline>
 
 <a id="documentation"></a>

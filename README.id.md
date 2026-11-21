@@ -24,7 +24,7 @@ Container Registry (`ghcr.io/fasti-bpm/fasti-bpm`), untuk amd64 dan arm64:
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.0.1
+  fastidev/fasti-bpm:1.1.0
 ```
 
 Buka <http://localhost:8080/fasti/> dan masuk. Tanpa `DB_URL`, image menggunakan basis data H2
@@ -123,11 +123,12 @@ ketentuan dukungan, kirim email ke <contact@fasti.dev>.
 
 ## Peta jalan
 
-Ini adalah rencana, bukan komitmen tanggal. Direncanakan untuk `1.1.0` dan sudah ada di branch
-`main`: Helm chart dan manifest Kubernetes, metrik Prometheus, tracing OpenTelemetry, log JSON
-terstruktur, pengganti selama berhalangan, kontrol empat mata untuk persetujuan, jejak audit yang
-tidak dapat diubah, serta persiapan penerbitan artefak Maven di Maven Central. Untuk `2.0`: CMMN
-di antarmuka baru. Lini masa, dari berakhirnya Camunda 7 CE hingga sasaran 2027:
+Ini adalah rencana, bukan komitmen tanggal. Dirilis di `1.1.0`: Helm chart dan manifest
+Kubernetes, metrik Prometheus, tracing OpenTelemetry, log JSON terstruktur, pengganti selama
+berhalangan, kontrol empat mata untuk persetujuan, jejak audit yang tidak dapat diubah, server
+MCP untuk asisten AI, serta kasus (CMMN) di antarmuka baru. Berikutnya di `1.x`: penerbitan
+artefak Maven di Maven Central, verifikasi pada DB2, peninjauan terjemahan oleh penutur asli, dan
+penghentian aplikasi AngularJS. Lini masa, dari berakhirnya Camunda 7 CE hingga sasaran 2027:
 <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>

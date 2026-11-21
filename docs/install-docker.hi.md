@@ -28,18 +28,18 @@
 इमेज amd64 और arm64 के लिए दो स्थानों पर प्रकाशित की जाती है:
 
 ```bash
-docker pull fastidev/fasti-bpm:1.0.1              # Docker Hub
-docker pull ghcr.io/fasti-bpm/fasti-bpm:1.0.1     # GitHub Container Registry
+docker pull fastidev/fasti-bpm:1.1.0              # Docker Hub
+docker pull ghcr.io/fasti-bpm/fasti-bpm:1.1.0     # GitHub Container Registry
 ```
 
-टैग: `1.0.1` (ठीक वही रिलीज़), `1.0` (1.0 की नवीनतम पैच रिलीज़) और `latest` (सबसे हाल में
+टैग: `1.1.0` (ठीक वही रिलीज़), `1.1` (1.1 की नवीनतम पैच रिलीज़) और `latest` (सबसे हाल में
 प्रकाशित रिलीज़)। इमेज पर cosign (बिना कुंजी के, GitHub OIDC) से हस्ताक्षर किए गए हैं और इसमें
 SBOM तथा उत्पत्ति का सत्यापन प्रमाण शामिल है। 1.0.1 से हस्ताक्षर cosign 3 के Sigstore bundle
 प्रारूप में है; 1.0.0 इमेज पर cosign 2 के पुराने प्रारूप वाला हस्ताक्षर है।
 
 आप स्रोत से भी इमेज बना सकते हैं (JDK 17+ और Maven
 Central, nodejs.org तथा npm रजिस्ट्री तक नेटवर्क पहुँच आवश्यक है) और नीचे दिए गए प्रत्येक कमांड में
-`fastidev/fasti-bpm:1.0.1` के स्थान पर `fasti-bpm:local` नाम का उपयोग कर सकते हैं:
+`fastidev/fasti-bpm:1.1.0` के स्थान पर `fasti-bpm:local` नाम का उपयोग कर सकते हैं:
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
@@ -54,7 +54,7 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
   -v fasti-data:/fasti/data \
-  fastidev/fasti-bpm:1.0.1
+  fastidev/fasti-bpm:1.1.0
 ```
 
 - <http://localhost:8080/fasti/> खोलें और `admin` के रूप में साइन इन करें।
@@ -102,7 +102,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
   -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
-  fastidev/fasti-bpm:1.0.1 --production
+  fastidev/fasti-bpm:1.1.0 --production
 ```
 
 - `FASTI_DB_SCHEMA_UPDATE=true` केवल नए डेटाबेस में अनुपस्थित टेबल बनाता है; Fasti कभी
@@ -131,7 +131,7 @@ docker compose -f docker-compose.postgres.yml up -d
 docker compose -f docker-compose.postgres.yml ps      # both services "healthy"
 ```
 
-शुरू करते समय सेट किए जा सकने वाले वेरिएबल: `FASTI_IMAGE` (डिफ़ॉल्ट `fastidev/fasti-bpm:1.0.1`, उदाहरण के
+शुरू करते समय सेट किए जा सकने वाले वेरिएबल: `FASTI_IMAGE` (डिफ़ॉल्ट `fastidev/fasti-bpm:1.1.0`, उदाहरण के
 लिए `FASTI_IMAGE=fasti-bpm:local`), `FASTI_HOST_PORT` (डिफ़ॉल्ट `8080`), `TZ` (डिफ़ॉल्ट `UTC`)।
 
 <a id="6-connecting-to-an-existing-camunda-7-database"></a>
@@ -159,7 +159,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=UTC \
-  fastidev/fasti-bpm:1.0.1 --production
+  fastidev/fasti-bpm:1.1.0 --production
 ```
 
 - पोर्ट केवल इस मशीन से बाइंड है; रिमोट पहुँच के लिए HTTPS वाले रिवर्स प्रॉक्सी का उपयोग करें।
@@ -232,12 +232,12 @@ Kubernetes: `livenessProbe` → `/actuator/health/liveness`, `readinessProbe` �
 
 ## 10. अपग्रेड और रोलबैक
 
-**Fasti को अपग्रेड करना** (उदाहरण के लिए `1.0.0` → `1.0.1`):
+**Fasti को अपग्रेड करना** (उदाहरण के लिए `1.0.1` → `1.1.0`):
 
 ```bash
-docker pull fastidev/fasti-bpm:1.0.1
+docker pull fastidev/fasti-bpm:1.1.0
 docker stop -t 60 fasti && docker rm fasti
-docker run -d --name fasti ... fastidev/fasti-bpm:1.0.1 --production   # same options as before
+docker run -d --name fasti ... fastidev/fasti-bpm:1.1.0 --production   # same options as before
 ```
 
 Docker Compose के साथ: `FASTI_IMAGE` (या `image:` पंक्ति) बदलें, फिर

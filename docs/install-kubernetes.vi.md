@@ -7,8 +7,8 @@ bên ngoài, qua **Helm chart** (`distro/kubernetes/helm/fasti-bpm`) hoặc **ma
 (`distro/kubernetes/manifests`, Kustomize). Fasti BPM được xây dựng trên Camunda 7 CE 7.24.0 và
 là dự án độc lập, không liên kết với Camunda Services GmbH.
 
-> Helm chart và manifest đã có trên nhánh `main` và sẽ được phát hành cùng Fasti 1.1.0; chúng
-> không thuộc bản phát hành 1.0.1. Chúng chạy image 1.0.1 đã công bố.
+> **Có từ 1.1.0.** Helm chart và manifest được phát hành cùng Fasti từ bản 1.1.0 và mặc định
+> chạy image cùng phiên bản.
 
 Tham chiếu: [README của chart](../distro/kubernetes/helm/fasti-bpm/README.md) (mọi giá trị, tiếng
 Anh), [tham chiếu image](../distro/docker/README.vi.md) (mọi biến môi trường),
@@ -60,7 +60,7 @@ Ghi cấu hình vào một file values, ví dụ `fasti-values.yaml`:
 
 ```yaml
 image:
-  tag: "1.0.1"
+  tag: "1.1.0"
   # digest: sha256:...            # nên ghim image theo digest
 database:
   url: jdbc:postgresql://postgres.db.svc.cluster.local:5432/fasti
@@ -127,7 +127,7 @@ resources:
   - ../fasti/distro/kubernetes/manifests
 images:
   - name: fastidev/fasti-bpm
-    newTag: "1.0.1"
+    newTag: "1.1.0"
 patches:
   - target: {kind: Deployment, name: fasti}
     patch: |

@@ -2,9 +2,8 @@
 
 # Kiểm soát bốn mắt cho bước phê duyệt
 
-> **Có từ 1.1.0, chưa có trong bản phát hành 1.0.1.** Tính năng này đã có trên nhánh `main` và sẽ
-> được phát hành cùng Fasti 1.1.0. Bản phát hành 1.0.1 và image 1.0.1 đã công bố chưa có tính năng
-> này; các thiết lập của nó không có tác dụng ở đó.
+> **Có từ 1.1.0.** Các bản phát hành và image 1.0.x chưa có tính năng này; các thiết lập của nó
+> không có tác dụng ở đó.
 
 Trong các ngành được quản lý chặt, một phê duyệt chỉ có giá trị khi do người khác với người
 đã chuẩn bị công việc thực hiện. Fasti BPM cho phép mô hình khai báo điều đó trên tác vụ

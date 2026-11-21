@@ -4,8 +4,8 @@ Runs the Fasti BPM container image (engine, REST API at `/engine-rest`, web UI a
 Kubernetes 1.29 or later against an **external database**. Fasti BPM is built on Camunda 7 CE
 7.24.0 and is an independent project, not affiliated with Camunda Services GmbH.
 
-The chart is on the `main` branch and will be released with Fasti 1.1.0; it is not part of the
-1.0.1 release. It runs the published 1.0.1 image (the default `appVersion`).
+The chart is released with Fasti since 1.1.0. Its version is the version of Fasti, and it runs
+the image of that version (the default `appVersion`).
 
 Step-by-step guide (database, secrets, TLS, upgrades, troubleshooting):
 [docs/install-kubernetes.md](../../../../docs/install-kubernetes.md). Image reference and every
@@ -65,7 +65,7 @@ existing Camunda 7.24 installation leave them out: tables and accounts already e
 | Key | Default | Meaning |
 |---|---|---|
 | `image.repository` | `fastidev/fasti-bpm` | also published as `ghcr.io/fasti-bpm/fasti-bpm` |
-| `image.tag` | `""` (appVersion `1.0.1`) | image tag |
+| `image.tag` | `""` (appVersion `1.1.0`) | image tag |
 | `image.digest` | `""` | `sha256:…`; pins the image (recommended) |
 | `replicaCount` | `1` | pods sharing the database (see Several replicas) |
 | `production` | `true` | `--production` of the image |

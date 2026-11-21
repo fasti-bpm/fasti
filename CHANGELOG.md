@@ -12,8 +12,7 @@ các mục dưới đây là khác biệt so với bản đó.
 
 ## [Unreleased]
 
-Planned for release as 1.1.0, because it adds features. None of these changes is part of the
-1.0.1 release or of the published 1.0.1 image.
+## [1.1.0] - 2026-11-21
 
 ### Added
 
@@ -60,8 +59,14 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   override. Who completed a step is recorded in the process instance variable
   `fasti_completedBy_<step>` and also read from the historic task instances and the operation
   log, so it works at every history level, counts steps completed on nodes without the plugin
-  (where history is kept, so not at level `none`), and keeps the Camunda 7.24 schema. Wrong rules fail the deployment. `GET /task/{id}/four-eyes`
-  tells the current user whether they may complete a task; the tasklist says so and disables
+  (where history is kept, so not at level `none`), and keeps the Camunda 7.24 schema. On an
+  engine with the plugin these variables are reserved in process instances: only the control
+  writes them, every other write or removal is refused with `403`
+  (`ReservedVariableException`), through any API and from code of the model, and copies of all
+  variables (call activity `variables="all"`, restart) leave them out; see the limits in
+  [docs/four-eyes.md](docs/four-eyes.md#limits). Wrong rules fail the deployment.
+  `GET /task/{id}/four-eyes` tells the current user whether they may complete a task (`404`
+  for a task the user may not read, as for a missing one); the tasklist says so and disables
   the form, and the modeler has a four-eyes field on user tasks. On in Run, the container image
   (`FASTI_FOUR_EYES_ENABLED=false` turns it off) and the Tomcat and WildFly bundles; off in the
   Spring Boot starter (`fasti.four-eyes.enabled`, plugin
@@ -78,7 +83,14 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   you are away or stand in for someone and marks tasks held for an absent user. REST:
   `GET`/`PUT`/`DELETE /user/{id}/absence`, `POST /user/{id}/absence/handover`,
   `GET /user/{id}/absence/substituting`; a user manages their own absence, others need `READ`
-  or `UPDATE` on the user. Absences are stored as user info (`ACT_ID_INFO`), so the database
+  or `UPDATE` on the user. Setting an absence also needs `READ` on the substitute; a
+  substitute that does not exist, may not be seen or leads back to the user gets one and the
+  same `400`, and `effectiveSubstituteId` follows absent substitutes only as far as the caller
+  has `READ` on them. The handover needs the permission to assign each task (`TASK_ASSIGN` or
+  `UPDATE`), as the task API does: tasks without it stay and are counted in `notAllowed`,
+  tasks of a tenant the caller does not belong to are left alone, and administrators may hand
+  over every task. Ended absences are removed the next time an absence is set or ended.
+  Absences are stored as user info (`ACT_ID_INFO`), so the database
   schema stays that of Camunda 7.24, also with LDAP. On in the default configuration of Run;
   off in the Spring Boot starter, the container image (`FASTI_ABSENCE_ENABLED=true`),
   `production.yml` and the Tomcat and WildFly bundles (`fasti.absence.enabled`, plugin
@@ -90,8 +102,14 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   Standard, startup/liveness/readiness probes on the actuator health endpoints, graceful
   shutdown, pod anti-affinity, topology spread, PodDisruptionBudget, and optional Ingress with
   TLS, HorizontalPodAutoscaler, NetworkPolicy, ServiceMonitor and OpenID Connect settings. A
-  values schema rejects unknown keys. Guide: `docs/install-kubernetes.md`. CI checks the chart
-  and the manifests with `helm lint` and kubeconform against Kubernetes 1.29–1.33.
+  values schema rejects unknown keys and values that cannot work (for example an extra port
+  named `http` or `management`, or a ServiceMonitor port that the Service does not have). In
+  the chart, `management.port` gives the actuator (health endpoints, Prometheus metrics) a
+  port of its own (`FASTI_MANAGEMENT_PORT`): the container port, the probes, the Service,
+  `helm test` and the NetworkPolicy follow it, and `metrics.serviceMonitor.port: management`
+  scrapes it; setting `FASTI_MANAGEMENT_PORT` through `extraEnv` is refused, because the
+  probes would keep calling port 8080. Guide: `docs/install-kubernetes.md`. CI checks the
+  chart and the manifests with `helm lint` and kubeconform against Kubernetes 1.29–1.33.
 - Observability for Fasti BPM Run and the container image, all off by default
   ([docs](docs/install-docker.md#13-observability)):
   - JSON logs: `fasti.logging.format=json` (`FASTI_LOG_FORMAT=json` in the image) writes one
@@ -102,8 +120,12 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
     port of the application a scrape token is required (`Authorization: Bearer`,
     `fasti.metrics.prometheus.token`, `FASTI_METRICS_PROMETHEUS_TOKEN(_FILE)`); without one Run
     only starts if the actuator has a management port of its own (`management.server.port`,
-    `FASTI_MANAGEMENT_PORT`). While the switch is off the endpoint does not exist, even for
-    configurations that expose every actuator endpoint.
+    `FASTI_MANAGEMENT_PORT`). A token must have at least 16 characters and the placeholder
+    `change-me` is refused. While the switch is off, a configuration that exposes every
+    actuator endpoint does not serve the metrics; when the Spring Boot settings behind the
+    switch (endpoint access, Prometheus registry, web exposure) are set by hand, the same
+    start-up check and token rules apply. The `HEALTHCHECK` of the image follows the
+    management port (`FASTI_PORT` when it is not a port number).
   - Engine metrics for Micrometer, also in the Spring Boot starter (`fasti.metrics.engine.*`):
     counters of started and ended root process instances, activity instances, executed,
     failed, acquired and rejected jobs and evaluated decisions, and gauges of active process
@@ -126,11 +148,6 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `MAVEN_GPG_PRIVATE_KEY` and
   `MAVEN_GPG_PASSPHRASE`) signs it and uploads it, and a dry run stops after the first job.
   Guide: `docs/publishing-maven-central.md`. No version has been published yet.
-- Helm chart: `management.port` gives the actuator (health endpoints, Prometheus metrics) a
-  port of its own (`FASTI_MANAGEMENT_PORT`). The container port, the probes, the Service,
-  `helm test` and the NetworkPolicy follow it, and `metrics.serviceMonitor.port: management`
-  scrapes it. Setting `FASTI_MANAGEMENT_PORT` through `extraEnv` is refused, because the probes
-  would keep calling port 8080.
 - MCP server for AI assistants ([docs](docs/mcp.md)): with `fasti.mcp.enabled=true` (Run:
   `--mcp`; container image: `FASTI_MCP_ENABLED=true`; Spring Boot: the new starter
   `fasti-bpm-spring-boot-starter-mcp`) the engine serves a Model Context Protocol server at
@@ -171,17 +188,17 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   generated pages. Plugin updates: maven-source-plugin 3.3.1, maven-javadoc-plugin 3.12.0,
   maven-gpg-plugin 3.2.8, maven-deploy-plugin 3.1.4. The integration tests of the Java external
   task client need the Tomcat distribution only when tests run (profile `tomcat-runtime`).
+- POMs: the JBoss repository, needed by the build for a few test and provided dependencies,
+  is declared in a build-only profile of `fasti-parent`. An application that depends on a
+  Fasti artifact no longer gets `repository.jboss.org` added to its build (75 of the 83
+  published POMs inherited it, with snapshots enabled).
 - New web UI: one consistent look across the Tasklist, monitoring, modeler, administration,
   preferences and welcome pages. Page headers, cards, tables, tabs, confirmations and options
-  are styled with the application instead of with the monitoring section, so a page no longer
-  looks different depending on the page opened before it (the preferences showed bare radio
-  buttons when opened directly). Every size, weight, layer and shadow comes from the design
-  tokens; the subtle text colour of the light theme and the frames of text fields now meet
-  WCAG 2.2 AA contrast (4.5:1 and 3:1). The tabs of a task and of the other pages, and the
-  segmented choices, share one style with a visible focus. Every dialog is left with the same
-  action, placed before the main one; pages that failed to load offer to try again; the
-  operation log keeps its filter fields apart and formats times like the rest; scrolling
-  started by the application honours reduced motion.
+  are styled with the application instead of with the monitoring section. Every size, weight,
+  layer and shadow comes from the design tokens. The tabs of a task and of the other pages,
+  and the segmented choices, share one style with a visible focus. Every dialog is left with
+  the same action, placed before the main one; pages that failed to load offer to try again;
+  the operation log formats times like the rest.
 - MyBatis 3.5.19 → 3.6.0. Since 3.6 a `<bind>` inside `<foreach>`, `<where>`, `<trim>` or
   `<set>` is visible only inside that element (and inside one iteration of a `<foreach>`), and
   a property path through `null` (`a.b` with `a == null`) fails again, as before 3.5.15. The
@@ -195,12 +212,9 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   batch, and a failed lookup aborts the transaction). For parameters declared as `Object` it
   finds no type handler when the driver offers no metadata (MySQL Connector/J by default) and
   uses the handler of a given `jdbcType` regardless of the value, which would break the history
-  cleanup and removal time of comments on PostgreSQL.
-
-- POMs: the JBoss repository, needed by the build for a few test and provided dependencies,
-  is declared in a build-only profile of `fasti-parent`. An application that depends on a
-  Fasti artifact no longer gets `repository.jboss.org` added to its build (75 of the 83
-  published POMs inherited it, with snapshots enabled).
+  cleanup and removal time of comments on PostgreSQL. The engine therefore keeps the parameter
+  metadata from MyBatis (the lookup is answered with one shared exception without stack
+  trace).
 - Release workflow: a tag must be a semantic version and equal the version of the POMs, or
   nothing is built. The image tag `latest` moves only when the tag is the highest release of
   the repository, so a maintenance release of an older line no longer takes it back.
@@ -210,16 +224,24 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
 
 ### Fixed
 
+- New web UI: a page no longer looks different depending on the page opened before it (the
+  preferences showed bare radio buttons when opened directly). The subtle text colour of the
+  light theme and the frames of text fields now meet WCAG 2.2 AA contrast (4.5:1 and 3:1).
+  The filter fields of the operation log are kept apart, and a text filter applied with Enter
+  keeps the keyboard focus. Scrolling started by the application honours reduced motion.
+- New web UI, Tasklist: a task claimed from its detail page could be completed before the server
+  had confirmed the claim; the completion then failed with an optimistic-locking error. Complete
+  and the form submit now wait until a pending claim, unclaim or assignment of the task is
+  settled, and a refused change is reverted at once.
+- New web UI: confirming a dialog opened from inside a form also submitted that form. Deleting a
+  saved task filter therefore also tried to save it ("The filter could not be saved"), and
+  handing over open tasks from the absence settings also saved the absence.
+- REST API: a servlet context started again in the same class loader (a redeployment of the REST
+  application) got no running fetch-and-lock handler, so long polling requests of external task
+  workers were never answered. A new handler is started.
 - The container image ignores a `FASTI_PORT` that is not a port number, with a warning, in the
   entrypoint and the `HEALTHCHECK`: Kubernetes sets `FASTI_PORT=tcp://<ip>:<port>` for a Service
   named `fasti`, and the server then failed to start.
-- The `HEALTHCHECK` of the container image uses `FASTI_PORT` when `FASTI_MANAGEMENT_PORT` is
-  not a port number, like the entrypoint; it used to probe 8080.
-- Helm chart: Secret names and keys, the Ingress path and class and the ServiceMonitor fields
-  are quoted, so values such as `"123"`, `"true"` or a path with ` #` keep their meaning. The
-  schema rejects PodDisruptionBudget values that are neither a number nor a percentage, a pool
-  size of `"0"`, an extra port named `http` or `management`, and a ServiceMonitor port that the
-  Service does not have.
 - MySQL and MariaDB: time filters of queries (for example `createdAfter` of historic variable
   instances, `startedAfter`, `executedActivityAfter`, `executedJobAfter`, a task's `dueDate`, also
   in saved filters) missed rows stored in the same second as the given time when the engine was
@@ -238,41 +260,9 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   lasts at least as long as asked for and less than a second longer; the `lockExpirationTime`
   a worker gets is the stored one. Migration note: on these databases lock expiration times are
   whole seconds, up to 999 ms later than `now + lockDuration`. Other databases are unchanged.
-- Absences: the check that substitutes do not lead back to the user runs under the lock of the
-  write, so two users who name each other at the same time are not both accepted, and it only
-  refuses when the absences on the way really overlap (it compared each one with the new
-  absence alone, and counted the past of an absence that has begun).
-- Absences read the user info table (`ACT_ID_INFO`, no index on user or key) less often: once
-  per user and command, once for all candidate users of a task and once for
-  `GET /user/{id}/absence/substituting` (it was once per user who ever had an absence). Ended
-  absences are removed the next time an absence is set or ended.
-- The parameter handler of the engine's MyBatis configuration answers the parameter metadata
-  lookup with one shared exception without stack trace instead of a new one per statement.
 
 ### Security
 
-- Four-eyes control: the record of who completed a step (`fasti_completedBy_<step>`) could be
-  emptied through the variables of a task (`PUT /task/{id}/variables/...`,
-  `TaskService#setVariable`) by any candidate or assignee, who could then approve their own
-  work. On an engine with the plugin these variables are now reserved in process instances:
-  only the control writes them, every other write or removal is refused with `403`
-  (`ReservedVariableException`), through any API and from code of the model. Copies of all
-  variables (call activity `variables="all"`, restart) leave them out. See the limits in
-  [docs/four-eyes.md](docs/four-eyes.md#limits).
-- `GET /task/{id}/four-eyes` answers `404` for a task the user may not read, like for a missing
-  one (it answered `403`, which told that the id exists).
-- Absences: setting an absence needs `READ` on the substitute, and a substitute that does not
-  exist, may not be seen or leads back to the user gets one and the same `400`, so the request
-  no longer tells which user ids exist or who is absent. `effectiveSubstituteId` follows absent
-  substitutes only as far as the caller has `READ` on them.
-- Absences: the handover (`POST /user/{id}/absence/handover`) needs the permission to assign
-  each task (`TASK_ASSIGN` or `UPDATE`), as the task API does; tasks without it stay and are
-  counted in the new `notAllowed`, and tasks of a tenant the caller does not belong to are left
-  alone. Administrators may hand over every task. With `defaultUserPermissionForTask=TASK_WORK` a user could move their tasks to anyone.
-- Prometheus metrics: Run also refuses to start when the endpoint is enabled and exposed with
-  Spring Boot settings alone (without `fasti.metrics.prometheus.enabled`) and has neither a
-  token nor a management port of its own, and the token filter then applies as well. A scrape
-  token must have at least 16 characters; the placeholder `change-me` is refused.
 - MyBatis 3.6.0 embeds OGNL 3.4.16 instead of 3.4.4, which closes CVE-2026-113730
   (GHSA-crwc-vw2r-qr6m, a bypass of the OGNL stricter-invocation block list) reported by
   scanners for every MyBatis 3.5 jar. The engine was not exposed in practice: MyBatis evaluates

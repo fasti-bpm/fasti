@@ -22,7 +22,7 @@ Container Registry (`ghcr.io/fasti-bpm/fasti-bpm`), for amd64 and arm64:
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.0.1
+  fastidev/fasti-bpm:1.1.0
 ```
 
 Open <http://localhost:8080/fasti/> and sign in. Without `DB_URL` the image uses an H2 database
@@ -120,11 +120,12 @@ terms, write to <contact@fasti.dev>.
 
 ## Roadmap
 
-This is a plan, not a commitment to dates. Planned for `1.1.0`, and already on the `main` branch:
-a Helm chart and Kubernetes manifests, Prometheus metrics, OpenTelemetry tracing, structured JSON
-logs, a substitute during absence, four-eyes control for approvals, an immutable audit trail, and
-the preparation for publishing the Maven artifacts on Maven Central. For `2.0`: CMMN in the new
-interface. The timeline, from the end of Camunda 7 CE to the goals for 2027:
+This is a plan, not a commitment to dates. Released in `1.1.0`: a Helm chart and Kubernetes
+manifests, Prometheus metrics, OpenTelemetry tracing, structured JSON logs, a substitute during
+absence, four-eyes control for approvals, an immutable audit trail, an MCP server for AI
+assistants, and cases (CMMN) in the new interface. Next in `1.x`: publishing the Maven artifacts
+on Maven Central, verification on DB2, a native-speaker review of the translations, and retiring
+the AngularJS applications. The timeline, from the end of Camunda 7 CE to the goals for 2027:
 <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>

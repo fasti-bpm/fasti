@@ -2,9 +2,8 @@ English | [Tiếng Việt](audit-trail.vi.md)
 
 # Immutable audit trail
 
-> **Coming in 1.1.0, not in the 1.0.1 release.** This feature is on the `main` branch and will be
-> released with Fasti 1.1.0. The 1.0.1 release and the published 1.0.1 image do not have it; its
-> settings have no effect there.
+> **New in 1.1.0.** The 1.0.x releases and images do not have this feature; its settings have no
+> effect there.
 
 Auditors want to know who did what, when, to which case, and that nobody changed that record
 afterwards. The history and the operation log of the engine answer the first question, but any

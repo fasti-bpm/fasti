@@ -24,7 +24,7 @@ Container Registry(`ghcr.io/fasti-bpm/fasti-bpm`)에서 제공됩니다.
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.0.1
+  fastidev/fasti-bpm:1.1.0
 ```
 
 <http://localhost:8080/fasti/>에 접속하여 로그인하세요. `DB_URL`이 없으면 이미지는 컨테이너 내부의 H2 데이터베이스를
@@ -112,10 +112,11 @@ Camunda 7을 이어 가는 좋은 프로젝트가 여럿 있습니다. Fasti는 
 
 ## 로드맵
 
-이것은 계획이며 일정에 대한 약속이 아닙니다. `1.1.0`에 예정되어 있으며 이미 `main` 브랜치에 있는 항목:
+이것은 계획이며 일정에 대한 약속이 아닙니다. `1.1.0`에서 릴리스된 항목:
 Helm 차트와 Kubernetes 매니페스트, Prometheus 메트릭, OpenTelemetry 트레이싱, 구조화된 JSON 로그, 부재 중
-대리인 지정, 승인에 대한 4-eyes 통제, 변경 불가능한 감사 추적, Maven 아티팩트의 Maven Central 게시 준비.
-`2.0`에서 예정된 항목: 새로운 인터페이스의 CMMN 지원. Camunda 7 CE 종료부터 2027년 목표까지의 타임라인:
+대리인 지정, 승인에 대한 4-eyes 통제, 변경 불가능한 감사 추적, AI 어시스턴트용 MCP 서버, 새로운
+인터페이스의 케이스(CMMN) 지원. `1.x`의 다음 항목: Maven 아티팩트의 Maven Central 게시, DB2 검증,
+원어민의 번역 검토, AngularJS 애플리케이션 폐기. Camunda 7 CE 종료부터 2027년 목표까지의 타임라인:
 <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>

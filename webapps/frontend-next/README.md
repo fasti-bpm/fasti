@@ -46,7 +46,11 @@ by side.
   `camunda.bpm.webapp.header-security.content-security-policy-value`) applies to every
   application, the new web UI included. Nothing is loaded from other hosts.
 - `config.json` (optional, next to `index.html`): `csrfCookieName` if the CSRF cookie has a
-  custom name, `defaultLocale` (the tag of an available language, e.g. `vi`; default `en`).
+  custom name, `defaultLocale` (the tag of an available language, e.g. `vi`; default `en`),
+  `idlePacing` (`false` keeps pages refreshing at their full rate while nobody is at the screen,
+  e.g. for a wall display; default `true`; `?idlePacing=false` before the `#` of the address does
+  the same for one screen). The first render waits at most three seconds for the file; a file
+  that answers later is still applied, and requests that change something wait for it.
 
 ## Development
 

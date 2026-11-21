@@ -146,6 +146,20 @@ curl -s -u "$AUTH" "$BASE/task/workload?groupIdIn=accounting,sales&userIdIn=demo
 `orphaned` counts unclaimed tasks offered to no group. Parameters: `groupIdIn`, `userIdIn`,
 `tenantIdIn` (comma separated) and `overdueBefore` (a date; the current time by default).
 
+- Each list takes at most 200 distinct ids of at most 255 characters. An empty id (`a,,b`, or
+  `""`/`null` in the body), a longer one or more ids answer `400`; a parameter without a value
+  is an empty list. A repeated id is answered once, in the order of its first occurrence.
+- Ids are compared as the database compares them. With a case-insensitive collation (the
+  default of SQL Server, MySQL and MariaDB) `sales` also counts the tasks offered to `Sales`,
+  exactly as `GET /task?candidateGroup=sales` does; the entry carries the id as it was asked for.
+  There, two ids that differ only in case name the same group: ask for one of them (if one is
+  spelled as stored, only that one gets the tasks).
+- `501` means that the MyBatis mappings of the engine lack the workload statements: an
+  application that replaced the default `mappings.xml` with a copy of its own must add
+  `<mapper resource="dev/fasti/engine/workload/TaskWorkload.xml" />` to it. The web UI then
+  counts per group and per person with `GET /task/count`, as with a server without the endpoint
+  (`404`/`405`).
+
 ## Variables
 
 ```bash

@@ -38,7 +38,9 @@ Hai lần đo dùng cùng script, dữ liệu và máy: 1.1.0 (commit `7df3ab864
 | Tasklist: nhận / trả task | 10 / 7 → **8 / 4** | | |
 | Process instance | 13 → 13 | 8 → 8 | 15,5 → 15,5 |
 
-Tab bị ẩn không gửi request nào, cả trước và sau: các trang vốn đã dừng khi bị ẩn.
+Tab bị ẩn không gửi request nào, cả trước và sau: các trang vốn đã dừng khi bị ẩn. Ngoại lệ
+duy nhất là mới: khi bật "Báo cho tôi khi có công việc mới" và trình duyệt cho phép thông báo, danh
+sách task vẫn đọc trang đầu tiên khi tab bị ẩn (xem mục Tasklist).
 
 ### Bảng khối lượng việc
 
@@ -53,8 +55,11 @@ giờ chứa task mà `GET /task` không trả cho cùng người dùng. Tối �
 request.
 
 Bảng gửi một `POST /task/workload` mỗi lần làm mới; danh sách nhóm và người dùng được đọc năm
-phút một lần. Server chưa có endpoint này (404 hoặc 405) được hỏi từng dòng như trước, mỗi lần
-bốn dòng.
+phút một lần. Server chưa có endpoint này (404 hoặc 405), hoặc có nhưng cấu hình MyBatis thiếu
+các câu lệnh của nó (501, xem hướng dẫn REST), được hỏi từng dòng như trước: mỗi lần bốn nhóm và
+bốn người, mỗi dòng ba hoặc bốn request. Việc endpoint có tồn tại hay không chỉ được ghi nhớ năm
+phút, nên trang để mở trong lúc nâng cấp cuốn chiếu (rolling update) hoặc rollback sẽ chuyển sang
+cách cũ khi endpoint mất đi và dùng lại nó khi nó trở lại.
 
 ### Dashboard
 
@@ -63,19 +68,28 @@ bốn dòng.
 - Bỏ hai request `statistics-count` vốn không được dùng.
 - Batch có lỗi được đếm bằng `/batch/statistics/count` thay vì liệt kê mọi batch.
 - Định nghĩa, deployment và xu hướng theo ngày của lịch sử được đọc năm phút một lần thay vì
-  30 giây. 18 lần đếm lịch sử cho xu hướng vẫn chạy khi tải trang.
+  30 giây. 8 lần đếm lịch sử cho xu hướng vẫn chạy khi tải trang.
+- Dòng "Không có gì cần xử lý" chỉ hiện khi đã đếm xong số task quá hạn, và ô số liệu nào không
+  đọc được sẽ báo lỗi thay vì chờ mãi.
 
 ### Tasklist
 
 - Danh sách filter được đọc không kèm số đếm, năm phút một lần. Số task của các filter (mỗi
   filter là một task query trên server) được đọc hai phút một lần khi khung filter đang mở, một
   lần sau một loạt thao tác trên task thay vì sau từng thao tác, và hoàn toàn không đọc khi
-  khung đã đóng cho tới khi người dùng mở menu filter. Filter đang dùng lấy số đếm từ danh sách
+  khung đã đóng khi menu filter không được dùng. Filter đang dùng lấy số đếm từ danh sách
   task.
 - Task của filter dùng lần trước được hỏi song song với danh sách filter; hai lần tra business
   key (process và case) chạy cùng lúc; mỗi business key được đọc một lần và giữ năm phút (cho
-  tới khi phiên kết thúc) thay vì đọc lại mỗi lần làm mới.
-- Chế độ xem theo mức khẩn cấp không còn đổi query mỗi phút.
+  tới khi phiên kết thúc) thay vì đọc lại mỗi lần làm mới. Việc không đọc được key của một
+  instance (quyền trên task không bao gồm process instance) cũng được ghi nhớ như vậy.
+- Chế độ xem theo mức khẩn cấp (quá hạn, sắp đến hạn) không còn đổi query mỗi phút; "bây giờ"
+  được lấy lúc đọc danh sách. Với filter đã tắt làm mới, chế độ xem này vẫn dịch theo thời gian
+  mỗi phút một lần như trước.
+- Khi bật "Báo cho tôi khi có công việc mới", danh sách được đọc ít nhất mỗi phút một lần kể cả khi
+  không có ai thao tác, nên task mới được báo trong vòng một phút. Nếu trình duyệt cho phép thông
+  báo, danh sách còn được đọc khi tab bị ẩn, đúng lúc thông báo hệ thống được hiển thị; trước
+  đây tab bị ẩn không bao giờ làm mới nên thông báo đó không bao giờ xuất hiện.
 
 ### Process instance
 
@@ -91,10 +105,22 @@ vào thao tác của người dùng. Đo bằng `--window 60 --idle 150` (theo d
 không thao tác): dashboard gửi 9 thay vì 18 API request mỗi phút (9,2 thay vì 18,4 kB), task
 list 24,9 thay vì 45,9 kB mỗi phút.
 
+Khi người dùng quay lại, chỉ những danh sách đang hiển thị và tự làm mới mới được đọc ngay; danh
+sách mà người dùng đã tạm dừng làm mới được giữ nguyên. Khi con trỏ bàn phím nằm trong một frame
+của trang (form nhúng hoặc form bên ngoài của task), người dùng được coi là đang có mặt, vì thao
+tác trong đó không tới được trang. Màn hình treo tường không ai chạm vào nhưng cần luôn cập nhật
+có thể tắt cơ chế giãn nhịp: `"idlePacing": false` trong `config.json` cho cả bản cài đặt, hoặc
+`?idlePacing=false` trong địa chỉ trước dấu `#` (ví dụ
+`/fasti/app/next/default/?idlePacing=false#/cockpit`) cho một màn hình.
+
 ### Khởi động
 
-`config.json` được đọc với giới hạn ba giây; không có trả lời thì trang khởi động với cấu hình
-mặc định. Ngôn ngữ người dùng đã chọn trước đó được tải song song với cấu hình thay vì sau nó.
+Lần vẽ đầu tiên chờ `config.json` tối đa ba giây; không có trả lời thì trang khởi động với cấu
+hình mặc định. Tệp vẫn tiếp tục được đọc và áp dụng khi trả lời muộn: ngôn ngữ mặc định của nó
+thay cho tiếng Anh nếu người dùng chưa chọn ngôn ngữ, và request làm thay đổi dữ liệu sẽ chờ tệp
+này (tối đa 20 giây), nên không bao giờ gửi đi với tên cookie CSRF sai. Khi lỗi kết nối, tệp được
+thử lại ba lần. Ngôn ngữ người dùng đã chọn trước đó được tải song song với cấu hình thay vì sau
+nó.
 
 ## Bundle
 
@@ -109,8 +135,16 @@ Kích thước của `vite build`, đã minify (gzip trong ngoặc):
 | Số file JavaScript | 204 | 164 |
 
 Lượng JavaScript tải trước trang đầu tiên gần như không đổi: React và router chuyển sang một
-chunk riêng, chỉ thay đổi khi nâng cấp thư viện, nên trình duyệt giữ được nó qua các bản phát
-hành. Dòng thời gian của case trong chi tiết task chỉ được tải khi mở tab đó.
+chunk riêng, chỉ thay đổi khi nâng cấp thư viện. Fasti Run, Docker image và Spring Boot starter
+phục vụ các tệp có hash dưới `/app/next/assets/` với
+`Cache-Control: public, max-age=31536000, immutable`, nên trình duyệt giữ lại chunk có nội dung
+không đổi qua các bản phát hành; trên Tomcat và WildFly việc này do servlet container quyết
+định. Dòng thời gian của case trong chi tiết task chỉ được tải khi mở tab đó.
+
+Trang để mở trong lúc máy chủ được cập nhật vẫn trỏ tới các tệp của bản build cũ đã không còn.
+Phần nào tải sau mà lỗi vì lý do này (tab case hoặc sơ đồ của task đang mở) sẽ báo ngay tại chỗ
+rằng đã có phiên bản mới và đề nghị tải lại; phần còn lại của trang, kể cả form task đang điền,
+được giữ nguyên.
 
 Chunk entry tăng từ 293 kB (16/11) lên 396 kB (21/11) do các tính năng được thêm cho tới
 1.1.0, không phải do nâng cấp thư viện. Source map cho thấy React DOM (207 kB) và React Router (96 kB) là hai

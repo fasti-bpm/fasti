@@ -144,6 +144,20 @@ curl -s -u "$AUTH" "$BASE/task/workload?groupIdIn=accounting,sales&userIdIn=demo
 `userIdIn`, `tenantIdIn` (phân cách bằng dấu phẩy) và `overdueBefore` (một thời điểm; mặc định
 là thời điểm hiện tại).
 
+- Mỗi danh sách nhận tối đa 200 id khác nhau, mỗi id dài tối đa 255 ký tự. Id rỗng (`a,,b`, hoặc
+  `""`/`null` trong body), id dài hơn hay nhiều id hơn đều trả về `400`; tham số không có giá trị
+  là danh sách rỗng. Id lặp lại chỉ được trả lời một lần, theo thứ tự lần xuất hiện đầu tiên.
+- Id được so sánh theo cách cơ sở dữ liệu so sánh. Với collation không phân biệt hoa thường (mặc
+  định của SQL Server, MySQL và MariaDB), `sales` cũng đếm các task giao cho `Sales`, đúng như
+  `GET /task?candidateGroup=sales`; mục trả về mang id đúng như khi được hỏi. Trên cơ sở dữ liệu
+  như vậy, hai id chỉ khác nhau về hoa thường là cùng một nhóm: chỉ nên hỏi một trong hai (nếu
+  một id viết đúng như giá trị đã lưu thì chỉ id đó nhận các task).
+- `501` nghĩa là cấu hình MyBatis của engine thiếu các câu lệnh workload: ứng dụng nào thay
+  `mappings.xml` mặc định bằng bản riêng phải thêm
+  `<mapper resource="dev/fasti/engine/workload/TaskWorkload.xml" />` vào đó. Khi đó giao diện web
+  đếm theo từng nhóm và từng người bằng `GET /task/count`, như với máy chủ chưa có endpoint này
+  (`404`/`405`).
+
 ## Biến
 
 ```bash

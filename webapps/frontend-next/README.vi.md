@@ -44,7 +44,11 @@ trị (Admin). Các ứng dụng cổ điển (`webapps/frontend`) vẫn đượ
   (`camunda.bpm.webapp.header-security.content-security-policy-value`), giá trị đó áp dụng cho
   mọi ứng dụng, kể cả giao diện mới. Không tải tài nguyên từ bên ngoài.
 - `config.json` (tùy chọn, cạnh `index.html`): `csrfCookieName` nếu tên cookie CSRF được cấu
-  hình khác mặc định, `defaultLocale` (thẻ của một ngôn ngữ có sẵn, ví dụ `vi`; mặc định `en`).
+  hình khác mặc định, `defaultLocale` (thẻ của một ngôn ngữ có sẵn, ví dụ `vi`; mặc định `en`),
+  `idlePacing` (`false` giữ nguyên tần suất làm mới của các trang khi không có ai thao tác, ví dụ
+  cho màn hình treo tường; mặc định `true`; `?idlePacing=false` trước dấu `#` của địa chỉ có tác
+  dụng tương tự cho một màn hình). Lần vẽ đầu tiên chờ tệp này tối đa ba giây; tệp trả lời muộn
+  vẫn được áp dụng, và các request làm thay đổi dữ liệu sẽ chờ nó.
 
 ## Phát triển
 

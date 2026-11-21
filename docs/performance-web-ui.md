@@ -38,7 +38,9 @@ Both runs used the same script, data and machine: 1.1.0 (commit `7df3ab864e`) an
 | Tasklist: claim / unclaim | 10 / 7 → **8 / 4** | | |
 | Process instance | 13 → 13 | 8 → 8 | 15.5 → 15.5 |
 
-A hidden tab sent no requests before and after: the pages already paused while hidden.
+A hidden tab sent no requests before and after: the pages already paused while hidden. The one
+exception is new: with "Notify me about new tasks" on and browser notifications allowed, the
+task list keeps reading its first page while hidden (see Tasklist).
 
 ### Workload board
 
@@ -52,8 +54,11 @@ CMMN handling apply unchanged: the counts never include a task that `GET /task` 
 return to the same user. At most 200 groups and 200 users per request.
 
 The board sends one `POST /task/workload` per refresh; the pages of groups and users are read
-every five minutes. A server without the endpoint (404 or 405) is asked per row as before, four
-rows at a time.
+every five minutes. A server without the endpoint (404 or 405), or one whose MyBatis mappings
+lack its statements (501, see the REST guide), is asked per row as before: four groups and four
+people at a time, each row with three or four requests. Whether the endpoint exists is kept for
+five minutes only, so a page left open during a rolling update or a rollback falls back when
+the endpoint goes away and uses it again once it is back.
 
 ### Dashboard
 
@@ -62,18 +67,27 @@ rows at a time.
 - The two `statistics-count` requests, whose results were not used, are gone.
 - Batches with failures are counted by `/batch/statistics/count` instead of listing every batch.
 - Definitions, deployments and the trends over days of history are read every five minutes
-  instead of every 30 s. The 18 history counts of the trends remain at load.
+  instead of every 30 s. The 8 history counts of the trends remain at load.
+- "Nothing needs attention" is shown only once the overdue tasks are counted, and a tile whose
+  numbers cannot be read says so instead of waiting forever.
 
 ### Tasklist
 
 - The filters are read without counts every five minutes. Their task counts (one task query
   per filter on the server) are read every two minutes while the filter pane is open, once
   after a burst of task actions instead of after each one, and not at all behind a closed pane
-  until the filter menu is used. The filter in use takes its count from the task list.
+  while the filter menu is not in use. The filter in use takes its count from the task list.
 - The tasks of the filter used last are requested beside the filters; the two business-key
   lookups (processes and cases) run together; a business key is read once and kept for five
-  minutes (until the session ends) instead of with every refresh.
-- An urgency view no longer changes its query every minute.
+  minutes (until the session ends) instead of with every refresh. That an instance's key cannot
+  be read (a task permission does not cover the process instance) is kept the same way.
+- An urgency view (overdue, due soon) no longer changes its query every minute; "now" is taken
+  when the list is read. A filter with refresh off still moves such a view along once a minute,
+  as before.
+- With "Notify me about new tasks" on, the list is read at least once a minute even while nobody
+  is at the screen, so a new task is reported within a minute. With browser notifications
+  allowed it is also read while the tab is hidden, which is when the system notification is
+  shown; before, a hidden tab never refreshed and that notification never appeared.
 
 ### Process instance
 
@@ -90,10 +104,22 @@ did not depend on input. Measured with `--window 60 --idle 150` (watched for 240
 150 s without input): the dashboard sends 9 instead of 18 API requests per minute (9.2 instead
 of 18.4 kB), the task list 24.9 instead of 45.9 kB per minute.
 
+Back from that, only the shown lists that refresh by themselves are read at once; a list whose
+refresh the user paused stays as it is. While the keyboard focus is in a frame of the page (an
+embedded or external task form), the user counts as present, as input there does not reach the
+page. A wall display that nobody touches but that should stay current turns the pacing off:
+`"idlePacing": false` in `config.json` for the installation, or `?idlePacing=false` in the
+address before the `#` (e.g. `/fasti/app/next/default/?idlePacing=false#/cockpit`) for one
+screen.
+
 ### Start-up
 
-`config.json` is read with a three-second limit; without an answer the page starts with the
-defaults. A language the user chose before is loaded beside the settings instead of after them.
+The first render waits at most three seconds for `config.json`; without an answer the page
+starts with the defaults. The file is still read and applied when it answers later: its default
+language replaces English unless the user chose one, and a request that changes something waits
+for it (up to 20 s), so it is never sent with the wrong CSRF cookie name. A failed connection is
+tried again three times. A language the user chose before is loaded beside the settings instead
+of after them.
 
 ## Bundle
 
@@ -108,8 +134,16 @@ Sizes of `vite build`, minified (gzip in brackets):
 | JavaScript files | 204 | 164 |
 
 The JavaScript loaded before the first page is about the same size: React and the router
-moved to a chunk of their own, which changes only with a dependency update, so browsers keep it
-across releases. The case timeline of the task detail is loaded when its tab is opened.
+moved to a chunk of their own, which changes only with a dependency update. Fasti Run, the
+Docker image and the Spring Boot starter serve the hashed files below `/app/next/assets/` with
+`Cache-Control: public, max-age=31536000, immutable`, so browsers keep a chunk whose content did
+not change across releases; on Tomcat and WildFly the servlet container decides. The case
+timeline of the task detail is loaded when its tab is opened.
+
+A page left open across an update of the server names files of the old build that are gone. A
+part loaded later that fails for this reason (the case tab or a diagram of the open task) says
+in its place that a newer version is available and offers to reload; the rest of the page, with
+a task form being filled in, stays.
 
 The entry chunk grew from 293 kB (16 Nov) to 396 kB (21 Nov) with the features added up to
 1.1.0, not with a dependency update. Its source maps show React DOM (207 kB) and React Router (96 kB)

@@ -69,7 +69,8 @@ fasti:
     enabled: true
   # immutable audit trail (docs/audit-trail.md): off, as it adds the tables FASTI_AUDIT_EVENT and
   # FASTI_AUDIT_HEAD and a write per command; FASTI_AUDIT_ENABLED=true turns it on (on every node).
-  # With FASTI_DB_SCHEMA_UPDATE left off, create the tables first (sql/create/*_fasti_audit.sql).
+  # With FASTI_DB_SCHEMA_UPDATE left off, create the tables first
+  # (/fasti/configuration/sql/create/*_fasti_audit.sql).
   # The key that signs checkpoints: FASTI_AUDIT_HMAC_KEY or FASTI_AUDIT_HMAC_KEY_FILE (a secret).
   audit:
     enabled: false
@@ -113,6 +114,7 @@ spring:
     static-locations: NULL
 
 logging:
-  # everything goes to stdout; the container runtime collects it
+  # everything goes to stdout; the container runtime collects it. With tracing on, a line written
+  # inside a span carries "[<trace id>-<span id>] " before the logger; otherwise nothing is added
   pattern:
-    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p [%t] %logger{40} : %m%n"
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p [%t] %replace([%X{traceId:-}-%X{spanId:-}] ){'^\\[-\\] ', ''}%logger{40} : %m%n"

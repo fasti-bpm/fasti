@@ -83,6 +83,7 @@ public class AuditSettings implements AuditStatus {
   protected volatile Set<String> retiredKeyIds = Collections.emptySet();
   protected volatile int lockTimeoutSeconds = DEFAULT_LOCK_TIMEOUT_SECONDS;
   protected volatile int queryTimeoutSeconds = DEFAULT_QUERY_TIMEOUT_SECONDS;
+  protected volatile boolean separateChains;
   /** Set while a verification of this engine runs: one at a time. */
   protected final AtomicBoolean verifying = new AtomicBoolean();
 
@@ -187,6 +188,27 @@ public class AuditSettings implements AuditStatus {
   /** The chain of a slot of this node. */
   public String chainId(int slot) {
     return nodeId + "/" + slot;
+  }
+
+  /**
+   * The chain of a slot of this node for transactions that write their records before the
+   * statements of the engine while others write theirs after them: they may go on after the
+   * command (see {@link AuditSession}).
+   */
+  public String extendedChainId(int slot) {
+    return nodeId + "/ext-" + slot;
+  }
+
+  /**
+   * Whether transactions that write their records before the statements of the engine use chains
+   * of their own: when the engine also has transactions that write their records after them.
+   */
+  public boolean isSeparateChains() {
+    return separateChains;
+  }
+
+  public void setSeparateChains(boolean separateChains) {
+    this.separateChains = separateChains;
   }
 
   public byte[] getHmacKey() {

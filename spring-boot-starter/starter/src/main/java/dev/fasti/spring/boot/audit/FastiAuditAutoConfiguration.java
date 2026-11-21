@@ -23,6 +23,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProp
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * Registers the audit trail plugin with the process engine when {@code fasti.audit.enabled=true}.
@@ -52,6 +53,9 @@ public class FastiAuditAutoConfiguration {
     plugin.setRetiredKeyIds(properties.getRetiredKeyIds());
     plugin.setLockTimeoutSeconds(properties.getLockTimeoutSeconds());
     plugin.setQueryTimeoutSeconds(properties.getQueryTimeoutSeconds());
+    // a command that finds no Spring transaction to join begins and ends its own: its records are
+    // then written after the statements of the engine
+    plugin.setTransactionActive(TransactionSynchronizationManager::isActualTransactionActive);
     return plugin;
   }
 }

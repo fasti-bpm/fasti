@@ -78,11 +78,11 @@ public class AuditHistoryEventHandler implements HistoryEventHandler {
   }
 
   /**
-   * The audit session of the command. The interceptor of the plugin opened it before the command
-   * ran, so that it is flushed after the sessions of the engine; see {@link AuditSession#open}.
+   * The audit session of the command: opened by the interceptor of the plugin before the command
+   * ran when the transaction ends with the command, otherwise now; see {@link AuditSession}.
    */
   public static AuditSession session(CommandContext commandContext) {
-    return AuditSession.open(commandContext);
+    return AuditSession.of(commandContext);
   }
 
   protected AuditRecord toRecord(CommandContext commandContext, HistoryEvent event) {

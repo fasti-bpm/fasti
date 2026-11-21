@@ -36,26 +36,39 @@ import org.camunda.bpm.engine.impl.persistence.entity.DeploymentEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.ResourceEntity;
 
 /**
- * Opens the audit session of a command before the command runs (see {@link AuditSession#open}) and
- * records deployments, which produce no history event: after each command, a deployment the
- * command created or deleted (as the entity cache shows before it is flushed) becomes an audit
- * record, with the SHA-256 of every resource of a new deployment. Deploying unchanged resources
- * with duplicate filtering creates nothing and records nothing.
+ * Opens the audit session of a command whose transaction ends with it before the command runs, so
+ * that its records are written last (see {@link AuditSession}), and records deployments, which
+ * produce no history event: after each command, a deployment the command created or deleted (as
+ * the entity cache shows before it is flushed) becomes an audit record, with the SHA-256 of every
+ * resource of a new deployment. Deploying unchanged resources with duplicate filtering creates
+ * nothing and records nothing.
  */
 public class AuditDeploymentInterceptor extends CommandInterceptor {
 
   protected final AuditSettings settings;
+  protected final AuditTransactionScope transactionScope;
+  protected final boolean requiresNew;
 
   public AuditDeploymentInterceptor(AuditSettings settings) {
+    this(settings, new AuditTransactionScope(null), false);
+  }
+
+  /**
+   * @param transactionScope tells whether the transaction of a command context ends with it
+   * @param requiresNew whether this interceptor is in the chain of "requires new" commands
+   */
+  public AuditDeploymentInterceptor(AuditSettings settings, AuditTransactionScope transactionScope, boolean requiresNew) {
     this.settings = settings;
+    this.transactionScope = transactionScope;
+    this.requiresNew = requiresNew;
   }
 
   @Override
   public <T> T execute(Command<T> command) {
     CommandContext commandContext = Context.getCommandContext();
-    if (commandContext != null) {
+    if (commandContext != null && transactionScope.endsWith(commandContext, requiresNew)) {
       // before the engine opens its sessions: the records are then written after its statements
-      AuditSession.open(commandContext);
+      AuditSession.openFirst(commandContext);
     }
     T result = next.execute(command);
     if (commandContext != null && settings.isRecorded(AuditService.TYPE_DEPLOYMENT)) {

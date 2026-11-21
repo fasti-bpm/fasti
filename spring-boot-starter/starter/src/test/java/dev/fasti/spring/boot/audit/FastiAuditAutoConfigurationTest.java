@@ -18,6 +18,7 @@ package dev.fasti.spring.boot.audit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import dev.fasti.engine.audit.AuditEvent;
 import dev.fasti.engine.audit.AuditService;
 import dev.fasti.engine.audit.AuditTrail;
 import dev.fasti.engine.audit.AuditTrailPlugin;
@@ -33,6 +34,8 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @RunWith(Enclosed.class)
 public class FastiAuditAutoConfigurationTest {
@@ -59,6 +62,9 @@ public class FastiAuditAutoConfigurationTest {
     @Autowired
     protected AuditTrailPlugin plugin;
 
+    @Autowired
+    protected PlatformTransactionManager transactionManager;
+
     @Test
     public void shouldRecordInSpringManagedTransactions() {
       assertThat(plugin.getChains()).isEqualTo(2);
@@ -81,6 +87,30 @@ public class FastiAuditAutoConfigurationTest {
             .isEqualTo(1);
         assertThat(audit.createQuery().businessKey("starter-1").count()).isPositive();
         assertThat(audit.createQuery().types(AuditService.TYPE_DEPLOYMENT).entityId(deployment.getId()).count()).isEqualTo(1);
+        assertThat(audit.verify().isIntact()).isTrue();
+      } finally {
+        repositoryService.deleteDeployment(deployment.getId(), true);
+      }
+    }
+
+    @Test
+    public void shouldWriteOnChainsOfTheirOwnInsideAnOuterTransaction() {
+      assertThat(plugin.getTransactionActive()).isNotNull();
+      RepositoryService repositoryService = processEngine.getRepositoryService();
+      Deployment deployment = repositoryService.createDeployment().addModelInstance("chains.bpmn",
+          Bpmn.createExecutableProcess("chainsProcess").camundaHistoryTimeToLive(1)
+              .startEvent().userTask().endEvent().done()).deploy();
+      try {
+        // no Spring transaction: the engine begins one for the command and writes the records last
+        String own = processEngine.getRuntimeService().startProcessInstanceByKey("chainsProcess").getId();
+        // inside an outer transaction that goes on after the command: written first, on an ext- chain
+        String joined = new TransactionTemplate(transactionManager).execute(
+            status -> processEngine.getRuntimeService().startProcessInstanceByKey("chainsProcess").getId());
+        AuditService audit = AuditTrail.of(processEngine);
+        assertThat(audit.createQuery().processInstanceId(own).types(AuditService.TYPE_PROCESS).list())
+            .extracting(AuditEvent::getChainId).singleElement().asString().matches("starter-node/[0-9]+");
+        assertThat(audit.createQuery().processInstanceId(joined).types(AuditService.TYPE_PROCESS).list())
+            .extracting(AuditEvent::getChainId).singleElement().asString().matches("starter-node/ext-[0-9]+");
         assertThat(audit.verify().isIntact()).isTrue();
       } finally {
         repositoryService.deleteDeployment(deployment.getId(), true);

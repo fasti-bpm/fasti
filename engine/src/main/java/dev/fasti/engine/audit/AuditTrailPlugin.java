@@ -23,12 +23,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 import dev.fasti.engine.audit.impl.AuditDeploymentInterceptor;
 import dev.fasti.engine.audit.impl.AuditHistoryEventHandler;
 import dev.fasti.engine.audit.impl.AuditSession;
 import dev.fasti.engine.audit.impl.AuditSettings;
 import dev.fasti.engine.audit.impl.AuditStore;
+import dev.fasti.engine.audit.impl.AuditTransactionScope;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.ProcessEngineConfiguration;
 import org.camunda.bpm.engine.ProcessEngineException;
@@ -81,6 +83,7 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
   protected String retiredKeyIds;
   protected int lockTimeoutSeconds = AuditSettings.DEFAULT_LOCK_TIMEOUT_SECONDS;
   protected int queryTimeoutSeconds = AuditSettings.DEFAULT_QUERY_TIMEOUT_SECONDS;
+  protected BooleanSupplier transactionActive;
 
   protected AuditSettings settings;
 
@@ -104,14 +107,22 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
       configuration.setCustomSessionFactories(new ArrayList<>());
     }
     configuration.getCustomSessionFactories().add(new AuditSession.Factory(settings));
+    AuditTransactionScope transactionScope = new AuditTransactionScope(transactionActive);
+    settings.setSeparateChains(transactionScope.knowsBoundaries(configuration));
+    if (transactionScope.hasProbe()) {
+      if (configuration.getCustomPreCommandInterceptorsTxRequired() == null) {
+        configuration.setCustomPreCommandInterceptorsTxRequired(new ArrayList<>());
+      }
+      configuration.getCustomPreCommandInterceptorsTxRequired().add(transactionScope.probeInterceptor());
+    }
     if (configuration.getCustomPostCommandInterceptorsTxRequired() == null) {
       configuration.setCustomPostCommandInterceptorsTxRequired(new ArrayList<>());
     }
-    configuration.getCustomPostCommandInterceptorsTxRequired().add(new AuditDeploymentInterceptor(settings));
+    configuration.getCustomPostCommandInterceptorsTxRequired().add(new AuditDeploymentInterceptor(settings, transactionScope, false));
     if (configuration.getCustomPostCommandInterceptorsTxRequiresNew() == null) {
       configuration.setCustomPostCommandInterceptorsTxRequiresNew(new ArrayList<>());
     }
-    configuration.getCustomPostCommandInterceptorsTxRequiresNew().add(new AuditDeploymentInterceptor(settings));
+    configuration.getCustomPostCommandInterceptorsTxRequiresNew().add(new AuditDeploymentInterceptor(settings, transactionScope, true));
   }
 
   /** The HMAC key from {@code hmacKey} or the file {@code hmacKeyFile}, or {@code null}. */
@@ -321,6 +332,22 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
   /** Seconds a query or export of the audit trail may run (default 120, 0 for no limit). */
   public void setQueryTimeoutSeconds(int queryTimeoutSeconds) {
     this.queryTimeoutSeconds = queryTimeoutSeconds;
+  }
+
+  public BooleanSupplier getTransactionActive() {
+    return transactionActive;
+  }
+
+  /**
+   * Tells whether a transaction is active on the calling thread before the engine begins or joins
+   * one for a command (with Spring: {@code TransactionSynchronizationManager::isActualTransactionActive}).
+   * With it, a command that begins its own transaction writes its audit records after the
+   * statements of the engine also when transactions are managed outside the engine; without it,
+   * such an engine writes them before (see {@link AuditSession}). A standalone engine does not
+   * need it.
+   */
+  public void setTransactionActive(BooleanSupplier transactionActive) {
+    this.transactionActive = transactionActive;
   }
 
   @Override

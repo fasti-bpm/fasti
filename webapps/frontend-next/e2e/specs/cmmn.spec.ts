@@ -64,8 +64,12 @@ test.describe('Cases (CMMN)', () => {
     await expect(main(app).locator('.cmmn-shape--humanTask', { hasText: 'Review claim' })).toBeVisible();
     const instances = main(app).getByRole('table', { name: 'Open instances of this version' });
     await main(app).getByRole('searchbox', { name: 'Business key (exact)' }).fill(businessKey);
-    await expect(instances.getByRole('row').filter({ hasText: businessKey })).toBeVisible();
+    // the header and the one instance with the key, once the search is in the address
+    await expect(app).toHaveURL(/bk=/);
+    await expect(instances.getByRole('row')).toHaveCount(2);
+    await expect(main(app).locator('[aria-busy="true"]')).toHaveCount(0);
     await instances.getByRole('row').filter({ hasText: businessKey }).getByRole('link').click();
+    await expect(app).toHaveURL(new RegExp(`cockpit/cases/instance/${instance.id}`));
 
     // the instance: its plan items in their states
     await expect(main(app).getByText(businessKey)).toBeVisible();
@@ -75,7 +79,12 @@ test.describe('Cases (CMMN)', () => {
     await expect(itemRow(app, 'Claim approved')).toContainText('Available');
     await expect(main(app).locator('[data-element-id="PI_review"]')).toHaveClass(/is-active/);
 
-    // start the manual plan item, then complete it after a confirmation
+    // the manual plan item is disabled and enabled again, started, then completed after a
+    // confirmation (the active review keeps the case from completing meanwhile)
+    await itemRow(app, 'Check documents').getByRole('button', { name: 'Disable: Check documents' }).click();
+    await expect(itemRow(app, 'Check documents')).toContainText('Disabled');
+    await itemRow(app, 'Check documents').getByRole('button', { name: 'Enable again: Check documents' }).click();
+    await expect(itemRow(app, 'Check documents')).toContainText('Enabled');
     await itemRow(app, 'Check documents').getByRole('button', { name: 'Start: Check documents' }).click();
     await expect(itemRow(app, 'Check documents')).toContainText('Active');
     await itemRow(app, 'Check documents').getByRole('button', { name: 'Complete: Check documents' }).click();
@@ -96,15 +105,12 @@ test.describe('Cases (CMMN)', () => {
     await details.getByRole('button', { name: 'Complete' }).click();
     await expect.poll(async () => (await api.get<unknown[]>('task', { caseInstanceId: instance.id, assignee: user })).length).toBe(0);
 
-    // back in the case: the stage started, the milestone occurred; the manual task in the stage
-    // is disabled and enabled again, then the stage is terminated after a confirmation
+    // back in the case: the stage started and the milestone occurred; the stage, whose manual
+    // task waits to be started, is terminated after a confirmation
     await open(app, `cockpit/cases/instance/${instance.id}`);
     await expect(itemRow(app, 'Settlement')).toContainText('Active');
     await expect(itemRow(app, 'Pay out')).toContainText('Enabled');
-    await itemRow(app, 'Pay out').getByRole('button', { name: 'Disable: Pay out' }).click();
-    await expect(itemRow(app, 'Pay out')).toContainText('Disabled');
-    await itemRow(app, 'Pay out').getByRole('button', { name: 'Enable again: Pay out' }).click();
-    await expect(itemRow(app, 'Pay out')).toContainText('Enabled');
+    await expect(itemRow(app, 'Claim approved')).toHaveCount(0);
     await itemRow(app, 'Settlement').getByRole('button', { name: 'Terminate: Settlement' }).click();
     await expect(dialog(app)).toContainText('This cannot be undone');
     await dialog(app).getByRole('button', { name: 'Terminate' }).click();
@@ -139,9 +145,10 @@ test.describe('Cases (CMMN)', () => {
     await waitFor(async () => (await planItem(api, instance.id, 'PI_check')) ?? null, 'the plan items of the new case');
 
     await open(app, 'cockpit');
-    await app.keyboard.press('Control+k');
-    await app.getByRole('combobox').fill(instance.id);
-    const hit = app.getByRole('option', { name: new RegExp(businessKey) });
+    await app.getByRole('button', { name: 'Find a command' }).click();
+    const palette = app.getByRole('dialog');
+    await palette.getByRole('combobox').fill(instance.id);
+    const hit = palette.getByRole('option', { name: new RegExp(businessKey) });
     await expect(hit).toBeVisible();
     await hit.click();
     await expect(app).toHaveURL(new RegExp(`cockpit/cases/instance/${instance.id}`));

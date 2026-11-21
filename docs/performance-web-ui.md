@@ -86,7 +86,9 @@ short to show that.
 
 Pages that refresh every 30 s do so every 60 s after two minutes without input and every five
 minutes after ten minutes. The first input reads at once what has become old. Before, the rate
-did not depend on input.
+did not depend on input. Measured with `--window 60 --idle 150` (watched for 240 s after
+150 s without input): the dashboard sends 9 instead of 18 API requests per minute (9.2 instead
+of 18.4 kB), the task list 24.9 instead of 45.9 kB per minute.
 
 ### Start-up
 

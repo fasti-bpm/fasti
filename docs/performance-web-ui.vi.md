@@ -87,7 +87,9 @@ không thay đổi trong hai hay mười phút; khung đo 120 giây ở trên qu
 
 Các trang làm mới mỗi 30 giây sẽ chuyển sang 60 giây sau hai phút không có thao tác, và năm phút
 sau mười phút. Thao tác đầu tiên đọc ngay những gì đã cũ. Trước đây tần suất không phụ thuộc
-vào thao tác của người dùng.
+vào thao tác của người dùng. Đo bằng `--window 60 --idle 150` (theo dõi 240 giây sau 150 giây
+không thao tác): dashboard gửi 9 thay vì 18 API request mỗi phút (9,2 thay vì 18,4 kB), task
+list 24,9 thay vì 45,9 kB mỗi phút.
 
 ### Khởi động
 

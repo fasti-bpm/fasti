@@ -232,9 +232,47 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   `<=` are unchanged, and `<` (`dueBefore`, a task's `createdBefore`, expired locks) no longer
   matches a row of the same second. MySQL no longer rounds a stored time up to the next second.
   Other databases are unchanged.
+- MySQL and MariaDB: the expiration of a lock (external task `fetchAndLock` and `extendLock`,
+  job acquisition) is rounded up to the next whole second before it is stored. Cut off to the second, an external task locked for less than a second could be
+  fetched by another worker right away (500 ms from 12:00:00.100 ended at 12:00:00). A lock now
+  lasts at least as long as asked for and less than a second longer; the `lockExpirationTime`
+  a worker gets is the stored one. Migration note: on these databases lock expiration times are
+  whole seconds, up to 999 ms later than `now + lockDuration`. Other databases are unchanged.
+- Absences: the check that substitutes do not lead back to the user runs under the lock of the
+  write, so two users who name each other at the same time are not both accepted, and it only
+  refuses when the absences on the way really overlap (it compared each one with the new
+  absence alone, and counted the past of an absence that has begun).
+- Absences read the user info table (`ACT_ID_INFO`, no index on user or key) less often: once
+  per user and command, once for all candidate users of a task and once for
+  `GET /user/{id}/absence/substituting` (it was once per user who ever had an absence). Ended
+  absences are removed the next time an absence is set or ended.
+- The parameter handler of the engine's MyBatis configuration answers the parameter metadata
+  lookup with one shared exception without stack trace instead of a new one per statement.
 
 ### Security
 
+- Four-eyes control: the record of who completed a step (`fasti_completedBy_<step>`) could be
+  emptied through the variables of a task (`PUT /task/{id}/variables/...`,
+  `TaskService#setVariable`) by any candidate or assignee, who could then approve their own
+  work. On an engine with the plugin these variables are now reserved in process instances:
+  only the control writes them, every other write or removal is refused with `403`
+  (`ReservedVariableException`), through any API and from code of the model. Copies of all
+  variables (call activity `variables="all"`, restart) leave them out. See the limits in
+  [docs/four-eyes.md](docs/four-eyes.md#limits).
+- `GET /task/{id}/four-eyes` answers `404` for a task the user may not read, like for a missing
+  one (it answered `403`, which told that the id exists).
+- Absences: setting an absence needs `READ` on the substitute, and a substitute that does not
+  exist, may not be seen or leads back to the user gets one and the same `400`, so the request
+  no longer tells which user ids exist or who is absent. `effectiveSubstituteId` follows absent
+  substitutes only as far as the caller has `READ` on them.
+- Absences: the handover (`POST /user/{id}/absence/handover`) needs the permission to assign
+  each task (`TASK_ASSIGN` or `UPDATE`), as the task API does; tasks without it stay and are
+  counted in the new `notAllowed`, and tasks of a tenant the caller does not belong to are left
+  alone. Administrators may hand over every task. With `defaultUserPermissionForTask=TASK_WORK` a user could move their tasks to anyone.
+- Prometheus metrics: Run also refuses to start when the endpoint is enabled and exposed with
+  Spring Boot settings alone (without `fasti.metrics.prometheus.enabled`) and has neither a
+  token nor a management port of its own, and the token filter then applies as well. A scrape
+  token must have at least 16 characters; the placeholder `change-me` is refused.
 - MyBatis 3.6.0 embeds OGNL 3.4.16 instead of 3.4.4, which closes CVE-2026-113730
   (GHSA-crwc-vw2r-qr6m, a bypass of the OGNL stricter-invocation block list) reported by
   scanners for every MyBatis 3.5 jar. The engine was not exposed in practice: MyBatis evaluates

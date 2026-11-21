@@ -78,6 +78,9 @@ public class IndexAdvisorTest {
     ExistingIndex otherRows = index("ACT_RU_JOB", "I", "DUEDATE_").predicate("(retries_ = 0)");
 
     assertThat(partial.isSatisfiedBy(asPostgresPrintsIt)).isTrue();
+    // the same rows with the terms the other way round
+    assertThat(partial.isSatisfiedBy(index("ACT_RU_JOB", "I", "DUEDATE_")
+        .predicate("((suspension_state_ = 1) AND (retries_ > 0))"))).isTrue();
     assertThat(partial.isSatisfiedBy(index("ACT_RU_JOB", "FULL", "DUEDATE_"))).isTrue();
     assertThat(partial.isSatisfiedBy(otherRows)).isFalse();
     // a filtered index never serves a recommendation without predicate
@@ -85,15 +88,60 @@ public class IndexAdvisorTest {
   }
 
   @Test
-  public void shouldRequireFurtherKeyColumnWhereNullsMustBeIndexed() {
-    RecommendedIndex oracle = recommended(IndexCatalog.ORACLE, "FASTI_IDX_JOB_DUEDATE");
+  public void shouldSortTheTermsOfAPredicate() {
+    assertThat(ExistingIndex.normalizePredicate("((retries_ > 0) AND (suspension_state_ = 1))"))
+        .isEqualTo(ExistingIndex.normalizePredicate("SUSPENSION_STATE_ = 1 and RETRIES_ > 0"))
+        .isEqualTo("RETRIES_>0 AND SUSPENSION_STATE_=1");
+    // a column name that contains AND is not split
+    assertThat(ExistingIndex.normalizePredicate("(handler_type_)::text = 'x'::text")).isEqualTo("HANDLER_TYPE_='X'");
+    assertThat(ExistingIndex.normalizePredicate(" ")).isNull();
+  }
 
-    assertThat(oracle.isSatisfiedBy(index("ACT_RU_JOB", "I", "DUEDATE_"))).isFalse();
-    assertThat(oracle.isSatisfiedBy(index("ACT_RU_JOB", "I", "DUEDATE_", "SYS_NC00031$"))).isTrue();
-    assertThat(oracle.isSatisfiedBy(index("ACT_RU_JOB", "I", "DUEDATE_", "ID_"))).isTrue();
-    // a nullable further column leaves the jobs out in which both are NULL
-    assertThat(oracle.isSatisfiedBy(index("ACT_RU_JOB", "I", "DUEDATE_", "LOCK_OWNER_"))).isFalse();
-    assertThat(recommended(IndexCatalog.MYSQL, "FASTI_IDX_JOB_DUEDATE").isSatisfiedBy(index("ACT_RU_JOB", "I", "DUEDATE_"))).isTrue();
+  @Test
+  public void shouldLeadWithTheSuspensionStateWhereThereIsNoPartialIndex() {
+    for (String databaseType : Arrays.asList(IndexCatalog.H2, IndexCatalog.MYSQL, IndexCatalog.ORACLE, IndexCatalog.MSSQL,
+        IndexCatalog.DB2)) {
+      RecommendedIndex job = recommended(databaseType, IndexAdvisor.JOB_DUE_DATE);
+      assertThat(job.getColumns()).as(databaseType).containsExactly("SUSPENSION_STATE_", "DUEDATE_", "RETRIES_");
+      assertThat(job.isSatisfiedBy(index("ACT_RU_JOB", "I", "SUSPENSION_STATE_", "DUEDATE_", "RETRIES_"))).isTrue();
+      // the index of the first variant of the scripts reads every failed and suspended job
+      assertThat(job.isSatisfiedBy(index("ACT_RU_JOB", "I", "DUEDATE_"))).isFalse();
+      assertThat(job.isSatisfiedBy(index("ACT_RU_JOB", "I", "SUSPENSION_STATE_", "DUEDATE_"))).isFalse();
+    }
+    RecommendedIndex postgres = recommended(IndexCatalog.POSTGRES, IndexAdvisor.JOB_DUE_DATE);
+    assertThat(postgres.getColumns()).containsExactly("DUEDATE_");
+    assertThat(postgres.getPartialPredicate()).isNotNull();
+  }
+
+  @Test
+  public void shouldAcceptOnlyBtreeIndexesWhereTheCatalogTellsTheAccessMethod() {
+    RecommendedIndex due = recommended(IndexCatalog.POSTGRES, "FASTI_IDX_TASK_DUE");
+
+    assertThat(due.isSatisfiedBy(index("ACT_RU_TASK", "I", "DUE_DATE_").accessMethod("btree"))).isTrue();
+    // equality only: no range of due dates, no order
+    assertThat(due.isSatisfiedBy(index("ACT_RU_TASK", "I", "DUE_DATE_").accessMethod("hash"))).isFalse();
+    assertThat(due.isSatisfiedBy(index("ACT_RU_TASK", "I", "DUE_DATE_").accessMethod("BRIN"))).isFalse();
+    // databases whose catalog query does not tell
+    assertThat(due.isSatisfiedBy(index("ACT_RU_TASK", "I", "DUE_DATE_"))).isTrue();
+  }
+
+  @Test
+  public void shouldRequireNullsFirstOnPostgresOnlyWhereAcquisitionOrdersByDueDateWithNulls() {
+    RecommendedIndex byDueDate = IndexAdvisor.recommendedIndexes(IndexCatalog.POSTGRES, true).get(0);
+    RecommendedIndex byDefault = IndexAdvisor.recommendedIndexes(IndexCatalog.POSTGRES, false).get(0);
+    String predicate = "((retries_ > 0) AND (suspension_state_ = 1))";
+    ExistingIndex ascending = new ExistingIndex("ACT_RU_JOB", "I").addColumn("duedate_", false).predicate(predicate).accessMethod("btree");
+    ExistingIndex nullsFirst = new ExistingIndex("ACT_RU_JOB", "I").addColumn("duedate_", true).predicate(predicate).accessMethod("btree");
+
+    assertThat(byDueDate.getName()).isEqualTo(IndexAdvisor.JOB_DUE_DATE);
+    assertThat(byDueDate.toString()).contains("(DUEDATE_ NULLS FIRST)").contains("where RETRIES_ > 0 and SUSPENSION_STATE_ = 1");
+    assertThat(byDueDate.isSatisfiedBy(nullsFirst)).isTrue();
+    // an ascending index lets the planner walk it in due date order when nothing is due
+    assertThat(byDueDate.isSatisfiedBy(ascending)).isFalse();
+    assertThat(byDefault.isSatisfiedBy(ascending)).isTrue();
+    assertThat(byDefault.isSatisfiedBy(nullsFirst)).isTrue();
+    // only the first column has to be NULLS FIRST; unknown order (other databases) counts
+    assertThat(byDueDate.isSatisfiedBy(index("ACT_RU_JOB", "I", "DUEDATE_").predicate(predicate))).isTrue();
   }
 
   @Test
@@ -131,7 +179,7 @@ public class IndexAdvisorTest {
 
     IndexCatalog catalogAndSchema = new IndexCatalog(IndexCatalog.MSSQL, null, "db.dbo.");
     assertThat(catalogAndSchema.getSchema()).isEqualTo("dbo");
-    // the catalog views of the connection do not show another database: only JDBC metadata
+    // the catalog views of that database are read
     assertThat(catalogAndSchema.getCatalog()).isEqualTo("db");
     assertThat(schemaPrefix.getCatalog()).isNull();
 

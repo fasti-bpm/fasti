@@ -29,17 +29,22 @@ import java.util.Locale;
  */
 public class RecommendedIndex {
 
+  /** The only access method that serves ranges and order, where the catalog tells one (PostgreSQL). */
+  public static final String BTREE = "btree";
+
   protected final String name;
   protected final String table;
   protected final List<String> columns;
-  protected final boolean nullsIndexed;
+  protected final boolean nullsFirst;
   protected final String partialPredicate;
+  /** The predicate as written, for messages. */
+  protected final String predicateText;
 
   public RecommendedIndex(String name, String table, String... columns) {
     this(name, table, Arrays.asList(columns), false, null);
   }
 
-  protected RecommendedIndex(String name, String table, List<String> columns, boolean nullsIndexed, String partialPredicate) {
+  protected RecommendedIndex(String name, String table, List<String> columns, boolean nullsFirst, String partialPredicate) {
     this.name = name;
     this.table = table.toUpperCase(Locale.ROOT);
     List<String> upper = new ArrayList<>();
@@ -47,18 +52,19 @@ public class RecommendedIndex {
       upper.add(column.toUpperCase(Locale.ROOT));
     }
     this.columns = Collections.unmodifiableList(upper);
-    this.nullsIndexed = nullsIndexed;
+    this.nullsFirst = nullsFirst;
     this.partialPredicate = ExistingIndex.normalizePredicate(partialPredicate);
+    this.predicateText = partialPredicate;
   }
 
   /**
-   * The index has to contain the rows in which the recommended columns are all NULL. Oracle leaves
-   * a row out of an index when all its key columns are NULL, so there the index needs a further
-   * key part that is never NULL: the constant of the scripts (a generated SYS_NC column in the
-   * catalog) or the primary key column ID_.
+   * The index must not be able to return the first column in ascending order with NULL last
+   * (PostgreSQL: it is {@code NULLS FIRST}, or {@code DESC NULLS LAST}). Required where the
+   * planner would otherwise walk the whole index in that order (job acquisition by due date on
+   * PostgreSQL, see docs/performance.md). Checked only where the catalog tells the order.
    */
-  public RecommendedIndex withNullsIndexed() {
-    return new RecommendedIndex(name, table, columns, true, partialPredicate);
+  public RecommendedIndex withNullsFirst() {
+    return new RecommendedIndex(name, table, columns, true, predicateText);
   }
 
   /**
@@ -66,7 +72,7 @@ public class RecommendedIndex {
    * one). Partial indexes with any other predicate never count.
    */
   public RecommendedIndex withPartialPredicate(String predicate) {
-    return new RecommendedIndex(name, table, columns, nullsIndexed, predicate);
+    return new RecommendedIndex(name, table, columns, nullsFirst, predicate);
   }
 
   public String getName() {
@@ -81,8 +87,8 @@ public class RecommendedIndex {
     return columns;
   }
 
-  public boolean isNullsIndexed() {
-    return nullsIndexed;
+  public boolean isNullsFirst() {
+    return nullsFirst;
   }
 
   public String getPartialPredicate() {
@@ -90,11 +96,15 @@ public class RecommendedIndex {
   }
 
   /**
-   * Whether the given index serves this recommendation: it is usable, its key columns start with
-   * the recommended columns in the same order, and it is not restricted to other rows.
+   * Whether the given index serves this recommendation: it is usable, a B-tree where the catalog
+   * tells the access method, its key columns start with the recommended columns in the same
+   * order, it is not restricted to other rows, and NULL comes first where that is required.
    */
   public boolean isSatisfiedBy(ExistingIndex index) {
     if (!index.isUsable() || !table.equals(index.getTable())) {
+      return false;
+    }
+    if (index.getAccessMethod() != null && !BTREE.equals(index.getAccessMethod())) {
       return false;
     }
     if (index.getPredicate() != null && !index.getPredicate().equals(partialPredicate)) {
@@ -109,19 +119,23 @@ public class RecommendedIndex {
         return false;
       }
     }
-    if (nullsIndexed) {
-      for (String further : existing.subList(columns.size(), existing.size())) {
-        if (further != null && (further.startsWith("SYS_NC") || "ID_".equals(further))) {
-          return true;
-        }
-      }
-      return false;
+    if (nullsFirst) {
+      Boolean first = index.getNullsFirst().isEmpty() ? null : index.getNullsFirst().get(0);
+      return first == null || first;
     }
     return true;
   }
 
   @Override
   public String toString() {
-    return name + " on " + table + " (" + String.join(", ", columns) + ")";
+    StringBuilder text = new StringBuilder(name).append(" on ").append(table).append(" (");
+    for (int i = 0; i < columns.size(); i++) {
+      text.append(i == 0 ? "" : ", ").append(columns.get(i)).append(i == 0 && nullsFirst ? " NULLS FIRST" : "");
+    }
+    text.append(")");
+    if (partialPredicate != null) {
+      text.append(" where ").append(predicateText);
+    }
+    return text.toString();
   }
 }

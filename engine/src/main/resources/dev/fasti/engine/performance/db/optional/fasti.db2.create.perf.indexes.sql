@@ -12,34 +12,45 @@
 -- Run it with the schema of the engine tables as current schema (db2 -tvf <file>). Plain
 -- statements: run again, an index that exists is refused with SQL0601N and an index with the
 -- same columns as an existing one gives the warning SQL0605W; both mean the index is there, and
--- the command line processor goes on with the next statement. Db2 builds indexes while reads
--- and writes go on. Run RUNSTATS on the tables afterwards.
+-- the command line processor goes on with the next statement. A table that does not exist gives
+-- SQL0204N (ACT_ID_INFO is missing where the engine never used its identity tables, for example
+-- with LDAP); ignore it. Db2 builds indexes while reads and writes go on. Run RUNSTATS on the
+-- tables afterwards.
+--
+-- Busy cluster: a build still needs a short exclusive lock at its end. The lock wait is limited
+-- to 10 seconds here (the default LOCKTIMEOUT of -1 waits forever): if a statement fails with
+-- SQL0911N, run the script again later. See "On a busy cluster" in docs/performance.md.
+set current lock timeout 10;
 
--- Job acquisition (selectNextJobsToExecute, every few seconds on every node) and timers by due
--- date: without it each acquisition reads all of ACT_RU_JOB, mostly timers that are not due.
--- Check on a test system: with jobExecutorAcquireByDueDate=true and ensureJobDueDateNotNull=false,
--- the acquisition plan must not read the whole index when nothing is due (Db2 sorts NULL last, as
--- PostgreSQL does, where an ascending index did that; see docs/performance.md).
--- Write cost: one entry per job; changed again only when a job is rescheduled.
-create index FASTI_IDX_JOB_DUEDATE on ACT_RU_JOB (DUEDATE_);
+-- Job acquisition (selectNextJobsToExecute, every few seconds on every node): without it each
+-- acquisition reads all of ACT_RU_JOB, mostly timers that are not due. SUSPENSION_STATE_ first,
+-- so the jobs of suspended instances are not read at all, and RETRIES_ last, so the failed jobs
+-- (no retries left) are rejected inside the index without reading their rows. Job lists by due
+-- date (Cockpit, REST) do not use it. Check on a test system: with
+-- jobExecutorAcquireByDueDate=true and ensureJobDueDateNotNull=false, the acquisition plan must
+-- not read the whole index when nothing is due (Db2 sorts NULL last, as PostgreSQL does, where an
+-- ascending index did that; see docs/performance.md).
+-- Write cost: one entry per job; rewritten when a job is rescheduled, fails or is suspended.
+create index FASTI_IDX_JOB_DUEDATE on ACT_RU_JOB (SUSPENSION_STATE_, DUEDATE_, RETRIES_);
 
--- Overdue tasks and tasks by due date (dueBefore/dueAfter, sorting by due date): task lists,
--- the dashboard and the workload page.
+-- Overdue tasks and tasks by due date (dueBefore/dueAfter, sorting by due date): task lists and
+-- the dashboard.
 -- Write cost: one entry per task; changed only when the due date changes.
 create index FASTI_IDX_TASK_DUE on ACT_RU_TASK (DUE_DATE_);
 
--- Tasks of one assignee counted or sorted by due date ("my tasks", workload per user) and
--- unassigned overdue tasks.
+-- Tasks of one assignee counted or sorted by due date ("my tasks") and unassigned overdue tasks.
 -- Write cost: one entry per task, rewritten at each claim, unclaim and reassignment (as the
 -- stock index on ASSIGNEE_ is).
 create index FASTI_IDX_TASK_ASSIGNEE_DUE on ACT_RU_TASK (ASSIGNEE_, DUE_DATE_);
 
--- User info by user: absences (fasti.absence.enabled) are looked up at each task assignment,
--- and ACT_ID_INFO has no index besides its primary key.
+-- User info of one user: the absence lookup at each task assignment (fasti.absence.enabled) and
+-- the user profile; ACT_ID_INFO has no index besides its primary key. Reading the absences of
+-- all users (the absence listings) still reads the whole table.
 -- Write cost: one entry per user info row; written only when a profile or an absence changes.
 create index FASTI_IDX_ID_INFO_USER on ACT_ID_INFO (USER_ID_, KEY_);
 
--- Second group: worth it only for the usage named; remove the "-- " to create them.
+-- Second group: worth it only for the usage named; remove the "-- " to create them. They can be
+-- run again like the ones above.
 --
 -- History of one process definition newest first (Cockpit history list of a definition). One
 -- more entry per started process instance.

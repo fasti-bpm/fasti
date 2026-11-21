@@ -41,26 +41,65 @@ public class IndexAdvisor {
 
   private static final Logger LOG = LoggerFactory.getLogger(IndexAdvisor.class);
 
+  public static final String JOB_DUE_DATE = "FASTI_IDX_JOB_DUEDATE";
+  public static final String ID_INFO_USER = "FASTI_IDX_ID_INFO_USER";
+
   protected static final String JOB_PREDICATE = "RETRIES_ > 0 and SUSPENSION_STATE_ = 1";
 
   /**
    * The active indexes of the script of the given database type (the commented second group of
-   * the scripts is not checked). Keep in step with
-   * {@code engine/src/main/resources/dev/fasti/engine/performance/db/optional}.
+   * the scripts is not checked), as job acquisition with the default settings needs them. Keep in
+   * step with {@code engine/src/main/resources/dev/fasti/engine/performance/db/optional}.
    */
   public static List<RecommendedIndex> recommendedIndexes(String databaseType) {
-    RecommendedIndex jobDueDate = new RecommendedIndex("FASTI_IDX_JOB_DUEDATE", "ACT_RU_JOB", "DUEDATE_");
+    return recommendedIndexes(databaseType, false);
+  }
+
+  /** The same for the settings of the engine: see {@link #recommendedIndexes(String, boolean)}. */
+  public static List<RecommendedIndex> recommendedIndexes(ProcessEngineConfigurationImpl configuration) {
+    return recommendedIndexes(configuration.getDatabaseType(), dueDateOrderWithNulls(configuration));
+  }
+
+  /**
+   * @param dueDateOrderWithNulls whether job acquisition asks for the jobs that are due or have no
+   *        due date ordered by due date ({@code jobExecutorAcquireByDueDate=true},
+   *        {@code ensureJobDueDateNotNull=false}): on PostgreSQL the job index must then be
+   *        {@code NULLS FIRST}, or the planner walks all of it whenever nothing is due
+   */
+  public static List<RecommendedIndex> recommendedIndexes(String databaseType, boolean dueDateOrderWithNulls) {
+    RecommendedIndex jobDueDate;
     if (IndexCatalog.POSTGRES.equals(databaseType)) {
-      jobDueDate = jobDueDate.withPartialPredicate(JOB_PREDICATE);
-    } else if (IndexCatalog.ORACLE.equals(databaseType)) {
-      // a single-column index would not contain the jobs without due date
-      jobDueDate = jobDueDate.withNullsIndexed();
+      // partial, so failed and suspended jobs stay out of it
+      jobDueDate = new RecommendedIndex(JOB_DUE_DATE, "ACT_RU_JOB", "DUEDATE_").withPartialPredicate(JOB_PREDICATE);
+      if (dueDateOrderWithNulls) {
+        jobDueDate = jobDueDate.withNullsFirst();
+      }
+    } else {
+      // the databases without partial indexes: suspended jobs are skipped by the leading column,
+      // failed ones inside the index by the last; SUSPENSION_STATE_ is NOT NULL, so the jobs
+      // without due date are in the index on Oracle as well
+      jobDueDate = new RecommendedIndex(JOB_DUE_DATE, "ACT_RU_JOB", "SUSPENSION_STATE_", "DUEDATE_", "RETRIES_");
     }
     return Collections.unmodifiableList(Arrays.asList(
         jobDueDate,
         new RecommendedIndex("FASTI_IDX_TASK_DUE", "ACT_RU_TASK", "DUE_DATE_"),
         new RecommendedIndex("FASTI_IDX_TASK_ASSIGNEE_DUE", "ACT_RU_TASK", "ASSIGNEE_", "DUE_DATE_"),
-        new RecommendedIndex("FASTI_IDX_ID_INFO_USER", "ACT_ID_INFO", "USER_ID_", "KEY_")));
+        new RecommendedIndex(ID_INFO_USER, "ACT_ID_INFO", "USER_ID_", "KEY_")));
+  }
+
+  /** Whether acquisition orders the due jobs and the jobs without due date by due date. */
+  public static boolean dueDateOrderWithNulls(ProcessEngineConfigurationImpl configuration) {
+    return configuration.isJobExecutorAcquireByDueDate() && !configuration.isEnsureJobDueDateNotNull();
+  }
+
+  /** The recommendation of that name for the engine. */
+  public static RecommendedIndex recommendedIndex(ProcessEngineConfigurationImpl configuration, String name) {
+    for (RecommendedIndex index : recommendedIndexes(configuration)) {
+      if (index.getName().equals(name)) {
+        return index;
+      }
+    }
+    throw new IllegalArgumentException(name);
   }
 
   /**
@@ -70,18 +109,7 @@ public class IndexAdvisor {
   public static List<RecommendedIndex> missing(List<RecommendedIndex> recommended, Map<String, List<ExistingIndex>> existing) {
     List<RecommendedIndex> missing = new ArrayList<>();
     for (RecommendedIndex index : recommended) {
-      List<ExistingIndex> ofTable = existing.get(index.getTable());
-      if (ofTable == null || ofTable.isEmpty()) {
-        continue;
-      }
-      boolean present = false;
-      for (ExistingIndex candidate : ofTable) {
-        if (index.isSatisfiedBy(candidate)) {
-          present = true;
-          break;
-        }
-      }
-      if (!present) {
+      if (Boolean.FALSE.equals(isPresent(index, existing))) {
         missing.add(index);
       }
     }
@@ -89,32 +117,52 @@ public class IndexAdvisor {
   }
 
   /**
+   * Whether an index serves the recommendation; {@code null} when nothing is known about its table
+   * (the table does not exist, or the catalog could not be read).
+   */
+  public static Boolean isPresent(RecommendedIndex recommended, Map<String, List<ExistingIndex>> existing) {
+    List<ExistingIndex> ofTable = existing == null ? null : existing.get(recommended.getTable());
+    if (ofTable == null || ofTable.isEmpty()) {
+      return null;
+    }
+    for (ExistingIndex candidate : ofTable) {
+      if (recommended.isSatisfiedBy(candidate)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * The indexes of the given tables of the engine database, or {@code null} when they cannot be
-   * read. Each attempt runs in a command of its own, because on PostgreSQL a refused statement
-   * aborts the transaction.
+   * read: no catalog query for the database, no permission, or the catalog did not answer within
+   * {@link IndexCatalog#QUERY_TIMEOUT_SECONDS} (a lock wait). Runs in a command of its own, because
+   * on PostgreSQL a refused statement aborts the transaction. There is no fallback to JDBC
+   * metadata: those calls cannot be given a timeout and wait for the same locks.
    */
   public static Map<String, List<ExistingIndex>> readIndexes(ProcessEngineConfigurationImpl configuration, Set<String> tables) {
     IndexCatalog catalog = new IndexCatalog(configuration.getDatabaseType(), configuration.getDatabaseSchema(),
         configuration.getDatabaseTablePrefix());
-    Map<String, List<ExistingIndex>> indexes = configuration.getCommandExecutorTxRequiresNew().execute(commandContext -> {
+    return readIndexes(configuration, catalog, tables);
+  }
+
+  public static Map<String, List<ExistingIndex>> readIndexes(ProcessEngineConfigurationImpl configuration, IndexCatalog catalog,
+      Set<String> tables) {
+    return configuration.getCommandExecutorTxRequiresNew().execute(commandContext -> {
       try {
         return catalog.readFromCatalog(connection(commandContext), tables);
       } catch (SQLException | RuntimeException e) {
-        LOG.debug("The index catalog of the {} database could not be read, trying JDBC metadata", configuration.getDatabaseType(), e);
+        if (IndexCatalog.isTimeout(e)) {
+          LOG.info("The index catalog of the {} database did not answer within {} seconds (waiting for a lock?); the index "
+              + "check is skipped", configuration.getDatabaseType(), IndexCatalog.QUERY_TIMEOUT_SECONDS);
+          LOG.debug("Timeout of the catalog query", e);
+        } else {
+          LOG.debug("The index catalog of the {} database could not be read; the index check is skipped",
+              configuration.getDatabaseType(), e);
+        }
         return null;
       }
     });
-    if (indexes == null) {
-      indexes = configuration.getCommandExecutorTxRequiresNew().execute(commandContext -> {
-        try {
-          return catalog.readFromMetaData(connection(commandContext), tables);
-        } catch (SQLException | RuntimeException e) {
-          LOG.debug("The index metadata of the {} database could not be read", configuration.getDatabaseType(), e);
-          return null;
-        }
-      });
-    }
-    return indexes;
   }
 
   public static Set<String> tables(List<RecommendedIndex> recommended) {

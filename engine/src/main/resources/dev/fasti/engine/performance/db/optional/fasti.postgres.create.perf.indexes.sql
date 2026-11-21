@@ -10,45 +10,61 @@
 -- docs/performance.md. Only indexes that cut the work of their queries by an order of magnitude
 -- are active here; the second group is commented out (see the conditions there).
 --
--- CREATE INDEX CONCURRENTLY does not block writers, but it cannot run inside a transaction: use
+-- The statements name the tables without schema: run the script with the schema of the engine
+-- tables first in the search_path (set search_path to <schema>; when it is not public). A
+-- statement whose table does not exist fails and psql goes on with the next one (ACT_ID_INFO is
+-- missing where the engine never used its identity tables, for example with LDAP).
+--
+-- Lock waits: CREATE INDEX CONCURRENTLY does not block reads or writes, but it waits for every
+-- transaction that is older than it (in the whole database, also an idle one), so a forgotten
+-- open transaction makes it wait without harming anything else. It has no lock timeout here,
+-- because a timeout would leave an INVALID index behind. It cannot run inside a transaction: use
 -- psql (autocommit), not a tool that wraps the script in a transaction. For such a tool remove
--- the word "concurrently"; the tables are then locked against writes while each index is built
--- (seconds per million rows). A concurrent build that fails leaves an INVALID index of that name
--- behind, which "if not exists" then skips. Find it with
+-- the word "concurrently" and run
+--   set lock_timeout = '10s';
+-- first: the tables are then locked against writes while each index is built (seconds per
+-- million rows), and while the build waits for its lock every new write waits behind it. If the
+-- timeout hits, run the script again later. See "On a busy cluster" in docs/performance.md.
+-- A concurrent build that fails leaves an INVALID index of that name behind, which "if not
+-- exists" then skips. Find it with
 --   select indexrelid::regclass from pg_index where not indisvalid;
 -- drop it (drop index concurrently <name>) and run the script again. The engine reports an
 -- invalid index as missing. Run ANALYZE on the tables afterwards.
 
--- Job acquisition (selectNextJobsToExecute, every few seconds on every node) and timers by due
--- date: without it each acquisition reads all of ACT_RU_JOB, mostly timers that are not due.
--- Partial, so failed and suspended jobs stay out of it. NULLS FIRST on purpose: with
--- jobExecutorAcquireByDueDate=true (and ensureJobDueDateNotNull=false) an ascending index would
--- let the planner walk the whole index whenever nothing is due (measured: 990,000 rows per
--- acquisition); this order cannot serve that sort, so the planner takes the due jobs and sorts them.
+-- Job acquisition (selectNextJobsToExecute, every few seconds on every node): without it each
+-- idle acquisition (nothing due) reads all of ACT_RU_JOB, mostly timers that are not due. With
+-- many due jobs the statement still reads the table for its exclusive-job condition, so the gain
+-- is smaller there. Partial, so failed and suspended jobs stay out of it. It serves acquisition
+-- only: job lists by due date (Cockpit, REST) carry neither condition of the predicate. NULLS
+-- FIRST on purpose: with jobExecutorAcquireByDueDate=true (and ensureJobDueDateNotNull=false) an
+-- ascending index would let the planner walk the whole index whenever nothing is due (measured:
+-- 990,000 rows per acquisition); this order cannot serve that sort, so the planner takes the due
+-- jobs and sorts them.
 -- Write cost: one entry per executable job, and one more for each update of such a job that is
 -- not a HOT update (in the measurements no job update was, with or without this index: locking
 -- rewrites the row). Failed and suspended jobs cost nothing.
 create index concurrently if not exists FASTI_IDX_JOB_DUEDATE on ACT_RU_JOB (DUEDATE_ nulls first)
   where RETRIES_ > 0 and SUSPENSION_STATE_ = 1;
 
--- Overdue tasks and tasks by due date (dueBefore/dueAfter, sorting by due date): task lists,
--- the dashboard and the workload page.
+-- Overdue tasks and tasks by due date (dueBefore/dueAfter, sorting by due date): task lists and
+-- the dashboard.
 -- Write cost: one entry per task, and one more for each update of the task (task updates are no
 -- HOT updates already, because the stock schema indexes the assignee and the last update time).
 create index concurrently if not exists FASTI_IDX_TASK_DUE on ACT_RU_TASK (DUE_DATE_);
 
--- Tasks of one assignee counted or sorted by due date ("my tasks", workload per user) and
--- unassigned overdue tasks.
+-- Tasks of one assignee counted or sorted by due date ("my tasks") and unassigned overdue tasks.
 -- Write cost: one entry per task, and one more for each update of the task, as for
 -- FASTI_IDX_TASK_DUE.
 create index concurrently if not exists FASTI_IDX_TASK_ASSIGNEE_DUE on ACT_RU_TASK (ASSIGNEE_, DUE_DATE_);
 
--- User info by user: absences (fasti.absence.enabled) are looked up at each task assignment,
--- and ACT_ID_INFO has no index besides its primary key.
+-- User info of one user: the absence lookup at each task assignment (fasti.absence.enabled) and
+-- the user profile; ACT_ID_INFO has no index besides its primary key. Reading the absences of
+-- all users (the absence listings) still reads the whole table.
 -- Write cost: one entry per user info row; written only when a profile or an absence changes.
 create index concurrently if not exists FASTI_IDX_ID_INFO_USER on ACT_ID_INFO (USER_ID_, KEY_);
 
--- Second group: worth it only for the usage named; remove the "-- " to create them.
+-- Second group: worth it only for the usage named; remove the "-- " to create them. They can be
+-- run again like the ones above.
 --
 -- History of one process definition newest first (Cockpit history list of a definition). With
 -- authorization enabled it also bounds the authorization join. One more entry per started

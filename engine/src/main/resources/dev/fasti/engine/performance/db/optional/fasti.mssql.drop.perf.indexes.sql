@@ -1,7 +1,13 @@
 -- Fasti BPM: removes the optional performance indexes of mssql_fasti_perf_indexes_create.sql
 -- (Microsoft SQL Server; docs/performance.md). The engine works without them, so they can be
--- dropped at any time, also while Camunda 7.24 and Fasti nodes are running; the queries they
--- serve get slower again. Can be run again (DROP INDEX IF EXISTS, SQL Server 2016 and later).
+-- dropped while Camunda 7.24 and Fasti nodes are running; the queries they serve get slower
+-- again. Can be run again (DROP INDEX IF EXISTS, SQL Server 2016 and later).
+--
+-- Busy cluster: DROP INDEX needs a schema modification lock on the table, and while it waits
+-- for one the statements that come after it wait too. The wait is limited to 10 seconds here
+-- (the default is to wait forever): if a statement fails with error 1222, run the script again
+-- later (see docs/performance.md).
+set lock_timeout 10000;
 
 drop index if exists FASTI_IDX_JOB_DUEDATE on ACT_RU_JOB;
 drop index if exists FASTI_IDX_TASK_DUE on ACT_RU_TASK;

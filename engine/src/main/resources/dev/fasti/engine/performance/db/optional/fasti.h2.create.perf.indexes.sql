@@ -7,10 +7,11 @@
 -- H2 is the database for trying things out, and the engine reports the missing indexes there
 -- only at INFO. The indexes matter on a production database with large tables (the numbers in
 -- docs/performance.md are from PostgreSQL 16 and MariaDB 11.4); this script exists so that the
--- same set can be tried on H2. Can be run again.
+-- same set can be tried on H2. Can be run again. A lock wait ends after 10 seconds.
+set lock_timeout 10000;
 
--- Job acquisition and timers by due date.
-create index if not exists FASTI_IDX_JOB_DUEDATE on ACT_RU_JOB (DUEDATE_);
+-- Job acquisition: suspended jobs skipped by the leading column, failed jobs inside the index.
+create index if not exists FASTI_IDX_JOB_DUEDATE on ACT_RU_JOB (SUSPENSION_STATE_, DUEDATE_, RETRIES_);
 
 -- Overdue tasks and tasks by due date.
 create index if not exists FASTI_IDX_TASK_DUE on ACT_RU_TASK (DUE_DATE_);
@@ -18,7 +19,7 @@ create index if not exists FASTI_IDX_TASK_DUE on ACT_RU_TASK (DUE_DATE_);
 -- Tasks of one assignee counted or sorted by due date, unassigned overdue tasks.
 create index if not exists FASTI_IDX_TASK_ASSIGNEE_DUE on ACT_RU_TASK (ASSIGNEE_, DUE_DATE_);
 
--- User info by user (absence lookups at each task assignment).
+-- User info of one user (the absence lookup at each task assignment).
 create index if not exists FASTI_IDX_ID_INFO_USER on ACT_ID_INFO (USER_ID_, KEY_);
 
 -- Second group: worth it only for the usage named; remove the "-- " to create them.

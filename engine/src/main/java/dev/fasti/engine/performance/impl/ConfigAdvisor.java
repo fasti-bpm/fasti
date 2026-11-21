@@ -53,13 +53,25 @@ public class ConfigAdvisor {
    *        take it from the configuration
    */
   public static List<String> check(ProcessEngineConfigurationImpl configuration, Boolean jobExecutorActive) {
+    return check(configuration, jobExecutorActive, null);
+  }
+
+  /**
+   * @param jobExecutorActive see {@link #check(ProcessEngineConfigurationImpl, Boolean)}
+   * @param jobIndexPresent whether the index check found an index that serves job acquisition with
+   *        the settings of this engine ({@code FASTI_IDX_JOB_DUEDATE}); {@code null} if not known
+   */
+  public static List<String> check(ProcessEngineConfigurationImpl configuration, Boolean jobExecutorActive, Boolean jobIndexPresent) {
     List<String> warnings = new ArrayList<>();
     historyCleanup(configuration, warnings);
-    if (jobExecutorActive != null ? jobExecutorActive : configuration.isJobExecutorActivate()) {
+    boolean executesJobs = jobExecutorActive != null ? jobExecutorActive : configuration.isJobExecutorActivate();
+    if (executesJobs) {
       connectionPool(configuration, warnings);
     }
     jobsWithoutDueDate(configuration, warnings);
-    acquisitionByDueDate(configuration, warnings);
+    if (executesJobs) {
+      acquisitionByDueDate(configuration, jobIndexPresent, warnings);
+    }
     return warnings;
   }
 
@@ -72,17 +84,20 @@ public class ConfigAdvisor {
     }
     String strategy = configuration.getHistoryCleanupStrategy();
     Map<?, ?> batchWindows = configuration.getHistoryCleanupBatchWindows();
-    String reason = null;
     if (!configuration.isHistoryCleanupEnabled()) {
-      reason = "history cleanup is disabled (historyCleanupEnabled=false)";
+      warnings.add(HISTORY_GROWS + " The history level is '" + historyLevel.getName() + "' and this node does not run history "
+          + "cleanup (historyCleanupEnabled=false). Unless another node of the cluster runs it (a dedicated cleanup node is a "
+          + "common setup, and then this is fine), the history tables grow without limit, and with them every history query "
+          + "and the backup (Spring Boot, Run and the container image: "
+          + "camunda.bpm.generic-properties.properties.history-cleanup-enabled).");
     } else if (configuration.getHistoryCleanupBatchWindowStartTime() == null && (batchWindows == null || batchWindows.isEmpty())) {
-      reason = "no history cleanup batch window is configured (historyCleanupBatchWindowStartTime), so cleanup only runs when "
-          + "someone starts it";
-    }
-    if (reason != null) {
-      warnings.add(HISTORY_GROWS + " The history level is '" + historyLevel.getName() + "' and " + reason
-          + ": the history tables grow without limit, and with them every history query and the backup. Configure a batch "
-          + "window and a history time to live, or lower the history level if the history is not needed.");
+      warnings.add(HISTORY_GROWS + " The history level is '" + historyLevel.getName() + "' and no history cleanup batch window "
+          + "is configured (historyCleanupBatchWindowStartTime/EndTime), so cleanup only runs when someone starts it: the "
+          + "history tables grow without limit, and with them every history query and the backup. Configure a batch window "
+          + "and a history time to live (Spring Boot, Run and the container image: "
+          + "camunda.bpm.generic-properties.properties.history-cleanup-batch-window-start-time and ...-end-time, for example in "
+          + "a mounted YAML file or SPRING_APPLICATION_JSON), or lower the history level if the history is not needed. Cleanup "
+          + "then removes the history whose time to live has passed.");
     }
     if (configuration.isHistoryCleanupEnabled()
         && ProcessEngineConfiguration.HISTORY_CLEANUP_STRATEGY_END_TIME_BASED.equals(strategy)) {
@@ -186,18 +201,43 @@ public class ConfigAdvisor {
     if (Boolean.TRUE.equals(found)) {
       warnings.add(JOBS_WITHOUT_DUE_DATE + " ensureJobDueDateNotNull is true, but " + table + " holds executable jobs without "
           + "due date. This engine never acquires them. They come from a node that runs without the setting (Camunda 7.24 "
-          + "and Fasti nodes with the default), so turn it on only when every node of the cluster sets it, and let the "
-          + "existing jobs run first.");
+          + "and Fasti nodes with the default). To get them executed, keep at least one node without the setting until none "
+          + "are left, or give them a due date (ManagementService#setJobDuedate, or a database administrator runs: update "
+          + table + " set DUEDATE_ = <now> where DUEDATE_ is null). Turn the setting on only when every node of the cluster "
+          + "sets it.");
     }
   }
 
-  protected static void acquisitionByDueDate(ProcessEngineConfigurationImpl configuration, List<String> warnings) {
-    if (configuration.isJobExecutorAcquireByDueDate() && !configuration.isEnsureJobDueDateNotNull()) {
-      warnings.add(DUE_DATE_ORDER_WITH_NULLS + " jobExecutorAcquireByDueDate is true and ensureJobDueDateNotNull is false: "
-          + "each acquisition asks for the jobs that are due or have no due date, ordered by due date, which no index "
-          + "answers in order. With an ascending index on DUEDATE_ alone, PostgreSQL then reads the whole index whenever "
-          + "nothing is due (the optional script creates its index NULLS FIRST to avoid that). Set "
-          + "ensureJobDueDateNotNull=true as well once every node of the cluster sets it.");
+  /**
+   * Only on the databases that sort NULL last (PostgreSQL, Oracle, Db2): MySQL, MariaDB, SQL Server
+   * and H2 sort NULL first, so there "due or without due date, ordered by due date" is one range
+   * of an ascending index.
+   */
+  protected static void acquisitionByDueDate(ProcessEngineConfigurationImpl configuration, Boolean jobIndexPresent,
+      List<String> warnings) {
+    if (!IndexAdvisor.dueDateOrderWithNulls(configuration)) {
+      return;
     }
+    String databaseType = configuration.getDatabaseType();
+    String advice;
+    if (IndexCatalog.POSTGRES.equals(databaseType)) {
+      if (Boolean.TRUE.equals(jobIndexPresent)) {
+        // the NULLS FIRST index of the script: the planner fetches the due jobs and sorts them
+        return;
+      }
+      advice = "With an ascending index on DUEDATE_, PostgreSQL then walks the whole index whenever nothing is due; the "
+          + "optional script creates FASTI_IDX_JOB_DUEDATE NULLS FIRST, which avoids that (FASTI-PERF-001 lists it while it "
+          + "is missing or ascending).";
+    } else if (IndexCatalog.ORACLE.equals(databaseType) || IndexCatalog.DB2.equals(databaseType)) {
+      advice = "The database sorts NULL last, as PostgreSQL does, where an index in due date order made the planner walk the "
+          + "whole index whenever nothing was due: check the plan of the acquisition statement on a large ACT_RU_JOB.";
+    } else {
+      return;
+    }
+    warnings.add(DUE_DATE_ORDER_WITH_NULLS + " jobExecutorAcquireByDueDate is true and ensureJobDueDateNotNull is false: each "
+        + "acquisition asks for the jobs that are due or have no due date, ordered by due date. " + advice
+        + " ensureJobDueDateNotNull=true would make it one range, but a node with that setting never acquires the jobs without "
+        + "due date that Camunda 7.24 nodes and Fasti nodes with the default write (FASTI-PERF-005), so set it only on every "
+        + "node of the cluster at once.");
   }
 }

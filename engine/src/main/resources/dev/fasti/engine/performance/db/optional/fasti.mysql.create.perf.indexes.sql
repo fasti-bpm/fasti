@@ -7,76 +7,118 @@
 --
 -- Measured on MariaDB 11.4 and PostgreSQL 16 with 1,000,000 running instances, 1,000,000 tasks
 -- and 1,000,000 jobs (990,000 of them timers that are not due); the numbers are in
--- docs/performance.md. Not run on MySQL itself. Only indexes that cut the work of their queries
--- by an order of magnitude are active here; the second group is commented out.
+-- docs/performance.md. Not run on MySQL itself (only on MariaDB). Only indexes that cut the work
+-- of their queries by an order of magnitude are active here; the second group is commented out.
 --
 -- Run it in the database of the engine tables (mysql/mariadb client: source <file>). It can be
 -- run again: each statement looks the index up in information_schema first, which works on
--- MySQL as well as on MariaDB (MySQL has no CREATE INDEX IF NOT EXISTS).
+-- MySQL as well as on MariaDB (MySQL has no CREATE INDEX IF NOT EXISTS). A statement whose table
+-- does not exist is skipped (ACT_ID_INFO is missing where the engine never used its identity
+-- tables, for example with LDAP).
 -- The indexes are built online (ALGORITHM=INPLACE LOCK=NONE): reads and writes go on. If the
 -- server cannot build one that way it refuses the statement instead of locking the table.
 -- Run ANALYZE TABLE on the tables afterwards.
+--
+-- Busy cluster: an online build still needs an exclusive metadata lock at its start and its
+-- end. While it waits for one (behind any open transaction that has used the table), every new
+-- statement on the table waits behind it, on every node. The lock wait is therefore limited to
+-- 10 seconds here (the server default is a day on MariaDB, a year on MySQL): if a statement
+-- fails with "Lock wait timeout exceeded", run the script again later. On MariaDB Galera with the
+-- default wsrep_OSU_method=TOI the build runs on all nodes at once and blocks the table there;
+-- use a quiet period or the rolling schema upgrade method (RSU). See "On a busy cluster" in
+-- docs/performance.md.
+set session lock_wait_timeout = 10;
 
--- Job acquisition (selectNextJobsToExecute, every few seconds on every node) and timers by due
--- date: without it each acquisition reads all of ACT_RU_JOB, mostly timers that are not due.
--- (MySQL and MariaDB sort NULL first, so "due date is null or due" is one range of this index.)
--- Write cost: one entry per job; changed again only when a job is rescheduled.
-set @fasti_ddl = (select if(count(*) = 0,
-    'create index FASTI_IDX_JOB_DUEDATE on ACT_RU_JOB (DUEDATE_) algorithm=inplace lock=none',
+-- Job acquisition (selectNextJobsToExecute, every few seconds on every node): without it each
+-- acquisition reads all of ACT_RU_JOB, mostly timers that are not due. SUSPENSION_STATE_ first,
+-- so the jobs of suspended instances are not read at all, and RETRIES_ last, so the failed jobs
+-- (no retries left) are rejected inside the index without reading their rows: an idle
+-- acquisition then reads a few index entries however many incidents are open. MySQL and MariaDB
+-- sort NULL first, so "due date is null or due" is one range of this index, also in due date
+-- order (jobExecutorAcquireByDueDate). Job lists by due date (Cockpit, REST) do not use it.
+-- Write cost: one entry per job; rewritten when a job is rescheduled, fails or is suspended.
+set @fasti_ddl = (select if(count(*) = 0
+      and (select count(*) from information_schema.tables where table_schema = database() and table_name = 'ACT_RU_JOB') > 0,
+    'create index FASTI_IDX_JOB_DUEDATE on ACT_RU_JOB (SUSPENSION_STATE_, DUEDATE_, RETRIES_) algorithm=inplace lock=none',
     'do 0')
   from information_schema.statistics
-  where table_schema = database() and upper(table_name) = 'ACT_RU_JOB' and upper(index_name) = 'FASTI_IDX_JOB_DUEDATE');
+  where table_schema = database() and table_name = 'ACT_RU_JOB' and index_name = 'FASTI_IDX_JOB_DUEDATE');
 prepare fasti_stmt from @fasti_ddl;
 execute fasti_stmt;
 deallocate prepare fasti_stmt;
 
--- Overdue tasks and tasks by due date (dueBefore/dueAfter, sorting by due date): task lists,
--- the dashboard and the workload page.
+-- Overdue tasks and tasks by due date (dueBefore/dueAfter, sorting by due date): task lists and
+-- the dashboard.
 -- Write cost: one entry per task; changed only when the due date changes.
-set @fasti_ddl = (select if(count(*) = 0,
+set @fasti_ddl = (select if(count(*) = 0
+      and (select count(*) from information_schema.tables where table_schema = database() and table_name = 'ACT_RU_TASK') > 0,
     'create index FASTI_IDX_TASK_DUE on ACT_RU_TASK (DUE_DATE_) algorithm=inplace lock=none',
     'do 0')
   from information_schema.statistics
-  where table_schema = database() and upper(table_name) = 'ACT_RU_TASK' and upper(index_name) = 'FASTI_IDX_TASK_DUE');
+  where table_schema = database() and table_name = 'ACT_RU_TASK' and index_name = 'FASTI_IDX_TASK_DUE');
 prepare fasti_stmt from @fasti_ddl;
 execute fasti_stmt;
 deallocate prepare fasti_stmt;
 
--- Tasks of one assignee counted or sorted by due date ("my tasks", workload per user) and
--- unassigned overdue tasks.
+-- Tasks of one assignee counted or sorted by due date ("my tasks") and unassigned overdue tasks.
 -- Write cost: one entry per task, rewritten at each claim, unclaim and reassignment (as the
 -- stock index on ASSIGNEE_ is).
-set @fasti_ddl = (select if(count(*) = 0,
+set @fasti_ddl = (select if(count(*) = 0
+      and (select count(*) from information_schema.tables where table_schema = database() and table_name = 'ACT_RU_TASK') > 0,
     'create index FASTI_IDX_TASK_ASSIGNEE_DUE on ACT_RU_TASK (ASSIGNEE_, DUE_DATE_) algorithm=inplace lock=none',
     'do 0')
   from information_schema.statistics
-  where table_schema = database() and upper(table_name) = 'ACT_RU_TASK' and upper(index_name) = 'FASTI_IDX_TASK_ASSIGNEE_DUE');
+  where table_schema = database() and table_name = 'ACT_RU_TASK' and index_name = 'FASTI_IDX_TASK_ASSIGNEE_DUE');
 prepare fasti_stmt from @fasti_ddl;
 execute fasti_stmt;
 deallocate prepare fasti_stmt;
 
--- User info by user: absences (fasti.absence.enabled) are looked up at each task assignment,
--- and ACT_ID_INFO has no index besides its primary key.
+-- User info of one user: the absence lookup at each task assignment (fasti.absence.enabled) and
+-- the user profile; ACT_ID_INFO has no index besides its primary key. Reading the absences of
+-- all users (the absence listings) still reads the whole table.
 -- Write cost: one entry per user info row; written only when a profile or an absence changes.
-set @fasti_ddl = (select if(count(*) = 0,
+set @fasti_ddl = (select if(count(*) = 0
+      and (select count(*) from information_schema.tables where table_schema = database() and table_name = 'ACT_ID_INFO') > 0,
     'create index FASTI_IDX_ID_INFO_USER on ACT_ID_INFO (USER_ID_, KEY_) algorithm=inplace lock=none',
     'do 0')
   from information_schema.statistics
-  where table_schema = database() and upper(table_name) = 'ACT_ID_INFO' and upper(index_name) = 'FASTI_IDX_ID_INFO_USER');
+  where table_schema = database() and table_name = 'ACT_ID_INFO' and index_name = 'FASTI_IDX_ID_INFO_USER');
 prepare fasti_stmt from @fasti_ddl;
 execute fasti_stmt;
 deallocate prepare fasti_stmt;
 
--- Second group: worth it only for the usage named; remove the "-- " to create them.
+-- Second group: worth it only for the usage named; remove the "-- " of a block to create it.
+-- The blocks can be run again like the ones above.
 --
 -- History of one process definition newest first (Cockpit history list of a definition). One
 -- more entry per started process instance.
--- create index FASTI_IDX_HI_PI_PDEF_START on ACT_HI_PROCINST (PROC_DEF_ID_, START_TIME_) algorithm=inplace lock=none;
+-- set @fasti_ddl = (select if(count(*) = 0,
+--     'create index FASTI_IDX_HI_PI_PDEF_START on ACT_HI_PROCINST (PROC_DEF_ID_, START_TIME_) algorithm=inplace lock=none',
+--     'do 0')
+--   from information_schema.statistics
+--   where table_schema = database() and table_name = 'ACT_HI_PROCINST' and index_name = 'FASTI_IDX_HI_PI_PDEF_START');
+-- prepare fasti_stmt from @fasti_ddl;
+-- execute fasti_stmt;
+-- deallocate prepare fasti_stmt;
 --
 -- Activity statistics of a definition (the definition page reads up to 2,000 finished activity
 -- instances every 30 seconds). ACT_HI_ACTINST is the largest history table: one more entry per
 -- activity instance, so only where that page is used on definitions with large histories.
--- create index FASTI_IDX_HI_AI_PDEF_START on ACT_HI_ACTINST (PROC_DEF_ID_, START_TIME_) algorithm=inplace lock=none;
+-- set @fasti_ddl = (select if(count(*) = 0,
+--     'create index FASTI_IDX_HI_AI_PDEF_START on ACT_HI_ACTINST (PROC_DEF_ID_, START_TIME_) algorithm=inplace lock=none',
+--     'do 0')
+--   from information_schema.statistics
+--   where table_schema = database() and table_name = 'ACT_HI_ACTINST' and index_name = 'FASTI_IDX_HI_AI_PDEF_START');
+-- prepare fasti_stmt from @fasti_ddl;
+-- execute fasti_stmt;
+-- deallocate prepare fasti_stmt;
 --
 -- Open incidents oldest first (incidents page, dashboard), with tens of thousands of open incidents.
--- create index FASTI_IDX_INC_TIMESTAMP on ACT_RU_INCIDENT (INCIDENT_TIMESTAMP_) algorithm=inplace lock=none;
+-- set @fasti_ddl = (select if(count(*) = 0,
+--     'create index FASTI_IDX_INC_TIMESTAMP on ACT_RU_INCIDENT (INCIDENT_TIMESTAMP_) algorithm=inplace lock=none',
+--     'do 0')
+--   from information_schema.statistics
+--   where table_schema = database() and table_name = 'ACT_RU_INCIDENT' and index_name = 'FASTI_IDX_INC_TIMESTAMP');
+-- prepare fasti_stmt from @fasti_ddl;
+-- execute fasti_stmt;
+-- deallocate prepare fasti_stmt;

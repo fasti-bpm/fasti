@@ -22,11 +22,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Variant;
+import dev.fasti.engine.workload.TaskWorkloadQuery;
+import dev.fasti.engine.workload.TaskWorkloads;
+import org.camunda.bpm.engine.BadUserRequestException;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.exception.NotValidException;
@@ -36,6 +40,9 @@ import org.camunda.bpm.engine.rest.dto.task.TaskDto;
 import org.camunda.bpm.engine.rest.dto.task.TaskQueryDto;
 import org.camunda.bpm.engine.rest.dto.task.TaskWithAttachmentAndCommentDto;
 import org.camunda.bpm.engine.rest.dto.task.TaskWithVariablesDto;
+import org.camunda.bpm.engine.rest.dto.task.TaskWorkloadDto;
+import org.camunda.bpm.engine.rest.dto.task.TaskWorkloadQueryDto;
+import org.camunda.bpm.engine.rest.dto.converter.DateConverter;
 import org.camunda.bpm.engine.rest.dto.VariableValueDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
 import org.camunda.bpm.engine.rest.hal.Hal;
@@ -168,6 +175,61 @@ public class TaskRestServiceImpl extends AbstractRestProcessEngineAware implemen
       throw new InvalidRequestException(Status.BAD_REQUEST, e, "Could not save task: " + e.getMessage());
     }
 
+  }
+
+  @Override
+  public TaskWorkloadDto getWorkload(UriInfo uriInfo) {
+    MultivaluedMap<String, String> parameters = uriInfo.getQueryParameters();
+    TaskWorkloadQueryDto queryDto = new TaskWorkloadQueryDto();
+    queryDto.setGroupIdIn(listParameter(parameters, "groupIdIn"));
+    queryDto.setUserIdIn(listParameter(parameters, "userIdIn"));
+    queryDto.setTenantIdIn(listParameter(parameters, "tenantIdIn"));
+    String overdueBefore = parameters.getFirst("overdueBefore");
+    if (overdueBefore != null && !overdueBefore.isEmpty()) {
+      DateConverter converter = new DateConverter();
+      converter.setObjectMapper(getObjectMapper());
+      try {
+        queryDto.setOverdueBefore(converter.convertQueryParameterToType(overdueBefore));
+      } catch (RuntimeException e) {
+        throw new InvalidRequestException(Status.BAD_REQUEST, e, "Cannot read overdueBefore: " + overdueBefore);
+      }
+    }
+    return queryWorkload(queryDto);
+  }
+
+  @Override
+  public TaskWorkloadDto queryWorkload(TaskWorkloadQueryDto queryDto) {
+    if (queryDto == null) {
+      queryDto = new TaskWorkloadQueryDto();
+    }
+    TaskWorkloadQuery query = TaskWorkloads.query(getProcessEngine());
+    try {
+      query.groupIdIn(queryDto.getGroupIdIn()).userIdIn(queryDto.getUserIdIn()).overdueBefore(queryDto.getOverdueBefore());
+      List<String> tenantIds = queryDto.getTenantIdIn();
+      if (tenantIds != null && !tenantIds.isEmpty()) {
+        query.tenantIdIn(tenantIds.toArray(new String[0]));
+      }
+    } catch (BadUserRequestException e) {
+      throw new InvalidRequestException(Status.BAD_REQUEST, e, e.getMessage());
+    }
+    return TaskWorkloadDto.fromWorkload(query.read());
+  }
+
+  /** The values of a comma separated parameter; {@code null} if it is not given. */
+  private static List<String> listParameter(MultivaluedMap<String, String> parameters, String name) {
+    List<String> values = parameters.get(name);
+    if (values == null) {
+      return null;
+    }
+    List<String> result = new ArrayList<>();
+    for (String value : values) {
+      for (String part : value.split(",")) {
+        if (!part.isEmpty()) {
+          result.add(part);
+        }
+      }
+    }
+    return result;
   }
 
   @Override

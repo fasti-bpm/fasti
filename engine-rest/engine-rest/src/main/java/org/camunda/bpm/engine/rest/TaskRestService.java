@@ -19,6 +19,8 @@ package org.camunda.bpm.engine.rest;
 import org.camunda.bpm.engine.rest.dto.CountResultDto;
 import org.camunda.bpm.engine.rest.dto.task.TaskDto;
 import org.camunda.bpm.engine.rest.dto.task.TaskQueryDto;
+import org.camunda.bpm.engine.rest.dto.task.TaskWorkloadDto;
+import org.camunda.bpm.engine.rest.dto.task.TaskWorkloadQueryDto;
 import org.camunda.bpm.engine.rest.hal.Hal;
 import org.camunda.bpm.engine.rest.sub.task.TaskReportResource;
 import org.camunda.bpm.engine.rest.sub.task.TaskResource;
@@ -75,6 +77,24 @@ public interface TaskRestService {
   @Path("/create")
   @Consumes(MediaType.APPLICATION_JSON)
   void createTask(TaskDto taskDto);
+
+  /**
+   * Fasti: the open tasks the user may read, in total and for the candidate groups and assignees
+   * asked for, counted with a few grouped statements. Query parameters: {@code groupIdIn},
+   * {@code userIdIn} and {@code tenantIdIn} (comma separated) and {@code overdueBefore} (a date;
+   * the current time by default).
+   */
+  @GET
+  @Path("/workload")
+  @Produces(MediaType.APPLICATION_JSON)
+  TaskWorkloadDto getWorkload(@Context UriInfo uriInfo);
+
+  /** The same with the parameters as JSON body, for id lists too long for a URL. Reads only. */
+  @POST
+  @Path("/workload")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  TaskWorkloadDto queryWorkload(TaskWorkloadQueryDto query);
 
   @Path("/report")
   TaskReportResource getTaskReportResource();

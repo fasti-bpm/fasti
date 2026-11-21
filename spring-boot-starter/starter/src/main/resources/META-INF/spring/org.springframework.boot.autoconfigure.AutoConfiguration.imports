@@ -3,3 +3,4 @@ dev.fasti.spring.boot.observability.FastiObservabilityAutoConfiguration
 dev.fasti.spring.boot.absence.FastiAbsenceAutoConfiguration
 dev.fasti.spring.boot.foureyes.FastiFourEyesAutoConfiguration
 dev.fasti.spring.boot.audit.FastiAuditAutoConfiguration
+dev.fasti.spring.boot.performance.FastiPerformanceAutoConfiguration

@@ -127,7 +127,7 @@ public class AuditSessionTest {
     List<String> chains = verification.getChains().stream().filter(chain -> chain.getRecords() > 0)
         .map(AuditVerification.Chain::getChainId).collect(Collectors.toList());
     // the outer transactions in the slots of the node, the nested ones in the next band
-    assertThat(chains).contains("node-ring/0", "node-ring/1", "node-ring/2", "node-ring/3");
+    assertThat(chains).contains("node-ring/end-0", "node-ring/end-1", "node-ring/end-2", "node-ring/end-3");
   }
 
   @Test
@@ -215,7 +215,8 @@ public class AuditSessionTest {
     assertThat(AuditSession.HELD.get()).isEmpty();
     // the thread is not taken for one that still holds a chain: its next transaction is an outermost one again
     engine.getRuntimeService().startProcessInstanceByKey("s");
-    assertThat(AuditTrail.of(engine).verify().getChains()).extracting(AuditVerification.Chain::getChainId)
-        .containsExactly("node-released/0");
+    assertThat(AuditTrail.of(engine).verify().getChains())
+        .filteredOn(chain -> chain.getRecords() > 0).extracting(AuditVerification.Chain::getChainId)
+        .containsExactly("node-released/end-0");
   }
 }

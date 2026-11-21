@@ -48,8 +48,8 @@ public class AuditFlushOrderTest {
 
   static final String HEAD = "fasti_audit_head";
   static final String EVENT = "fasti_audit_event";
-  static final String OWN_CHAIN = "node-order/0";
-  static final String EXTENDED_CHAIN = "node-order/ext-0";
+  static final String OWN_CHAIN = "node-order/end-0";
+  static final String EXTENDED_CHAIN = "node-order/0";
 
   /** What the probe of the plugin answers on this thread: whether a transaction is active outside the engine. */
   static final ThreadLocal<Boolean> OUTER_TRANSACTION = ThreadLocal.withInitial(() -> false);

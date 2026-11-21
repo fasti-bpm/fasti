@@ -18,6 +18,7 @@ package dev.fasti.engine.audit.impl;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
 import java.util.function.BooleanSupplier;
 
 import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
@@ -44,17 +45,31 @@ import org.camunda.bpm.engine.impl.interceptor.CommandInterceptor;
  * always no: every command writes its records first, on the usual chains, as up to 1.1. Writing
  * some records last and others first on the same chains could let two transactions wait for each
  * other.</p>
+ *
+ * <p>Its interceptors also give back what a transaction that began and ended inside a command did
+ * not give back when it ended ({@link AuditSession#dropHeldSince(List, AuditSettings)}).</p>
  */
 public class AuditTransactionScope {
 
   protected final BooleanSupplier transactionActive;
+  /** The settings of the engine whose chains the interceptors give back; {@code null}: of every engine. */
+  protected final AuditSettings settings;
 
   /** For each command running on the thread that passed the probe interceptor: whether a transaction was active. */
   protected final ThreadLocal<Deque<Boolean>> joined = ThreadLocal.withInitial(ArrayDeque::new);
 
   /** @param transactionActive whether a transaction is active on the calling thread; {@code null} if unknown */
   public AuditTransactionScope(BooleanSupplier transactionActive) {
+    this(transactionActive, null);
+  }
+
+  /**
+   * @param transactionActive whether a transaction is active on the calling thread; {@code null} if unknown
+   * @param settings the settings of the engine
+   */
+  public AuditTransactionScope(BooleanSupplier transactionActive, AuditSettings settings) {
     this.transactionActive = transactionActive;
+    this.settings = settings;
   }
 
   public boolean hasProbe() {
@@ -83,13 +98,18 @@ public class AuditTransactionScope {
     return !wasActive;
   }
 
-  /** The interceptor that asks the probe before the engine begins or joins a transaction for a command. */
+  /**
+   * The interceptor that asks the probe before the engine begins or joins a transaction for a
+   * command. When the engine began one, it has ended when the command returns.
+   */
   public CommandInterceptor probeInterceptor() {
     return new CommandInterceptor() {
       @Override
       public <T> T execute(Command<T> command) {
         Deque<Boolean> stack = joined.get();
-        stack.push(transactionActive.getAsBoolean());
+        boolean active = transactionActive.getAsBoolean();
+        List<AuditSession.Held> before = active ? null : AuditSession.heldSnapshot();
+        stack.push(active);
         try {
           return next.execute(command);
         } finally {
@@ -97,6 +117,27 @@ public class AuditTransactionScope {
           if (stack.isEmpty()) {
             joined.remove();
           }
+          if (before != null) {
+            AuditSession.dropHeldSince(before, settings);
+          }
+        }
+      }
+    };
+  }
+
+  /**
+   * The interceptor for "requires new" commands, before the transaction interceptor of the
+   * engine: the transaction the engine begins for such a command has ended when it returns.
+   */
+  public CommandInterceptor requiresNewInterceptor() {
+    return new CommandInterceptor() {
+      @Override
+      public <T> T execute(Command<T> command) {
+        List<AuditSession.Held> before = AuditSession.heldSnapshot();
+        try {
+          return next.execute(command);
+        } finally {
+          AuditSession.dropHeldSince(before, settings);
         }
       }
     };

@@ -25,6 +25,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 import dev.fasti.engine.audit.AuditService;
@@ -61,6 +62,10 @@ public class AuditSettings implements AuditStatus {
    * written before a key was configured.
    */
   public static final String UNSIGNED_KEY_ID = "unsigned";
+  /** Before the slot in the ids of the chains of transactions that write their records last. */
+  public static final String END_CHAIN_PREFIX = "end-";
+  /** Records a purge removes from a chain in one transaction. */
+  public static final int DEFAULT_PURGE_BATCH_SIZE = 10_000;
 
   protected volatile String nodeId;
   protected final int chains;
@@ -84,6 +89,8 @@ public class AuditSettings implements AuditStatus {
   protected volatile int lockTimeoutSeconds = DEFAULT_LOCK_TIMEOUT_SECONDS;
   protected volatile int queryTimeoutSeconds = DEFAULT_QUERY_TIMEOUT_SECONDS;
   protected volatile boolean separateChains;
+  protected volatile int purgeBatchSize = DEFAULT_PURGE_BATCH_SIZE;
+  protected volatile Consumer<Runnable> transactionCompletion;
   /** Set while a verification of this engine runs: one at a time. */
   protected final AtomicBoolean verifying = new AtomicBoolean();
 
@@ -185,23 +192,26 @@ public class AuditSettings implements AuditStatus {
     return false;
   }
 
-  /** The chain of a slot of this node. */
+  /**
+   * The chain of a slot of this node for transactions that write their records before the
+   * statements of the engine, as every transaction of 1.0 and 1.1 did (see {@link AuditSession}).
+   */
   public String chainId(int slot) {
     return nodeId + "/" + slot;
   }
 
   /**
-   * The chain of a slot of this node for transactions that write their records before the
-   * statements of the engine while others write theirs after them: they may go on after the
-   * command (see {@link AuditSession}).
+   * The chain of a slot of this node for transactions that end with their command and write their
+   * records after the statements of the engine. Fasti 1.0 and 1.1 never write to these chains, so
+   * that a node of 1.1 with the same node id never holds one of them (see {@link AuditSession}).
    */
-  public String extendedChainId(int slot) {
-    return nodeId + "/ext-" + slot;
+  public String endChainId(int slot) {
+    return nodeId + "/" + END_CHAIN_PREFIX + slot;
   }
 
   /**
-   * Whether transactions that write their records before the statements of the engine use chains
-   * of their own: when the engine also has transactions that write their records after them.
+   * Whether transactions that write their records after the statements of the engine use chains
+   * of their own ({@link #endChainId(int)}): when the engine can tell where its transactions end.
    */
   public boolean isSeparateChains() {
     return separateChains;
@@ -352,6 +362,33 @@ public class AuditSettings implements AuditStatus {
       throw new IllegalArgumentException("queryTimeoutSeconds must not be negative");
     }
     this.queryTimeoutSeconds = queryTimeoutSeconds;
+  }
+
+  public int getPurgeBatchSize() {
+    return purgeBatchSize;
+  }
+
+  /**
+   * Records a purge removes from a chain in one transaction (at least 1): it holds the head of the
+   * chain for one batch at a time and leaves a purge record per batch.
+   */
+  public void setPurgeBatchSize(int purgeBatchSize) {
+    if (purgeBatchSize < 1) {
+      throw new IllegalArgumentException("purgeBatchSize must be at least 1");
+    }
+    this.purgeBatchSize = purgeBatchSize;
+  }
+
+  public Consumer<Runnable> getTransactionCompletion() {
+    return transactionCompletion;
+  }
+
+  /**
+   * Registers a callback that runs when the transaction of the calling thread ends, whatever its
+   * outcome; {@code null} when the transaction listeners of the engine are enough.
+   */
+  public void setTransactionCompletion(Consumer<Runnable> transactionCompletion) {
+    this.transactionCompletion = transactionCompletion;
   }
 
   public String getDatabaseType() {

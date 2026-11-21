@@ -240,7 +240,7 @@ public class AuditQueryTest {
     try {
       long before = audit.createQuery().types(AuditService.TYPE_AUDIT).action(AuditService.ACTION_VERIFY).count();
       assertThatThrownBy(audit::verify).isInstanceOf(AuditVerificationRunningException.class);
-      assertThatThrownBy(() -> audit.verify(settings.chainId(0))).isInstanceOf(AuditVerificationRunningException.class);
+      assertThatThrownBy(() -> audit.verify(settings.endChainId(0))).isInstanceOf(AuditVerificationRunningException.class);
       // a refused verification reads nothing and records nothing
       assertThat(audit.createQuery().types(AuditService.TYPE_AUDIT).action(AuditService.ACTION_VERIFY).count()).isEqualTo(before);
     } finally {

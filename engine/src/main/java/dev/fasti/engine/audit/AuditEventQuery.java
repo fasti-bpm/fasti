@@ -63,9 +63,12 @@ public interface AuditEventQuery {
   long count();
 
   /**
-   * The number of records, counted up to {@code limit}: the database stops counting there, so
-   * counting a large result costs no more than reading {@code limit} records. A result equal to
-   * {@code limit} means "that many or more". A limit of zero or less counts all records.
+   * The number of records, counted up to {@code limit}: the database stops once it has found that
+   * many, so a large result is not counted to its end. A result equal to {@code limit} means "that
+   * many or more". A limit of zero or less counts all records. The limit caps the records counted,
+   * not the rows the database examines to find them: with a filter that no index serves (an
+   * action without a category, a tenant restriction) it may still read many rows, or the whole
+   * table when fewer than {@code limit} records match.
    */
   long count(long limit);
 

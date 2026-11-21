@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 
 import dev.fasti.engine.audit.impl.AuditDeploymentInterceptor;
 import dev.fasti.engine.audit.impl.AuditHistoryEventHandler;
@@ -83,7 +84,9 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
   protected String retiredKeyIds;
   protected int lockTimeoutSeconds = AuditSettings.DEFAULT_LOCK_TIMEOUT_SECONDS;
   protected int queryTimeoutSeconds = AuditSettings.DEFAULT_QUERY_TIMEOUT_SECONDS;
+  protected int purgeBatchSize = AuditSettings.DEFAULT_PURGE_BATCH_SIZE;
   protected BooleanSupplier transactionActive;
+  protected Consumer<Runnable> transactionCompletion;
 
   protected AuditSettings settings;
 
@@ -103,11 +106,13 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
     settings.setRetiredKeyIds(retiredKeyIds);
     settings.setLockTimeoutSeconds(lockTimeoutSeconds);
     settings.setQueryTimeoutSeconds(queryTimeoutSeconds);
+    settings.setPurgeBatchSize(purgeBatchSize);
+    settings.setTransactionCompletion(transactionCompletion);
     if (configuration.getCustomSessionFactories() == null) {
       configuration.setCustomSessionFactories(new ArrayList<>());
     }
     configuration.getCustomSessionFactories().add(new AuditSession.Factory(settings));
-    AuditTransactionScope transactionScope = new AuditTransactionScope(transactionActive);
+    AuditTransactionScope transactionScope = new AuditTransactionScope(transactionActive, settings);
     settings.setSeparateChains(transactionScope.knowsBoundaries(configuration));
     if (transactionScope.hasProbe()) {
       if (configuration.getCustomPreCommandInterceptorsTxRequired() == null) {
@@ -119,6 +124,10 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
       configuration.setCustomPostCommandInterceptorsTxRequired(new ArrayList<>());
     }
     configuration.getCustomPostCommandInterceptorsTxRequired().add(new AuditDeploymentInterceptor(settings, transactionScope, false));
+    if (configuration.getCustomPreCommandInterceptorsTxRequiresNew() == null) {
+      configuration.setCustomPreCommandInterceptorsTxRequiresNew(new ArrayList<>());
+    }
+    configuration.getCustomPreCommandInterceptorsTxRequiresNew().add(transactionScope.requiresNewInterceptor());
     if (configuration.getCustomPostCommandInterceptorsTxRequiresNew() == null) {
       configuration.setCustomPostCommandInterceptorsTxRequiresNew(new ArrayList<>());
     }
@@ -204,8 +213,22 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
         }
       }
     }
+    // the heads of the first band of each kind of chain the engine writes to: transactions that end
+    // with their command write last (when the engine can tell), the others first (with a probe, or
+    // when it cannot tell). Created here rather than by the first transaction that appends, which
+    // would hold the new row until it ends (any other missing head is created in a transaction of
+    // its own, see AuditStore.lockHead).
+    boolean writesFirst = transactionActive != null || !settings.isSeparateChains();
+    List<String> chainIds = new ArrayList<>();
     for (int slot = 0; slot < settings.getChains(); slot++) {
-      String chainId = settings.chainId(slot);
+      if (writesFirst) {
+        chainIds.add(settings.chainId(slot));
+      }
+      if (settings.isSeparateChains()) {
+        chainIds.add(settings.endChainId(slot));
+      }
+    }
+    for (String chainId : chainIds) {
       try {
         executor.execute(commandContext -> AuditStore.ensureHead(commandContext, settings, chainId));
       } catch (RuntimeException e) {
@@ -334,20 +357,49 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
     this.queryTimeoutSeconds = queryTimeoutSeconds;
   }
 
+  public int getPurgeBatchSize() {
+    return purgeBatchSize;
+  }
+
+  /**
+   * Records a purge removes from a chain in one transaction (default 10,000): the head of the chain
+   * is held for one batch at a time, and each batch leaves a purge record.
+   */
+  public void setPurgeBatchSize(int purgeBatchSize) {
+    this.purgeBatchSize = purgeBatchSize;
+  }
+
   public BooleanSupplier getTransactionActive() {
     return transactionActive;
   }
 
   /**
-   * Tells whether a transaction is active on the calling thread before the engine begins or joins
-   * one for a command (with Spring: {@code TransactionSynchronizationManager::isActualTransactionActive}).
-   * With it, a command that begins its own transaction writes its audit records after the
+   * Tells whether the transaction manager of the engine has a transaction on the calling thread
+   * before the engine begins or joins one for a command, that is whether the command will join a
+   * transaction that goes on after it (the Spring Boot starter asks the transaction manager of the
+   * engine). With it, a command that begins its own transaction writes its audit records after the
    * statements of the engine also when transactions are managed outside the engine; without it,
    * such an engine writes them before (see {@link AuditSession}). A standalone engine does not
-   * need it.
+   * need it. When in doubt it should answer {@code true}: a command treated as joining only writes
+   * as in 1.1, while one treated as ending its transaction that does not could wait for a head
+   * held by a transaction that waits for it.
    */
   public void setTransactionActive(BooleanSupplier transactionActive) {
     this.transactionActive = transactionActive;
+  }
+
+  public Consumer<Runnable> getTransactionCompletion() {
+    return transactionCompletion;
+  }
+
+  /**
+   * Registers a callback to run when the transaction of the calling thread ends, whatever its
+   * outcome (with Spring: in {@code afterCompletion} of a transaction synchronization). The engine
+   * reports only commits and rollbacks; a transaction that ends otherwise (Spring: a commit or a
+   * rollback that failed) would leave the chain it took marked as held on its thread. Optional.
+   */
+  public void setTransactionCompletion(Consumer<Runnable> transactionCompletion) {
+    this.transactionCompletion = transactionCompletion;
   }
 
   @Override

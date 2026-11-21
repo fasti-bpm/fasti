@@ -206,40 +206,73 @@ public class AuditServiceImpl implements AuditService {
       return AuditStore.chainIds(commandContext, settings);
     });
     Map<String, Long> purgedThrough = new LinkedHashMap<>();
+    List<String> failed = new ArrayList<>();
     long removed = 0;
-    // one transaction per chain: a purge holds one head at a time and nothing else meanwhile, so
-    // it never waits for a transaction while another waits for it (a transaction holding a head of
-    // one kind of chain may wait for engine rows, see AuditSession)
+    // one transaction per batch of a chain: a purge holds one head at a time, for one batch, and
+    // nothing else meanwhile, so it never waits for a transaction while another waits for it (a
+    // transaction holding a head of one kind of chain may wait for engine rows, see AuditSession),
+    // and the writers of the chain wait for one batch at most
     for (String chainId : chainIds) {
-      long[] result = requiresNew.execute(commandContext -> purgeChain(commandContext, settings, before, chainId));
-      if (result != null) {
-        purgedThrough.put(chainId, result[0]);
-        removed += result[1];
+      long[] progress = {-1, 0, 0};
+      try {
+        while (true) {
+          long boundary = progress[0];
+          long[] batch = requiresNew.execute(commandContext -> purgeBatch(commandContext, settings, before, chainId, boundary));
+          if (batch == null) {
+            break;
+          }
+          progress[0] = batch[0];
+          progress[1] = batch[1];
+          progress[2] += batch[2];
+          if (batch[1] >= batch[0]) {
+            break;
+          }
+        }
+      } catch (AuthorizationException e) {
+        throw e;
+      } catch (RuntimeException e) {
+        // the other chains are purged all the same; this one stays as its last batch left it
+        LOG.error("The audit trail could not purge chain {}; the other chains are purged. Purge again to complete it.",
+            chainId, e);
+        failed.add(chainId);
+      }
+      if (progress[1] > 0) {
+        purgedThrough.put(chainId, progress[1]);
+        removed += progress[2];
       }
     }
-    return new AuditPurgeResult(before, purgedThrough, removed);
+    return new AuditPurgeResult(before, purgedThrough, removed, failed);
   }
 
-  /** Purges the records of one chain before the date; returns the position purged through and the number removed, or {@code null}. */
-  protected long[] purgeChain(CommandContext commandContext, AuditSettings settings, Date before, String chainId) {
+  /**
+   * Purges one batch of the records of a chain before the date: from its first record, at most
+   * {@code purgeBatchSize} records, not beyond the boundary of the purge. The boundary (the last
+   * record before the date) is found in the first batch ({@code boundary} below 0) and kept for
+   * the following ones. Returns the boundary, the position purged through and the number of
+   * records removed, or {@code null} when nothing is left to purge.
+   */
+  protected long[] purgeBatch(CommandContext commandContext, AuditSettings settings, Date before, String chainId,
+      long boundary) {
     AuditAuthorization.checkPurge(commandContext);
     try {
       // the head first, so that what is read below is not purged at the same time by another purge
-      AuditStore.lockHead(AuditStore.connection(commandContext), settings, chainId);
+      AuditStore.lockHead(commandContext, settings, chainId);
     } catch (SQLException e) {
       throw AuditStore.failure("lock chain " + chainId + " for a purge", e);
     }
-    long through = AuditStore.purgeBoundary(commandContext, settings, chainId, before.getTime());
+    long end = boundary >= 0 ? boundary : AuditStore.purgeBoundary(commandContext, settings, chainId, before.getTime());
     List<AuditRecord> first = AuditStore.readChain(commandContext, settings, chainId, 0, 1);
-    if (through <= 0 || first.isEmpty() || through < first.get(0).getSequence()) {
+    if (end <= 0 || first.isEmpty() || end < first.get(0).getSequence()) {
       return null;
     }
+    long from = first.get(0).getSequence();
+    long through = Math.min(end, from + settings.getPurgeBatchSize() - 1);
     AuditRecord last = AuditStore.find(commandContext, settings, chainId, through);
     if (last == null) {
       LOG.warn("Audit trail chain {} has no record {}; it is not purged. Verify the audit trail.", chainId, through);
       return null;
     }
-    long count = through - first.get(0).getSequence() + 1;
+    long count = through - from + 1;
     AuditRecord purge = new AuditRecord(AuditService.TYPE_AUDIT, AuditService.ACTION_PURGE);
     purge.setTime(ClockUtil.getCurrentTime().getTime());
     purge.setEngineName(settings.getEngineName());
@@ -248,13 +281,12 @@ public class AuditServiceImpl implements AuditService {
     purge.setEntityName(chainId);
     purge.setPurge(through, last.getHash(), AuditJson.object()
         .put("before", before.toInstant().toString())
-        .put("purgedFromSeq", first.get(0).getSequence())
+        .put("purgedFromSeq", from)
         .put("removed", count));
     // the purge record first, then the records it attests
     AuditStore.append(commandContext, settings, chainId, List.of(purge));
     long deleted = AuditStore.deleteThrough(commandContext, settings, chainId, through);
-    LOG.info("Audit trail chain {}: purged records {} to {} (last hash {})", chainId, first.get(0).getSequence(), through,
-        last.getHash());
-    return new long[] { through, deleted };
+    LOG.info("Audit trail chain {}: purged records {} to {} (last hash {})", chainId, from, through, last.getHash());
+    return new long[] { end, through, deleted };
   }
 }

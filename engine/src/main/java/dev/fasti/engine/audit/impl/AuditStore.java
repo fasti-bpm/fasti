@@ -33,6 +33,7 @@ import java.util.function.Consumer;
 import dev.fasti.engine.audit.AuditService;
 import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
+import org.camunda.bpm.engine.impl.interceptor.CommandExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -133,7 +134,7 @@ public final class AuditStore {
     }
     Connection connection = connection(commandContext);
     try {
-      Head head = lockHead(connection, settings, chainId);
+      Head head = lockHead(commandContext, settings, chainId);
       long sequence = head.sequence;
       String previous = head.hash;
       List<AuditRecord> written = new ArrayList<>();
@@ -224,8 +225,28 @@ public final class AuditStore {
     return checkpoint;
   }
 
-  /** Locks the head row of the chain until the end of the transaction and reads it; creates it if missing. */
-  static Head lockHead(Connection connection, AuditSettings settings, String chainId) throws SQLException {
+  /**
+   * Locks the head row of the chain until the end of the transaction and reads it. A missing head
+   * (a chain of a band this node did not prepare at startup, or a head removed from outside) is
+   * created first, in a transaction of its own.
+   */
+  static Head lockHead(CommandContext commandContext, AuditSettings settings, String chainId) throws SQLException {
+    Connection connection = connection(commandContext);
+    if (lockHeadRow(connection, settings, chainId) == 0 && createHead(commandContext, settings, chainId)) {
+      lockHeadRow(connection, settings, chainId);
+    }
+    Head head = readHead(connection, settings, chainId);
+    if (head == null) {
+      // it could not be created on its own: in this transaction, which holds the new row until it
+      // ends; a concurrent insert of the same head fails one of the two, like any other conflict
+      head = lastRecord(connection, settings, chainId);
+      insertHead(connection, settings, head);
+    }
+    return head;
+  }
+
+  /** Locks the head row of the chain with an update; the number of rows it found. */
+  static int lockHeadRow(Connection connection, AuditSettings settings, String chainId) throws SQLException {
     // the statement waits for the transaction that holds the head; not for ever. H2 does not end a
     // wait for a row when the statement times out, only when the lock timeout of the session is
     // over, so that is set for this statement.
@@ -238,30 +259,42 @@ public final class AuditStore {
         "update " + heads(settings) + " set SEQ_ = SEQ_ where CHAIN_ID_ = ?")) {
       lock.setString(1, chainId);
       timeout(lock, settings.getLockTimeoutSeconds());
-      lock.executeUpdate();
+      return lock.executeUpdate();
     } finally {
       if (sessionLockTimeout != null) {
         h2LockTimeout(connection, sessionLockTimeout);
       }
     }
-    Head head = readHead(connection, settings, chainId);
-    if (head == null) {
-      // a chain this node did not prepare at startup, or a head removed from outside: continue after
-      // the last record there is (verifying reported the missing head until now). A concurrent insert
-      // of the same head fails one of the two transactions, like any other conflict.
-      head = lastRecord(connection, settings, chainId);
-      if (head.sequence > 0) {
-        LOG.warn("The head of audit trail chain {} was missing; it is recreated from record {}", chainId, head.sequence);
-      }
-      try (PreparedStatement insert = connection.prepareStatement(
-          "insert into " + heads(settings) + " (CHAIN_ID_, SEQ_, HASH_, TIME_) values (?, ?, ?, 0)")) {
-        insert.setString(1, chainId);
-        insert.setLong(2, head.sequence);
-        insert.setString(3, head.hash);
-        insert.executeUpdate();
-      }
+  }
+
+  /**
+   * Creates the missing head of a chain in a transaction of its own and commits it, so that the
+   * transaction that needs it does not hold a new row until it ends (another transaction that
+   * appends to the same new chain would fail on the duplicate). The head continues after the last
+   * record of the chain there is (verifying reported the missing head until now). Whether the
+   * caller should lock the head again.
+   */
+  static boolean createHead(CommandContext commandContext, AuditSettings settings, String chainId) {
+    CommandExecutor requiresNew = commandContext.getProcessEngineConfiguration().getCommandExecutorTxRequiresNew();
+    try {
+      return requiresNew.execute(context -> {
+        Connection connection = connection(context);
+        try {
+          if (readHead(connection, settings, chainId) == null) {
+            insertHead(connection, settings, lastRecord(connection, settings, chainId));
+          }
+          return true;
+        } catch (SQLException e) {
+          // reported below, without the message of the database reaching anyone but the log
+          throw new ProcessEngineException("The audit trail could not create the head of chain " + chainId, e);
+        }
+      });
+    } catch (RuntimeException e) {
+      // created by another transaction at the same time (the caller locks it then), or this engine
+      // cannot run a transaction of its own here (the caller creates it in its transaction then)
+      LOG.debug("The head of audit trail chain {} was not created in a transaction of its own", chainId, e);
+      return true;
     }
-    return head;
   }
 
   /** Sets the lock timeout of the H2 session in milliseconds, or reads it with {@code null}. */
@@ -305,11 +338,16 @@ public final class AuditStore {
     }
   }
 
-  static void insertHead(Connection connection, AuditSettings settings, String chainId) throws SQLException {
+  /** Inserts the head of a chain at the record (position 0 and the genesis hash for an empty chain). */
+  static void insertHead(Connection connection, AuditSettings settings, Head head) throws SQLException {
+    if (head.sequence > 0) {
+      LOG.warn("The head of audit trail chain {} was missing; it is recreated from record {}", head.chainId, head.sequence);
+    }
     try (PreparedStatement insert = connection.prepareStatement(
-        "insert into " + heads(settings) + " (CHAIN_ID_, SEQ_, HASH_, TIME_) values (?, 0, ?, 0)")) {
-      insert.setString(1, chainId);
-      insert.setString(2, AuditChain.GENESIS);
+        "insert into " + heads(settings) + " (CHAIN_ID_, SEQ_, HASH_, TIME_) values (?, ?, ?, 0)")) {
+      insert.setString(1, head.chainId);
+      insert.setLong(2, head.sequence);
+      insert.setString(3, head.hash);
       insert.executeUpdate();
     }
   }
@@ -321,7 +359,7 @@ public final class AuditStore {
       if (readHead(connection, settings, chainId) != null) {
         return false;
       }
-      insertHead(connection, settings, chainId);
+      insertHead(connection, settings, new Head(chainId, 0, AuditChain.GENESIS));
       return true;
     } catch (SQLException e) {
       throw failure("create the head of a chain", "chain " + chainId, e);
@@ -517,8 +555,8 @@ public final class AuditStore {
 
   /**
    * The statement that counts the records of a query. With a positive {@code limit} the database
-   * stops at that many records, so the count of a large result costs no more than reading
-   * {@code limit} index entries or rows; the result is then at most {@code limit}.
+   * stops once it has found that many records; the result is then at most {@code limit}. That caps
+   * the records counted, not the rows examined: a filter no index serves may still read many rows.
    */
   static String countSql(AuditSettings settings, AuditEventQueryImpl query, List<String> tenants, long limit,
       List<Object> parameters) {

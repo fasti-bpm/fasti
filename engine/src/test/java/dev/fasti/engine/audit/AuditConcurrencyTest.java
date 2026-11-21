@@ -198,7 +198,7 @@ public class AuditConcurrencyTest {
     });
     assertComplete0(engine, 2);
     assertThat(AuditTrail.of(engine).verify().getChains()).extracting(AuditVerification.Chain::getChainId)
-        .contains("node-nested1/0", "node-nested1/1");
+        .contains("node-nested1/end-0", "node-nested1/end-1");
   }
 
   @Test

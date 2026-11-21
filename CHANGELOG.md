@@ -112,10 +112,16 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   libraries, starters, BOMs and parent POMs (QA modules, distributions and build helpers are
   left out), attaches sources and javadoc jars, signs with GPG and uploads through the Central
   Portal (`central-publishing-maven-plugin`, deployment left for a manual "Publish"). The manual
-  workflow `publish-maven` runs it for a version tag once the secrets `MAVEN_CENTRAL_USERNAME`,
-  `MAVEN_CENTRAL_PASSWORD`, `MAVEN_GPG_PRIVATE_KEY` and `MAVEN_GPG_PASSPHRASE` exist (it skips
-  with a notice otherwise; a dry run needs none). Guide: `docs/publishing-maven-central.md`. No
-  version has been published yet.
+  workflow `publish-maven` runs it for a version tag: one job builds the bundle without any
+  secret, a second job in the GitHub environment `maven-central` (required reviewers; secrets
+  `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `MAVEN_GPG_PRIVATE_KEY` and
+  `MAVEN_GPG_PASSPHRASE`) signs it and uploads it, and a dry run stops after the first job.
+  Guide: `docs/publishing-maven-central.md`. No version has been published yet.
+- Helm chart: `management.port` gives the actuator (health endpoints, Prometheus metrics) a
+  port of its own (`FASTI_MANAGEMENT_PORT`). The container port, the probes, the Service,
+  `helm test` and the NetworkPolicy follow it, and `metrics.serviceMonitor.port: management`
+  scrapes it. Setting `FASTI_MANAGEMENT_PORT` through `extraEnv` is refused, because the probes
+  would keep calling port 8080.
 
 ### Changed
 
@@ -153,11 +159,29 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   uses the handler of a given `jdbcType` regardless of the value, which would break the history
   cleanup and removal time of comments on PostgreSQL.
 
+- POMs: the JBoss repository, needed by the build for a few test and provided dependencies,
+  is declared in a build-only profile of `fasti-parent`. An application that depends on a
+  Fasti artifact no longer gets `repository.jboss.org` added to its build (75 of the 83
+  published POMs inherited it, with snapshots enabled).
+- Release workflow: a tag must be a semantic version and equal the version of the POMs, or
+  nothing is built. The image tag `latest` moves only when the tag is the highest release of
+  the repository, so a maintenance release of an older line no longer takes it back.
+- Build: the Maven wrapper verifies the SHA-256 of the Maven distribution it downloads and of
+  its own jar. The HTTP retry settings use the keys of Maven Resolver 2; the previous keys
+  were ignored by the Maven of the wrapper.
+
 ### Fixed
 
 - The container image ignores a `FASTI_PORT` that is not a port number, with a warning, in the
   entrypoint and the `HEALTHCHECK`: Kubernetes sets `FASTI_PORT=tcp://<ip>:<port>` for a Service
   named `fasti`, and the server then failed to start.
+- The `HEALTHCHECK` of the container image uses `FASTI_PORT` when `FASTI_MANAGEMENT_PORT` is
+  not a port number, like the entrypoint; it used to probe 8080.
+- Helm chart: Secret names and keys, the Ingress path and class and the ServiceMonitor fields
+  are quoted, so values such as `"123"`, `"true"` or a path with ` #` keep their meaning. The
+  schema rejects PodDisruptionBudget values that are neither a number nor a percentage, a pool
+  size of `"0"`, an extra port named `http` or `management`, and a ServiceMonitor port that the
+  Service does not have.
 - MySQL and MariaDB: time filters of queries (for example `createdAfter` of historic variable
   instances, `startedAfter`, `executedActivityAfter`, `executedJobAfter`, a task's `dueDate`, also
   in saved filters) missed rows stored in the same second as the given time when the engine was

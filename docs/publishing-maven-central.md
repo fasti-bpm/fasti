@@ -162,7 +162,7 @@ MAVEN_GPG_PASSPHRASE=... ./mvnw -Pcentral deploy -DskipTests [-Dgpg.keyname=<KEY
 | `central.skipUpload` | `false` | build the bundle locally, do not upload it (the Portal validates only uploaded bundles) |
 | `central.autoPublish` | `false` | publish right after validation, without the manual step |
 | `central.waitUntil` | `validated` | how long the build waits (`uploaded`, `validated`, `published`) |
-| `gpg.skip` | `false` | do not sign (dry runs only: Central rejects unsigned files) |
+| `gpg.skip` | `false` | do not sign (dry runs, and the `bundle` job of the workflow, whose `publish` job signs afterwards; Central rejects unsigned files) |
 | `gpg.keyname` | default key | the key to sign with |
 
 The plugin is `org.sonatype.central:central-publishing-maven-plugin`; the server id in the

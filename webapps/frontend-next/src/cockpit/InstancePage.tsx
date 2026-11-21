@@ -3,7 +3,7 @@
  * Copyright Fasti BPM contributors
  */
 import { settleLimited, throwIfAnyFailed } from '../lib/limit';
-import { Suspense, lazy, useMemo, useState } from 'react';
+import { Suspense, lazy, memo, useCallback, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
@@ -40,7 +40,6 @@ import {
   setInstanceSuspended,
   setJobSuspended,
   setRetries,
-  type ActivityInstance,
   type CalledInstance,
   type ExternalTask,
   type FailureKind,
@@ -63,6 +62,7 @@ import { useI18n } from '../i18n';
 import { useToast } from '../ui/toast';
 import { Button, EmptyState, ErrorState, Field, IconButton, Loading, Skeleton, cx } from '../ui';
 import { MenuContent } from '../ui/menu';
+import { toTree, useTreeInterval, walk, type TreeNode } from './activityTree';
 import { COCKPIT, IncidentBadge, StateBadge, elementNames, totalIncidents, useCockpitAction, useRefreshInterval } from './common';
 import { Checkbox, ConfirmDialog } from '../ui/controls';
 import { Id, Time } from '../ui/format';
@@ -86,36 +86,11 @@ const BpmnDiagram = lazy(() => import('../bpmn/BpmnDiagram'));
 
 // --- activity instances -----------------------------------------------------
 
-interface TreeNode {
-  id: string;
-  activityId: string;
-  name: string;
-  /** a token that is about to enter or has just left the activity */
-  transition: boolean;
-  incidents: number;
-  children: TreeNode[];
-}
-
-function toTree(instance: ActivityInstance, names: Map<string, string>, transition = false): TreeNode {
-  return {
-    id: instance.id,
-    activityId: instance.activityId,
-    name: instance.activityName ?? names.get(instance.activityId) ?? instance.activityId,
-    transition,
-    incidents: instance.incidents?.length ?? 0,
-    children: [
-      ...(instance.childActivityInstances ?? []).map((child) => toTree(child, names)),
-      ...(instance.childTransitionInstances ?? []).map((child) => toTree(child, names, true)),
-    ],
-  };
-}
-
-function walk(node: TreeNode, visit: (node: TreeNode, root: boolean) => void, root = true): void {
-  visit(node, root);
-  node.children.forEach((child) => walk(child, visit, false));
-}
-
-function ActivityTree({
+/**
+ * A part of the tree is rendered again only if it changed: the refresh of an instance that
+ * stands still, or changed elsewhere, leaves the other nodes alone (see `toTree`).
+ */
+const ActivityTree = memo(function ActivityTree({
   node,
   selected,
   onSelect,
@@ -153,7 +128,7 @@ function ActivityTree({
       )}
     </li>
   );
-}
+});
 
 // --- tabs -------------------------------------------------------------------
 
@@ -878,11 +853,13 @@ export function InstancePage() {
     enabled: !!definitionId,
     staleTime: Infinity,
   });
+  const treeInterval = useTreeInterval(refetchInterval);
   const activities = useQuery({
     queryKey: [COCKPIT, 'activity-instances', id],
     queryFn: ({ signal }) => getActivityInstances(id, signal),
     enabled: !!instance.data,
-    refetchInterval,
+    // read less often for a large tree and for one that stands still
+    refetchInterval: (query) => treeInterval(query.state.data),
   });
 
   const names = useMemo(() => elementNames(xml.data), [xml.data]);
@@ -965,8 +942,10 @@ export function InstancePage() {
     }
   };
   const tab = TABS.find((candidate) => candidate === params.get('tab')) ?? 'variables';
-  const select = (activityId: string | null) =>
-    setParams({ act: activityId === selected ? null : activityId, page: null });
+  const select = useCallback(
+    (activityId: string | null) => setParams({ act: activityId === selected ? null : activityId, page: null }),
+    [setParams, selected],
+  );
 
   if (instance.isError && !instance.data) {
     return (

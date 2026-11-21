@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Tooltip } from 'radix-ui';
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { auditDetails, auditParams, type AuditEvent, type AuditStatus, type AuditVerification } from '../api/audit';
@@ -61,7 +62,9 @@ function wrap(children: ReactNode, path = '/cockpit/audit-trail') {
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <I18nProvider initial="en">
         <ToastProvider>
-          <MemoryRouter initialEntries={[path]}>{children}</MemoryRouter>
+          <Tooltip.Provider>
+            <MemoryRouter initialEntries={[path]}>{children}</MemoryRouter>
+          </Tooltip.Provider>
         </ToastProvider>
       </I18nProvider>
     </QueryClientProvider>,
@@ -117,8 +120,49 @@ describe('the audit trail page', () => {
     expect(within(table).getAllByRole('link', { name: 'order-4711' })[0]).toHaveAttribute('href', '/cockpit/history/instance/pi-1');
     expect(screen.getByText(/Node node-1 · 4 chains · variable values: hash · checkpoints signed/)).toBeInTheDocument();
 
-    await userEvent.type(screen.getByRole('textbox', { name: 'User ID, or "system"' }), 'bob{Enter}');
+    const user = screen.getByRole('textbox', { name: 'User ID, or "system"' });
+    await userEvent.type(user, 'bob{Enter}');
     await waitFor(() => expect(server.find('GET', `${ENGINE}/audit/event`).some((request) => request.query.get('actor') === 'bob')).toBe(true));
+    // the field is the same one and keeps the focus, so that a keyboard user can go on from it
+    expect(user).toBeInTheDocument();
+    expect(user).toHaveFocus();
+    expect(user).toHaveValue('bob');
+  });
+
+  it('names one chain as one chain', async () => {
+    fakeServer({
+      [`GET ${ENGINE}/audit`]: () => json({ ...STATUS, chains: 1 }),
+      [`GET ${ENGINE}/audit/event`]: () => json([]),
+      [`GET ${ENGINE}/audit/event/count`]: () => json({ count: 0 }),
+    });
+    wrap(<AuditTrailPage />);
+    expect(await screen.findByText(/Node node-1 · 1 chain · variable values/)).toBeInTheDocument();
+  });
+
+  it('takes a filter from the address and gives it up when the filters are cleared', async () => {
+    fakeServer({
+      [`GET ${ENGINE}/audit`]: () => json(STATUS),
+      [`GET ${ENGINE}/audit/event`]: () => json([]),
+      [`GET ${ENGINE}/audit/event/count`]: () => json({ count: 0 }),
+    });
+    wrap(<AuditTrailPage />, '/cockpit/audit-trail?user=bob');
+    const user = await screen.findByRole('textbox', { name: 'User ID, or "system"' });
+    expect(user).toHaveValue('bob');
+    await userEvent.click(await screen.findByRole('button', { name: 'Clear filters' }));
+    await waitFor(() => expect(user).toHaveValue(''));
+  });
+
+  it('goes to the last page when the address names one past the end', async () => {
+    const server = fakeServer({
+      [`GET ${ENGINE}/audit`]: () => json(STATUS),
+      [`GET ${ENGINE}/audit/event`]: (request) => json(request.query.get('firstResult') === '25' ? [event()] : []),
+      [`GET ${ENGINE}/audit/event/count`]: () => json({ count: 30 }),
+    });
+    wrap(<AuditTrailPage />, '/cockpit/audit-trail?apage=9');
+    const table = await screen.findByRole('table', { name: 'Records of the audit trail' });
+    expect(await within(table).findByText('Approve invoice')).toBeInTheDocument();
+    expect(server.find('GET', `${ENGINE}/audit/event`).map((request) => request.query.get('firstResult'))).toEqual(['200', '25']);
+    expect(screen.queryByText('No records yet')).not.toBeInTheDocument();
   });
 
   it('shows the details and the place of a record in its chain', async () => {
@@ -151,10 +195,30 @@ describe('the audit trail page', () => {
       [`POST ${ENGINE}/audit/verify`]: () => json(result),
     });
     wrap(<AuditTrailPage />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Verify integrity' }));
-    expect(await screen.findByText('Intact: 12 records in 1 chains verified')).toBeInTheDocument();
+    // the region that announces the outcome is there before there is one
+    const verify = await screen.findByRole('button', { name: 'Verify integrity' });
+    // (once the table has loaded, it is the only one)
+    await screen.findByText('No records yet');
+    const status = within(screen.getByRole('status'));
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    await userEvent.click(verify);
+    expect(await status.findByText('Intact: 12 records in 1 chain verified')).toBeInTheDocument();
+    expect(screen.getByRole('note')).toHaveTextContent('Intact: 12 records in 1 chain verified');
     expect(screen.getByText('1 of 1 verified')).toBeInTheDocument();
     expect(server.find('POST', `${ENGINE}/audit/verify`)).toHaveLength(1);
+
+    // verified again, the same outcome is announced again: the region is emptied meanwhile
+    let finish: () => void = () => undefined;
+    server.on(`POST ${ENGINE}/audit/verify`, async () => {
+      await new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+      return json({ ...result, records: 1234 });
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Verify integrity' }));
+    await waitFor(() => expect(screen.getByRole('status')).toBeEmptyDOMElement());
+    finish();
+    expect(await status.findByText('Intact: 1,234 records in 1 chain verified')).toBeInTheDocument();
   });
 
   it('reports the first break as an alert', async () => {
@@ -178,6 +242,9 @@ describe('the audit trail page', () => {
     expect(within(alert).getByText('The audit trail is broken')).toBeInTheDocument();
     expect(within(alert).getByText('A record was changed')).toBeInTheDocument();
     expect(within(alert).getByText(/Chain node-1\/2, record 5/)).toBeInTheDocument();
+    // the alert announces a break; the polite region stays silent
+    await screen.findByText('No records yet');
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
   });
 
   it('exports the filtered records as a file of the server', async () => {
@@ -212,5 +279,19 @@ describe('the audit trail of one instance', () => {
     const request = server.find('GET', `${ENGINE}/audit/event`)[0];
     expect(request?.query.get('processInstanceId')).toBe('pi-1');
     expect(request?.query.get('sortOrder')).toBe('asc');
+  });
+
+  it('goes to the last page of the tab when the address names one past the end', async () => {
+    const server = fakeServer({
+      [`GET ${ENGINE}/audit/event`]: (request) => json(request.query.get('firstResult') === '25' ? [event()] : []),
+      [`GET ${ENGINE}/audit/event/count`]: () => json({ count: 26 }),
+    });
+    wrap(
+      <AuditTrailTable query={{ processInstanceId: 'pi-1', sortOrder: 'asc' }} pageParam="tpage" showCase={false} />,
+      '/cockpit/history/instance/pi-1?tpage=4',
+    );
+    const table = await screen.findByRole('table', { name: 'Records of the audit trail' });
+    expect(await within(table).findByText('Approve invoice')).toBeInTheDocument();
+    expect(server.find('GET', `${ENGINE}/audit/event`).at(-1)?.query.get('firstResult')).toBe('25');
   });
 });

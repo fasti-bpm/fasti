@@ -31,7 +31,11 @@ export function toCsv(header: string[], rows: CsvValue[][]): string {
 
 /** Hands a CSV file to the browser; the byte order mark lets spreadsheets read UTF-8. */
 export function downloadCsv(fileName: string, header: string[], rows: CsvValue[][]): void {
-  const blob = new Blob(['﻿', toCsv(header, rows)], { type: 'text/csv;charset=utf-8' });
+  downloadBlob(new Blob(['﻿', toCsv(header, rows)], { type: 'text/csv;charset=utf-8' }), fileName);
+}
+
+/** Hands a file to the browser. */
+export function downloadBlob(blob: Blob, fileName: string): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

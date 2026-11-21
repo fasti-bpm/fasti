@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright Fasti BPM contributors
  */
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
@@ -13,7 +13,6 @@ import {
   exportAudit,
   getAuditEvents,
   getAuditStatus,
-  saveBlob,
   verifyAudit,
   type AuditEvent,
   type AuditQuery,
@@ -22,12 +21,14 @@ import {
   type AuditVerification,
 } from '../api/audit';
 import { useI18n, type MessageKey } from '../i18n';
+import { downloadBlob } from '../lib/csv';
 import { fromDateTimeInput, toEngineDate } from '../lib/dates';
 import { Button, EmptyState, ErrorState, Loading, NoMatch, Notice } from '../ui';
+import { TextFilter } from '../ui/controls';
 import { Id, Time } from '../ui/format';
 import { pageOf, useUrlState } from '../ui/hooks';
 import { Card, PageHeader } from '../ui/page';
-import { DataTable, PAGE_SIZE, Pager, type Column } from '../ui/table';
+import { DataTable, PAGE_SIZE, Pager, useClampedPage, type Column } from '../ui/table';
 import { useToast } from '../ui/toast';
 import { COCKPIT } from './common';
 import { MoreFilters } from './MoreFilters';
@@ -139,6 +140,13 @@ export function AuditTrailTable({
     queryFn: ({ signal }) => getAuditEvents(query, { firstResult: page * PAGE_SIZE, maxResults: PAGE_SIZE }, signal),
     placeholderData: keepPreviousData,
   });
+  const toPage = useCallback(
+    (next: number, push = false) => setParams({ [pageParam]: next ? String(next + 1) : null }, { push }),
+    [setParams, pageParam],
+  );
+  // a page past the end, from a link or after a purge shortened the trail; the count shown
+  // meanwhile for other filters says nothing about these
+  useClampedPage(page, records.isPlaceholderData ? undefined : records.data?.count, toPage);
   const columns = useMemo<Column<AuditEvent>[]>(() => {
     const all: Column<AuditEvent>[] = [
       { id: 'time', header: t('audit.col.time'), cell: (row) => <Time value={row.timestamp} /> },
@@ -197,18 +205,29 @@ export function AuditTrailTable({
       <Pager
         page={page}
         count={records.data?.count ?? 0}
-        onPage={(next) => setParams({ [pageParam]: next ? String(next + 1) : null }, { push: true })}
+        onPage={(next) => toPage(next, true)}
       />
     </>
   );
 }
 
-/** The outcome of a verification, for every chain. */
+/** What an intact trail is reported with: "12 records in 1 chain", each count in its own plural form. */
+function intactMessage(result: AuditVerification, t: ReturnType<typeof useI18n>['t']): string {
+  return t('audit.intact', {
+    records: t('audit.recordCount', { count: result.records }),
+    chains: t('audit.chainCount', { count: result.chains.length }),
+  });
+}
+
+/**
+ * The outcome of a verification, for every chain. A break is an alert; an intact trail is
+ * announced by the live region of the page, which is there before the result.
+ */
 export function VerificationResult({ result }: { result: AuditVerification }) {
-  const { t } = useI18n();
+  const { t, number } = useI18n();
   const found = result.firstBreak;
   return (
-    <div className="audit-trail__result" aria-live="polite">
+    <div className="audit-trail__result">
       {found ? (
         <Notice tone="danger" title={t('audit.broken')}>
           <p>
@@ -218,7 +237,7 @@ export function VerificationResult({ result }: { result: AuditVerification }) {
           <p>{t('audit.brokenHint')}</p>
         </Notice>
       ) : (
-        <Notice tone="info" title={t('audit.intact', { records: result.records, chains: result.chains.length })}>
+        <Notice tone="info" title={intactMessage(result, t)}>
           <p>{t('audit.intactHint')}</p>
         </Notice>
       )}
@@ -239,7 +258,7 @@ export function VerificationResult({ result }: { result: AuditVerification }) {
                   {chain.intact ? <ShieldCheck aria-hidden size={14} /> : <ShieldOff aria-hidden size={14} />} {chain.chainId}
                   {chain.purgedThrough > 0 && <div className="muted">{t('audit.chainPurged', { sequence: chain.purgedThrough })}</div>}
                 </th>
-                <td>{chain.records}</td>
+                <td>{number(chain.records)}</td>
                 <td>{t('audit.checkpointsVerified', { verified: chain.checkpointsVerified, total: chain.checkpoints })}</td>
                 <td>{chain.lastHash ? <Id value={chain.lastHash} copy /> : '—'}</td>
               </tr>
@@ -257,7 +276,7 @@ function SettingsLine({ status }: { status: AuditStatus }) {
     <p className="muted audit-trail__settings">
       {t('audit.settings', {
         node: status.nodeId ?? '—',
-        chains: status.chains,
+        chains: t('audit.chainCount', { count: status.chains }),
         values: status.variableValues ?? '—',
         signed: status.signed ? t('audit.signed') : t('audit.unsigned'),
       })}
@@ -296,7 +315,7 @@ export function AuditTrailPage() {
     setExporting(format);
     try {
       const { blob, filename } = await exportAudit(query, format);
-      saveBlob(blob, filename);
+      downloadBlob(blob, filename);
       toast.show({ title: t('audit.exported') });
     } catch (error) {
       toast.error(error, t('audit.exportFailed'));
@@ -321,15 +340,7 @@ export function AuditTrailPage() {
     setParams({ [name]: next, apage: null });
   };
   const text = (name: string, label: string) => (
-    <input
-      className="input"
-      aria-label={label}
-      placeholder={label}
-      key={`${name}:${params.get(name) ?? ''}`}
-      defaultValue={params.get(name) ?? ''}
-      onBlur={(event) => change(name, event.target.value)}
-      onKeyDown={(event) => event.key === 'Enter' && change(name, event.currentTarget.value)}
-    />
+    <TextFilter key={name} label={label} value={params.get(name) ?? ''} onApply={(value) => change(name, value)} />
   );
 
   if (status.isPending) {
@@ -385,6 +396,10 @@ export function AuditTrailPage() {
         }
       />
       <SettingsLine status={status.data} />
+      {/* mounted before there is a result, so that screen readers announce it; emptied while verifying, so that the same outcome is announced again */}
+      <p className="sr-only" role="status">
+        {verification && !verification.firstBreak && !verifying ? intactMessage(verification, t) : ''}
+      </p>
       {verification && (
         <Card>
           <VerificationResult result={verification} />

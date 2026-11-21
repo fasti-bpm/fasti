@@ -6,7 +6,7 @@ import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Save } from 'lucide-react';
 import { notifyUnauthorized } from '../api/http';
 import { SessionContext } from '../app/session';
-import { config } from '../config';
+import { config, configSettled } from '../config';
 import { formFrameUrl, formsSettings, type FormsSettings } from '../env';
 import { useI18n } from '../i18n';
 import { useTheme } from '../theme/theme';
@@ -111,16 +111,19 @@ export function EmbeddedForm({
   });
 
   const sendInit = useCallback(() => {
-    const { target: currentTarget, disabled: currentDisabled, theme: currentTheme } =
-      current.current;
-    post({
-      type: 'init',
-      target: currentTarget,
-      disabled: currentDisabled,
-      theme: currentTheme,
-      csrfCookieName: config.csrfCookieName,
-      transport: broker ? 'broker' : 'direct',
-      storedValues: broker ? broker.storedValues() : null,
+    // the frame sends requests itself (transport `direct`) with the CSRF cookie of config.json
+    void configSettled().then(() => {
+      const { target: currentTarget, disabled: currentDisabled, theme: currentTheme } =
+        current.current;
+      post({
+        type: 'init',
+        target: currentTarget,
+        disabled: currentDisabled,
+        theme: currentTheme,
+        csrfCookieName: config.csrfCookieName,
+        transport: broker ? 'broker' : 'direct',
+        storedValues: broker ? broker.storedValues() : null,
+      });
     });
   }, [post, broker]);
 

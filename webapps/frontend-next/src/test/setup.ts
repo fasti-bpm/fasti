@@ -9,7 +9,7 @@ import { resetBusinessKeys } from '../api/engine';
 import { resetHttpState } from '../api/http';
 import { resetWorkloadSupport } from '../api/workload';
 import { clearReceipts } from '../cockpit/receipts';
-import { config, defaultConfig } from '../config';
+import { resetConfig } from '../config';
 import { loadAllLocales } from '../i18n';
 
 // A full-app test waits for several fake round trips and renders before an element appears. The
@@ -50,7 +50,7 @@ afterEach(() => {
   resetHttpState();
   resetWorkloadSupport();
   resetBusinessKeys();
-  Object.assign(config, defaultConfig);
+  resetConfig();
   window.localStorage.clear();
   clearReceipts();
   document.cookie = 'XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';

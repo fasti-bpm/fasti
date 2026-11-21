@@ -3,7 +3,7 @@
  * Copyright Fasti BPM contributors
  */
 import { describe, expect, it, vi } from 'vitest';
-import { config } from '../config';
+import { config, loadConfig } from '../config';
 import { empty, fakeServer, json, text } from '../test/server';
 import { ApiError, apiUrl, invalidateCsrfToken, onUnauthorized, request } from './http';
 
@@ -46,6 +46,26 @@ describe('CSRF token', () => {
     await request(CLAIM, { method: 'POST' });
 
     expect(server.requests[0]?.headers.get('X-XSRF-TOKEN')).toBe('right');
+  });
+
+  it('waits with a write for settings still on their way, which name the cookie', async () => {
+    document.cookie = 'XSRF-TOKEN=wrong; path=/';
+    document.cookie = 'MY-TOKEN=right; path=/';
+    let answer: (response: Response) => void = () => undefined;
+    const server = fakeServer({
+      'GET /fasti/app/next/config.json': () => new Promise<Response>((resolve) => (answer = resolve)),
+      [`POST ${CLAIM}`]: () => empty(),
+    });
+    // the page started without the settings
+    await loadConfig(1);
+
+    const claim = request(CLAIM, { method: 'POST' });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(server.find('POST', CLAIM)).toHaveLength(0);
+    answer(json({ csrfCookieName: 'MY-TOKEN' }));
+    await claim;
+
+    expect(server.find('POST', CLAIM)[0]?.headers.get('X-XSRF-TOKEN')).toBe('right');
   });
 
   it('fetches a token first if none is known', async () => {

@@ -4,7 +4,7 @@
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { config } from '../config';
+import { config, onLateConfig } from '../config';
 import { formatDateTime, formatRelative } from '../lib/dates';
 import { onPreferencesReplaced, readPreference, writePreference } from '../lib/storage';
 import type { AnyKey, LocaleManifest, MessageKey } from './catalog';
@@ -195,6 +195,9 @@ export function I18nProvider({ children, initial }: { children: ReactNode; initi
   // the language asked for last; a slower earlier load must not override it
   const requested = useRef<Locale>(locale);
 
+  // the user picked a language in this page: a default that arrives late does not replace it
+  const chosen = useRef(false);
+
   const apply = useCallback((next: Locale, remember: boolean) => {
     requested.current = next;
     loadLocale(next).then(
@@ -232,9 +235,19 @@ export function I18nProvider({ children, initial }: { children: ReactNode; initi
     return onPreferencesReplaced(() => apply(initialLocale(), false));
   }, [initial, apply]);
 
+  // config.json came after the page had started with the defaults: its default language applies
+  // unless the user chose one
+  useEffect(() => {
+    if (initial) return undefined;
+    return onLateConfig(() => {
+      if (!chosen.current && !storedLocale()) apply(initialLocale(), false);
+    });
+  }, [initial, apply]);
+
   const setLocale = useCallback(
     (next: Locale) => {
       if (isLocale(next)) {
+        chosen.current = true;
         apply(next, true);
       }
     },

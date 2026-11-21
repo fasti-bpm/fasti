@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright Fasti BPM contributors
  */
-import { config } from '../config';
+import { config, configSettled } from '../config';
 import { env } from '../env';
 
 export type ApiErrorKind =
@@ -181,6 +181,8 @@ async function send(path: string, options: RequestOptions): Promise<Response> {
     body = new URLSearchParams(options.form).toString();
   }
   if (!SAFE_METHODS.has(method)) {
+    // the token cookie is read by the name config.json gives; one still on its way is waited for
+    await configSettled();
     const token = await currentToken();
     if (token) {
       headers[CSRF_HEADER] = token;

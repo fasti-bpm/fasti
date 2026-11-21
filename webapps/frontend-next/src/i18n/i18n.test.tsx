@@ -5,8 +5,9 @@
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
-import { config } from '../config';
+import { act } from 'react';
+import { describe, expect, it, vi } from 'vitest';
+import { config, loadConfig } from '../config';
 import {
   I18nProvider,
   LOCALES,
@@ -113,5 +114,48 @@ describe('language of the user interface', () => {
     );
     await waitFor(() => expect(screen.getByText(/^de: /)).toBeVisible());
     expect(document.documentElement.lang).toBe('de');
+  });
+
+  it('follows a default of the installation that arrives after the page started', async () => {
+    let answer: (response: Response) => void = () => undefined;
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((resolve) => (answer = resolve))));
+    // the page gives up waiting and starts in English
+    await loadConfig(1);
+    render(
+      <I18nProvider>
+        <CurrentLocale />
+      </I18nProvider>,
+    );
+    expect(screen.getByText('en: Sign in')).toBeVisible();
+
+    await act(async () => answer(new Response(JSON.stringify({ defaultLocale: 'vi' }))));
+
+    await waitFor(() => expect(screen.getByText('vi: Đăng nhập')).toBeVisible());
+  });
+
+  it('keeps the language the user chose over a default that arrives late', async () => {
+    let answer: (response: Response) => void = () => undefined;
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((resolve) => (answer = resolve))));
+    await loadConfig(1);
+    function Choose() {
+      const { setLocale } = useI18n();
+      return (
+        <button type="button" onClick={() => setLocale('de')}>
+          choose
+        </button>
+      );
+    }
+    render(
+      <I18nProvider>
+        <CurrentLocale />
+        <Choose />
+      </I18nProvider>,
+    );
+    await act(async () => screen.getByRole('button', { name: 'choose' }).click());
+    await waitFor(() => expect(screen.getByText(/^de: /)).toBeVisible());
+
+    await act(async () => answer(new Response(JSON.stringify({ defaultLocale: 'vi' }))));
+
+    expect(screen.getByText(/^de: /)).toBeVisible();
   });
 });

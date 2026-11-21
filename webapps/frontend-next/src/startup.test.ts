@@ -3,7 +3,7 @@
  * Copyright Fasti BPM contributors
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { config, defaultConfig, loadConfig } from './config';
+import { config, configSettled, defaultConfig, loadConfig, onLateConfig, resetConfig } from './config';
 import { isLoaded } from './i18n';
 import { writePreference } from './lib/storage';
 import { prepare } from './startup';
@@ -23,14 +23,14 @@ const answer = (body: unknown): typeof fetch =>
 
 describe('start-up', () => {
   beforeEach(() => {
-    Object.assign(config, defaultConfig);
+    resetConfig();
     localStorage.clear();
   });
 
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
-    Object.assign(config, defaultConfig);
+    resetConfig();
     localStorage.clear();
   });
 
@@ -39,7 +39,7 @@ describe('start-up', () => {
 
     await loadConfig();
 
-    expect(config).toEqual({ csrfCookieName: 'MY-TOKEN', defaultLocale: 'vi' });
+    expect(config).toEqual({ csrfCookieName: 'MY-TOKEN', defaultLocale: 'vi', idlePacing: true });
   });
 
   it('keeps the defaults when the settings are not answered in time', async () => {
@@ -56,18 +56,66 @@ describe('start-up', () => {
     await vi.advanceTimersByTimeAsync(1);
 
     await expect(loading).resolves.toEqual(defaultConfig);
+    // not given up: an answer that comes later still applies
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(fetchMock).mock.calls[0]?.[1]?.signal).toBeUndefined();
   });
 
   it('keeps the defaults when the settings are broken or missing', async () => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response('<html>', { status: 200 }))));
     await expect(loadConfig()).resolves.toEqual(defaultConfig);
 
+    resetConfig();
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response('', { status: 404 }))));
     await expect(loadConfig()).resolves.toEqual(defaultConfig);
 
-    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new TypeError('offline'))));
-    await expect(loadConfig()).resolves.toEqual(defaultConfig);
+    resetConfig();
+    vi.useFakeTimers();
+    const offline = vi.fn(() => Promise.reject(new TypeError('offline')));
+    vi.stubGlobal('fetch', offline);
+    const loading = loadConfig();
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(loading).resolves.toEqual(defaultConfig);
+    // a failed connection is tried again a few times; an answer is not
+    expect(offline).toHaveBeenCalledTimes(4);
+  });
+
+  it('applies settings that arrive after the page started without them, and tells who listens', async () => {
+    vi.useFakeTimers();
+    let answer: (response: Response) => void = () => undefined;
+    const fetchMock = vi.fn(() => new Promise<Response>((resolve) => (answer = resolve)));
+    vi.stubGlobal('fetch', fetchMock);
+    const late = vi.fn();
+
+    const loading = loadConfig(3000);
+    await vi.advanceTimersByTimeAsync(3000);
+    await expect(loading).resolves.toEqual(defaultConfig);
+    onLateConfig(late);
+    let settled = false;
+    void configSettled().then(() => (settled = true));
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(settled).toBe(false);
+
+    answer(new Response(JSON.stringify({ csrfCookieName: 'MY-TOKEN', defaultLocale: 'vi', idlePacing: false })));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(config).toEqual({ csrfCookieName: 'MY-TOKEN', defaultLocale: 'vi', idlePacing: false });
+    expect(late).toHaveBeenCalledTimes(1);
+    expect(settled).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets a write wait for settings that do not come only so long', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', stalled());
+    void loadConfig(3000);
+
+    let settled = false;
+    void configSettled(20_000).then(() => (settled = true));
+    await vi.advanceTimersByTimeAsync(19_999);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(settled).toBe(true);
   });
 
   it('does not let stalled settings hold back the first render', async () => {

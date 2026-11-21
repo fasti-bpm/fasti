@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright Fasti BPM contributors
  */
-import { Component, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Component, Suspense, createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getFormInfo, saveTaskVariables, submitStartForm, submitTaskForm } from '../api/engine';
@@ -65,6 +65,12 @@ export function formTargetKey(target: FormTarget): string {
   return target.type === 'task' ? `task:${target.taskId}` : `start:${target.processDefinitionId}`;
 }
 
+/**
+ * Whether the form is not to be submitted for now, although it can be filled in: a change of its
+ * task is on its way. Read by the buttons of the form, whichever renderer shows them.
+ */
+const SubmitHeldContext = createContext(false);
+
 class RendererBoundary extends Component<
   { children: ReactNode; resetKey: string },
   { error: unknown }
@@ -98,12 +104,21 @@ export function FormHost({
   target,
   disabled,
   disabledHint,
+  pending = false,
+  beforeSubmit,
   submitLabel,
   onSubmitted,
 }: {
   target: FormTarget;
   disabled: boolean;
   disabledHint?: ReactNode;
+  /** something the submit depends on is under way, e.g. the claim of the task: no submit until then */
+  pending?: boolean;
+  /**
+   * Awaited before the form is sent: answers whether it may be, once what was under way is
+   * settled. A form that may not is kept as it is; why is reported by what failed.
+   */
+  beforeSubmit?: () => Promise<boolean>;
   submitLabel: string;
   onSubmitted: (result: ProcessInstanceRef | undefined) => void;
 }) {
@@ -121,6 +136,10 @@ export function FormHost({
   const submit = useCallback(
     async (variables: VariableMap, options?: SubmitOptions) => {
       setFailure(null);
+      // not sent before, e.g., the claim of the task is made: the engine would refuse it
+      if (beforeSubmit && !(await beforeSubmit())) {
+        throw new Error('The form was not submitted: a change it depends on was not made.');
+      }
       try {
         const result =
           target.type === 'task'
@@ -132,7 +151,7 @@ export function FormHost({
         throw error;
       }
     },
-    [target, onSubmitted],
+    [target, onSubmitted, beforeSubmit],
   );
 
   const save = useCallback(
@@ -180,21 +199,23 @@ export function FormHost({
           {described.detail ?? described.title} {described.hint} {t('form.inputKept')}
         </Notice>
       )}
-      <RendererBoundary resetKey={key}>
-        <Suspense fallback={<Loading label={t('form.loading')} />}>
-          <Renderer
-            key={key}
-            target={target}
-            form={form}
-            disabled={disabled}
-            submitLabel={submitLabel}
-            submit={submit}
-            save={target.type === 'task' ? save : undefined}
-            submitted={submitted}
-            reportFailure={setFailure}
-          />
-        </Suspense>
-      </RendererBoundary>
+      <SubmitHeldContext.Provider value={pending}>
+        <RendererBoundary resetKey={key}>
+          <Suspense fallback={<Loading label={t('form.loading')} />}>
+            <Renderer
+              key={key}
+              target={target}
+              form={form}
+              disabled={disabled}
+              submitLabel={submitLabel}
+              submit={submit}
+              save={target.type === 'task' ? save : undefined}
+              submitted={submitted}
+              reportFailure={setFailure}
+            />
+          </Suspense>
+        </RendererBoundary>
+      </SubmitHeldContext.Provider>
     </div>
   );
 }
@@ -224,7 +245,9 @@ export function FormActions({
   useEffect(() => {
     submitRef.current = onSubmit;
   });
-  const inactive = disabled || busy || !!save?.saving;
+  // a change of the task is on its way: the form is submitted once it is settled
+  const held = useContext(SubmitHeldContext);
+  const inactive = disabled || busy || held || !!save?.saving;
   const actionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -269,7 +292,7 @@ export function FormActions({
           </Tooltip>
         </>
       )}
-      <Button variant="primary" busy={busy} disabled={disabled || !!save?.saving} onClick={onSubmit}>
+      <Button variant="primary" busy={busy} disabled={disabled || held || !!save?.saving} onClick={onSubmit}>
         {label}
       </Button>
     </div>

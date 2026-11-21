@@ -5,7 +5,7 @@
 import type { Page } from '@playwright/test';
 import { expect, open, test } from '../support/test';
 import { PREFIX, user } from '../support/env';
-import { dialog } from '../support/ui';
+import { claimOpenTask, dialog } from '../support/ui';
 import { waitFor, type Api } from '../support/api';
 
 interface CaseInstance {
@@ -100,7 +100,7 @@ test.describe('Cases (CMMN)', () => {
     await expect(details.getByRole('heading', { name: 'Review claim' })).toBeVisible();
     await expect(details.getByText('E2E claim case')).toBeVisible();
     await expect(details.getByRole('link', { name: 'Open the case in Cockpit' })).toBeVisible();
-    await details.getByRole('button', { name: 'Claim' }).first().click();
+    await claimOpenTask(app);
     await expect(details.getByRole('button', { name: 'Complete' })).toBeEnabled();
     await details.getByRole('button', { name: 'Complete' }).click();
     await expect.poll(async () => (await api.get<unknown[]>('task', { caseInstanceId: instance.id, assignee: user })).length).toBe(0);

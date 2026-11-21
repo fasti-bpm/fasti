@@ -20,7 +20,7 @@ import { parseEngineDate } from '../lib/dates';
 import { pluginsFor } from '../plugins/registry';
 import { Button, EmptyState, ErrorState, IconButton, Loading, Skeleton } from '../ui';
 import { useToast } from '../ui/toast';
-import { refreshTasks, type TaskActions } from './actions';
+import { refreshTasks, taskChangesSettled, useTaskChangePending, type TaskActions } from './actions';
 import { AttachmentsTab } from './Attachments';
 import { TaskMeta } from './TaskMeta';
 import { CaseTimeline } from './CaseTimeline';
@@ -296,6 +296,8 @@ export function TaskDetail({
   );
   // whether the four-eyes control would refuse the completion by the signed-in user
   const fourEyes = useFourEyes(task);
+  // a claim or another change of the task that is shown already, but not confirmed by the server yet
+  const changing = useTaskChangePending(taskId);
 
   // a task completed or deleted elsewhere is gone, even with the data read before
   if (query.isError && (!task || isApiError(query.error, 'notFound'))) {
@@ -447,6 +449,9 @@ export function TaskDetail({
           <FormHost
             target={{ type: 'task', taskId: task.id }}
             disabled={!mine || fourEyesBlocked}
+            // the form of a task being claimed can be filled in, but is completed only once the claim is made
+            pending={changing}
+            beforeSubmit={() => taskChangesSettled(queryClient, task.id)}
             disabledHint={
               mine && fourEyesBlocked ? (
                 t('fourEyes.formHint')

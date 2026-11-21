@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright Fasti BPM contributors
  */
-import { useMemo } from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Query, QueryClient } from '@tanstack/react-query';
 import * as api from '../api/engine';
@@ -30,6 +30,117 @@ function patchTask(queryClient: QueryClient, taskId: string, patch: Partial<Task
         }
       : page,
   );
+}
+
+/** The task as it is shown: the open one, or else its copy in a list. */
+function shownTask(queryClient: QueryClient, taskId: string): Task | undefined {
+  const open = queryClient.getQueryData<Task>(['task', taskId]);
+  if (open) {
+    return open;
+  }
+  for (const [, page] of queryClient.getQueriesData<TaskPage>({ queryKey: ['tasks'] })) {
+    const listed = page?.tasks.find((task) => task.id === taskId);
+    if (listed) {
+      return listed;
+    }
+  }
+  return undefined;
+}
+
+/** What the task shows for the properties of a patch, to go back to if the change is refused. */
+function shownValues(queryClient: QueryClient, taskId: string, patch: Partial<Task>): Partial<Task> | null {
+  const task = shownTask(queryClient, taskId);
+  if (!task) {
+    return null;
+  }
+  const values: Record<string, unknown> = {};
+  for (const property of Object.keys(patch)) {
+    values[property] = (task as unknown as Record<string, unknown>)[property];
+  }
+  return values as Partial<Task>;
+}
+
+/**
+ * The changes of tasks that are on their way to the server, by query client. A change is shown
+ * before the server confirmed it, but the task itself is not what it shows until then: completing
+ * it meanwhile would run into the change (an optimistic locking failure of the engine) or be
+ * refused for a task that is not claimed yet. So what completes a task waits for these.
+ */
+interface PendingChanges {
+  /** per task: the changes under way, each answering whether it was made */
+  tasks: Map<string, Set<Promise<boolean>>>;
+  listeners: Set<() => void>;
+}
+
+const pendingChanges = new WeakMap<QueryClient, PendingChanges>();
+
+function pendingOf(queryClient: QueryClient): PendingChanges {
+  let pending = pendingChanges.get(queryClient);
+  if (!pending) {
+    pending = { tasks: new Map(), listeners: new Set() };
+    pendingChanges.set(queryClient, pending);
+  }
+  return pending;
+}
+
+/** Keeps a change of a task as under way until it is settled. */
+function trackChange(queryClient: QueryClient, taskId: string, change: Promise<boolean>): Promise<boolean> {
+  const pending = pendingOf(queryClient);
+  const notify = () => pending.listeners.forEach((listener) => listener());
+  let changes = pending.tasks.get(taskId);
+  if (!changes) {
+    changes = new Set();
+    pending.tasks.set(taskId, changes);
+  }
+  changes.add(change);
+  notify();
+  const settle = () => {
+    const current = pending.tasks.get(taskId);
+    current?.delete(change);
+    if (current?.size === 0) {
+      pending.tasks.delete(taskId);
+    }
+    notify();
+  };
+  change.then(settle, settle);
+  return change;
+}
+
+/** Whether a change of the task (claim, unclaim, assignment, ...) is on its way to the server. */
+export function isTaskChangePending(queryClient: QueryClient, taskId: string): boolean {
+  return (pendingChanges.get(queryClient)?.tasks.get(taskId)?.size ?? 0) > 0;
+}
+
+/**
+ * Waits for the changes of the task that are under way, those started meanwhile included.
+ * Answers whether all of them were made: after a refused one the task is not what was shown.
+ */
+export async function taskChangesSettled(queryClient: QueryClient, taskId: string): Promise<boolean> {
+  let made = true;
+  for (;;) {
+    const changes = pendingChanges.get(queryClient)?.tasks.get(taskId);
+    if (!changes || changes.size === 0) {
+      return made;
+    }
+    const results = await Promise.all([...changes].map((change) => change.catch(() => false)));
+    made = made && results.every(Boolean);
+  }
+}
+
+/** Whether a change of the task is under way, kept up to date for a component. */
+export function useTaskChangePending(taskId: string): boolean {
+  const queryClient = useQueryClient();
+  const subscribe = useCallback(
+    (listener: () => void) => {
+      const pending = pendingOf(queryClient);
+      pending.listeners.add(listener);
+      return () => {
+        pending.listeners.delete(listener);
+      };
+    },
+    [queryClient],
+  );
+  return useSyncExternalStore(subscribe, () => isTaskChangePending(queryClient, taskId));
 }
 
 /**
@@ -115,25 +226,37 @@ export function useTaskActions(): TaskActions {
   const { t } = useI18n();
 
   return useMemo<TaskActions>(() => {
-    const change = async (
+    const change = (
       taskId: string,
       patch: Partial<Task>,
       call: () => Promise<unknown>,
       success: Parameters<typeof toast.show>[0] | null,
       failure: string,
     ): Promise<void> => {
-      await queryClient.cancelQueries({ queryKey: ['task', taskId] });
-      patchTask(queryClient, taskId, patch);
-      try {
-        await call();
-        if (success) {
-          toast.show(success);
+      const run = async (): Promise<boolean> => {
+        await queryClient.cancelQueries({ queryKey: ['task', taskId] });
+        const before = shownValues(queryClient, taskId, patch);
+        patchTask(queryClient, taskId, patch);
+        try {
+          await call();
+          if (success) {
+            toast.show(success);
+          }
+          return true;
+        } catch (error) {
+          // back to what was shown before: the task is read again, but until then it must not
+          // pass for changed. A later change of the task is shown by now and stays.
+          if (before && pendingOf(queryClient).tasks.get(taskId)?.size === 1) {
+            patchTask(queryClient, taskId, before);
+          }
+          toast.error(error, failure);
+          return false;
+        } finally {
+          refreshTasks(queryClient, taskId);
         }
-      } catch (error) {
-        toast.error(error, failure);
-      } finally {
-        refreshTasks(queryClient, taskId);
-      }
+      };
+      // under way from here on, before anything is shown
+      return trackChange(queryClient, taskId, run()).then(() => undefined);
     };
 
     const actions: TaskActions = {

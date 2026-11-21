@@ -19,11 +19,22 @@ export const defaultConfig: AppConfig = {
 
 export const config: AppConfig = { ...defaultConfig };
 
-export async function loadConfig(): Promise<AppConfig> {
+/** How long the page waits for `config.json` before it starts with the defaults. */
+export const CONFIG_TIMEOUT = 3000;
+
+/**
+ * Reads `config.json`. A file that is missing, broken or not answered within
+ * `timeout` ms leaves the defaults in place: the first render never waits
+ * longer than that for a file most installations do not change.
+ */
+export async function loadConfig(timeout: number = CONFIG_TIMEOUT): Promise<AppConfig> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
   try {
     const response = await fetch(assetUrl('config.json'), {
       credentials: 'same-origin',
       cache: 'no-cache',
+      signal: controller.signal,
     });
     if (response.ok) {
       const raw: unknown = await response.json();
@@ -39,6 +50,8 @@ export async function loadConfig(): Promise<AppConfig> {
     }
   } catch {
     // the defaults apply
+  } finally {
+    clearTimeout(timer);
   }
   return config;
 }

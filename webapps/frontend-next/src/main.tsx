@@ -5,9 +5,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
-import { loadConfig } from './config';
-import { initialLocale, loadLocale } from './i18n';
 import './plugins';
+import { prepare } from './startup';
 import { applyStoredTheme } from './theme/theme';
 import { applyDensity } from './lib/userPrefs';
 import { onPreferencesReplaced } from './lib/storage';
@@ -24,10 +23,7 @@ onPreferencesReplaced(() => applyDensity());
 
 const root = document.getElementById('root');
 if (root) {
-  void loadConfig()
-    .then(() => loadLocale(initialLocale()))
-    .catch(() => undefined)
-    .then(() => {
+  void prepare().then(() => {
     createRoot(root).render(
       <StrictMode>
         <App />

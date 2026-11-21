@@ -10,9 +10,14 @@
 #   newest entry of an older POM state, so that a changed POM downloads only what changed.
 #   This action only restores it: the job saves it with actions/cache/save and the outputs
 #   below (build.yml does that on main, so pull requests reuse the entries of main).
-# HTTP retries of Maven itself (including on 429) are set in .mvn/maven.config, once for
-# the Wagon transport of Maven 3.8 (maven.wagon.*) and once for the native HTTP transport of
-# Maven 3.9.5 and later (aether.connector.http.*); each Maven ignores the other set.
+# HTTP retries of Maven itself (including on 429 and 503) are set in .mvn/maven.config for the
+# Maven of the wrapper (3.10.1, Resolver 2): aether.transport.http.* and
+# aether.transport.apache.* configure its default HTTP transport. The maven.wagon.* keys
+# only apply when the Wagon transport is chosen (-Dmaven.resolver.transport=wagon). Resolver 1
+# (Maven 3.9) named the keys aether.connector.http.*; Resolver 2 does not read those.
+# The wrapper checks the SHA-256 of the Maven distribution it downloads and of its own jar
+# (distributionSha256Sum, wrapperSha256Sum in .mvn/wrapper/maven-wrapper.properties); the cache
+# key below is the hash of that file, so a changed checksum never reuses a cached distribution.
 name: Set up Java and Maven
 description: JDK, cached Maven distribution and local repository, and a retried wrapper download
 inputs:

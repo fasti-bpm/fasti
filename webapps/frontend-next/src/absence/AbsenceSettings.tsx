@@ -15,6 +15,7 @@ import {
 } from '../api/absence';
 import { useI18n } from '../i18n';
 import { fromDateTimeInput, parseEngineDate, toDateTimeInput, toEngineDate } from '../lib/dates';
+import { refreshTasks } from '../tasklist/actions';
 import { IdentityInput } from '../tasklist/IdentityInput';
 import { Button, ErrorState, Field, Notice, Skeleton, cx } from '../ui';
 import { ConfirmDialog } from '../ui/controls';
@@ -211,7 +212,8 @@ function AbsenceForm({ absence, userId, self }: { absence: Absence; userId: stri
         detail: result.remaining > 0 ? t('absence.handoverRemaining', { count: result.remaining }) : undefined,
       });
       refresh();
-      void queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      // the tasks have another assignee now, and are no longer held for the absent user
+      refreshTasks(queryClient);
     } catch (error) {
       toast.error(error, t('absence.handoverFailed'));
     } finally {

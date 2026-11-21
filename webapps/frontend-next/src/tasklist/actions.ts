@@ -41,6 +41,9 @@ export function refreshTasks(queryClient: QueryClient, taskId?: string): void {
   void queryClient.invalidateQueries({ queryKey: ['filters'] });
   // who may complete a task depends on its assignee and on the steps completed meanwhile
   void queryClient.invalidateQueries({ queryKey: taskId ? ['four-eyes', taskId] : ['four-eyes'] });
+  // a task assigned anew is no longer held for an absent user
+  void queryClient.invalidateQueries({ queryKey: ['substitution-marks'] });
+  void queryClient.invalidateQueries({ queryKey: taskId ? ['substitution-mark', taskId] : ['substitution-mark'] });
 }
 
 export interface TaskActions {

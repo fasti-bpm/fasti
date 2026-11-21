@@ -25,17 +25,26 @@ Planned for release as 1.1.0, because it adds features. None of these changes is
   included), with the authenticated user, the engine clock, the engine and the tenant, in the
   transaction of what it records. Each record carries SHA-256(previous hash, canonical record);
   every node appends to a few chains of its own, locking only the head row of a chain, so nodes
-  do not wait for one global lock. Checkpoints can be signed with an HMAC key that never reaches
-  the database (`FASTI_AUDIT_HMAC_KEY` or a key file): a chain rewritten before a signed
-  checkpoint then fails verification, unless the key id of the checkpoint was changed as well,
-  which shows only as fewer verified checkpoints (`checkpointsVerified`). `POST /audit/verify` and the
+  do not wait for one global lock; nested transactions use slots of their own and the wait for
+  a chain is limited (`fasti.audit.lock-timeout-seconds`). Checkpoints and purge records can be
+  signed with an HMAC key that never reaches the database (`FASTI_AUDIT_HMAC_KEY` or a key
+  file). `POST /audit/verify` (one at a time per engine, `409` otherwise) and the
   **Cockpit → Audit trail** page recompute the chains and name the first changed, removed or
-  inserted record; the page and the new "Audit trail" tab of an instance history filter by
-  instance, business key, user, category and time and export CSV or JSON (the export is
-  recorded). History cleanup does not touch the records; an explicit, export-confirmed
-  `POST /audit/purge` removes records older than `fasti.audit.retention-days` and leaves a purge
-  record that keeps the chain verifiable. Reading needs an administrators group or `READ` on
-  `SYSTEM`, purging `DELETE` on `SYSTEM`. Stored in the optional tables `FASTI_AUDIT_EVENT` and
+  inserted record. Verification gives two verdicts: `intact` (nothing that can be checked
+  failed) and `authenticated` (every checkpoint and the purge record of a removed start were
+  checked with a key of the engine). With a key, a checkpoint without valid signature, a missing
+  checkpoint and a removed start without signed purge record are breaks; earlier keys stay
+  usable through `fasti.audit.retired-hmac-keys` (checked) or `fasti.audit.retired-key-ids`
+  (accepted unchecked, so not authenticated). Without a key a purged start is reported as not
+  attested. The page and the new "Audit trail" tab of an instance history filter by instance,
+  business key, user, category and time (pages are cut by the database) and export CSV or JSON
+  with `POST /audit/event/export`, streamed from one cursor (the export is recorded; a `GET`
+  exports and records nothing). History cleanup does not touch the records; an explicit,
+  export-confirmed `POST /audit/purge` removes records older than `fasti.audit.retention-days`
+  and leaves a purge record that keeps the chain verifiable. Reading needs an administrators
+  group or `READ` on `SYSTEM`, purging `DELETE` on `SYSTEM`; readers who are not administrators
+  see the records of their tenants and those without tenant. Database error messages are logged,
+  not returned. Stored in the optional tables `FASTI_AUDIT_EVENT` and
   `FASTI_AUDIT_HEAD` (scripts for H2, PostgreSQL, MySQL/MariaDB, Oracle, SQL Server and DB2,
   `sql/create/<database>_fasti_audit.sql`, below `configuration/` in Run and the container
   image); the Camunda 7.24 schema is unchanged. Off by default

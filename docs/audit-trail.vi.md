@@ -77,9 +77,15 @@ nó (mặc định 4), tên là `<node id>/<slot>`; một giao dịch dùng slot
 Khi ghi, chỉ dòng head của chuỗi đó bị khóa (bằng một lệnh `UPDATE`, mọi cơ sở dữ liệu đều hỗ trợ
 như nhau), vào cuối lệnh, cho đến khi commit. Vì vậy lệnh trên slot khác và node khác không bao
 giờ chờ nhau, còn các lệnh cùng slot chỉ xếp hàng trong khoảnh khắc commit. Một giao dịch lồng
-bắt đầu khi giao dịch ngoài của cùng luồng đang giữ một chuỗi sẽ lấy slot khác (thêm một slot
-ngoài `chains` nếu mọi slot đều đang bị luồng đó giữ), nên không thể chờ chính giao dịch ngoài
-của nó. Đánh đổi: không có một thứ tự toàn cục duy nhất cho mọi bản
+("requires new") bắt đầu khi các giao dịch ngoài của cùng luồng đang giữ chuỗi sẽ lấy slot của nó
+ở dải kế tiếp: với `chains` = 4, giao dịch ngoài cùng dùng slot 0 đến 3, giao dịch lồng trong đó
+dùng 4 đến 7, và cứ thế (các chuỗi `<node id>/4` … xuất hiện khi dùng lần đầu). Vì vậy một giao
+dịch chỉ chờ các giao dịch cùng độ sâu lồng, không bao giờ chờ một giao dịch ngoài đang tạm dừng,
+nên giao dịch lồng của nhiều luồng không thể chặn nhau theo cách mà cơ sở dữ liệu không nhìn
+thấy. Một giao dịch trải qua nhiều lệnh giữ chuỗi của nó từ bản ghi đầu tiên đến khi commit, nên
+các giao dịch như vậy trên cùng một slot chạy lần lượt. Thời gian chờ chuỗi có giới hạn: sau
+`fasti.audit.lock-timeout-seconds` (mặc định 60) giây, lệnh thất bại mà không ghi gì, thay vì
+treo. Đánh đổi: không có một thứ tự toàn cục duy nhất cho mọi bản
 ghi (mỗi chuỗi có thứ tự; giữa các chuỗi thì sắp theo thời gian), và việc kiểm tra phải đọc mọi
 chuỗi.
 
@@ -96,23 +102,74 @@ trang, và báo cho mỗi chuỗi nó còn toàn vẹn hay không và đứt ở
 | `previous-hash-mismatch` | bản ghi không nối tiếp bản ghi trước: một trong hai bị sửa, hoặc có bản ghi bị xóa hay chèn vào giữa |
 | `sequence-gap` | thiếu vị trí: bản ghi đã bị xóa |
 | `missing-start` | chuỗi không bắt đầu từ 1 và không có bản ghi dọn nào nói về các bản ghi trước đó |
+| `purge-unattested` | đã đặt khóa, chuỗi không bắt đầu từ 1, và bản ghi dọn nói về các bản ghi trước đó không có chữ ký hợp lệ của một khóa của engine |
 | `head-mismatch` | head chỉ tới bản ghi cuối khác: bản ghi ở cuối bị xóa, hoặc head bị sửa |
 | `head-missing` | có bản ghi cho một chuỗi không có head |
 | `checkpoint-mismatch` | HMAC của một điểm kiểm tra có chữ ký không khớp: chuỗi trước đó đã bị viết lại |
+| `checkpoint-unsigned` | đã đặt khóa mà một điểm kiểm tra không có chữ ký |
+| `checkpoint-unknown-key` | đã đặt khóa mà một điểm kiểm tra ghi một khóa không phải khóa hiện tại hay khóa đã thôi dùng |
+| `checkpoint-missing` | đã đặt khóa mà không có điểm kiểm tra ở chỗ khoảng cách quy định: điểm kiểm tra đã bị xóa |
 
-Bản thân việc kiểm tra cũng thành một bản ghi (ai kiểm tra, kết quả).
+Bản thân việc kiểm tra cũng thành một bản ghi (ai kiểm tra, kết quả). Mỗi engine chỉ chạy một
+lần kiểm tra tại một thời điểm, vì nó đọc và băm mọi bản ghi; yêu cầu thứ hai bị từ chối (`409`
+qua REST, `AuditVerificationRunningException` trong Java) cho đến khi lần đầu xong. Giới hạn này
+tính theo từng engine, không phải cả cụm.
+
+**Hai kết luận.** Một lần kiểm tra trả lời hai câu hỏi, cho từng chuỗi và cho cả nhật ký:
+
+- **`intact`** (toàn vẹn): không có gì kiểm được bằng thiết lập của engine bị sai. Các mã băm
+  nhất quán từ bản ghi đầu của chuỗi đến head. Khi có khóa, thêm vào đó, mọi điểm kiểm tra và
+  mọi bản ghi dọn giải thích phần đầu bị xóa đều có chữ ký hợp lệ (hoặc chữ ký mà thiết lập liệt
+  kê là đã thôi dùng, xem dưới), và không thiếu điểm kiểm tra nào.
+- **`authenticated`** (đã xác thực): toàn vẹn, có đặt khóa, và mọi điểm kiểm tra cùng bản ghi
+  dọn của phần đầu bị xóa đã được *kiểm* bằng một khóa mà engine đang giữ. Chỉ kết luận này mới
+  loại trừ việc người có quyền ghi vào cơ sở dữ liệu viết lại một chuỗi cho đến điểm kiểm tra
+  cuối của nó hoặc xóa phần đầu của nó. Nó là `false` khi không có khóa, với chuỗi có chữ ký được
+  chấp nhận mà không kiểm (id khóa đã thôi dùng), và với chuỗi mà phần đầu bị xóa chỉ được nêu
+  bởi một bản ghi dọn không có chữ ký đã kiểm (`purgeAttested: false`). Với từng chuỗi,
+  `authenticatedThrough` là bản ghi cuối cùng được một chữ ký đã kiểm bao phủ (bản ghi ngay trước
+  điểm kiểm tra cuối; `0` khi chuỗi chưa có điểm kiểm tra): các bản ghi sau nó chỉ được mã băm và
+  head bảo vệ.
+
+Vậy khi không có khóa, "toàn vẹn" nghĩa là "các mã băm nhất quán"; giao diện web nói rõ điều đó,
+và nói rõ khi một nhật ký toàn vẹn chưa được xác thực.
 
 **Điểm kiểm tra có chữ ký.** Người có quyền ghi vào cơ sở dữ liệu có thể viết lại cả một chuỗi
 từ một bản ghi nào đó trở đi, với mã băm đúng, và dời head. Để phát hiện được điều đó, hãy đặt
 một khóa ít nhất 32 byte (`fasti.audit.hmac-key`, tốt nhất qua biến môi trường
 `FASTI_AUDIT_HMAC_KEY`, hoặc một tệp trong `fasti.audit.hmac-key-file`). Sau mỗi
 `checkpoint-interval` bản ghi (mặc định 1000), chuỗi có một bản ghi `checkpoint` chứa
-HMAC-SHA256 của vị trí và mã băm trước nó. Khóa không bao giờ vào cơ sở dữ liệu; `keyId` (phần
-đầu SHA-256 của khóa) giúp phân biệt các khóa. Điểm kiểm tra ghi khóa hiện tại mà không có chữ ký
-hợp lệ sẽ làm đứt chuỗi; điểm kiểm tra ghi trước khi đặt khóa, hoặc bằng khóa cũ, không kiểm tra
-được và được tính là chưa xác minh ("đã xác minh 3/5" trong giao diện web, `checkpointsVerified`
-qua REST). Sau khi đổi khóa, hãy kiểm tra và lưu kết quả trước khi các điểm kiểm tra cũ trở nên
-không kiểm tra được. Mỗi điểm kiểm tra cũng được ghi vào log của ứng
+HMAC-SHA256 của chuỗi, vị trí và mã băm trước nó, cùng khoảng cách dùng khi ghi. Khóa không bao
+giờ vào cơ sở dữ liệu; `keyId` (phần đầu SHA-256 của khóa) giúp phân biệt các khóa.
+
+Khi đã đặt khóa, thiếu chữ ký cũng là một chỗ đứt như chữ ký sai, vì người viết lại chuỗi không
+giả được chữ ký nhưng xóa được chúng:
+
+- mọi điểm kiểm tra phải có chữ ký hợp lệ của khóa hiện tại hoặc của một khóa đã thôi dùng;
+- các điểm kiểm tra phải nối tiếp nhau, tính từ bản ghi đầu của chuỗi, đúng khoảng cách dùng khi
+  ghi chúng, và sau điểm cuối cùng không được có nhiều bản ghi hơn khoảng cách đó: điểm kiểm tra
+  bị xóa sẽ bị phát hiện, kể cả khi engine đã ghi thêm điểm mới lên một chuỗi đã bị viết lại;
+- chuỗi không bắt đầu từ bản ghi 1 cần một bản ghi dọn được ký bằng một khóa như vậy.
+
+**Đổi khóa, hoặc đặt khóa về sau.** Đưa các khóa cũ cho engine qua
+`fasti.audit.retired-hmac-keys` (phân cách bằng dấu phẩy, ví dụ `FASTI_AUDIT_RETIRED_HMAC_KEYS`):
+những gì chúng đã ký vẫn được kiểm, và nhật ký vẫn được xác thực. Nếu một khóa cũ đã mất, hoặc
+điểm kiểm tra và bản ghi dọn được ghi trước khi đặt khóa, hãy liệt kê id khóa của chúng (12 ký
+tự hex, như `GET /audit` và các điểm kiểm tra hiển thị) hoặc từ `unsigned` trong
+`fasti.audit.retired-key-ids`. Khi đó các chữ ký ấy được chấp nhận mà không kiểm, nhưng chỉ trước
+điểm kiểm tra đầu tiên của khóa hiện tại trong chuỗi, và chuỗi như vậy được báo là toàn vẹn chứ
+không phải đã xác thực ("đã xác minh 3/5" trong giao diện web, `checkpointsVerified` qua REST).
+Hãy bỏ mục đó khi một lần dọn đã xóa các bản ghi mà nó bao phủ. Không có cả hai thiết lập, việc
+kiểm tra báo `checkpoint-unknown-key`, `checkpoint-unsigned` hoặc `purge-unattested`. Đổi
+`checkpoint-interval` từ giá trị này sang giá trị khác thì không sao (mỗi điểm kiểm tra ghi lại
+khoảng cách dùng khi ghi nó). Nhưng một đoạn của chuỗi có ký dài hơn khoảng cách mà không có điểm
+kiểm tra (điểm kiểm tra từng tắt, `0`, một thời gian; khoảng cách bị giảm trước điểm kiểm tra đầu
+tiên của chuỗi; node khác dùng khoảng cách lớn hơn) sẽ bị báo `checkpoint-missing`, vì điểm kiểm
+tra bị xóa cũng trông như vậy. Ở đầu chuỗi, hãy liệt kê `unsigned` để chấp nhận (khi đó chuỗi
+không được xác thực); ở giữa chuỗi thì nó tồn tại cho đến khi một lần dọn xóa phần đó. Vì vậy hãy
+đặt khóa và khoảng cách trước các bản ghi đầu tiên, giống nhau trên mọi node của cụm.
+
+Mỗi điểm kiểm tra cũng được ghi vào log của ứng
 dụng (`Audit trail checkpoint …`); khi log được chuyển sang kho log, đó là một mốc nằm ngoài cơ sở
 dữ liệu. Các bản ghi sau điểm kiểm tra cuối chỉ được chuỗi bảo vệ: hãy lưu các mã băm cuối mà
 việc kiểm tra báo (hoặc các dòng log) ở ngoài cơ sở dữ liệu để phát hiện việc cắt bớt hay viết
@@ -124,8 +181,13 @@ lại chúng về sau.
   bảng lịch sử, bất kể thời gian sống của lịch sử.
 - Bản ghi được giữ cho đến khi bị dọn có chủ đích. `POST /audit/purge`
   `{"before": "…", "exported": true}` (Java: `AuditService#purge`) xóa, theo từng chuỗi, các bản
-  ghi từ đầu chuỗi đến bản ghi cuối cùng trước `before`, rồi thêm một bản ghi `purge` nêu mã băm
-  của bản ghi cuối bị xóa, để phần còn lại của chuỗi vẫn kiểm tra được. Việc dọn chạy trong giao
+  ghi từ đầu chuỗi đến bản ghi cuối cùng trước `before`, rồi thêm một bản ghi `purge` nêu vị trí
+  và mã băm của bản ghi cuối bị xóa, để phần còn lại của chuỗi vẫn kiểm tra được. Khi có khóa,
+  bản ghi dọn được ký (HMAC trên chuỗi, vị trí và mã băm bị xóa, cùng id và vị trí của chính bản
+  ghi dọn), và việc kiểm tra chỉ chấp nhận một chuỗi thiếu phần đầu khi có chữ ký đó: bản ghi dọn
+  do ai đó tự ghi vào cơ sở dữ liệu để che việc xóa bản ghi sẽ bị phát hiện. Không có khóa thì
+  bản ghi dọn không chứng minh được gì; chuỗi được báo với `purgeAttested: false` và không bao
+  giờ là đã xác thực. Việc dọn chạy trong giao
   dịch riêng (không nằm trong giao dịch đã ghi bản ghi kiểm toán). Bản ghi mới hơn
   `fasti.audit.retention-days` (mặc định 365) ngày không bao giờ bị dọn. Hãy xuất trước: bản xuất
   JSON có đủ mọi mã băm, nên phần đã xóa vẫn kiểm tra được ngoại tuyến với bản ghi dọn. Dọn cần
@@ -156,7 +218,10 @@ liệu mà ứng dụng không ghi được.
   / **Xuất JSON** tải phần đang lọc từ máy chủ (cũ nhất trước, tối đa 100.000 bản ghi; lần xuất
   được ghi lại); CSV thêm dấu nháy trước văn bản mà bảng tính có thể chạy như công thức, JSON giữ
   nguyên mọi giá trị như khi băm. **Kiểm tra toàn vẹn** hiện "Toàn vẹn" cùng mã băm cuối của
-  từng chuỗi, hoặc một cảnh báo nêu chuỗi, bản ghi và lý do của chỗ đứt đầu tiên.
+  từng chuỗi, hoặc một cảnh báo nêu chuỗi, bản ghi và lý do của chỗ đứt đầu tiên. Dưới "Toàn vẹn"
+  có ghi nhật ký đã được xác thực hay chưa, và nếu chưa thì vì sao (không có khóa, hoặc có chữ ký
+  không kiểm được); mỗi chuỗi cho biết chữ ký của nó bao phủ đến bản ghi nào, và phần đầu đã dọn
+  mà không có chữ ký đã kiểm được đánh dấu trên chuỗi của nó.
 - **Lịch sử một lượt chạy → Nhật ký kiểm toán**: các bản ghi của lượt chạy đó, cũ nhất trước
   (hiện khi nhật ký kiểm toán đang bật).
 
@@ -168,11 +233,11 @@ Tất cả nằm dưới `/engine-rest` (cũng có trong tài liệu OpenAPI, nh
 
 | Phương thức và đường dẫn | Chức năng |
 |---|---|
-| `GET /audit` | `enabled`, cho mọi người gọi và cả khi nhật ký kiểm toán tắt (`200` với `enabled: false`); với người được đọc nhật ký thì có thêm các thiết lập (`nodeId`, `chains`, `types`, `variableValues`, `maskedVariables`, `signed`, `keyId`, `checkpointInterval`, `retentionDays`, `historyLevel`); không bao giờ có khóa |
-| `GET /audit/event` | Các bản ghi, mới nhất trước; lọc `processInstanceId`, `businessKey`, `actor` (`system` cho engine), `type` (phân cách bằng dấu phẩy), `action`, `tenantId`, `processDefinitionKey`, `entityId`, `chainId`, `from`, `to`, `sortOrder` (`desc`, `asc`), phân trang `firstResult`, `maxResults` (tối đa 1000) |
+| `GET /audit` | `enabled`, cho mọi người gọi và cả khi nhật ký kiểm toán tắt (`200` với `enabled: false`); với người được đọc nhật ký thì có thêm các thiết lập (`nodeId`, `chains`, `types`, `variableValues`, `maskedVariables`, `signed`, `keyId`, `retiredKeyIds`, `checkpointInterval`, `retentionDays`, `historyLevel`); không bao giờ có khóa |
+| `GET /audit/event` | Các bản ghi, mới nhất trước; lọc `processInstanceId`, `businessKey`, `actor` (`system` cho engine), `type` (phân cách bằng dấu phẩy), `action`, `tenantId`, `processDefinitionKey`, `entityId`, `chainId`, `from`, `to`, `sortOrder` (`desc`, `asc`), phân trang `firstResult` (tối đa 1.000.000), `maxResults` (tối đa 1000); trang được cắt ngay trong cơ sở dữ liệu |
 | `GET /audit/event/count` | Số bản ghi khớp bộ lọc |
-| `GET /audit/event/export?format=csv\|json` | Phần đang lọc dưới dạng tệp (được ghi lại là `audit`/`export`) |
-| `POST /audit/verify?chainId=` | Kiểm tra mọi chuỗi (hoặc một chuỗi): `intact`, `records`, `chains` (với `lastHash`, `checkpointsVerified`, `purgedThrough`, `firstBreak`) và `firstBreak` |
+| `POST /audit/event/export?format=csv\|json` | Phần đang lọc (cùng bộ lọc, dạng tham số truy vấn) dưới dạng tệp, đọc từ một con trỏ cơ sở dữ liệu; được ghi lại là `audit`/`export`. Dùng `POST` vì nó ghi bản ghi đó: `GET` trả `405` và không ghi gì |
+| `POST /audit/verify?chainId=` | Kiểm tra mọi chuỗi (hoặc một chuỗi): `intact`, `authenticated`, `records`, `chains` (với `authenticated`, `authenticatedThrough`, `lastHash`, `checkpointsVerified`, `purgedThrough`, `purgeAttested`, `firstBreak`) và `firstBreak`; `409` khi một lần kiểm tra khác đang chạy |
 | `POST /audit/purge` | `{"before": "...", "exported": true}`: dọn bản ghi cũ, xem ở trên |
 
 **Phân quyền**: đọc, xuất và kiểm tra cần là thành viên nhóm quản trị (`camunda-admin`) hoặc có
@@ -183,8 +248,19 @@ dùng đã xác thực, kể cả khi phân quyền đang bật: đó là trư�
 cấu hình mặc định của Fasti BPM Run (container image thì bật). Mọi endpoint trừ `GET /audit` trả về
 `400` khi nhật ký kiểm toán tắt.
 
+**Tenant**: người đọc không phải quản trị viên chỉ xem, đếm và xuất được bản ghi của các tenant
+trong phiên xác thực của mình và các bản ghi không có tenant (deployment và thao tác không có
+tenant, điểm kiểm tra, lần kiểm tra, lần xuất, lần dọn), như các truy vấn của engine khi việc
+kiểm tra tenant đang bật. Việc kiểm tra luôn bao trùm cả chuỗi; nó trả về vị trí và mã băm, không
+trả về bản ghi.
+
+**Lỗi**: khi cơ sở dữ liệu lỗi, phản hồi chỉ nêu việc không làm được ("The audit trail could not
+read records"), không bao giờ nêu thông báo của cơ sở dữ liệu; thông báo đó nằm trong log máy
+chủ. Truy vấn và xuất dừng sau `fasti.audit.query-timeout-seconds` (mặc định 120) giây.
+
 Java: `AuditTrail.of(processEngine)` trả về `AuditService` (`createQuery()`, `verify()`,
-`recordExport(…)`, `purge(before)`).
+`recordExport(…)`, `purge(before)`); `AuditEventQuery#listPage` phân trang trong cơ sở dữ liệu và
+`#forEach` đọc một kết quả lớn từ một con trỏ.
 
 ## Bật tính năng
 
@@ -204,9 +280,13 @@ Thiết lập (`fasti.audit.*`; thuộc tính plugin viết kiểu camelCase cho
 | `types` | tất cả trừ `activity` | các loại, phân cách bằng dấu phẩy, hoặc `all` |
 | `variable-values` | `hash` | `hash`, `value` hoặc `none` |
 | `masked-variables` | xem ở trên | mẫu tên biến không bao giờ được ghi giá trị |
-| `hmac-key` / `hmac-key-file` | không có | khóa ký điểm kiểm tra (ít nhất 32 byte) |
+| `hmac-key` / `hmac-key-file` | không có | khóa ký điểm kiểm tra và bản ghi dọn (ít nhất 32 byte) |
+| `retired-hmac-keys` | không có | các khóa cũ, phân cách bằng dấu phẩy: những gì chúng đã ký vẫn được kiểm |
+| `retired-key-ids` | không có | id của các khóa cũ đã mất, và `unsigned`: được chấp nhận mà không kiểm, khi đó chuỗi không được xác thực |
 | `checkpoint-interval` | `1000` | số bản ghi giữa hai điểm kiểm tra; `0` là không có |
 | `retention-days` | `365` | bản ghi mới hơn số ngày này không dọn được |
+| `lock-timeout-seconds` | `60` | lệnh chờ chuỗi của nó bao lâu trước khi thất bại; `0` là theo giới hạn của cơ sở dữ liệu |
+| `query-timeout-seconds` | `120` | một truy vấn hay lần xuất được chạy bao lâu; `0` là không giới hạn |
 
 **Vì sao mặc định tắt ở mọi nơi**: tính năng thêm hai bảng và một lần ghi cho mỗi lệnh tạo lịch
 sử, cần chạy trên mọi node của cụm (node không bật sẽ không ghi gì), cần quản lý một khóa để có
@@ -245,14 +325,10 @@ phải chờ.
   đều đã được ghi: node không bật plugin, mức lịch sử thấp hơn, hoặc sửa trực tiếp bảng engine
   trong cơ sở dữ liệu sẽ đi vòng qua nó.
 - Không có khóa ký, người có quyền ghi vào cơ sở dữ liệu có thể viết lại một chuỗi từ một bản ghi
-  nào đó trở đi cùng với head. Có khóa thì việc viết lại lùi về trước một điểm kiểm tra sẽ làm
-  điểm kiểm tra đó không khớp (`checkpoint-mismatch`), nhưng chỉ khi điểm kiểm tra vẫn ghi khóa
-  hiện tại. Người viết lại chuỗi cũng có thể đổi `keyId` của các điểm kiểm tra: khi đó chúng trông
-  như điểm kiểm tra của một khóa cũ, không được kiểm tra, và chuỗi vẫn được báo là toàn vẹn. Dấu
-  hiệu duy nhất là `checkpointsVerified` thấp hơn `checkpoints`. Vì vậy hãy theo dõi con số đó (mọi
-  điểm kiểm tra chưa xác minh mà không giải thích được bằng một lần đổi khóa hay bằng giai đoạn
-  trước khi đặt khóa đều đáng ngờ), và lưu các mã băm cuối được báo hoặc các dòng log điểm kiểm
-  tra ở ngoài cơ sở dữ liệu. Các bản ghi sau điểm kiểm tra cuối chỉ được chuỗi bảo vệ.
+  nào đó trở đi cùng với head, hoặc xóa phần đầu của nó rồi ghi một bản ghi dọn cho phần đó; khi
+  ấy việc kiểm tra vẫn báo toàn vẹn, nhưng không bao giờ báo đã xác thực. Có khóa thì chỉ các bản
+  ghi sau điểm kiểm tra cuối mới viết lại được. Hãy lưu các mã băm cuối được báo hoặc các dòng log
+  điểm kiểm tra ở ngoài cơ sở dữ liệu.
 - Xóa mọi bản ghi và head của một chuỗi chỉ phát hiện được khi đối chiếu với mốc bên ngoài như vậy.
 - Một lần dọn xóa mọi bản ghi của một chuỗi trước một thời điểm trong một giao dịch; lần dọn rất
   lớn nên chia thành nhiều bước (nhiều mốc `before`).

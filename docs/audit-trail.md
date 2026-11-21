@@ -78,9 +78,15 @@ own (default 4), named `<node id>/<slot>`; a transaction takes the slot of its t
 locks only the head row of that chain (an `UPDATE`, which every database supports the same way),
 at the end of the command, until the commit. So commands on other slots and other nodes never
 wait for each other, and commands of one slot are serialized only for the moment of their
-commit. A nested transaction that starts while an outer one of the same thread holds a chain
-takes another slot (an extra one beyond `chains` if every slot is held on that thread), so it
-cannot wait for its own outer transaction. The trade-off: there is no
+commit. A nested transaction ("requires new") that starts while outer ones of the same thread
+hold chains takes its slot in the next band: with `chains` = 4 the outermost transactions use
+the slots 0 to 3, transactions nested in them 4 to 7, and so on (chains `<node id>/4` … appear on
+first use). A transaction therefore only waits for transactions of its own nesting depth, never
+for a suspended outer one, so nested transactions of several threads cannot block each other in
+a way the database cannot see. A transaction that spans several commands holds its chain from
+its first record to its commit, so such transactions of one slot run one after the other. The
+wait for a chain is limited: after `fasti.audit.lock-timeout-seconds` (default 60) the command
+fails with nothing written, instead of hanging. The trade-off: there is no
 single global order of all records (each chain is ordered; across chains the time orders them),
 and verifying reads every chain.
 
@@ -97,23 +103,76 @@ by page, and reports per chain whether it is intact and where it first breaks:
 | `previous-hash-mismatch` | the record does not follow the one before it: one of them was changed, or a record was removed or inserted between them |
 | `sequence-gap` | positions are missing: records were removed |
 | `missing-start` | the chain does not start at 1 and no purge record names the records before it |
+| `purge-unattested` | a key is set, the chain does not start at 1, and the purge record that names the records before it carries no valid signature of a key of the engine |
 | `head-mismatch` | the head names another last record: records at the end were removed, or the head was changed |
 | `head-missing` | records exist for a chain without head |
 | `checkpoint-mismatch` | the HMAC of a signed checkpoint does not match: the chain before it was rewritten |
+| `checkpoint-unsigned` | a key is set and a checkpoint carries no signature |
+| `checkpoint-unknown-key` | a key is set and a checkpoint names a key that is neither the current nor a retired one |
+| `checkpoint-missing` | a key is set and no checkpoint is where the interval puts one: checkpoints were removed |
 
-The verification itself becomes a record (who verified, the result).
+The verification itself becomes a record (who verified, the result). An engine runs one
+verification at a time, as it reads and hashes every record; a second request is refused
+(`409` over REST, `AuditVerificationRunningException` in Java) until the first is done. The
+guard is per engine, not per cluster.
+
+**Two verdicts.** A verification answers two questions, per chain and for the whole trail:
+
+- **`intact`**: nothing that can be checked with the settings of the engine failed. The hashes
+  are consistent from the first record of the chain to its head. With a key, in addition, every
+  checkpoint and every purge record that explains a removed start carries a valid signature (or
+  one that the settings list as retired, below), and no checkpoint is missing.
+- **`authenticated`**: intact, a key is set, and every checkpoint and the purge record of a
+  removed start were *checked* with a key the engine holds. Only this rules out that someone
+  with write access to the database rewrote a chain up to its last checkpoint or removed its
+  start. It is `false` without a key, for chains with signatures that are accepted unchecked
+  (retired key ids), and for a chain whose removed start is named by a purge record without
+  checked signature (`purgeAttested: false`). Per chain, `authenticatedThrough` is the last
+  record a checked signature covers (the record before the last checkpoint; `0` before the first
+  checkpoint of a chain): the records after it are protected by the hashes and the head only.
+
+So without a key, "intact" means "the hashes are consistent"; the web UI says so, and says when
+an intact trail is not authenticated.
 
 **Signed checkpoints.** Someone with write access to the database could rewrite a whole chain
 from some record on, with correct hashes, and move the head. To make that detectable, set a key
 of at least 32 bytes (`fasti.audit.hmac-key`, best as the environment variable
 `FASTI_AUDIT_HMAC_KEY`, or a file in `fasti.audit.hmac-key-file`). After every
 `checkpoint-interval` records (default 1000) the chain gets a `checkpoint` record with the
-HMAC-SHA256 of the position and hash before it. The key never reaches the database; the
-`keyId` (the start of the SHA-256 of the key) tells keys apart. A checkpoint that names the
-current key but has no valid signature breaks the chain; checkpoints written before the key was
-set, or with an earlier key, cannot be checked and are counted as unverified ("3 of 5 verified"
-in the web UI, `checkpointsVerified` over REST). After changing the key, verify and keep the
-result before the old checkpoints become unverifiable. Each checkpoint is also written
+HMAC-SHA256 of the chain, the position and hash before it, and the interval it was written
+with. The key never reaches the database; the `keyId` (the start of the SHA-256 of the key)
+tells keys apart.
+
+With a key set, a signature that is missing is as much a break as one that is wrong, because
+someone who rewrites a chain cannot forge signatures but can remove them:
+
+- every checkpoint must carry a valid signature of the current key or of a retired key;
+- checkpoints must follow each other, from the first record of the chain, at the distance of
+  the interval they were written with, and no more records than that may follow the last one:
+  removed checkpoints are missed, also after the engine has written new ones over a rewritten
+  chain;
+- a chain that does not start at record 1 needs a purge record signed with such a key.
+
+**Changing the key, or setting one later.** Give the engine the earlier keys in
+`fasti.audit.retired-hmac-keys` (comma separated, e.g. `FASTI_AUDIT_RETIRED_HMAC_KEYS`): what
+they signed is still checked, and the trail stays authenticated. If an earlier key is lost, or
+checkpoints and purge records were written before any key was set, list their key ids (12 hex
+characters, as `GET /audit` and the checkpoints show them) or the word `unsigned` in
+`fasti.audit.retired-key-ids`. Those signatures are then accepted without being checked, but
+only before the first checkpoint of the current key in a chain, and such a chain verifies as
+intact, not as authenticated ("3 of 5 verified" in the web UI, `checkpointsVerified` over
+REST). Remove an entry once a purge has removed the records it covers. Without either setting,
+verification reports `checkpoint-unknown-key`, `checkpoint-unsigned` or `purge-unattested`.
+Changing `checkpoint-interval` from one value to another is fine (each checkpoint records the
+interval it was written with). But a stretch of a signed chain that is longer than the interval
+and has no checkpoint (checkpoints were off, `0`, for a while; the interval was lowered before
+the first checkpoint of a chain; another node uses a larger interval) is reported as
+`checkpoint-missing`, because that is also what removed checkpoints look like. At the start of a
+chain, list `unsigned` to accept it (the chain is then not authenticated); in the middle of a
+chain it stays until a purge removes that part. So set the key and the interval before the first
+records, the same on all nodes of a cluster.
+
+Each checkpoint is also written
 to the application log (`Audit trail checkpoint …`), which, shipped to a log store, is an anchor
 outside the database. The records written after the last checkpoint are protected by the
 chain only: keep the last hashes that a verification reports (or the log lines) outside the
@@ -126,7 +185,12 @@ database to detect a later truncation or rewrite of them.
 - Records are kept until they are purged explicitly. `POST /audit/purge`
   `{"before": "…", "exported": true}` (Java: `AuditService#purge`) removes, per chain, the
   records from its start up to the last one before `before`, and appends a `purge` record that
-  names the hash of the last removed record, so the rest of the chain still verifies. The purge
+  names the position and hash of the last removed record, so the rest of the chain still
+  verifies. With a key the purge record is signed (HMAC over the chain, the removed position and
+  hash, and the id and position of the purge record), and verification accepts a chain without
+  its start only with such a signature: a purge record that someone writes into the database to
+  hide removed records is found. Without a key a purge record proves nothing; the chain is
+  reported with `purgeAttested: false` and never as authenticated. The purge
   runs in a transaction of its own (not inside one that has written audit records). Records
   younger than `fasti.audit.retention-days` (default 365) are never purged. Export first: the
   JSON export carries every hash, so the removed part can still be verified offline against the
@@ -158,7 +222,10 @@ table to a database the application cannot write to.
   100,000 records; the export is recorded); the CSV puts an apostrophe before text a spreadsheet
   would run as a formula, the JSON keeps every value exactly as hashed. **Verify integrity**
   shows "Intact" with the last hash of every chain, or an alert that names the chain, the
-  record and the reason of the first break.
+  record and the reason of the first break. Below "Intact" it says whether the trail is also
+  authenticated, and if not, why (no key, or signatures that could not be checked); each chain
+  shows up to which record its signatures reach, and a purged start without checked signature
+  is marked on its chain.
 - **History of an instance → Audit trail**: the records of that instance, oldest first (shown
   when the audit trail is on).
 
@@ -170,11 +237,11 @@ All below `/engine-rest` (also in the OpenAPI document, tag "Audit Trail"):
 
 | Method and path | What it does |
 |---|---|
-| `GET /audit` | `enabled`, for every caller and also while the audit trail is off (`200` with `enabled: false`); for callers who may read the trail also the settings (`nodeId`, `chains`, `types`, `variableValues`, `maskedVariables`, `signed`, `keyId`, `checkpointInterval`, `retentionDays`, `historyLevel`); never the key |
-| `GET /audit/event` | The records, newest first; filters `processInstanceId`, `businessKey`, `actor` (`system` for the engine), `type` (comma separated), `action`, `tenantId`, `processDefinitionKey`, `entityId`, `chainId`, `from`, `to`, `sortOrder` (`desc`, `asc`), paging `firstResult`, `maxResults` (at most 1000) |
+| `GET /audit` | `enabled`, for every caller and also while the audit trail is off (`200` with `enabled: false`); for callers who may read the trail also the settings (`nodeId`, `chains`, `types`, `variableValues`, `maskedVariables`, `signed`, `keyId`, `retiredKeyIds`, `checkpointInterval`, `retentionDays`, `historyLevel`); never the key |
+| `GET /audit/event` | The records, newest first; filters `processInstanceId`, `businessKey`, `actor` (`system` for the engine), `type` (comma separated), `action`, `tenantId`, `processDefinitionKey`, `entityId`, `chainId`, `from`, `to`, `sortOrder` (`desc`, `asc`), paging `firstResult` (at most 1,000,000), `maxResults` (at most 1000); the page is cut by the database |
 | `GET /audit/event/count` | The number of records the filters select |
-| `GET /audit/event/export?format=csv\|json` | The selection as a file (recorded as `audit`/`export`) |
-| `POST /audit/verify?chainId=` | Verifies every chain (or one): `intact`, `records`, `chains` (with `lastHash`, `checkpointsVerified`, `purgedThrough`, `firstBreak`) and `firstBreak` |
+| `POST /audit/event/export?format=csv\|json` | The selection (same filters, as query parameters) as a file, streamed from one database cursor; recorded as `audit`/`export`. A `POST` because it writes that record: a `GET` answers `405` and records nothing |
+| `POST /audit/verify?chainId=` | Verifies every chain (or one): `intact`, `authenticated`, `records`, `chains` (with `authenticated`, `authenticatedThrough`, `lastHash`, `checkpointsVerified`, `purgedThrough`, `purgeAttested`, `firstBreak`) and `firstBreak`; `409` while another verification runs |
 | `POST /audit/purge` | `{"before": "...", "exported": true}`: purges old records, see above |
 
 **Authorization**: reading, exporting and verifying need membership of an administrators group
@@ -186,8 +253,19 @@ authorization is on: that is the case when REST authentication is off, as in the
 configuration of Fasti BPM Run (the container image has it on). All endpoints except `GET /audit`
 answer `400` when the audit trail is off.
 
+**Tenants**: a reader who is not an administrator sees, counts and exports only the records of
+the tenants of the authentication and the records without tenant (deployments and operations
+without tenant, checkpoints, verifications, exports, purges), as the queries of the engine do
+while its tenant check is on. Verifying always covers whole chains; it returns positions and
+hashes, not records.
+
+**Errors**: when the database fails, the response names what could not be done ("The audit trail
+could not read records"), never the message of the database; that is in the server log. Queries
+and exports stop after `fasti.audit.query-timeout-seconds` (default 120).
+
 Java: `AuditTrail.of(processEngine)` returns the `AuditService` (`createQuery()`, `verify()`,
-`recordExport(…)`, `purge(before)`).
+`recordExport(…)`, `purge(before)`); `AuditEventQuery#listPage` pages in the database and
+`#forEach` reads a large result from one cursor.
 
 ## Turning it on
 
@@ -207,9 +285,13 @@ Settings (`fasti.audit.*`; plugin properties in camel case for Tomcat and WildFl
 | `types` | everything but `activity` | categories, comma separated, or `all` |
 | `variable-values` | `hash` | `hash`, `value` or `none` |
 | `masked-variables` | see above | name patterns never recorded |
-| `hmac-key` / `hmac-key-file` | none | key that signs checkpoints (at least 32 bytes) |
+| `hmac-key` / `hmac-key-file` | none | key that signs checkpoints and purge records (at least 32 bytes) |
+| `retired-hmac-keys` | none | earlier keys, comma separated: what they signed is still checked |
+| `retired-key-ids` | none | key ids of lost earlier keys, and `unsigned`: accepted unchecked, the chain is then not authenticated |
 | `checkpoint-interval` | `1000` | records between two checkpoints; `0` for none |
 | `retention-days` | `365` | records younger than this cannot be purged |
+| `lock-timeout-seconds` | `60` | how long a command waits for its chain before it fails; `0` for the limit of the database |
+| `query-timeout-seconds` | `120` | how long a query or export may run; `0` for no limit |
 
 **Why off by default everywhere**: it adds two tables and one write per command that produces
 history, it should run on every node of a cluster (a node without it records nothing), it needs
@@ -250,14 +332,10 @@ four chains per node, threads rarely wait.
   something was recorded at all: a node without the plugin, a lower history level or a direct
   change of the engine tables in the database bypasses it.
 - Without a signing key, someone with write access to the database can rewrite a chain from
-  some record on together with its head. With a key, a rewrite that reaches back before a
-  checkpoint breaks that checkpoint (`checkpoint-mismatch`), but only while the checkpoint still
-  names the current key. Whoever rewrites the chain can also change the `keyId` of its
-  checkpoints: they then look like checkpoints of an earlier key, are not checked, and the chain
-  is reported as intact. The only sign is a `checkpointsVerified` lower than `checkpoints`. So
-  watch that number (every checkpoint you cannot explain by a key change or by the time before
-  the key was set is suspect), and keep reported last hashes or the checkpoint log lines outside
-  the database. The records after the last checkpoint are protected by the chain only.
+  some record on together with its head, or remove its start and write a purge record for it;
+  verification then still says intact, but never authenticated. With a key, only the records
+  after the last checkpoint can be rewritten. Keep reported last hashes or the checkpoint log
+  lines outside the database.
 - Deleting every record and the head of a chain is only noticed against such an outside
   anchor.
 - A purge removes all records of a chain before a time in one transaction; very large purges

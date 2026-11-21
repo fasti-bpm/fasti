@@ -65,11 +65,11 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**Docker 이미지**(`fastidev/fasti-bpm`, amd64 및 arm64): <https://fasti.dev/install>. 단계별 안내는
   [docs/install-docker.ko.md](docs/install-docker.ko.md), 모든 변수는
   [distro/docker/README.md](distro/docker/README.md#environment-variables)를 참조하세요.
-- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Tomcat 번들**(Docker 없이): <https://fasti.dev/download>. 사전 빌드된 Tomcat 1.0.1 번들:
-  - [fasti-bpm-tomcat-1.0.1.zip](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip.sha256))
-  - [fasti-bpm-tomcat-1.0.1.tar.gz](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz.sha256))
+- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Tomcat 번들**(Docker 없이): <https://fasti.dev/download>. 사전 빌드된 Tomcat 1.1.0 번들:
+  - [fasti-bpm-tomcat-1.1.0.zip](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.zip.sha256))
+  - [fasti-bpm-tomcat-1.1.0.tar.gz](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.tar.gz.sha256))
 
-  압축을 풀기 전에 체크섬을 확인하세요. 예: `sha256sum -c fasti-bpm-tomcat-1.0.1.zip.sha256`.
+  압축을 풀기 전에 체크섬을 확인하세요. 예: `sha256sum -c fasti-bpm-tomcat-1.1.0.zip.sha256`.
   시작하기 전에 번들에 포함된 `README.txt`를 읽으세요.
 - **임베디드**(Spring Boot 또는 다른 Java 애플리케이션에 내장): 새로운 Maven 좌표
   (`dev.fasti.platform:fasti-*`), 동일한 `org.camunda.bpm.*` 패키지.

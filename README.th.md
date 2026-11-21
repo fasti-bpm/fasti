@@ -66,11 +66,11 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**อิมเมจ Docker** (`fastidev/fasti-bpm`, amd64 และ arm64): <https://fasti.dev/install> ดูขั้นตอน
   ทีละขั้นใน [docs/install-docker.th.md](docs/install-docker.th.md) และตัวแปรทั้งหมดใน
   [distro/docker/README.md](distro/docker/README.md#environment-variables)
-- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**ชุด Tomcat** โดยไม่ใช้ Docker: <https://fasti.dev/download> ชุด Tomcat 1.0.1 ที่พร้อมใช้งาน:
-  - [fasti-bpm-tomcat-1.0.1.zip](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip.sha256))
-  - [fasti-bpm-tomcat-1.0.1.tar.gz](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz.sha256))
+- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**ชุด Tomcat** โดยไม่ใช้ Docker: <https://fasti.dev/download> ชุด Tomcat 1.1.0 ที่พร้อมใช้งาน:
+  - [fasti-bpm-tomcat-1.1.0.zip](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.zip.sha256))
+  - [fasti-bpm-tomcat-1.1.0.tar.gz](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.tar.gz.sha256))
 
-  ตรวจสอบค่าเช็กซัมก่อนแตกไฟล์ ตัวอย่างเช่น `sha256sum -c fasti-bpm-tomcat-1.0.1.zip.sha256`
+  ตรวจสอบค่าเช็กซัมก่อนแตกไฟล์ ตัวอย่างเช่น `sha256sum -c fasti-bpm-tomcat-1.1.0.zip.sha256`
   และอ่าน `README.txt` ในชุดก่อนเริ่มใช้งาน
 - **แบบฝัง** ใน Spring Boot หรือแอปพลิเคชัน Java อื่น: พิกัด Maven ใหม่
   (`dev.fasti.platform:fasti-*`) แพ็กเกจ `org.camunda.bpm.*` ชุดเดิม ดู

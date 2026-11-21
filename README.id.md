@@ -66,11 +66,11 @@ Panduan lengkap, termasuk dengan database Anda sendiri: <https://fasti.dev/insta
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**Image Docker** (`fastidev/fasti-bpm`, amd64 dan arm64): <https://fasti.dev/install>; langkah
   demi langkah di [docs/install-docker.id.md](docs/install-docker.id.md), semua variabel di
   [distro/docker/README.md](distro/docker/README.md#environment-variables).
-- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Paket Tomcat**, tanpa Docker: <https://fasti.dev/download>. Paket Tomcat 1.0.1 siap pakai:
-  - [fasti-bpm-tomcat-1.0.1.zip](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip.sha256))
-  - [fasti-bpm-tomcat-1.0.1.tar.gz](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz.sha256))
+- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Paket Tomcat**, tanpa Docker: <https://fasti.dev/download>. Paket Tomcat 1.1.0 siap pakai:
+  - [fasti-bpm-tomcat-1.1.0.zip](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.zip.sha256))
+  - [fasti-bpm-tomcat-1.1.0.tar.gz](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.tar.gz.sha256))
 
-  Verifikasi checksum sebelum mengekstrak, misalnya `sha256sum -c fasti-bpm-tomcat-1.0.1.zip.sha256`,
+  Verifikasi checksum sebelum mengekstrak, misalnya `sha256sum -c fasti-bpm-tomcat-1.1.0.zip.sha256`,
   dan baca `README.txt` dalam paket sebelum menjalankannya.
 - **Tertanam** di Spring Boot atau aplikasi Java lainnya: koordinat Maven baru
   (`dev.fasti.platform:fasti-*`), package `org.camunda.bpm.*` yang sama; lihat

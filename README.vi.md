@@ -64,11 +64,11 @@ Hướng dẫn đầy đủ, kể cả dùng cơ sở dữ liệu của bạn: <
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**Image Docker** (`fastidev/fasti-bpm`, amd64 và arm64): <https://fasti.dev/install>;
   từng bước trong [docs/install-docker.vi.md](docs/install-docker.vi.md), toàn bộ biến trong
   [distro/docker/README.vi.md](distro/docker/README.vi.md).
-- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Gói Tomcat**, không dùng Docker: <https://fasti.dev/download>. Gói Tomcat 1.0.1 dựng sẵn:
-  - [fasti-bpm-tomcat-1.0.1.zip](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.zip.sha256))
-  - [fasti-bpm-tomcat-1.0.1.tar.gz](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.0.1/fasti-bpm-tomcat-1.0.1.tar.gz.sha256))
+- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Gói Tomcat**, không dùng Docker: <https://fasti.dev/download>. Gói Tomcat 1.1.0 dựng sẵn:
+  - [fasti-bpm-tomcat-1.1.0.zip](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.zip.sha256))
+  - [fasti-bpm-tomcat-1.1.0.tar.gz](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.tar.gz.sha256))
 
-  Kiểm tra checksum trước khi giải nén, ví dụ `sha256sum -c fasti-bpm-tomcat-1.0.1.zip.sha256`,
+  Kiểm tra checksum trước khi giải nén, ví dụ `sha256sum -c fasti-bpm-tomcat-1.1.0.zip.sha256`,
   và đọc `README.txt` trong gói trước khi chạy.
 - **Nhúng** vào Spring Boot hoặc một ứng dụng Java khác: tọa độ Maven mới
   (`dev.fasti.platform:fasti-*`), vẫn các package `org.camunda.bpm.*`; xem

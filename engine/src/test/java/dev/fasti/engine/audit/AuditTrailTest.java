@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
+import org.camunda.bpm.engine.impl.jobexecutor.historycleanup.HistoryCleanupJobHandler;
 import org.camunda.bpm.engine.authorization.Authorization;
 import org.camunda.bpm.engine.authorization.Resources;
 import org.camunda.bpm.engine.authorization.SystemPermissions;
@@ -333,6 +335,15 @@ public class AuditTrailTest {
     engine.getHistoryService().findHistoryCleanupJobs().forEach(job -> engine.getManagementService().deleteJob(job.getId()));
 
     assertThat(audit.createQuery().processInstanceId(pi).count()).isEqualTo(recorded);
+
+    // the cleanup job leaves its job log and metrics behind; on a shared database (PostgreSQL,
+    // MariaDB, ...) they would fail the clean-database check of the next test class
+    ((ProcessEngineConfigurationImpl) engine.getProcessEngineConfiguration()).getCommandExecutorTxRequired()
+        .execute(commandContext -> {
+          commandContext.getHistoricJobLogManager().deleteHistoricJobLogsByHandlerType(HistoryCleanupJobHandler.TYPE);
+          return null;
+        });
+    engine.getManagementService().deleteMetrics(null);
   }
 
   @Test

@@ -120,9 +120,10 @@ terms, write to <contact@fasti.dev>.
 
 ## Roadmap
 
-This is a plan, not a commitment to dates. Next in `1.x`: Maven artifacts on Maven Central, a Helm
-chart, Prometheus metrics and OpenTelemetry tracing, structured JSON logs. For `2.0`: a substitute
-during absence, four-eyes control for approvals, an immutable audit trail, and CMMN in the new
+This is a plan, not a commitment to dates. Planned for `1.1.0`, and already on the `main` branch:
+a Helm chart and Kubernetes manifests, Prometheus metrics, OpenTelemetry tracing, structured JSON
+logs, a substitute during absence, four-eyes control for approvals, an immutable audit trail, and
+the preparation for publishing the Maven artifacts on Maven Central. For `2.0`: CMMN in the new
 interface. The timeline, from the end of Camunda 7 CE to the goals for 2027:
 <https://fasti.dev/#timeline>.
 
@@ -140,9 +141,13 @@ On [fasti.dev](https://fasti.dev): [Install with Docker](https://fasti.dev/insta
 | Document | Contents |
 |---|---|
 | [docs/install-docker.md](docs/install-docker.md) | Installing with Docker, step by step |
+| [docs/install-kubernetes.md](docs/install-kubernetes.md) | Installing on Kubernetes: Helm chart and plain manifests (from 1.1.0) |
 | [docs/migrate-from-camunda-7.md](docs/migrate-from-camunda-7.md) | Moving from Camunda 7, rollback, limits |
 | [docs/embedding.md](docs/embedding.md) | Compatibility, what is different from 7.24.0, versioning, Maven coordinates, startup check |
 | [docs/web-ui.md](docs/web-ui.md) | The web interface: features users asked for, the `/fasti` path, the classic apps |
+| [docs/absence.md](docs/absence.md) | Substitutes during absence (from 1.1.0) |
+| [docs/four-eyes.md](docs/four-eyes.md) | Four-eyes control for approvals (from 1.1.0) |
+| [docs/audit-trail.md](docs/audit-trail.md) | Immutable audit trail (from 1.1.0) |
 | [docs/single-sign-on.md](docs/single-sign-on.md) | Single sign-on (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.md](docs/api/README.md) | REST API integration, Java and JavaScript external task clients |
 | [distro/docker/README.md](distro/docker/README.md) | Image: environment variables, drivers, operations, tuning |

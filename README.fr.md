@@ -127,10 +127,11 @@ l’installation, à la migration ou en production, et pour des conditions de su
 
 ## Feuille de route
 
-Ceci est un plan, pas un engagement sur des dates. Prochaines étapes dans `1.x` : des artefacts
-Maven sur Maven Central, un chart Helm, des métriques Prometheus et des traces OpenTelemetry, des
-logs structurés en JSON. Pour `2.0` : un suppléant pendant les absences, un contrôle à quatre yeux
-pour les approbations, une piste d’audit immuable et CMMN dans la nouvelle interface. La chronologie,
+Ceci est un plan, pas un engagement sur des dates. Prévu pour `1.1.0` et déjà sur la branche
+`main` : un chart Helm et des manifestes Kubernetes, des métriques Prometheus, des traces
+OpenTelemetry, des logs structurés en JSON, un suppléant pendant les absences, un contrôle à quatre
+yeux pour les approbations, une piste d’audit immuable et la préparation de la publication des
+artefacts Maven sur Maven Central. Pour `2.0` : CMMN dans la nouvelle interface. La chronologie,
 de la fin de Camunda 7 CE aux objectifs pour 2027 : <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>
@@ -147,9 +148,13 @@ Sur [fasti.dev](https://fasti.dev) : [Installer avec Docker](https://fasti.dev/i
 | Document | Contenu |
 |---|---|
 | [docs/install-docker.fr.md](docs/install-docker.fr.md) | Installation avec Docker, étape par étape |
+| [docs/install-kubernetes.md](docs/install-kubernetes.md) | Installation sur Kubernetes : chart Helm et manifestes simples (à partir de 1.1.0) |
 | [docs/migrate-from-camunda-7.fr.md](docs/migrate-from-camunda-7.fr.md) | Migration depuis Camunda 7, retour arrière, limites |
 | [docs/embedding.fr.md](docs/embedding.fr.md) | Compatibilité, différences par rapport à 7.24.0, gestion des versions, coordonnées Maven, vérification au démarrage |
 | [docs/web-ui.fr.md](docs/web-ui.fr.md) | L’interface web : fonctionnalités demandées par les utilisateurs, le chemin `/fasti`, les applications classiques |
+| [docs/absence.md](docs/absence.md) | Suppléants pendant les absences (à partir de 1.1.0) |
+| [docs/four-eyes.md](docs/four-eyes.md) | Contrôle à quatre yeux pour les approbations (à partir de 1.1.0) |
+| [docs/audit-trail.md](docs/audit-trail.md) | Piste d’audit immuable (à partir de 1.1.0) |
 | [docs/single-sign-on.fr.md](docs/single-sign-on.fr.md) | Authentification unique (OpenID Connect) : Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.md](docs/api/README.md) | Intégration de l’API REST, clients de tâches externes Java et JavaScript |
 | [distro/docker/README.md](distro/docker/README.md) | Image : variables d’environnement, pilotes, exploitation, réglages |

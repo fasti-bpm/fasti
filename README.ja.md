@@ -113,10 +113,11 @@ Camunda 7 を引き継ぐ優れたプロジェクトはいくつもあります�
 
 ## ロードマップ
 
-これは計画であり、日程の約束ではありません。`1.x` で次に予定しているもの：Maven Central での Maven
-アーティファクト公開、Helm チャート、Prometheus メトリクスと OpenTelemetry トレーシング、構造化 JSON
-ログ。`2.0` で予定しているもの：不在時の代理者設定、承認に対する四眼原則（フォーアイズ）による統制、
-改ざん不能な監査証跡、新しいインターフェースでの CMMN 対応。Camunda 7 CE の終了から 2027年の目標までの
+これは計画であり、日程の約束ではありません。`1.1.0` で予定しており、すでに `main` ブランチにあるもの：
+Helm チャートと Kubernetes マニフェスト、Prometheus メトリクス、OpenTelemetry トレーシング、構造化 JSON
+ログ、不在時の代理者設定、承認に対する四眼原則（フォーアイズ）による統制、改ざん不能な監査証跡、
+Maven アーティファクトを Maven Central で公開するための準備。`2.0` で予定しているもの：新しい
+インターフェースでの CMMN 対応。Camunda 7 CE の終了から 2027年の目標までの
 タイムライン：<https://fasti.dev/#timeline>。
 
 <a id="documentation"></a>
@@ -133,9 +134,13 @@ Camunda 7 を引き継ぐ優れたプロジェクトはいくつもあります�
 | ドキュメント | 内容 |
 |---|---|
 | [docs/install-docker.md](docs/install-docker.ja.md) | Docker でのインストール手順 |
+| [docs/install-kubernetes.md](docs/install-kubernetes.md) | Kubernetes へのインストール：Helm チャートとプレーンなマニフェスト（1.1.0 以降） |
 | [docs/migrate-from-camunda-7.md](docs/migrate-from-camunda-7.ja.md) | Camunda 7 からの移行、ロールバック、制限事項 |
 | [docs/embedding.md](docs/embedding.ja.md) | 互換性、7.24.0 との違い、バージョニング、Maven 座標、起動時チェック |
 | [docs/web-ui.md](docs/web-ui.ja.md) | Web インターフェース：ユーザーが要望した機能、`/fasti` パス、従来のアプリケーション |
+| [docs/absence.md](docs/absence.md) | 不在時の代理者設定（1.1.0 以降） |
+| [docs/four-eyes.md](docs/four-eyes.md) | 承認に対する四眼原則（フォーアイズ）による統制（1.1.0 以降） |
+| [docs/audit-trail.md](docs/audit-trail.md) | 改ざん不能な監査証跡（1.1.0 以降） |
 | [docs/single-sign-on.md](docs/single-sign-on.ja.md) | シングルサインオン（OpenID Connect）：Run、Spring Boot、Tomcat、WildFly |
 | [docs/api/README.md](docs/api/README.md) | REST API 連携、Java および JavaScript の外部タスククライアント |
 | [distro/docker/README.md](distro/docker/README.md) | イメージ：環境変数、ドライバー、運用、チューニング |

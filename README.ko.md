@@ -112,10 +112,10 @@ Camunda 7을 이어 가는 좋은 프로젝트가 여럿 있습니다. Fasti는 
 
 ## 로드맵
 
-이것은 계획이며 일정에 대한 약속이 아닙니다. `1.x`에서 다음으로 예정된 항목: Maven Central의 Maven
-아티팩트, Helm 차트, Prometheus 메트릭과 OpenTelemetry 트레이싱, 구조화된 JSON 로그. `2.0`에서 예정된
-항목: 부재 중 대리인 지정, 승인에 대한 4-eyes 통제, 변경 불가능한 감사 추적, 새로운 인터페이스의 CMMN
-지원. Camunda 7 CE 종료부터 2027년 목표까지의 타임라인:
+이것은 계획이며 일정에 대한 약속이 아닙니다. `1.1.0`에 예정되어 있으며 이미 `main` 브랜치에 있는 항목:
+Helm 차트와 Kubernetes 매니페스트, Prometheus 메트릭, OpenTelemetry 트레이싱, 구조화된 JSON 로그, 부재 중
+대리인 지정, 승인에 대한 4-eyes 통제, 변경 불가능한 감사 추적, Maven 아티팩트의 Maven Central 게시 준비.
+`2.0`에서 예정된 항목: 새로운 인터페이스의 CMMN 지원. Camunda 7 CE 종료부터 2027년 목표까지의 타임라인:
 <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>
@@ -132,9 +132,13 @@ Camunda 7을 이어 가는 좋은 프로젝트가 여럿 있습니다. Fasti는 
 | 문서 | 내용 |
 |---|---|
 | [docs/install-docker.md](docs/install-docker.ko.md) | 단계별 Docker 설치 |
+| [docs/install-kubernetes.md](docs/install-kubernetes.md) | Kubernetes 설치: Helm 차트와 일반 매니페스트 (1.1.0부터) |
 | [docs/migrate-from-camunda-7.md](docs/migrate-from-camunda-7.ko.md) | Camunda 7에서 이전, 롤백, 제한 사항 |
 | [docs/embedding.md](docs/embedding.ko.md) | 호환성, 7.24.0과의 차이점, 버전 관리, Maven 좌표, 시작 시 검사 |
 | [docs/web-ui.md](docs/web-ui.ko.md) | 웹 인터페이스: 사용자가 요청한 기능, `/fasti` 경로, 클래식 애플리케이션 |
+| [docs/absence.md](docs/absence.md) | 부재 중 대리인 지정 (1.1.0부터) |
+| [docs/four-eyes.md](docs/four-eyes.md) | 승인에 대한 4-eyes 통제 (1.1.0부터) |
+| [docs/audit-trail.md](docs/audit-trail.md) | 변경 불가능한 감사 추적 (1.1.0부터) |
 | [docs/single-sign-on.md](docs/single-sign-on.ko.md) | 싱글 사인온(OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.md](docs/api/README.md) | REST API 통합, Java 및 JavaScript 외부 작업 클라이언트 |
 | [distro/docker/README.md](distro/docker/README.md) | 이미지: 환경 변수, 드라이버, 운영, 튜닝 |

@@ -123,10 +123,11 @@ ketentuan dukungan, kirim email ke <contact@fasti.dev>.
 
 ## Peta jalan
 
-Ini adalah rencana, bukan komitmen tanggal. Berikutnya di `1.x`: artefak Maven di Maven Central,
-Helm chart, metrik Prometheus dan tracing OpenTelemetry, log JSON terstruktur. Untuk `2.0`:
-pengganti selama berhalangan, kontrol empat mata untuk persetujuan, jejak audit yang tidak dapat
-diubah, dan CMMN di antarmuka baru. Lini masa, dari berakhirnya Camunda 7 CE hingga sasaran 2027:
+Ini adalah rencana, bukan komitmen tanggal. Direncanakan untuk `1.1.0` dan sudah ada di branch
+`main`: Helm chart dan manifest Kubernetes, metrik Prometheus, tracing OpenTelemetry, log JSON
+terstruktur, pengganti selama berhalangan, kontrol empat mata untuk persetujuan, jejak audit yang
+tidak dapat diubah, serta persiapan penerbitan artefak Maven di Maven Central. Untuk `2.0`: CMMN
+di antarmuka baru. Lini masa, dari berakhirnya Camunda 7 CE hingga sasaran 2027:
 <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>
@@ -143,9 +144,13 @@ Di [fasti.dev](https://fasti.dev): [Instalasi dengan Docker](https://fasti.dev/i
 | Dokumen | Isi |
 |---|---|
 | [docs/install-docker.id.md](docs/install-docker.id.md) | Instalasi dengan Docker, langkah demi langkah |
+| [docs/install-kubernetes.md](docs/install-kubernetes.md) | Instalasi di Kubernetes: Helm chart dan manifest biasa (sejak 1.1.0) |
 | [docs/migrate-from-camunda-7.id.md](docs/migrate-from-camunda-7.id.md) | Beralih dari Camunda 7, rollback, batasan |
 | [docs/embedding.id.md](docs/embedding.id.md) | Kompatibilitas, perbedaan dari 7.24.0, penomoran versi, koordinat Maven, pemeriksaan saat startup |
 | [docs/web-ui.id.md](docs/web-ui.id.md) | Antarmuka web: fitur yang diminta pengguna, path `/fasti`, aplikasi klasik |
+| [docs/absence.md](docs/absence.md) | Pengganti selama berhalangan (sejak 1.1.0) |
+| [docs/four-eyes.md](docs/four-eyes.md) | Kontrol empat mata untuk persetujuan (sejak 1.1.0) |
+| [docs/audit-trail.md](docs/audit-trail.md) | Jejak audit yang tidak dapat diubah (sejak 1.1.0) |
 | [docs/single-sign-on.id.md](docs/single-sign-on.id.md) | Single sign-on (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.md](docs/api/README.md) | Integrasi REST API, klien tugas eksternal Java dan JavaScript |
 | [distro/docker/README.md](distro/docker/README.md) | Image: variabel lingkungan, driver, operasi, penyesuaian |

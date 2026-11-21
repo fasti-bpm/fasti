@@ -125,11 +125,12 @@ bearer-токен.
 
 ## План развития
 
-Это план, а не обязательство по срокам. Далее в `1.x`: артефакты Maven в Maven Central, Helm
-chart, метрики Prometheus и трассировка OpenTelemetry, структурированные логи в формате JSON. В
-`2.0`: замещение на время отсутствия, принцип «четырёх глаз» для согласований, неизменяемый
-журнал аудита и CMMN в новом интерфейсе. Хронология — от завершения Camunda 7 CE до
-целей на 2027 год: <https://fasti.dev/#timeline>.
+Это план, а не обязательство по срокам. Запланировано на `1.1.0` и уже есть в ветке `main`: Helm
+chart и манифесты Kubernetes, метрики Prometheus, трассировка OpenTelemetry, структурированные
+логи в формате JSON, замещение на время отсутствия, принцип «четырёх глаз» для согласований,
+неизменяемый журнал аудита и подготовка к публикации артефактов Maven в Maven Central. В `2.0`:
+CMMN в новом интерфейсе. Хронология — от завершения Camunda 7 CE до целей на 2027 год:
+<https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>
 
@@ -145,9 +146,13 @@ chart, метрики Prometheus и трассировка OpenTelemetry, стр
 | Документ | Содержание |
 |---|---|
 | [docs/install-docker.ru.md](docs/install-docker.ru.md) | Пошаговая установка с Docker |
+| [docs/install-kubernetes.md](docs/install-kubernetes.md) | Установка в Kubernetes: Helm chart и простые манифесты (с 1.1.0) |
 | [docs/migrate-from-camunda-7.ru.md](docs/migrate-from-camunda-7.ru.md) | Переход с Camunda 7, откат, ограничения |
 | [docs/embedding.ru.md](docs/embedding.ru.md) | Совместимость, отличия от 7.24.0, версионирование, координаты Maven, проверка при запуске |
 | [docs/web-ui.ru.md](docs/web-ui.ru.md) | Веб-интерфейс: функции, о которых просили пользователи, путь `/fasti`, классические приложения |
+| [docs/absence.md](docs/absence.md) | Замещение на время отсутствия (с 1.1.0) |
+| [docs/four-eyes.md](docs/four-eyes.md) | Принцип «четырёх глаз» для согласований (с 1.1.0) |
+| [docs/audit-trail.md](docs/audit-trail.md) | Неизменяемый журнал аудита (с 1.1.0) |
 | [docs/single-sign-on.ru.md](docs/single-sign-on.ru.md) | Единый вход (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.md](docs/api/README.md) | Интеграция через REST API, клиенты внешних задач на Java и JavaScript |
 | [distro/docker/README.md](distro/docker/README.md) | Образ: переменные окружения, драйверы, эксплуатация, настройка |

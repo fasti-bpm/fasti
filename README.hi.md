@@ -122,10 +122,11 @@ patch releases के रूप में। कृपया security समस�
 
 ## रोडमैप
 
-यह एक योजना है, तारीख़ों का वादा नहीं। `1.x` में आगे: Maven Central पर Maven आर्टिफ़ैक्ट, Helm
-chart, Prometheus metrics और OpenTelemetry tracing, structured JSON logs। `2.0` के लिए: अनुपस्थिति
-में substitute, approvals के लिए four-eyes control, immutable audit trail, और नए इंटरफ़ेस में
-CMMN। Camunda 7 CE के अंत से 2027 के लक्ष्यों तक की टाइमलाइन:
+यह एक योजना है, तारीख़ों का वादा नहीं। `1.1.0` के लिए नियोजित, और `main` branch पर पहले से मौजूद:
+Helm chart और Kubernetes manifests, Prometheus metrics, OpenTelemetry tracing, structured JSON
+logs, अनुपस्थिति में substitute, approvals के लिए four-eyes control, immutable audit trail, और Maven
+आर्टिफ़ैक्ट को Maven Central पर प्रकाशित करने की तैयारी। `2.0` के लिए: नए इंटरफ़ेस में CMMN। Camunda 7
+CE के अंत से 2027 के लक्ष्यों तक की टाइमलाइन:
 <https://fasti.dev/#timeline>।
 
 <a id="documentation"></a>
@@ -142,9 +143,13 @@ CMMN। Camunda 7 CE के अंत से 2027 के लक्ष्यो�
 | दस्तावेज़ | विषय-वस्तु |
 |---|---|
 | [docs/install-docker.md](docs/install-docker.hi.md) | Docker के साथ चरण-दर-चरण स्थापना |
+| [docs/install-kubernetes.md](docs/install-kubernetes.md) | Kubernetes पर स्थापना: Helm chart और सादे manifests (1.1.0 से) |
 | [docs/migrate-from-camunda-7.md](docs/migrate-from-camunda-7.hi.md) | Camunda 7 से माइग्रेशन, रोलबैक, सीमाएँ |
 | [docs/embedding.md](docs/embedding.hi.md) | संगतता, 7.24.0 से क्या अलग है, संस्करण निर्धारण, Maven निर्देशांक, स्टार्टअप जाँच |
 | [docs/web-ui.md](docs/web-ui.hi.md) | वेब इंटरफ़ेस: उपयोगकर्ताओं द्वारा माँगी गई सुविधाएँ, `/fasti` पथ, क्लासिक ऐप्स |
+| [docs/absence.md](docs/absence.md) | अनुपस्थिति में substitute (1.1.0 से) |
+| [docs/four-eyes.md](docs/four-eyes.md) | Approvals के लिए four-eyes control (1.1.0 से) |
+| [docs/audit-trail.md](docs/audit-trail.md) | Immutable audit trail (1.1.0 से) |
 | [docs/single-sign-on.md](docs/single-sign-on.hi.md) | सिंगल साइन-ऑन (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.md](docs/api/README.md) | REST API इंटीग्रेशन, Java और JavaScript एक्सटर्नल टास्क क्लाइंट |
 | [distro/docker/README.md](distro/docker/README.md) | इमेज: एनवायरनमेंट वेरिएबल, ड्राइवर, संचालन, ट्यूनिंग |

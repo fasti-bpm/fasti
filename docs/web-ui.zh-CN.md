@@ -18,7 +18,7 @@ Camunda 论坛和 GitHub 上公开提出的需求，例如：
 | 按多个变量搜索实例，支持 OR | 论坛 [39269](https://forum.camunda.io/t/39269)、[45695](https://forum.camunda.io/t/45695)、[48976](https://forum.camunda.io/t/48976)、[64208](https://forum.camunda.io/t/64208)、[28855](https://forum.camunda.io/t/28855)、[4678](https://forum.camunda.io/t/4678)；[camunda-bpm-platform#3236](https://github.com/camunda/camunda-bpm-platform/issues/3236) | 多变量条件构建器，支持 AND/OR |
 | 查看业务个案每个步骤的评论 | 论坛 [30260](https://forum.camunda.io/t/30260)、[52109](https://forum.camunda.io/t/52109)、[2173](https://forum.camunda.io/t/2173) | 任务中的业务个案时间线；直接针对流程实例发表评论 |
 | 按变量对任务排序，最早的优先 | 论坛 [17599](https://forum.camunda.io/t/17599)、[42078](https://forum.camunda.io/t/42078)、[41193](https://forum.camunda.io/t/41193)、[67328](https://forum.camunda.io/t/67328) | 按变量、截止日期和紧急程度排序 |
-| 委派、缺勤期间的替代人 | 论坛 [2788](https://forum.camunda.io/t/2788)、[38199](https://forum.camunda.io/t/38199)、[9331](https://forum.camunda.io/t/9331) | 支持单个任务的委派，以及带交接的[缺勤代理人](absence.md) |
+| 委派、缺勤期间的替代人 | 论坛 [2788](https://forum.camunda.io/t/2788)、[38199](https://forum.camunda.io/t/38199)、[9331](https://forum.camunda.io/t/9331) | 支持单个任务的委派，以及带交接的[缺勤代理人](absence.md)（自 1.1.0 起） |
 | 无表单启动流程时填写业务键和变量 | [cibseven-webclient#528](https://github.com/cibseven/cibseven-webclient/issues/528) | 支持 |
 | 下载已部署的 BPMN XML | [camunda/camunda#22005](https://github.com/camunda/camunda/issues/22005) | 支持 |
 | 一致的标签、多语言支持 | [operaton#643](https://github.com/operaton/operaton/issues/643) | 13 种语言；BPMN、DMN 和表单编辑器内置的标签仅有英语和越南语 |

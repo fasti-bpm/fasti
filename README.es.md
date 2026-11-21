@@ -125,10 +125,11 @@ o producción, y para condiciones de soporte, escriba a <contact@fasti.dev>.
 
 ## Hoja de ruta
 
-Esto es un plan, no un compromiso de fechas. Lo siguiente en `1.x`: artefactos Maven en Maven
-Central, un chart de Helm, métricas de Prometheus y trazas de OpenTelemetry, logs estructurados en
-JSON. Para `2.0`: un sustituto durante las ausencias, control de cuatro ojos para las aprobaciones,
-un registro de auditoría inmutable y CMMN en la nueva interfaz. La cronología, desde el final de
+Esto es un plan, no un compromiso de fechas. Previsto para `1.1.0` y ya en la rama `main`: un chart
+de Helm y manifiestos de Kubernetes, métricas de Prometheus, trazas de OpenTelemetry, logs
+estructurados en JSON, un sustituto durante las ausencias, control de cuatro ojos para las
+aprobaciones, un registro de auditoría inmutable y la preparación para publicar los artefactos
+Maven en Maven Central. Para `2.0`: CMMN en la nueva interfaz. La cronología, desde el final de
 Camunda 7 CE hasta los objetivos para 2027: <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>
@@ -145,9 +146,13 @@ En [fasti.dev](https://fasti.dev): [Instalar con Docker](https://fasti.dev/insta
 | Documento | Contenido |
 |---|---|
 | [docs/install-docker.es.md](docs/install-docker.es.md) | Instalación con Docker, paso a paso |
+| [docs/install-kubernetes.md](docs/install-kubernetes.md) | Instalación en Kubernetes: chart de Helm y manifiestos simples (desde 1.1.0) |
 | [docs/migrate-from-camunda-7.es.md](docs/migrate-from-camunda-7.es.md) | Migración desde Camunda 7, reversión, limitaciones |
 | [docs/embedding.es.md](docs/embedding.es.md) | Compatibilidad, qué cambia respecto a 7.24.0, versionado, coordenadas de Maven, comprobación al arrancar |
 | [docs/web-ui.es.md](docs/web-ui.es.md) | La interfaz web: funciones que pidieron los usuarios, la ruta `/fasti`, las aplicaciones clásicas |
+| [docs/absence.md](docs/absence.md) | Sustitutos durante las ausencias (desde 1.1.0) |
+| [docs/four-eyes.md](docs/four-eyes.md) | Control de cuatro ojos para las aprobaciones (desde 1.1.0) |
+| [docs/audit-trail.md](docs/audit-trail.md) | Registro de auditoría inmutable (desde 1.1.0) |
 | [docs/single-sign-on.es.md](docs/single-sign-on.es.md) | Inicio de sesión único (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.md](docs/api/README.md) | Integración con la API REST, clientes de tareas externas para Java y JavaScript |
 | [distro/docker/README.md](distro/docker/README.md) | Imagen: variables de entorno, controladores, operaciones, ajustes |

@@ -120,11 +120,12 @@ trợ cài đặt, chuyển đổi hoặc vận hành production, hay thống nh
 
 ## Lộ trình
 
-Đây là kế hoạch, không phải cam kết về ngày. Tiếp theo trong `1.x`: artifact Maven trên Maven
-Central, Helm chart, metrics cho Prometheus và tracing bằng OpenTelemetry, log có cấu trúc dạng
-JSON. Cho `2.0`: người thay thế khi vắng mặt, nguyên tắc bốn mắt khi phê duyệt, nhật ký kiểm toán
-không thể sửa đổi, và CMMN trong giao diện mới. Dòng thời gian, từ khi Camunda 7 CE kết thúc tới
-các mục tiêu năm 2027: <https://fasti.dev/#timeline>.
+Đây là kế hoạch, không phải cam kết về ngày. Dự kiến cho `1.1.0`, đã có trên nhánh `main`: Helm
+chart và manifest Kubernetes, metrics cho Prometheus, tracing bằng OpenTelemetry, log có cấu trúc
+dạng JSON, người thay thế khi vắng mặt, nguyên tắc bốn mắt khi phê duyệt, nhật ký kiểm toán không
+thể sửa đổi, và phần chuẩn bị để phát hành artifact Maven lên Maven Central. Cho `2.0`: CMMN trong
+giao diện mới. Dòng thời gian, từ khi Camunda 7 CE kết thúc tới các mục tiêu năm 2027:
+<https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>
 
@@ -140,9 +141,13 @@ Trên [fasti.dev](https://fasti.dev): [Cài đặt bằng Docker](https://fasti.
 | Tài liệu | Nội dung |
 |---|---|
 | [docs/install-docker.vi.md](docs/install-docker.vi.md) | Cài đặt bằng Docker từng bước |
+| [docs/install-kubernetes.vi.md](docs/install-kubernetes.vi.md) | Cài đặt trên Kubernetes: Helm chart và manifest thuần (từ 1.1.0) |
 | [docs/migrate-from-camunda-7.vi.md](docs/migrate-from-camunda-7.vi.md) | Chuyển từ Camunda 7, quay lại, giới hạn |
 | [docs/embedding.vi.md](docs/embedding.vi.md) | Tương thích, khác gì so với 7.24.0, phiên bản, tọa độ Maven, kiểm tra khi khởi động |
 | [docs/web-ui.vi.md](docs/web-ui.vi.md) | Giao diện web: tính năng người dùng yêu cầu, đường dẫn `/fasti`, các ứng dụng cổ điển |
+| [docs/absence.vi.md](docs/absence.vi.md) | Người thay thế khi vắng mặt (từ 1.1.0) |
+| [docs/four-eyes.vi.md](docs/four-eyes.vi.md) | Nguyên tắc bốn mắt khi phê duyệt (từ 1.1.0) |
+| [docs/audit-trail.vi.md](docs/audit-trail.vi.md) | Nhật ký kiểm toán không thể sửa đổi (từ 1.1.0) |
 | [docs/single-sign-on.vi.md](docs/single-sign-on.vi.md) | Đăng nhập một lần (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.vi.md](docs/api/README.vi.md) | Tích hợp qua REST API, client external task Java và JavaScript |
 | [distro/docker/README.vi.md](distro/docker/README.vi.md) | Image: biến môi trường, driver, vận hành, tinh chỉnh |

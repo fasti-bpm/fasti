@@ -125,11 +125,12 @@ oder Betrieb sowie für Support-Bedingungen schreiben Sie an <contact@fasti.dev>
 
 ## Roadmap
 
-Dies ist ein Plan, keine Terminzusage. Als Nächstes in `1.x`: Maven-Artefakte auf Maven Central, ein
-Helm-Chart, Prometheus-Metriken und OpenTelemetry-Tracing, strukturierte JSON-Logs. Für `2.0`: eine
-Vertretung bei Abwesenheit, das Vier-Augen-Prinzip für Freigaben, ein unveränderlicher Audit-Trail
-und CMMN in der neuen Oberfläche. Die Zeitleiste, vom Ende von Camunda 7 CE bis zu den Zielen für
-2027: <https://fasti.dev/#timeline>.
+Dies ist ein Plan, keine Terminzusage. Für `1.1.0` geplant und bereits auf dem Branch `main`: ein
+Helm-Chart und Kubernetes-Manifeste, Prometheus-Metriken, OpenTelemetry-Tracing, strukturierte
+JSON-Logs, eine Vertretung bei Abwesenheit, das Vier-Augen-Prinzip für Freigaben, ein
+unveränderlicher Audit-Trail sowie die Vorbereitung der Veröffentlichung der Maven-Artefakte auf
+Maven Central. Für `2.0`: CMMN in der neuen Oberfläche. Die Zeitleiste, vom Ende von Camunda 7 CE
+bis zu den Zielen für 2027: <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>
 
@@ -145,9 +146,13 @@ Auf [fasti.dev](https://fasti.dev): [Installation mit Docker](https://fasti.dev/
 | Dokument | Inhalt |
 |---|---|
 | [docs/install-docker.de.md](docs/install-docker.de.md) | Installation mit Docker, Schritt für Schritt |
+| [docs/install-kubernetes.md](docs/install-kubernetes.md) | Installation auf Kubernetes: Helm-Chart und einfache Manifeste (ab 1.1.0) |
 | [docs/migrate-from-camunda-7.de.md](docs/migrate-from-camunda-7.de.md) | Umstieg von Camunda 7, Rollback, Einschränkungen |
 | [docs/embedding.de.md](docs/embedding.de.md) | Kompatibilität, Unterschiede zu 7.24.0, Versionierung, Maven-Koordinaten, Prüfung beim Start |
 | [docs/web-ui.de.md](docs/web-ui.de.md) | Die Weboberfläche: von Anwendern gewünschte Funktionen, der Pfad `/fasti`, die klassischen Anwendungen |
+| [docs/absence.md](docs/absence.md) | Vertretungen bei Abwesenheit (ab 1.1.0) |
+| [docs/four-eyes.md](docs/four-eyes.md) | Vier-Augen-Prinzip für Freigaben (ab 1.1.0) |
+| [docs/audit-trail.md](docs/audit-trail.md) | Unveränderlicher Audit-Trail (ab 1.1.0) |
 | [docs/single-sign-on.de.md](docs/single-sign-on.de.md) | Single Sign-on (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.md](docs/api/README.md) | REST-API-Integration, Java- und JavaScript-Clients für externe Aufgaben |
 | [distro/docker/README.md](distro/docker/README.md) | Image: Umgebungsvariablen, Treiber, Betrieb, Optimierung |

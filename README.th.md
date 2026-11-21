@@ -114,11 +114,12 @@ external task worker ต้องส่งข้อมูลรับรอง�
 
 ## แผนงาน
 
-นี่คือแผน ไม่ใช่คำมั่นเรื่องวันที่ สิ่งที่จะตามมาใน `1.x`: อาร์ติแฟกต์ Maven บน Maven Central,
-Helm chart, metrics ของ Prometheus และ tracing ของ OpenTelemetry, log แบบมีโครงสร้างในรูปแบบ JSON
-สำหรับ `2.0`: ผู้ปฏิบัติงานแทนระหว่างที่ไม่อยู่, การควบคุมแบบ four-eyes สำหรับการอนุมัติ, audit
-trail ที่แก้ไขไม่ได้ และ CMMN ในอินเทอร์เฟซใหม่ ไทม์ไลน์ตั้งแต่การสิ้นสุดของ Camunda 7 CE ไปจนถึง
-เป้าหมายปี 2027: <https://fasti.dev/#timeline>
+นี่คือแผน ไม่ใช่คำมั่นเรื่องวันที่ วางแผนไว้สำหรับ `1.1.0` และมีอยู่แล้วใน branch `main`: Helm chart
+และ manifest ของ Kubernetes, metrics ของ Prometheus, tracing ของ OpenTelemetry, log
+แบบมีโครงสร้างในรูปแบบ JSON, ผู้ปฏิบัติงานแทนระหว่างที่ไม่อยู่, การควบคุมแบบ four-eyes สำหรับการอนุมัติ,
+audit trail ที่แก้ไขไม่ได้ และการเตรียมเผยแพร่อาร์ติแฟกต์ Maven บน Maven Central สำหรับ `2.0`: CMMN
+ในอินเทอร์เฟซใหม่ ไทม์ไลน์ตั้งแต่การสิ้นสุดของ Camunda 7 CE ไปจนถึงเป้าหมายปี 2027:
+<https://fasti.dev/#timeline>
 
 <a id="documentation"></a>
 
@@ -134,9 +135,13 @@ trail ที่แก้ไขไม่ได้ และ CMMN ในอิน�
 | เอกสาร | เนื้อหา |
 |---|---|
 | [docs/install-docker.md](docs/install-docker.th.md) | การติดตั้งด้วย Docker ทีละขั้นตอน |
+| [docs/install-kubernetes.md](docs/install-kubernetes.md) | การติดตั้งบน Kubernetes: Helm chart และ manifest แบบธรรมดา (ตั้งแต่ 1.1.0) |
 | [docs/migrate-from-camunda-7.md](docs/migrate-from-camunda-7.th.md) | การย้ายจาก Camunda 7 การย้อนกลับ และข้อจำกัด |
 | [docs/embedding.md](docs/embedding.th.md) | ความเข้ากันได้ สิ่งที่แตกต่างจาก 7.24.0 การกำหนดเวอร์ชัน พิกัด Maven และการตรวจสอบเมื่อเริ่มทำงาน |
 | [docs/web-ui.md](docs/web-ui.th.md) | เว็บอินเทอร์เฟซ: ฟีเจอร์ที่ผู้ใช้ร้องขอ พาธ `/fasti` และแอปแบบคลาสสิก |
+| [docs/absence.md](docs/absence.md) | ผู้ปฏิบัติงานแทนระหว่างที่ไม่อยู่ (ตั้งแต่ 1.1.0) |
+| [docs/four-eyes.md](docs/four-eyes.md) | การควบคุมแบบ four-eyes สำหรับการอนุมัติ (ตั้งแต่ 1.1.0) |
+| [docs/audit-trail.md](docs/audit-trail.md) | Audit trail ที่แก้ไขไม่ได้ (ตั้งแต่ 1.1.0) |
 | [docs/single-sign-on.md](docs/single-sign-on.th.md) | การลงชื่อเข้าใช้ครั้งเดียว (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.md](docs/api/README.md) | การเชื่อมต่อ REST API และไคลเอนต์งานภายนอกสำหรับ Java กับ JavaScript |
 | [distro/docker/README.md](distro/docker/README.md) | อิมเมจ: ตัวแปรสภาพแวดล้อม ไดรเวอร์ การดูแลระบบ และการปรับแต่ง |

@@ -107,9 +107,10 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 
 ## 路线图
 
-这是一份计划，而不是对日期的承诺。`1.x` 的下一步：发布到 Maven Central 的 Maven 构件、Helm chart、
-Prometheus 指标和 OpenTelemetry 链路追踪、结构化 JSON 日志。`2.0` 的计划：缺勤期间的代理人、审批的
-四眼原则控制、不可篡改的审计轨迹，以及新界面支持 CMMN。从 Camunda 7 CE 终止到 2027 年目标的时间线：
+这是一份计划，而不是对日期的承诺。计划随 `1.1.0` 发布、已在 `main` 分支上的内容：Helm chart 和
+Kubernetes 清单、Prometheus 指标、OpenTelemetry 链路追踪、结构化 JSON 日志、缺勤期间的代理人、审批的
+四眼原则控制、不可篡改的审计轨迹，以及将 Maven 构件发布到 Maven Central 的准备工作。`2.0` 的计划：
+新界面支持 CMMN。从 Camunda 7 CE 终止到 2027 年目标的时间线：
 <https://fasti.dev/#timeline>。
 
 <a id="documentation"></a>
@@ -126,9 +127,13 @@ Prometheus 指标和 OpenTelemetry 链路追踪、结构化 JSON 日志。`2.0` 
 | 文档 | 内容 |
 |---|---|
 | [docs/install-docker.md](docs/install-docker.zh-CN.md) | 使用 Docker 安装的分步指南 |
+| [docs/install-kubernetes.md](docs/install-kubernetes.md) | 在 Kubernetes 上安装：Helm chart 和原生清单（自 1.1.0 起） |
 | [docs/migrate-from-camunda-7.md](docs/migrate-from-camunda-7.zh-CN.md) | 从 Camunda 7 迁移、回滚、限制 |
 | [docs/embedding.md](docs/embedding.zh-CN.md) | 兼容性、与 7.24.0 的差异、版本规则、Maven 坐标、启动检查 |
 | [docs/web-ui.md](docs/web-ui.zh-CN.md) | Web 界面：用户要求的功能、`/fasti` 路径、经典应用 |
+| [docs/absence.md](docs/absence.md) | 缺勤期间的代理人（自 1.1.0 起） |
+| [docs/four-eyes.md](docs/four-eyes.md) | 审批的四眼原则控制（自 1.1.0 起） |
+| [docs/audit-trail.md](docs/audit-trail.md) | 不可篡改的审计轨迹（自 1.1.0 起） |
 | [docs/single-sign-on.md](docs/single-sign-on.zh-CN.md) | 单点登录（OpenID Connect）：Run、Spring Boot、Tomcat、WildFly |
 | [docs/api/README.md](docs/api/README.md) | REST API 集成、Java 和 JavaScript 外部任务客户端 |
 | [distro/docker/README.md](distro/docker/README.md) | 镜像：环境变量、驱动、运维、调优 |

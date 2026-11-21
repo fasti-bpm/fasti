@@ -53,6 +53,13 @@
         desc = "Records between two checkpoints of a chain; 0 for none." />
 
     <@lib.property
+        name = "retiredKeyIds"
+        type = "array"
+        itemType = "string"
+        desc = "Ids of earlier keys whose signatures are still accepted: retired keys the engine holds (checked)
+                and listed key ids (accepted unchecked); `unsigned` if records without signature are accepted." />
+
+    <@lib.property
         name = "retentionDays"
         type = "integer"
         format = "int32"

@@ -5,8 +5,10 @@
       id = "exportAuditEvents"
       tag = "Audit Trail"
       summary = "Export Audit Records"
-      desc = "Fasti: the selected records as a file, oldest first, at most 100000. The export itself is recorded in
-              the audit trail (who, how many, which filter). The JSON export keeps every value exactly as hashed,
+      desc = "Fasti: the selected records as a file, oldest first, at most 100000, streamed from one database
+              cursor. The export itself is recorded in the audit trail (who, how many, which filter), which is why
+              it is a `POST`; the filter is given as query parameters. A user who is not an administrator gets the
+              records of the tenants of the authentication and the records without tenant. The JSON export keeps every value exactly as hashed,
               so it can be verified offline; the CSV export puts an apostrophe before text a spreadsheet would run
               as a formula. The user needs membership of an administrators group (`camunda-admin`) or the permission
               `READ` on the resource `SYSTEM`." />

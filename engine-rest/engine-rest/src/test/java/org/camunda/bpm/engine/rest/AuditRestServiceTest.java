@@ -39,6 +39,8 @@ import javax.ws.rs.core.Response.Status;
 import dev.fasti.engine.audit.AuditService;
 import dev.fasti.engine.audit.AuditTrail;
 import dev.fasti.engine.audit.AuditTrailPlugin;
+import dev.fasti.engine.audit.impl.AuditServiceImpl;
+import dev.fasti.engine.audit.impl.AuditSettings;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.ProcessEngineConfiguration;
 import org.camunda.bpm.engine.authorization.Authorization;
@@ -173,6 +175,7 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
         .body("chains", equalTo(1))
         .body("signed", equalTo(true))
         .body("keyId", notNullValue())
+        .body("retiredKeyIds", hasSize(0))
         .body("types", hasItem("task"))
         .body("variableValues", equalTo("hash"))
         .body("historyLevel", equalTo("full"))
@@ -229,7 +232,33 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
     given().queryParam("maxResults", 5000).then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).when().get(EVENT_URL);
     given().queryParam("sortOrder", "up").then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).when().get(EVENT_URL);
     given().queryParam("from", "yesterday").then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).when().get(COUNT_URL);
-    given().queryParam("format", "xml").then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).when().get(EXPORT_URL);
+    given().queryParam("format", "xml").then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).when().post(EXPORT_URL);
+  }
+
+  @Test
+  public void shouldRefusePagesFarIntoTheResult() {
+    given().queryParam("firstResult", 2_000_000_000)
+    .then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).body("message", containsString("firstResult"))
+    .when().get(EVENT_URL);
+    given().queryParam("firstResult", 1_000_001).then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).when().get(EVENT_URL);
+    given().queryParam("firstResult", -1).then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).when().get(EVENT_URL);
+    // a page behind the last record is empty, and found without reading what is before it
+    given().queryParam("firstResult", 1_000_000).queryParam("maxResults", 1000)
+    .then().expect().statusCode(Status.OK.getStatusCode()).body("$", hasSize(0))
+    .when().get(EVENT_URL);
+  }
+
+  @Test
+  public void shouldPageInOrder() {
+    List<String> all = given().queryParam("sortOrder", "asc").queryParam("maxResults", 1000)
+        .then().expect().statusCode(Status.OK.getStatusCode()).when().get(EVENT_URL).jsonPath().getList("id");
+    assertThat(all.size()).isGreaterThan(3);
+    List<String> paged = new ArrayList<>();
+    for (int first = 0; first < all.size(); first += 2) {
+      paged.addAll(given().queryParam("sortOrder", "asc").queryParam("firstResult", first).queryParam("maxResults", 2)
+          .then().expect().statusCode(Status.OK.getStatusCode()).when().get(EVENT_URL).jsonPath().<String>getList("id"));
+    }
+    assertThat(paged).containsExactlyElementsOf(all);
   }
 
   @Test
@@ -240,7 +269,7 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
         .statusCode(Status.OK.getStatusCode())
         .header("Content-Disposition", containsString("attachment; filename=\"audit-trail-"))
         .header("Content-Type", containsString("text/csv"))
-    .when().get(EXPORT_URL);
+    .when().post(EXPORT_URL);
     String[] lines = csv.asString().split("\r\n");
     assertThat(lines[0]).contains("id,chainId,sequence,timestamp,time,type,action,actor");
     assertThat(lines.length - 1L).isEqualTo(AuditTrail.of(engine).createQuery().processInstanceId(instanceId).count());
@@ -248,7 +277,7 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
 
     Response json = given().queryParam("processInstanceId", instanceId).queryParam("format", "json")
     .then().expect().statusCode(Status.OK.getStatusCode()).header("Content-Type", containsString("application/json"))
-    .when().get(EXPORT_URL);
+    .when().post(EXPORT_URL);
     List<Map<String, Object>> records = json.jsonPath().getList("$");
     assertThat(records).hasSize(lines.length - 1);
     assertThat(records.get(0).get("previousHash")).isNotNull();
@@ -260,9 +289,43 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
   }
 
   @Test
+  public void shouldNotExportOrRecordAnythingOnGet() {
+    requestAuthentication = new Authentication("auditor", List.of(Groups.CAMUNDA_ADMIN));
+    long before = AuditTrail.of(engine).createQuery().types("audit").action("export").count();
+    // a link or a top-level navigation is a GET: it gets no file and leaves no record
+    given().queryParam("format", "csv").then().expect().statusCode(Status.METHOD_NOT_ALLOWED.getStatusCode()).when().get(EXPORT_URL);
+    assertThat(AuditTrail.of(engine).createQuery().types("audit").action("export").count()).isEqualTo(before);
+    given().queryParam("format", "csv").then().expect().statusCode(Status.OK.getStatusCode()).when().post(EXPORT_URL);
+    assertThat(AuditTrail.of(engine).createQuery().types("audit").action("export").count()).isEqualTo(before + 1);
+  }
+
+  @Test
+  public void shouldExportOnlyTheTenantsOfTheReader() {
+    engine.getRepositoryService().createDeployment().tenantId("acme").addModelInstance("tenant.bpmn",
+        Bpmn.createExecutableProcess("tenant").camundaHistoryTimeToLive(180).startEvent().userTask().endEvent().done()).deploy();
+    engine.getRuntimeService().createProcessInstanceByKey("tenant").processDefinitionTenantId("acme").businessKey("acme-1").execute();
+
+    requestAuthentication = new Authentication("other", List.of(), List.of("globex"));
+    given().queryParam("businessKey", "acme-1").then().expect().statusCode(Status.OK.getStatusCode()).body("count", equalTo(0))
+    .when().get(COUNT_URL);
+    given().queryParam("tenantId", "acme").then().expect().statusCode(Status.OK.getStatusCode()).body("$", hasSize(0))
+    .when().get(EVENT_URL);
+    String csv = given().queryParam("format", "csv").then().expect().statusCode(Status.OK.getStatusCode()).when().post(EXPORT_URL)
+        .asString();
+    assertThat(csv).contains("order-1").doesNotContain("acme");
+
+    requestAuthentication = new Authentication("member", List.of(), List.of("acme"));
+    given().queryParam("businessKey", "acme-1").then().expect().statusCode(Status.OK.getStatusCode()).body("count", greaterThan(0))
+    .when().get(COUNT_URL);
+    requestAuthentication = new Authentication("root", List.of(Groups.CAMUNDA_ADMIN), List.of());
+    given().queryParam("tenantId", "acme").then().expect().statusCode(Status.OK.getStatusCode()).body("count", greaterThan(0))
+    .when().get(COUNT_URL);
+  }
+
+  @Test
   public void shouldGuardSpreadsheetFormulasInCsvOnly() {
     String csv = given().queryParam("processInstanceId", instanceId).queryParam("type", "operation").queryParam("format", "csv")
-        .then().expect().statusCode(Status.OK.getStatusCode()).when().get(EXPORT_URL).asString();
+        .then().expect().statusCode(Status.OK.getStatusCode()).when().post(EXPORT_URL).asString();
     for (String line : csv.split("\r\n")) {
       assertThat(line).doesNotStartWith("=");
     }
@@ -278,7 +341,11 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
     given().then().expect()
         .statusCode(Status.OK.getStatusCode())
         .body("intact", equalTo(true))
+        .body("authenticated", equalTo(true))
         .body("chains[0].chainId", equalTo("rest/0"))
+        .body("chains[0].authenticated", equalTo(true))
+        .body("chains[0].authenticatedThrough", equalTo(0))
+        .body("chains[0].purgeAttested", equalTo(false))
         .body("firstBreak", nullValue())
     .when().post(VERIFY_URL);
 
@@ -300,6 +367,7 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
       given().then().expect()
           .statusCode(Status.OK.getStatusCode())
           .body("intact", equalTo(false))
+          .body("authenticated", equalTo(false))
           .body("firstBreak.reason", equalTo("hash-mismatch"))
           .body("firstBreak.sequence", equalTo(2))
           .body("chains[0].intact", equalTo(false))
@@ -307,6 +375,52 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
       given().queryParam("chainId", "unknown").then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).when().post(VERIFY_URL);
     } finally {
       tampered.close();
+    }
+  }
+
+  @Test
+  public void shouldAnswerConflictWhileAnotherVerificationRuns() {
+    AuditSettings settings = AuditServiceImpl.settingsOf(configuration(engine));
+    long before = AuditTrail.of(engine).createQuery().types("audit").action("verify").count();
+    // as if another request were verifying
+    assertThat(settings.startVerifying()).isTrue();
+    try {
+      given().then().expect()
+          .statusCode(Status.CONFLICT.getStatusCode())
+          .body("type", equalTo("InvalidRequestException"))
+          .body("message", containsString("verification of the audit trail is running"))
+      .when().post(VERIFY_URL);
+    } finally {
+      settings.endVerifying();
+    }
+    assertThat(AuditTrail.of(engine).createQuery().types("audit").action("verify").count()).isEqualTo(before);
+    given().then().expect().statusCode(Status.OK.getStatusCode()).body("intact", equalTo(true)).when().post(VERIFY_URL);
+  }
+
+  @Test
+  public void shouldNotReturnWhatTheDatabaseSaid() {
+    ProcessEngine failing = buildEngine("auditRestFailing", true);
+    try {
+      use(failing);
+      configuration(failing).getCommandExecutorTxRequired().execute(commandContext -> {
+        try (PreparedStatement statement = commandContext.getDbSqlSession().getSqlSession().getConnection()
+            .prepareStatement("alter table FASTI_AUDIT_EVENT rename to FASTI_AUDIT_GONE")) {
+          return statement.executeUpdate();
+        } catch (java.sql.SQLException e) {
+          throw new IllegalStateException(e);
+        }
+      });
+      for (String url : List.of(EVENT_URL, COUNT_URL)) {
+        String body = given().then().expect().statusCode(Status.INTERNAL_SERVER_ERROR.getStatusCode())
+            .body("message", containsString("The audit trail could not"))
+        .when().get(url).asString();
+        assertThat(body.toUpperCase()).doesNotContain("FASTI_AUDIT", "SELECT ", "SQL");
+      }
+      String body = given().queryParam("format", "json").then().expect().statusCode(Status.INTERNAL_SERVER_ERROR.getStatusCode())
+          .when().post(EXPORT_URL).asString();
+      assertThat(body.toUpperCase()).doesNotContain("FASTI_AUDIT", "SELECT ", "SQL");
+    } finally {
+      failing.close();
     }
   }
 
@@ -328,7 +442,7 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
     .when().get(EVENT_URL);
     given().then().expect().statusCode(Status.FORBIDDEN.getStatusCode()).when().get(COUNT_URL);
     given().then().expect().statusCode(Status.FORBIDDEN.getStatusCode()).when().post(VERIFY_URL);
-    given().queryParam("format", "csv").then().expect().statusCode(Status.FORBIDDEN.getStatusCode()).when().get(EXPORT_URL);
+    given().queryParam("format", "csv").then().expect().statusCode(Status.FORBIDDEN.getStatusCode()).when().post(EXPORT_URL);
     // whether the audit trail runs is told, its settings are not
     given().then().expect().statusCode(Status.OK.getStatusCode()).body("enabled", equalTo(true)).body("nodeId", nullValue())
     .when().get(AUDIT_URL);

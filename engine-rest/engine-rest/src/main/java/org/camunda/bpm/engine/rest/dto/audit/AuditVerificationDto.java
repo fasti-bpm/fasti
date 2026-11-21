@@ -25,6 +25,7 @@ import dev.fasti.engine.audit.AuditVerification;
 public class AuditVerificationDto {
 
   protected boolean intact;
+  protected boolean authenticated;
   protected Date verifiedAt;
   protected long records;
   protected List<AuditChainDto> chains;
@@ -33,6 +34,7 @@ public class AuditVerificationDto {
   public static AuditVerificationDto fromVerification(AuditVerification verification) {
     AuditVerificationDto dto = new AuditVerificationDto();
     dto.intact = verification.isIntact();
+    dto.authenticated = verification.isAuthenticated();
     dto.verifiedAt = verification.getVerifiedAt();
     dto.records = verification.getRecords();
     dto.chains = new ArrayList<>();
@@ -49,6 +51,15 @@ public class AuditVerificationDto {
 
   public void setIntact(boolean intact) {
     this.intact = intact;
+  }
+
+  /** Whether every chain is intact and every signature it needs was checked with a key of the engine. */
+  public boolean isAuthenticated() {
+    return authenticated;
+  }
+
+  public void setAuthenticated(boolean authenticated) {
+    this.authenticated = authenticated;
   }
 
   public Date getVerifiedAt() {

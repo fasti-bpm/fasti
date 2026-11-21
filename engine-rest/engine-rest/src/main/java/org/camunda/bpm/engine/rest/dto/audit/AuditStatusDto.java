@@ -32,6 +32,7 @@ public class AuditStatusDto {
   protected List<String> maskedVariables;
   protected boolean signed;
   protected String keyId;
+  protected List<String> retiredKeyIds;
   protected int checkpointInterval;
   protected int retentionDays;
   protected String historyLevel;
@@ -50,6 +51,7 @@ public class AuditStatusDto {
       dto.maskedVariables = new ArrayList<>(status.getMaskedVariables());
       dto.signed = status.isSigned();
       dto.keyId = status.getKeyId();
+      dto.retiredKeyIds = new ArrayList<>(status.getRetiredKeyIds());
       dto.checkpointInterval = status.getCheckpointInterval();
       dto.retentionDays = status.getRetentionDays();
       dto.historyLevel = status.getHistoryLevel();
@@ -119,6 +121,14 @@ public class AuditStatusDto {
 
   public void setKeyId(String keyId) {
     this.keyId = keyId;
+  }
+
+  public List<String> getRetiredKeyIds() {
+    return retiredKeyIds;
+  }
+
+  public void setRetiredKeyIds(List<String> retiredKeyIds) {
+    this.retiredKeyIds = retiredKeyIds;
   }
 
   public int getCheckpointInterval() {

@@ -5,7 +5,8 @@
       id = "getAuditEvents"
       tag = "Audit Trail"
       summary = "Get Audit Records"
-      desc = "Fasti: queries the records of the audit trail, newest first. The user needs membership of an administrators group (`camunda-admin`) or the permission
+      desc = "Fasti: queries the records of the audit trail, newest first. A user who is not an administrator gets
+              the records of the tenants of the authentication and the records without tenant. The user needs membership of an administrators group (`camunda-admin`) or the permission
               `READ` on the resource `SYSTEM`." />
 
   "parameters" : [

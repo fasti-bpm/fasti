@@ -17,7 +17,9 @@
 package org.camunda.bpm.engine.rest.impl;
 
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -42,6 +44,7 @@ import dev.fasti.engine.audit.AuditEvent;
 import dev.fasti.engine.audit.AuditEventQuery;
 import dev.fasti.engine.audit.AuditService;
 import dev.fasti.engine.audit.AuditTrail;
+import dev.fasti.engine.audit.AuditVerificationRunningException;
 import org.camunda.bpm.engine.rest.AuditRestService;
 import org.camunda.bpm.engine.rest.dto.CountResultDto;
 import org.camunda.bpm.engine.rest.dto.audit.AuditEventDto;
@@ -56,7 +59,8 @@ public class AuditRestServiceImpl extends AbstractRestProcessEngineAware impleme
 
   static final int DEFAULT_MAX_RESULTS = 50;
   static final int LIMIT_MAX_RESULTS = 1000;
-  static final int EXPORT_PAGE = 1000;
+  /** Pages further in than this need a narrower filter: the database still has to walk to the page. */
+  static final int LIMIT_FIRST_RESULT = 1_000_000;
   /** Exports beyond this need a narrower filter. */
   static final int LIMIT_EXPORT = 100_000;
   static final String ACTOR_SYSTEM = "system";
@@ -90,6 +94,10 @@ public class AuditRestServiceImpl extends AbstractRestProcessEngineAware impleme
     if (first < 0 || max < 0 || max > LIMIT_MAX_RESULTS) {
       throw new InvalidRequestException(Status.BAD_REQUEST,
           "firstResult must not be negative and maxResults must be between 0 and " + LIMIT_MAX_RESULTS + ".");
+    }
+    if (first > LIMIT_FIRST_RESULT) {
+      throw new InvalidRequestException(Status.BAD_REQUEST, "firstResult must not be greater than " + LIMIT_FIRST_RESULT
+          + ". Narrow the filter, for example by time.");
     }
     List<AuditEventDto> result = new ArrayList<>();
     for (AuditEvent event : query(uriInfo.getQueryParameters()).listPage(first, max)) {
@@ -163,30 +171,41 @@ public class AuditRestServiceImpl extends AbstractRestProcessEngineAware impleme
     AuditService audit = audit();
     audit.recordExport(kind, describe(parameters), count);
 
+    // one cursor over the records, oldest first: nothing but the row at hand is held in memory
     AuditEventQuery query = query(parameters).oldestFirst();
+    int limit = (int) count;
     String stamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC).format(Instant.now());
     StreamingOutput body = output -> {
       Writer writer = new BufferedWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8));
-      if (kind.equals("csv")) {
-        writer.write('﻿');
-        writer.write(String.join(",", CSV_COLUMNS));
-        writer.write("\r\n");
-        for (int first = 0; first < count; first += EXPORT_PAGE) {
-          for (AuditEvent event : query.listPage(first, EXPORT_PAGE)) {
-            writer.write(csvRow(event));
-          }
+      try {
+        if (kind.equals("csv")) {
+          writer.write('\uFEFF');
+          writer.write(String.join(",", CSV_COLUMNS));
+          writer.write("\r\n");
+          query.forEach(limit, event -> {
+            try {
+              writer.write(csvRow(event));
+            } catch (IOException e) {
+              throw new UncheckedIOException(e);
+            }
+          });
+          writer.flush();
+        } else {
+          JsonGenerator json = getObjectMapper().getFactory().createGenerator(writer);
+          json.writeStartArray();
+          query.forEach(limit, event -> {
+            try {
+              getObjectMapper().writeValue(json, AuditEventDto.fromEvent(event));
+            } catch (IOException e) {
+              throw new UncheckedIOException(e);
+            }
+          });
+          json.writeEndArray();
+          json.flush();
         }
-        writer.flush();
-      } else {
-        JsonGenerator json = getObjectMapper().getFactory().createGenerator(writer);
-        json.writeStartArray();
-        for (int first = 0; first < count; first += EXPORT_PAGE) {
-          for (AuditEvent event : query.listPage(first, EXPORT_PAGE)) {
-            getObjectMapper().writeValue(json, AuditEventDto.fromEvent(event));
-          }
-        }
-        json.writeEndArray();
-        json.flush();
+      } catch (UncheckedIOException e) {
+        // the client went away
+        throw e.getCause();
       }
     };
     return Response.ok(body, kind.equals("csv") ? "text/csv; charset=UTF-8" : MediaType.APPLICATION_JSON)
@@ -243,7 +262,11 @@ public class AuditRestServiceImpl extends AbstractRestProcessEngineAware impleme
 
   @Override
   public AuditVerificationDto verify(String chainId) {
-    return AuditVerificationDto.fromVerification(chainId == null || chainId.isBlank() ? audit().verify() : audit().verify(chainId));
+    try {
+      return AuditVerificationDto.fromVerification(chainId == null || chainId.isBlank() ? audit().verify() : audit().verify(chainId));
+    } catch (AuditVerificationRunningException e) {
+      throw new InvalidRequestException(Status.CONFLICT, e, e.getMessage());
+    }
   }
 
   @Override

@@ -63,12 +63,17 @@ public interface AuditRestService {
   @Produces(MediaType.APPLICATION_JSON)
   CountResultDto getEventCount(@Context UriInfo uriInfo);
 
-  /** The selected records as a file ({@code format} {@code csv} or {@code json}), oldest first; the export is recorded. */
-  @GET
+  /**
+   * The selected records as a file ({@code format} {@code csv} or {@code json}), oldest first; the
+   * export is recorded. A {@code POST}, because it writes that record: a link or a page of another
+   * site cannot trigger it in the web application, whose CSRF filter covers every request but GET.
+   */
+  @POST
   @Path("/event/export")
   @Produces({"text/csv", MediaType.APPLICATION_JSON})
   Response exportEvents(@Context UriInfo uriInfo, @QueryParam("format") String format);
 
+  /** Verifies the chains; answers 409 while another verification runs on the engine. */
   @POST
   @Path("/verify")
   @Produces(MediaType.APPLICATION_JSON)

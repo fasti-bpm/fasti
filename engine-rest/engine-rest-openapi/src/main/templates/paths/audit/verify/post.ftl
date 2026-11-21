@@ -7,7 +7,10 @@
       summary = "Verify Audit Trail"
       desc = "Fasti: recomputes the hash chains and reports, per chain, whether it is intact and where it first
               breaks (a changed, removed or inserted record, a rewritten chain before a signed checkpoint, or a
-              head that does not match). The verification is recorded in the audit trail. The user needs membership of an administrators group (`camunda-admin`) or the permission
+              head that does not match; with a signing key also a checkpoint without valid signature, a missing
+              checkpoint, or a removed start that no signed purge record names). `authenticated` tells whether every
+              signature was checked with a key the engine holds. An engine runs one verification at a time. The
+              verification is recorded in the audit trail. The user needs membership of an administrators group (`camunda-admin`) or the permission
               `READ` on the resource `SYSTEM`." />
 
   "parameters" : [
@@ -32,6 +35,13 @@
         code = "400"
         dto = "ExceptionDto"
         desc = "The audit trail is not enabled on the engine, or a parameter is invalid. See the
+                [Introduction](${docsUrl}/reference/rest/overview/#error-handling)
+                for the error response format." />
+
+    <@lib.response
+        code = "409"
+        dto = "ExceptionDto"
+        desc = "Another verification runs on the engine; try again when it is done. See the
                 [Introduction](${docsUrl}/reference/rest/overview/#error-handling)
                 for the error response format." />
 

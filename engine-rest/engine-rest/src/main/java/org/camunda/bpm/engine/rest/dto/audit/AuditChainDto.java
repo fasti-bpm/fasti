@@ -23,6 +23,8 @@ public class AuditChainDto {
 
   protected String chainId;
   protected boolean intact;
+  protected boolean authenticated;
+  protected long authenticatedThrough;
   protected long records;
   protected long firstSequence;
   protected long lastSequence;
@@ -30,12 +32,15 @@ public class AuditChainDto {
   protected long checkpoints;
   protected long checkpointsVerified;
   protected long purgedThrough;
+  protected boolean purgeAttested;
   protected AuditBreakDto firstBreak;
 
   public static AuditChainDto fromChain(AuditVerification.Chain chain) {
     AuditChainDto dto = new AuditChainDto();
     dto.chainId = chain.getChainId();
     dto.intact = chain.isIntact();
+    dto.authenticated = chain.isAuthenticated();
+    dto.authenticatedThrough = chain.getAuthenticatedThrough();
     dto.records = chain.getRecords();
     dto.firstSequence = chain.getFirstSequence();
     dto.lastSequence = chain.getLastSequence();
@@ -43,6 +48,7 @@ public class AuditChainDto {
     dto.checkpoints = chain.getCheckpoints();
     dto.checkpointsVerified = chain.getCheckpointsVerified();
     dto.purgedThrough = chain.getPurgedThrough();
+    dto.purgeAttested = chain.isPurgeAttested();
     dto.firstBreak = AuditBreakDto.fromBreak(chain.getFirstBreak());
     return dto;
   }
@@ -117,6 +123,32 @@ public class AuditChainDto {
 
   public void setPurgedThrough(long purgedThrough) {
     this.purgedThrough = purgedThrough;
+  }
+
+  public boolean isAuthenticated() {
+    return authenticated;
+  }
+
+  public void setAuthenticated(boolean authenticated) {
+    this.authenticated = authenticated;
+  }
+
+  /** The last record a checked signature covers; 0 if the chain is not authenticated or has no checkpoint yet. */
+  public long getAuthenticatedThrough() {
+    return authenticatedThrough;
+  }
+
+  public void setAuthenticatedThrough(long authenticatedThrough) {
+    this.authenticatedThrough = authenticatedThrough;
+  }
+
+  /** Whether the purge record that names the removed start carries a signature that was checked. */
+  public boolean isPurgeAttested() {
+    return purgeAttested;
+  }
+
+  public void setPurgeAttested(boolean purgeAttested) {
+    this.purgeAttested = purgeAttested;
   }
 
   public AuditBreakDto getFirstBreak() {

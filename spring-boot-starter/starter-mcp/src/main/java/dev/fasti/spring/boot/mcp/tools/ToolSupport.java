@@ -190,8 +190,8 @@ public class ToolSupport {
 
   /**
    * The message of an engine exception if it is meant for the caller (a missing or invalid
-   * argument, something not found, suspended or changed concurrently, a validation of the engine
-   * with its ENGINE code); otherwise a reference to the server log. Messages of failed
+   * argument, something not found, suspended or changed concurrently, a task claimed by someone
+   * else); otherwise a reference to the server log. Messages of failed
    * expressions, scripts, delegates and the persistence layer can carry model details, values or
    * secrets and are never returned.
    */
@@ -206,14 +206,11 @@ public class ToolSupport {
   }
 
   protected boolean isForTheCaller(ProcessEngineException e) {
-    if (e instanceof BadUserRequestException || e instanceof NullValueException
+    // a plain ProcessEngineException, even with an ENGINE code, may quote values (for example a
+    // decision result that cannot be mapped), so only these kinds are passed on
+    return e instanceof BadUserRequestException || e instanceof NullValueException
         || e instanceof SuspendedEntityInteractionException || e instanceof OptimisticLockingException
-        || e instanceof TaskAlreadyClaimedException) {
-      return true;
-    }
-    // validations of the engine itself: coded, without an underlying cause
-    return e.getClass() == ProcessEngineException.class && e.getCause() == null
-        && e.getMessage().startsWith("ENGINE-");
+        || e instanceof TaskAlreadyClaimedException;
   }
 
   protected static String reference() {

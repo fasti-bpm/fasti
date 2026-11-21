@@ -209,7 +209,7 @@ class McpWriteToolsTest {
     assertThat(mcp.callToolError(BOB, PASSWORD, "retry_failed_job", Map.of("incidentId", incident.getId())))
         .contains("not found or you are not allowed");
     assertThat(mcp.callToolError(BOB, PASSWORD, "retry_failed_job", Map.of("jobId", job.getId())))
-        .startsWith("Not authorized");
+        .contains("not found or you are not allowed");
 
     Map<String, Object> retried = mcp.callToolOk(ADMIN, ADMIN_PASSWORD, "retry_failed_job",
         Map.of("incidentId", incident.getId(), "retries", 2));

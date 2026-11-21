@@ -203,6 +203,9 @@ public class IncidentTools {
             throw new ToolException("Incidents of type '" + incident.getIncidentType() + "' cannot be retried");
           }
           if (jobId != null) {
+            if (management().createJobQuery().jobId(jobId).count() == 0) {
+              throw ToolException.notFound("Job", jobId);
+            }
             management().setJobRetries(jobId, retries);
             return Json.obj().with("jobId", jobId).with("retries", retries);
           }

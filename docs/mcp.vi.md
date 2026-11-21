@@ -189,3 +189,7 @@ Trong container image, mọi thuộc tính đều đặt được bằng biến 
   Spring Boot starter.
 - Biến truyền cho công cụ ghi là giá trị đơn giản; không nhận đối tượng JSON, danh sách, file
   hay ngày giờ.
+- Giá trị đối tượng đã tuần tự hóa (JSON, XML) được đọc đầy đủ từ cơ sở dữ liệu rồi mới cắt: các
+  giới hạn áp cho câu trả lời, không áp cho việc đọc. Giá trị nhị phân và file không được đọc.
+- Lỗi của engine có thể trích chi tiết mô hình hoặc giá trị (biểu thức, script, delegate lỗi)
+  không được trả về; lỗi của công cụ ghi một mã tham chiếu để tra trong log của máy chủ.

@@ -188,3 +188,7 @@ In the container image every property can be set as an environment variable, for
   image or the Spring Boot starter.
 - Variables passed to write tools are plain values; JSON objects, lists, files and dates are not
   accepted.
+- Serialized object values (JSON, XML) are read from the database in full and then cut: the
+  limits bound the answer, not the read. Binary values and files are not read.
+- Engine errors that may quote model details or values (failed expressions, scripts, delegates)
+  are not returned; the tool error names a reference to look up in the server log.

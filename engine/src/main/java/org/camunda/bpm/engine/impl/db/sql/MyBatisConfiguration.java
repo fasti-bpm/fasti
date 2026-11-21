@@ -148,8 +148,11 @@ public class MyBatisConfiguration extends Configuration {
 
     protected static PreparedStatement hideParameterMetadata(PreparedStatement statement) {
       if (statement instanceof CallableStatement) {
-        // a stored procedure call: rare, and its output parameters are read through the same
-        // object, so it keeps its type by a dynamic proxy
+        // a stored procedure call, whose output parameters are read through the same object, so
+        // it keeps its type by a dynamic proxy. The statement logging proxy of MyBatis implements
+        // CallableStatement as well: while a mapper logs its statements at DEBUG, every statement
+        // takes this path and binds its parameters by reflective calls, as before (correct, only
+        // without the plain delegate's speed-up)
         return (PreparedStatement) Proxy.newProxyInstance(MyBatisConfiguration.class.getClassLoader(),
             new Class<?>[] { CallableStatement.class }, new StatementHandler(statement));
       }

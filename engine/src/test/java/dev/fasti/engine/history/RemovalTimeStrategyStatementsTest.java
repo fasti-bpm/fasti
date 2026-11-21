@@ -19,6 +19,8 @@ package dev.fasti.engine.history;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import dev.fasti.engine.audit.AuditTestSupport;
@@ -37,15 +39,29 @@ import org.junit.Test;
  * What the removal time strategies cost when a root process instance ends, as documented in
  * docs/tuning-runtime.md: with {@code end} (the default) one update per history table, with
  * {@code start} none, because every history row gets its removal time when it is written.
+ * <p>
+ * The statements are recognised by their columns, not by the exact text, so that the test holds
+ * for the variants of every database (SQL Server: {@code update RES set RES.REMOVAL_TIME_ = ?
+ * FROM ACT_HI_... RES WITH (FORCESEEK) where RES.ROOT_PROC_INST_ID_ = ?}) and a table prefix.
  */
 public class RemovalTimeStrategyStatementsTest {
+
+  /** An update that sets the removal time, with or without a table alias. */
+  static final Pattern SETS_REMOVAL_TIME = Pattern.compile("^update .*\\bset (\\w+\\.)?removal_time_ = .*");
+  /** ... of every row of the root process instance. */
+  static final Pattern BY_ROOT_INSTANCE = Pattern.compile(".* where (\\w+\\.)?root_proc_inst_id_ = \\?.*");
 
   final StatementTrace trace = new StatementTrace();
   ProcessEngine engine;
 
   ProcessEngine engine(String strategy) {
+    return engine(strategy, configuration -> { });
+  }
+
+  ProcessEngine engine(String strategy, Consumer<ProcessEngineConfigurationImpl> configurer) {
     ProcessEngineConfigurationImpl configuration = AuditTestSupport.configuration("removal-" + strategy);
     configuration.setHistoryRemovalTimeStrategy(strategy);
+    configurer.accept(configuration);
     PooledDataSource dataSource = new PooledDataSource(ReflectUtil.getClassLoader(), configuration.getJdbcDriver(),
         configuration.getJdbcUrl(), configuration.getJdbcUsername(), configuration.getJdbcPassword());
     configuration.setDataSource(trace.wrap(dataSource));
@@ -67,7 +83,7 @@ public class RemovalTimeStrategyStatementsTest {
     trace.clear();
     engine.getTaskService().complete(task.getId());
     return trace.executed().stream()
-        .filter(sql -> sql.startsWith("update act_") && sql.contains("set removal_time_ ="))
+        .filter(sql -> SETS_REMOVAL_TIME.matcher(sql).matches())
         .collect(Collectors.toList());
   }
 
@@ -76,9 +92,34 @@ public class RemovalTimeStrategyStatementsTest {
     engine(ProcessEngineConfiguration.HISTORY_REMOVAL_TIME_STRATEGY_END);
     List<String> updates = removalTimeUpdatesOfTheEnd();
     // one statement per table that can hold history of the instance, whether it has rows there or not
-    assertThat(updates).hasSize(16).doesNotHaveDuplicates().allMatch(sql -> sql.contains("where root_proc_inst_id_ = ?"));
+    assertThat(updates).hasSize(16).doesNotHaveDuplicates().allMatch(sql -> BY_ROOT_INSTANCE.matcher(sql).matches());
     HistoricProcessInstance instance = engine.getHistoryService().createHistoricProcessInstanceQuery().singleResult();
     assertThat(instance.getRemovalTime()).isAfter(instance.getEndTime());
+  }
+
+  @Test
+  public void shouldAlsoUpdateTheAuthorizationsWithHistoricInstancePermissions() {
+    engine(ProcessEngineConfiguration.HISTORY_REMOVAL_TIME_STRATEGY_END,
+        configuration -> configuration.setEnableHistoricInstancePermissions(true));
+    List<String> updates = removalTimeUpdatesOfTheEnd();
+    // the 16 history tables plus ACT_RU_AUTHORIZATION
+    assertThat(updates).hasSize(17).doesNotHaveDuplicates().allMatch(sql -> BY_ROOT_INSTANCE.matcher(sql).matches())
+        .anyMatch(sql -> sql.contains("act_ru_authorization"));
+  }
+
+  @Test
+  public void shouldRecogniseTheStatementsOfEveryDatabase() {
+    // as sent by the engine, lower case with single spaces (StatementTrace)
+    assertThat(List.of(
+        "update act_hi_varinst set removal_time_ = ? where root_proc_inst_id_ = ?",
+        "update fasti_act_hi_varinst set removal_time_ = ? where root_proc_inst_id_ = ?",
+        "update myschema.act_hi_varinst set removal_time_ = ? where root_proc_inst_id_ = ?",
+        "update res set res.removal_time_ = ? from act_hi_varinst res with (forceseek) where res.root_proc_inst_id_ = ?"))
+        .allMatch(sql -> SETS_REMOVAL_TIME.matcher(sql).matches() && BY_ROOT_INSTANCE.matcher(sql).matches());
+    assertThat(List.of(
+        "update act_ru_task set rev_ = ?, removal_time_x = ? where id_ = ?",
+        "select removal_time_ from act_hi_procinst where root_proc_inst_id_ = ?"))
+        .noneMatch(sql -> SETS_REMOVAL_TIME.matcher(sql).matches());
   }
 
   @Test

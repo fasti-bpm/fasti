@@ -200,9 +200,20 @@ alten Knoten dürfen keine neuen Funktionen verwenden).
 
 ## Leistung
 
-Die Standardeinstellungen des Images (10 Verbindungen im Pool, Job Executor mit 3 Kern-Threads/maximal 10 Threads) entsprechen Camunda Run. Wenn Sie den Verbindungspool oder Job Executor Ihrer bisherigen Camunda 7-Installation angepasst haben, übernehmen Sie diese Werte
-(`FASTI_DB_CONN_MAXACTIVE`, `CAMUNDA_BPM_JOB_EXECUTION_*`); Hinweise und Messwerte finden Sie in
-`distro/docker/README.md`, „Leistungsoptimierung“. Fasti fügt dem Schema keinen Index hinzu.
+Das Image übernimmt für Job Executor und Verbindungspool nicht mehr die Standardwerte von Camunda
+Run (bis Fasti 1.1 tat es das): Es arbeitet mit 10 Job-Threads, einer Warteschlange von 10 und 10
+Jobs pro Abruf (Camunda Run: 3 Kern-Threads, maximal 10, Warteschlange 3, 3 pro Abruf) und einem
+Verbindungspool von bis zu 20 Verbindungen, von denen im Leerlauf 10 offen bleiben (Camunda Run:
+10). Bemessen Sie das Verbindungslimit der Datenbank für die Pools aller Knoten zusammen, Camunda
+7-Knoten eingeschlossen ([Laufzeit-Tuning](tuning-runtime.md), Englisch). Wenn Sie den
+Verbindungspool oder Job Executor Ihrer bisherigen Camunda 7-Installation angepasst haben,
+übernehmen Sie diese Werte (`FASTI_DB_CONN_MAXACTIVE`, `FASTI_DB_CONN_MINIDLE`,
+`CAMUNDA_BPM_JOB_EXECUTION_*`); weitere Hinweise finden Sie in `distro/docker/README.md`,
+„Leistungsoptimierung“. Fasti ändert die Indizes des Schemas nie von selbst; für große Datenbanken
+liefert es optionale Indizes als Skripte, die ein Administrator ausführt
+(`/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql`, siehe
+[performance.md](performance.md)). Sie sind neben Camunda 7.24-Knoten sicher und werden mit dem
+passenden `_drop.sql` wieder entfernt.
 
 <a id="limits"></a>
 

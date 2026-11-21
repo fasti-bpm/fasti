@@ -196,7 +196,7 @@ Chi tiết: [Chạy lẫn với node Camunda 7](migrate-from-camunda-7.vi.md#ch�
 | `FASTI_ADMIN_USER`, `FASTI_ADMIN_PASSWORD` (`_FILE`) | tạo admin nếu chưa có |
 | `FASTI_JOB_EXECUTOR_ENABLED`, `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | job executor của node |
 | `FASTI_EXTRA_LIB` | thư mục jar thêm (driver Oracle, DB2) |
-| `FASTI_DB_CONN_MAXACTIVE` | kích thước pool kết nối (mặc định 20) |
+| `FASTI_DB_CONN_MAXACTIVE` | kích thước tối đa của pool kết nối (mặc định 20; khi rảnh giữ mở 10, `FASTI_DB_CONN_MINIDLE`) |
 | `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | tùy chọn JVM, phần trăm RAM cho heap (75) |
 
 Bảng đầy đủ: [distro/docker/README.vi.md](../distro/docker/README.vi.md#biến-môi-trường).

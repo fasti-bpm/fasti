@@ -77,7 +77,7 @@ existing Camunda 7.24 installation leave them out: tables and accounts already e
 | `database.schemaUpdate` | `false` | `true` creates missing tables in a new database; never upgrades a schema |
 | `database.schemaVersionCheck` | `enforce` | `warn` only logs a schema older than 7.24 (unsupported) |
 | `database.schema`, `.tablePrefix` | `""` | schema name / table prefix |
-| `database.pool.maxActive`, `.minIdle` | `""` | HikariCP pool per pod (default of the image: 20, 10 up to 1.1) |
+| `database.pool.maxActive`, `.minIdle` | `""` | HikariCP pool per pod (default of the image: up to 20, 10 kept when idle; up to 1.1: 10 and 10); see Several replicas for the connection budget |
 | `database.waitFor`, `.waitForTimeout` | `""`, `60` | wait for `host:port` before starting the JVM |
 | `admin.user`, `admin.existingSecret`, `admin.passwordKey` | `""`, `""`, `password` | administrator created if missing |
 | `engine.timezone` | `UTC` | `TZ`; must match every node on the database |
@@ -120,8 +120,22 @@ All pods share the database; the engine is built for that.
 - **Job executor:** every pod acquires jobs from the same tables with optimistic locking, so each
   job (async continuation, timer, retry) runs on one pod only; a pod that loses the race leaves
   the job to the other. Keep `max-jobs-per-acquisition` moderate (≤ 16) with many pods and size the
-  pool above the job executor threads plus concurrent REST requests (`database.pool.maxActive`);
-  the pools of all pods together must stay below the database's `max_connections`.
+  pool above the job executor threads plus concurrent REST requests (`database.pool.maxActive`).
+- **Connections:** each pod opens up to `database.pool.maxActive` connections (image default 20;
+  an idle pod keeps `database.pool.minIdle`, image default 10). Count the pods at their highest
+  and keep the sum below the connection limit of the database:
+
+  ```
+  (autoscaling.maxReplicas, or replicaCount, + updateStrategy.rollingUpdate.maxSurge) × maxActive
+    + pools of other nodes on the database (Camunda 7.24 nodes) + other clients + reserve
+    < max_connections
+  ```
+
+  With the defaults (`maxReplicas` 4, `maxSurge` 1, pool 20) that is 5 × 20 = 100 before any
+  other client, exactly the `max_connections` of a default PostgreSQL (100, of which 3 are
+  reserved for superusers). Raise the limit of the database, lower `database.pool.maxActive`, or
+  lower `autoscaling.maxReplicas` before enabling autoscaling. The [runtime tuning
+  guide](../../../../docs/tuning-runtime.md) has the full formula.
 - **Deployment-aware:** keep `engine.jobExecutor.deploymentAware: false` when every pod runs the
   same image, plugins and process classes: processes are deployed through the REST API or the
   web UI into the database and are known to every pod. Set it to `true` (on every node) only when

@@ -113,7 +113,8 @@ cấu hình riêng): image dùng H2 trong `/fasti/data`, chỉ để thử.
 Tên biến của image cũ và các bí danh `FASTI_*` đều được chấp nhận (khi đặt cả hai, giá trị `FASTI_*` được dùng;
 với `DEBUG` và `JMX_PROMETHEUS`, chỉ cần một trong hai tên là `true`). Mọi thuộc tính
 Spring Boot cũng đặt được bằng biến môi trường (ví dụ `CAMUNDA_BPM_RUN_AUTH_ENABLED=true`). Các
-mục ghi **từ 1.1.0** chưa có trong các image 1.0.x.
+mục ghi **từ 1.1.0** chưa có trong các image 1.0.x; các mục ghi **sau 1.1.0** chưa có trong các
+image 1.1.x.
 
 | Biến | Mặc định | Ý nghĩa |
 |---|---|---|
@@ -160,8 +161,8 @@ mục ghi **từ 1.1.0** chưa có trong các image 1.0.x.
 | `FASTI_FOUR_EYES_ENABLED` | `true` | **Từ 1.1.0.** [Kiểm soát bốn mắt](../../docs/four-eyes.vi.md) cho các user task mà mô hình khai báo `fasti:fourEyes`; `false` để tắt |
 | `FASTI_AUDIT_ENABLED` | `false` | **Từ 1.1.0.** `true`: [nhật ký kiểm toán bất biến](../../docs/audit-trail.vi.md), trên mọi node. Trừ khi `FASTI_DB_SCHEMA_UPDATE=true`, hãy tạo bảng trước bằng `/fasti/configuration/sql/create/<database>_fasti_audit.sql` |
 | `FASTI_AUDIT_HMAC_KEY`, `FASTI_AUDIT_HMAC_KEY_FILE` | | **Từ 1.1.0.** Khóa ký các điểm kiểm tra của nhật ký kiểm toán (ít nhất 32 byte), hoặc đường dẫn tệp chứa khóa (secret của Docker/Kubernetes) |
-| `FASTI_PERFORMANCE_INDEX_CHECK` | `warn` | Một cảnh báo khi khởi động liệt kê các [chỉ mục hiệu năng tùy chọn](../../docs/performance.vi.md) của `/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql` mà cơ sở dữ liệu chưa có; `off` để tắt |
-| `FASTI_PERFORMANCE_CONFIG_CHECK` | `warn` | Cảnh báo khi khởi động cho các cấu hình tốn hiệu năng khi dữ liệu lớn dần (lịch sử không có khung giờ dọn, connection pool nhỏ hơn mức job executor cần, …); `off` để tắt |
+| `FASTI_PERFORMANCE_INDEX_CHECK` | `warn` | **Sau 1.1.0.** Một cảnh báo khi khởi động liệt kê các [chỉ mục hiệu năng tùy chọn](../../docs/performance.vi.md) của `/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql` mà cơ sở dữ liệu chưa có; `off` để tắt |
+| `FASTI_PERFORMANCE_CONFIG_CHECK` | `warn` | **Sau 1.1.0.** Cảnh báo khi khởi động cho các cấu hình tốn hiệu năng khi dữ liệu lớn dần (lịch sử không có khung giờ dọn, connection pool nhỏ hơn mức job executor cần, …); `off` để tắt |
 | `FASTI_APPCDS`, `FASTI_APPCDS_FILE` | `false`, `/fasti/data/fasti-appcds.jsa` | class data sharing để khởi động nhanh hơn (xem Tinh chỉnh hiệu năng) |
 | `FASTI_BASE64_INTRINSICS` | `false` | `false` thêm `-XX:-UseBASE64Intrinsics` để giảm thiểu CVE-2026-114938 ("Java4Shell"); `true` giữ intrinsic Base64 của JVM. Xem [docs/security/CVE-2026-114938.vi.md](../../docs/security/CVE-2026-114938.vi.md) |
 
@@ -242,14 +243,21 @@ Số đo tham khảo (image này, PostgreSQL 16 cùng máy, 16 nhân, container 
   `/fasti/data/fasti-appcds.jsa` khi container dừng êm; các lần chạy sau dùng lại. Cần
   `/fasti/data` ghi được (gắn volume để giữ qua các lần tạo lại container). Archive không khớp
   với JDK hoặc classpath thì JVM bỏ qua; khi nâng cấp image nên xóa file này để nó được tạo lại.
-- **Pool kết nối (HikariCP):** mặc định 20 (đến 1.1 là 10): mười luồng job executor cộng chỗ
-  cho các request REST đồng thời. Đổi bằng `FASTI_DB_CONN_MAXACTIVE` (ví dụ 30). Tổng pool của
-  mọi node phải nằm dưới `max_connections` của cơ sở dữ liệu.
+- **Pool kết nối (HikariCP):** mặc định tối đa 20 kết nối (đến 1.1 là 10): mười luồng job
+  executor cộng chỗ cho các request REST đồng thời. Node đang rảnh giữ mở 10 kết nối và chỉ mở
+  thêm khi có tải. Đổi bằng `FASTI_DB_CONN_MAXACTIVE` (ví dụ 30) và `FASTI_DB_CONN_MINIDLE`. Tổng
+  số tối đa của mọi node (kể cả node Camunda 7.24), cộng các client khác và phần dự trữ của cơ sở
+  dữ liệu, phải nằm dưới giới hạn kết nối của nó (`max_connections`); tính số node ở mức cao nhất
+  (số bản sao tối đa khi tự co giãn cộng các pod thêm của một lần cập nhật cuốn chiếu).
 - **Job executor:** mặc định giống Run: 10 luồng, hàng đợi 10 và 10 job mỗi lần lấy (đến 1.1:
   core 3, max 10, queue 3, 3 job mỗi lần lấy). Khi có nhiều job async/timer, tăng cùng lúc
-  `CAMUNDA_BPM_JOB_EXECUTION_CORE_POOL_SIZE`, `..._MAX_POOL_SIZE`, `..._QUEUE_CAPACITY` và
+  `CAMUNDA_BPM_JOB_EXECUTION_MAX_POOL_SIZE`, `..._QUEUE_CAPACITY` và
   `..._MAX_JOBS_PER_ACQUISITION`, và tăng pool kết nối thêm từng đó
-  ([tinh chỉnh khi chạy](../../docs/tuning-runtime.vi.md)). Tắt hẳn trên node chỉ phục vụ
+  ([tinh chỉnh khi chạy](../../docs/tuning-runtime.vi.md)). Số luồng lõi theo `..._MAX_POOL_SIZE`
+  trừ khi đặt `..._CORE_POOL_SIZE`; số lõi lớn hơn số tối đa được hạ xuống bằng số tối đa kèm
+  cảnh báo. Các job độc quyền của cùng một phiên bản quy trình được lấy cùng lúc sẽ chạy lần lượt
+  dưới một khóa `..._LOCK_TIME_IN_MILLIS` (5 phút): giữ 10 × job chậm nhất loại này dưới mức đó,
+  hoặc tăng nó, nếu không một job có thể chạy hai lần. Tắt hẳn job executor trên node chỉ phục vụ
   REST/UI: `FASTI_JOB_EXECUTOR_ENABLED=false`.
 - **Nhiều node:** mỗi node có job executor riêng lấy job từ cùng bảng; thêm node tăng thông
   lượng job nhưng cũng tăng xung đột khóa lạc quan (vô hại, job được thử lại). Giữ
@@ -258,4 +266,7 @@ Số đo tham khảo (image này, PostgreSQL 16 cùng máy, 16 nhân, container 
   (`server.compression.enabled=false` nếu proxy đã nén). File của web UI mới có hash trong tên
   được cache một năm (`immutable`); `index.html` luôn được kiểm tra lại (`no-cache`).
 - **Chỉ mục cơ sở dữ liệu:** image không thêm hay đổi chỉ mục; schema giữ nguyên như 7.24.0.
+  **Sau 1.1.0:** chỉ mục tùy chọn cho cơ sở dữ liệu lớn là các script do quản trị viên chạy,
+  `/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql` (và `_drop.sql`),
+  an toàn khi chạy cạnh node Camunda 7.24 ([hướng dẫn hiệu năng](../../docs/performance.vi.md)).
 

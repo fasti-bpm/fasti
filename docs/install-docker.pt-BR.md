@@ -202,7 +202,7 @@ Detalhes: [Operação mista com nós Camunda 7](migrate-from-camunda-7.pt-BR.md#
 | `FASTI_ADMIN_USER`, `FASTI_ADMIN_PASSWORD` (`_FILE`) | cria o administrador caso ele não exista |
 | `FASTI_JOB_EXECUTOR_ENABLED`, `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | executor de jobs deste nó |
 | `FASTI_EXTRA_LIB` | diretório de jars adicionais (drivers Oracle, DB2) |
-| `FASTI_DB_CONN_MAXACTIVE` | tamanho do pool de conexões (padrão 20) |
+| `FASTI_DB_CONN_MAXACTIVE` | tamanho máximo do pool de conexões (padrão 20; ocioso, mantém 10 abertas, `FASTI_DB_CONN_MINIDLE`) |
 | `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | opções da JVM, porcentagem de memória para o heap (75) |
 
 Tabela completa: [distro/docker/README.md](../distro/docker/README.md#environment-variables).

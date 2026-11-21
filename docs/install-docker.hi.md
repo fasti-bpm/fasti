@@ -202,7 +202,7 @@ Fasti और Camunda 7.24 एक ही डेटाबेस पर एक स�
 | `FASTI_ADMIN_USER`, `FASTI_ADMIN_PASSWORD` (`_FILE`) | एडमिन अनुपस्थित हो तो बनाएँ |
 | `FASTI_JOB_EXECUTOR_ENABLED`, `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | इस नोड का जॉब एक्ज़ीक्यूटर |
 | `FASTI_EXTRA_LIB` | अतिरिक्त jar की डायरेक्टरी (Oracle, DB2 ड्राइवर) |
-| `FASTI_DB_CONN_MAXACTIVE` | कनेक्शन पूल का आकार (डिफ़ॉल्ट 20) |
+| `FASTI_DB_CONN_MAXACTIVE` | कनेक्शन पूल का अधिकतम आकार (डिफ़ॉल्ट 20; निष्क्रिय अवस्था में 10 खुले रहते हैं, `FASTI_DB_CONN_MINIDLE`) |
 | `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | JVM विकल्प, हीप के लिए मेमोरी का प्रतिशत (75) |
 
 पूरी तालिका: [distro/docker/README.md](../distro/docker/README.md#environment-variables)।

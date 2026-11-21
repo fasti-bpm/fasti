@@ -199,9 +199,7 @@ Camunda のローリングアップデートのルールに従う場合を除き
 
 ## パフォーマンス
 
-イメージのデフォルト（接続プール 10 接続、ジョブエグゼキューターのコア 3／最大 10）は Camunda Run と同じです。以前の Camunda 7 環境で接続プールやジョブエグゼキューターを調整していた場合は、その値を引き継いでください
-（`FASTI_DB_CONN_MAXACTIVE`、`CAMUNDA_BPM_JOB_EXECUTION_*`）。指針と測定結果は
-`distro/docker/README.md` の「パフォーマンス調整」にあります。Fasti はスキーマにインデックスを追加しません。
+イメージは、ジョブエグゼキューターと接続プールに Camunda Run のデフォルトを使わなくなりました（Fasti 1.1 までは同じでした）。ジョブスレッド 10、キュー 10、1 回の取得あたり 10 ジョブ（Camunda Run: コア 3、最大 10、キュー 3、取得あたり 3）で、接続プールは最大 20 接続、アイドル時は 10 接続を保持します（Camunda Run: 10）。データベースの接続上限は、Camunda 7 ノードを含むすべてのノードのプールの合計に合わせて設定してください（[ランタイムチューニング](tuning-runtime.md)、英語）。以前の Camunda 7 環境で接続プールやジョブエグゼキューターを調整していた場合は、その値を引き継いでください（`FASTI_DB_CONN_MAXACTIVE`、`FASTI_DB_CONN_MINIDLE`、`CAMUNDA_BPM_JOB_EXECUTION_*`）。その他の指針は `distro/docker/README.md` の「パフォーマンス調整」にあります。Fasti がスキーマのインデックスを自動で変更することはありません。大規模なデータベース向けには、管理者が実行するスクリプトとしてオプションのインデックスを提供しています（`/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql`、[performance.md](performance.md) を参照）。これらは Camunda 7.24 ノードと併用しても安全で、対応する `_drop.sql` で削除できます。
 
 <a id="limits"></a>
 

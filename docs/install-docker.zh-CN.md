@@ -201,7 +201,7 @@ Fasti 和 Camunda 7.24 可以同时在同一个数据库上运行（已测试：
 | `FASTI_ADMIN_USER`, `FASTI_ADMIN_PASSWORD` (`_FILE`) | 管理员不存在时创建管理员 |
 | `FASTI_JOB_EXECUTOR_ENABLED`, `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | 此节点的作业执行器 |
 | `FASTI_EXTRA_LIB` | 附加 jar 文件所在目录（Oracle、DB2 驱动程序） |
-| `FASTI_DB_CONN_MAXACTIVE` | 连接池大小（默认值为 20） |
+| `FASTI_DB_CONN_MAXACTIVE` | 连接池最大大小（默认值为 20；空闲时保持 10 个，`FASTI_DB_CONN_MINIDLE`） |
 | `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | JVM 选项、分配给堆的内存百分比（75） |
 
 完整表格：[distro/docker/README.md](../distro/docker/README.md#environment-variables)。

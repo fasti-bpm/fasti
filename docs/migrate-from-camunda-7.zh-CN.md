@@ -196,9 +196,7 @@ Fasti 和 Camunda 7.24 可以同时使用同一个数据库（已测试：双方
 
 ## 性能
 
-镜像的默认设置（连接池 10 个连接，作业执行器核心线程数 3/最大线程数 10）与 Camunda Run 一致。如果您曾调整原有 Camunda 7 安装的连接池或作业执行器，请沿用这些值
-（`FASTI_DB_CONN_MAXACTIVE`、`CAMUNDA_BPM_JOB_EXECUTION_*`）；相关指导和测量结果见
-`distro/docker/README.md` 的“性能调优”部分。Fasti 不会向数据库模式添加索引。
+镜像不再沿用 Camunda Run 的作业执行器和连接池默认值（Fasti 1.1 及以前与之一致）：它使用 10 个作业线程、容量为 10 的队列和每次获取 10 个作业（Camunda Run：核心线程 3、最大线程 10、队列 3、每次获取 3 个），连接池最多 20 个连接，空闲时保持 10 个（Camunda Run：10）。请按所有节点（包括 Camunda 7 节点）连接池的总和来设置数据库的连接上限（[运行时调优](tuning-runtime.md)，英文）。如果您曾调整原有 Camunda 7 安装的连接池或作业执行器，请沿用这些值（`FASTI_DB_CONN_MAXACTIVE`、`FASTI_DB_CONN_MINIDLE`、`CAMUNDA_BPM_JOB_EXECUTION_*`）；更多指导见 `distro/docker/README.md` 的“性能调优”部分。Fasti 从不自行更改数据库模式的索引；针对大型数据库，它以脚本形式提供可选索引，由管理员执行（`/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql`，参见 [performance.md](performance.md)），可与 Camunda 7.24 节点安全共存，并可通过对应的 `_drop.sql` 删除。
 
 <a id="limits"></a>
 

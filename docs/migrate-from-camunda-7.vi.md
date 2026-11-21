@@ -191,10 +191,17 @@ trình rolling update của Camunda (chỉ một minor, và node cũ không đư
 
 ## Hiệu năng
 
-Mặc định của image (pool 10 kết nối, job executor core 3/max 10) giống Camunda Run. Nếu hệ
-Camunda 7 cũ đã chỉnh pool hoặc job executor, đặt lại các giá trị đó (`FASTI_DB_CONN_MAXACTIVE`,
-`CAMUNDA_BPM_JOB_EXECUTION_*`); hướng dẫn và số đo trong `distro/docker/README.md`, mục "Tinh
-chỉnh hiệu năng". Fasti không thêm chỉ mục nào vào schema.
+Image không còn dùng mặc định của Camunda Run cho job executor và pool kết nối (đến Fasti 1.1 thì
+giống): 10 luồng job, hàng đợi 10 và 10 job mỗi lần lấy (Camunda Run: core 3, max 10, hàng đợi 3, 3
+job mỗi lần lấy), pool tối đa 20 kết nối, giữ mở 10 kết nối khi rảnh (Camunda Run: 10). Đặt giới hạn
+kết nối của cơ sở dữ liệu theo tổng pool của mọi node, kể cả node Camunda 7 ([tinh chỉnh khi
+chạy](tuning-runtime.vi.md)). Nếu hệ Camunda 7 cũ đã chỉnh pool hoặc job executor, đặt lại các giá
+trị đó (`FASTI_DB_CONN_MAXACTIVE`, `FASTI_DB_CONN_MINIDLE`, `CAMUNDA_BPM_JOB_EXECUTION_*`); hướng
+dẫn thêm trong `distro/docker/README.vi.md`, mục "Tinh chỉnh hiệu năng". Fasti không bao giờ tự đổi
+chỉ mục của schema; với cơ sở dữ liệu lớn, Fasti kèm các chỉ mục tùy chọn dưới dạng script do quản
+trị viên chạy (`/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql`, xem
+[performance.vi.md](performance.vi.md)), an toàn khi chạy cạnh node Camunda 7.24 và gỡ được bằng
+`_drop.sql` tương ứng.
 
 <a id="limits"></a>
 

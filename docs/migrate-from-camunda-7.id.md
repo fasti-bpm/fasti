@@ -199,9 +199,19 @@ node lama tidak boleh menggunakan fitur baru).
 
 ## Performa
 
-Pengaturan default image (10 koneksi dalam pool, eksekutor job dengan inti 3/maksimum 10) sama dengan Camunda Run. Jika Anda telah menyesuaikan pool koneksi atau eksekutor job pada instalasi Camunda 7 sebelumnya, terapkan kembali nilai tersebut
-(`FASTI_DB_CONN_MAXACTIVE`, `CAMUNDA_BPM_JOB_EXECUTION_*`); panduan dan hasil pengukuran tersedia dalam
-`distro/docker/README.md`, "Penyesuaian performa". Fasti tidak menambahkan indeks pada skema.
+Image tidak lagi memakai pengaturan default Camunda Run untuk eksekutor job dan pool koneksi (hingga
+Fasti 1.1 masih memakainya): image menjalankan 10 thread job, antrean 10, dan 10 job per akuisisi
+(Camunda Run: inti 3, maksimum 10, antrean 3, 3 per akuisisi), serta pool hingga 20 koneksi, 10 di
+antaranya tetap terbuka saat idle (Camunda Run: 10). Tentukan batas koneksi database untuk gabungan
+pool semua node, termasuk node Camunda 7 ([penyetelan runtime](tuning-runtime.md), dalam bahasa
+Inggris). Jika Anda telah menyesuaikan pool koneksi atau eksekutor job pada instalasi Camunda 7
+sebelumnya, terapkan kembali nilai tersebut (`FASTI_DB_CONN_MAXACTIVE`, `FASTI_DB_CONN_MINIDLE`,
+`CAMUNDA_BPM_JOB_EXECUTION_*`); panduan lebih lanjut tersedia dalam `distro/docker/README.md`,
+"Penyesuaian performa". Fasti tidak pernah mengubah indeks skema dengan sendirinya; untuk database
+besar, Fasti menyediakan indeks opsional berupa skrip yang dijalankan administrator
+(`/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql`, lihat
+[performance.md](performance.md)), aman berdampingan dengan node Camunda 7.24 dan dihapus dengan
+`_drop.sql` yang sesuai.
 
 <a id="limits"></a>
 

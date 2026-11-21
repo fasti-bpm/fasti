@@ -198,9 +198,18 @@ old nodes must not use new features).
 
 ## Performance
 
-The image defaults (10 pooled connections, job executor core 3/max 10) match Camunda Run. If you tuned the connection pool or job executor of your former Camunda 7 installation, carry those values over
-(`FASTI_DB_CONN_MAXACTIVE`, `CAMUNDA_BPM_JOB_EXECUTION_*`); guidance and measurements are in
-`distro/docker/README.md`, "Performance tuning". Fasti adds no index to the schema.
+The image no longer takes the job executor and connection pool defaults of Camunda Run (up to Fasti
+1.1 it did): it runs 10 job threads, a queue of 10 and 10 jobs per acquisition (Camunda Run: core 3,
+max 10, queue 3, 3 per acquisition) and a connection pool of up to 20 connections, 10 of them kept
+open when idle (Camunda Run: 10). Size the connection limit of the database for the pools of all
+nodes together, Camunda 7 nodes included ([runtime tuning](tuning-runtime.md)). If you tuned the
+connection pool or job executor of your former Camunda 7 installation, carry those values over
+(`FASTI_DB_CONN_MAXACTIVE`, `FASTI_DB_CONN_MINIDLE`, `CAMUNDA_BPM_JOB_EXECUTION_*`); more guidance
+is in `distro/docker/README.md`, "Performance tuning". Fasti never changes the indexes of the schema
+by itself; for large databases it ships optional indexes as scripts an administrator runs
+(`/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql`, see
+[performance.md](performance.md)), safe next to Camunda 7.24 nodes and removed by the matching
+`_drop.sql`.
 
 <a id="limits"></a>
 

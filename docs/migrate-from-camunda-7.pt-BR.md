@@ -200,9 +200,19 @@ nós antigos não devem usar recursos novos).
 
 ## Desempenho
 
-Os padrões da imagem (10 conexões no pool, executor de jobs com 3 threads principais/máximo de 10) correspondem aos do Camunda Run. Se você ajustou o pool de conexões ou o executor de jobs da sua instalação anterior do Camunda 7, transfira esses valores
-(`FASTI_DB_CONN_MAXACTIVE`, `CAMUNDA_BPM_JOB_EXECUTION_*`); as orientações e medições estão em
-`distro/docker/README.md`, "Ajuste de desempenho". O Fasti não adiciona nenhum índice ao esquema.
+A imagem não usa mais os padrões do Camunda Run para o executor de jobs e o pool de conexões (até o
+Fasti 1.1 usava): ela roda 10 threads de jobs, uma fila de 10 e 10 jobs por aquisição (Camunda Run:
+3 threads principais, máximo de 10, fila de 3, 3 por aquisição) e um pool de até 20 conexões, das
+quais 10 ficam abertas quando ocioso (Camunda Run: 10). Dimensione o limite de conexões do banco de
+dados para os pools de todos os nós juntos, incluindo os nós do Camunda 7 ([ajuste em tempo de
+execução](tuning-runtime.md), em inglês). Se você ajustou o pool de conexões ou o executor de jobs
+da sua instalação anterior do Camunda 7, transfira esses valores (`FASTI_DB_CONN_MAXACTIVE`,
+`FASTI_DB_CONN_MINIDLE`, `CAMUNDA_BPM_JOB_EXECUTION_*`); mais orientações estão em
+`distro/docker/README.md`, "Ajuste de desempenho". O Fasti nunca altera sozinho os índices do
+esquema; para bancos de dados grandes, ele fornece índices opcionais como scripts que um
+administrador executa (`/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql`,
+veja [performance.md](performance.md)), seguros ao lado de nós do Camunda 7.24 e removidos pelo
+`_drop.sql` correspondente.
 
 <a id="limits"></a>
 

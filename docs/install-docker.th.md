@@ -202,7 +202,7 @@ Fasti และ Camunda 7.24 สามารถทำงานพร้อมก
 | `FASTI_ADMIN_USER`, `FASTI_ADMIN_PASSWORD` (`_FILE`) | สร้างผู้ดูแลระบบหากยังไม่มี |
 | `FASTI_JOB_EXECUTOR_ENABLED`, `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | ตัวดำเนินงานของโหนดนี้ |
 | `FASTI_EXTRA_LIB` | ไดเรกทอรีของไฟล์ jar เพิ่มเติม (ไดรเวอร์ Oracle, DB2) |
-| `FASTI_DB_CONN_MAXACTIVE` | ขนาดพูลการเชื่อมต่อ (ค่าเริ่มต้น 20) |
+| `FASTI_DB_CONN_MAXACTIVE` | ขนาดสูงสุดของพูลการเชื่อมต่อ (ค่าเริ่มต้น 20 ขณะว่างเปิดค้างไว้ 10 รายการ `FASTI_DB_CONN_MINIDLE`) |
 | `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | ตัวเลือก JVM, เปอร์เซ็นต์หน่วยความจำสำหรับฮีป (75) |
 
 ตารางฉบับเต็ม: [distro/docker/README.md](../distro/docker/README.md#environment-variables)

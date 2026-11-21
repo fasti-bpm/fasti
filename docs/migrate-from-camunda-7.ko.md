@@ -197,9 +197,7 @@ Camunda의 롤링 업데이트 규칙이 허용하는 경우를 제외하고 업
 
 ## 성능
 
-이미지 기본값(풀 연결 10개, 잡 실행기 코어 3/최대 10)은 Camunda Run과 동일합니다. 기존 Camunda 7 설치에서 연결 풀이나 잡 실행기를 조정했다면 해당 값을 그대로 적용하십시오
-(`FASTI_DB_CONN_MAXACTIVE`, `CAMUNDA_BPM_JOB_EXECUTION_*`). 지침과 측정 결과는
-`distro/docker/README.md`의 "성능 튜닝"에 있습니다. Fasti는 스키마에 인덱스를 추가하지 않습니다.
+이미지는 이제 잡 실행기와 연결 풀에 Camunda Run 기본값을 사용하지 않습니다(Fasti 1.1까지는 동일했습니다). 잡 스레드 10개, 큐 10, 획득당 잡 10개(Camunda Run: 코어 3, 최대 10, 큐 3, 획득당 3)를 사용하고, 연결 풀은 최대 20개이며 유휴 시 10개를 열어 둡니다(Camunda Run: 10). 데이터베이스의 연결 한도는 Camunda 7 노드를 포함한 모든 노드의 풀 합계에 맞춰 정하십시오([런타임 튜닝](tuning-runtime.md), 영어). 기존 Camunda 7 설치에서 연결 풀이나 잡 실행기를 조정했다면 해당 값을 그대로 적용하십시오(`FASTI_DB_CONN_MAXACTIVE`, `FASTI_DB_CONN_MINIDLE`, `CAMUNDA_BPM_JOB_EXECUTION_*`). 추가 지침은 `distro/docker/README.md`의 "성능 튜닝"에 있습니다. Fasti는 스키마의 인덱스를 스스로 변경하지 않습니다. 대규모 데이터베이스를 위해 관리자가 실행하는 스크립트 형태의 선택적 인덱스를 제공합니다(`/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql`, [performance.md](performance.md) 참조). 이 인덱스는 Camunda 7.24 노드와 함께 사용해도 안전하며 해당 `_drop.sql`로 제거됩니다.
 
 <a id="limits"></a>
 

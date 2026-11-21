@@ -258,7 +258,7 @@ public class IndexCatalog {
             + "case when x.indisvalid and x.indisready then 1 else 0 end, "
             + "pg_catalog.pg_get_expr(x.indpred, x.indrelid), "
             + "am.amname, "
-            + "case when ((x.indoption[k.ord - 1] & 1) <> 0) <> ((x.indoption[k.ord - 1] & 2) <> 0) then 1 else 0 end "
+            + "case when ((x.indoption[(k.ord - 1)::int] & 1) <> 0) <> ((x.indoption[(k.ord - 1)::int] & 2) <> 0) then 1 else 0 end "
             + "from pg_catalog.pg_index x "
             + "join pg_catalog.pg_class t on t.oid = x.indrelid "
             + "join pg_catalog.pg_class i on i.oid = x.indexrelid "

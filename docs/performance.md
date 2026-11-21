@@ -82,8 +82,8 @@ reports `SQL0601N` for it and goes on).
   `public`; on SQL Server and Db2 with that schema as the default or current schema.
 - `ACT_ID_INFO` exists only where the engine created its identity tables. With LDAP or another
   identity provider (`dbIdentityUsed=false`) it may be missing: the MySQL/MariaDB, Oracle and SQL
-  Server scripts then skip that statement, on PostgreSQL, Db2 and H2 it fails and the rest of the
-  script still runs.
+  Server scripts then skip that statement; on PostgreSQL (psql) and Db2 (command line processor)
+  it fails and the rest of the script still runs.
 
 | Database | Command | Without blocking writes |
 |---|---|---|

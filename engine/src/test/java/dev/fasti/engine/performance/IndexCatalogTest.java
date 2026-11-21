@@ -106,7 +106,7 @@ public class IndexCatalogTest {
   public void shouldReadAccessMethodAndNullOrderOnPostgres() throws SQLException {
     new IndexCatalog(IndexCatalog.POSTGRES, null, null).readFromCatalog(connection(null), Arrays.asList("ACT_RU_JOB"));
 
-    assertThat(prepared.get(0)).contains("am.amname").contains("x.indoption[k.ord - 1]");
+    assertThat(prepared.get(0)).contains("am.amname").contains("x.indoption[(k.ord - 1)::int]");
   }
 
   /** A connection whose statements fail with the given exception on execution, or return no rows. */

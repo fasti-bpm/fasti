@@ -79,8 +79,8 @@ Oracle và H2 bỏ qua chỉ mục đã có; trên Db2 trình dòng lệnh báo 
   SQL Server và Db2, với schema đó là schema mặc định hoặc hiện hành.
 - `ACT_ID_INFO` chỉ có khi engine đã tạo các bảng định danh của nó. Khi dùng LDAP hoặc nhà cung cấp
   định danh khác (`dbIdentityUsed=false`), bảng này có thể không có: script MySQL/MariaDB, Oracle và
-  SQL Server khi đó bỏ qua lệnh ấy, trên PostgreSQL, Db2 và H2 lệnh đó báo lỗi còn phần còn lại của
-  script vẫn chạy.
+  SQL Server khi đó bỏ qua lệnh ấy; trên PostgreSQL (psql) và Db2 (trình dòng lệnh) lệnh đó báo lỗi
+  còn phần còn lại của script vẫn chạy.
 
 | Cơ sở dữ liệu | Lệnh | Không chặn thao tác ghi |
 |---|---|---|

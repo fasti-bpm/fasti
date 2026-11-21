@@ -6,14 +6,20 @@
 # DOCKERHUB_TOKEN. The image is built for amd64 and arm64, carries an SBOM and a provenance
 # attestation, and is signed with cosign (keyless, GitHub OIDC).
 #
-# Jobs: "build" runs the full build workflow (Java build and tests, web UI checks, end-to-end
-# tests on the image) for the tagged commit. "image" publishes and signs only after it has
-# passed. "draft-release" attaches the SBOM to a draft GitHub release; it is the only job
-# that may write repository contents.
+# Jobs: "preflight" refuses a tag that is not a semantic version or that differs from the
+# version of the POMs, before anything is built. "build" runs the full build workflow (Java
+# build and tests, web UI checks, end-to-end tests on the image) for the tagged commit. "image"
+# publishes and signs only after it has passed. "draft-release" attaches the SBOM to a draft
+# GitHub release; it is the only job that may write repository contents.
+#
+# Image tags: X.Y.Z always; X.Y only for a release (not for a pre-release such as
+# 1.1.0-rc.1); "latest" only when the tag is the highest release version of the repository, so
+# a maintenance release of an older line (1.0.3 after 1.1.0) does not move it backwards.
 name: release
 
 on:
   push:
+    # a glob, not a regular expression: "preflight" does the strict check
     tags: ['v[0-9]+.[0-9]+.[0-9]+*']
 
 permissions:
@@ -24,13 +30,61 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      latest: ${{ steps.latest.outputs.latest }}
+    steps:
+      - name: Check the tag
+        run: |
+          # semantic version with an optional pre-release; no build metadata ("+" is not
+          # allowed in an image tag)
+          id='(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)'
+          if ! [[ "$GITHUB_REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-$id(\.$id)*)?$ ]]; then
+            echo "::error::'${GITHUB_REF_NAME}' is not a release tag (vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-PRERELEASE)."
+            exit 1
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check that the POM version matches the tag
+        run: |
+          version=$(python3 -c "import xml.etree.ElementTree as e; print(e.parse('pom.xml').getroot().findtext('{http://maven.apache.org/POM/4.0.0}version'))")
+          if [ "v${version}" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::The POM version ${version} does not match the tag ${GITHUB_REF_NAME}. Set the version of the POMs first, then tag that commit."
+            exit 1
+          fi
+      - name: Check the versions of the chart, the manifests and the Dockerfile
+        run: bash distro/kubernetes/validate.sh --versions
+      - id: latest
+        name: Decide whether the image becomes "latest"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest=false
+          if [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            # every tag of the repository; a failed call fails the step
+            refs=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/v" --jq '.[].ref')
+            newest=$(echo "$refs" | sed 's|^refs/tags/||' | grep -E '^v[0-9]+[.][0-9]+[.][0-9]+$' | sort -V | tail -n 1)
+            if [ "$newest" = "$GITHUB_REF_NAME" ]; then
+              latest=true
+            else
+              echo "::notice::${GITHUB_REF_NAME} is not the highest release (${newest}): the image is not tagged latest."
+            fi
+          fi
+          echo "latest=${latest}" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: preflight
     permissions:
       contents: read
     uses: ./.github/workflows/build.yml
 
   image:
-    needs: build
+    needs: [preflight, build]
     runs-on: ubuntu-latest
     timeout-minutes: 120
     permissions:
@@ -76,9 +130,12 @@ jobs:
           images: |
             ${{ env.DOCKERHUB_IMAGE }}
             ${{ env.GHCR_IMAGE }}
+          # no automatic "latest": the preflight job decides (see the top of this file)
+          flavor: latest=false
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ needs.preflight.outputs.latest == 'true' }}
       - id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:

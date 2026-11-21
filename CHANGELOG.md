@@ -43,7 +43,9 @@ các mục dưới đây là khác biệt so với bản đó.
   due date that allows jobs without one. They only read and never fail the start;
   `fasti.performance.index-check` / `config-check` (`warn` or `off`; image
   `FASTI_PERFORMANCE_INDEX_CHECK` / `FASTI_PERFORMANCE_CONFIG_CHECK`; Tomcat and WildFly plugin
-  `PerformanceAdvisorPlugin`).
+  `PerformanceAdvisorPlugin`). The `bpm-platform.xml` (Tomcat) and `standalone*.xml` (WildFly) of
+  this release enable the plugin, which Fasti BPM 1.1 does not have: to roll back to 1.1
+  binaries with these files, remove the `PerformanceAdvisorPlugin` element first.
 
 ### Changed
 
@@ -90,18 +92,39 @@ các mục dưới đây là khác biệt so với bản đó.
 - The gauges of the engine state (`fasti.engine.*.active`, `.open`, `.executable`, `.failed`) are
   read on a background thread. A Prometheus scrape returns the values read last and never waits
   for the six count queries; a value is up to one refresh interval plus one scrape interval old,
-  and `NaN` until the first round has finished.
+  and `NaN` until the first round has finished. While a round has been running for more than three
+  refresh intervals (a count that waits for a lock or on a dead connection) the gauges report
+  `NaN` instead of the last values. The gauges stop when the application context stops, before
+  the engine is closed, and one thread serves the rounds while the gauges are scraped.
 - Fasti BPM Run and the container image: the job executor acquires 10 jobs per cycle (3 before)
-  into a queue of 10 (3) for 10 threads (3 core, 10 maximum), and the connection pool holds 20
-  connections (10), so that job threads cannot use up every connection. One node may now open
-  20 database connections: check the connection limit of the database before upgrading many
-  replicas, or set the former values ([runtime tuning](docs/tuning-runtime.md)). Applications
-  that embed the starter keep their defaults.
+  into a queue of 10 (3) for 10 threads (3 core, 10 maximum), and the connection pool holds up to
+  20 connections (10), so that job threads cannot use up every connection; an idle node keeps 10
+  open (`minimum-idle`, as before). The core threads follow `max-pool-size`, so lowering only the
+  maximum (`CAMUNDA_BPM_JOB_EXECUTION_MAX_POOL_SIZE`) lowers both. One node may now open 20
+  database connections under load: the maxima of all nodes (counted at the autoscaling maximum
+  plus the pods of a rolling update), the other clients and the reserve of the database must stay
+  below its connection limit; check it before upgrading many replicas, or set the former values
+  ([runtime tuning](docs/tuning-runtime.md)). The exclusive jobs of one process instance that
+  one acquisition takes run one after the other under one lock of 5 minutes, as before, but a
+  batch can now hold up to 10 jobs instead of 3: keep 10 × the slowest such job below
+  `lock-time-in-millis`, or raise it, or a job may run a second time on another node. The new
+  values are in the shipped configuration files: a Run installation that keeps its
+  `configuration/default.yml` or `production.yml` from 1.1 keeps the former values until the
+  `camunda.bpm.job-execution` block and the `hikari` lines are copied over. Applications that
+  embed the starter keep their defaults.
 - Statement parameters are bound through a plain statement wrapper instead of a dynamic proxy
-  (no reflective call per parameter).
+  (no reflective call per parameter; while MyBatis logs a mapper's statements at `DEBUG` they are
+  bound through the proxy as before).
 - Absence substitution: the second absence lookup of a command reads all absences with one
   statement, which answers every later lookup of the command (a chain of three substitutes sends
   two statements instead of four).
+
+### Fixed
+
+- Spring Boot starter: a `camunda.bpm.job-execution.core-pool-size` larger than `max-pool-size`
+  kept the application from starting (`IllegalArgumentException` without a message while the
+  thread pool of the job executor was created; also in Camunda 7.24). The starter now uses
+  `max-pool-size` core threads and logs a warning.
 
 ## [1.1.0] - 2026-11-21
 

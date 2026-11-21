@@ -74,6 +74,10 @@
     <mapper resource="org/camunda/bpm/engine/impl/mapping/entity/TenantMembership.xml" />
     <mapper resource="org/camunda/bpm/engine/impl/mapping/entity/CamundaFormDefinition.xml" />
 
+    <!-- Fasti -->
+
+    <mapper resource="dev/fasti/engine/workload/TaskWorkload.xml" />
+
     <!-- CMMN -->
 
     <mapper resource="org/camunda/bpm/engine/impl/mapping/entity/CaseDefinition.xml" />

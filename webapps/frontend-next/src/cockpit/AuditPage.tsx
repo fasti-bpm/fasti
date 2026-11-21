@@ -22,6 +22,7 @@ import { formatDateTime, fromDateTimeInput, parseEngineDate, toEngineDate } from
 import { downloadCsv } from '../lib/csv';
 import { useToast } from '../ui/toast';
 import { Button, Dialog, EmptyState, Field, NoMatch, cx } from '../ui';
+import { TextFilter } from '../ui/controls';
 import { COCKPIT, EngineWideNote, useCockpitAction } from './common';
 import { Time } from '../ui/format';
 import { pageOf, useUrlState } from '../ui/hooks';
@@ -298,16 +299,7 @@ export function AuditPage() {
     setParams({ [name]: next, lpage: null, ...(name === 'case' ? { caseid: null } : {}) });
   };
   const text = (name: string, label: string) => (
-    <input
-      className="input"
-      aria-label={label}
-      placeholder={label}
-      // a new value from the address resets the field; the name keeps the fields apart
-      key={`${name}:${params.get(name) ?? ''}`}
-      defaultValue={params.get(name) ?? ''}
-      onBlur={(event) => change(name, event.target.value)}
-      onKeyDown={(event) => event.key === 'Enter' && change(name, event.currentTarget.value)}
-    />
+    <TextFilter key={name} label={label} value={params.get(name) ?? ''} onApply={(value) => change(name, value)} />
   );
   return (
     <div className="page">

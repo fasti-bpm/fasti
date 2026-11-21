@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright Fasti BPM contributors
  */
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Search } from 'lucide-react';
 import { useI18n } from '../i18n';
 import { Button, Dialog } from './index';
@@ -118,6 +118,40 @@ export function SearchInput({
         onChange={(event) => onChange(event.target.value)}
       />
     </div>
+  );
+}
+
+/**
+ * A text filter whose value lives elsewhere, e.g. in the address: typed freely, applied with
+ * Enter or on leaving the field. A value that arrives from outside (back, a link, cleared
+ * filters) replaces what was typed. The field itself stays, so that applying a filter with
+ * Enter keeps the keyboard focus in it.
+ */
+export function TextFilter({
+  value,
+  onApply,
+  label,
+}: {
+  value: string;
+  onApply: (value: string) => void;
+  label: string;
+}) {
+  const [draft, setDraft] = useState(value);
+  const [applied, setApplied] = useState(value);
+  if (applied !== value) {
+    setApplied(value);
+    setDraft(value);
+  }
+  return (
+    <input
+      className="input"
+      aria-label={label}
+      placeholder={label}
+      value={draft}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={() => onApply(draft)}
+      onKeyDown={(event) => event.key === 'Enter' && onApply(draft)}
+    />
   );
 }
 

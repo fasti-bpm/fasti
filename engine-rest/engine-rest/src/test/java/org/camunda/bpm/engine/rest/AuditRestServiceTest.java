@@ -228,6 +228,29 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
   }
 
   @Test
+  public void shouldStopCountingAtMaxCount() {
+    requestAuthentication = new Authentication("auditor", List.of(Groups.CAMUNDA_ADMIN));
+    long all = AuditTrail.of(engine).createQuery().count();
+    assertThat(all).isGreaterThan(2);
+
+    given().queryParam("maxCount", 2)
+    .then().expect().statusCode(Status.OK.getStatusCode()).body("count", equalTo(2))
+    .when().get(COUNT_URL);
+
+    given().queryParam("maxCount", 1000000)
+    .then().expect().statusCode(Status.OK.getStatusCode()).body("count", equalTo((int) all))
+    .when().get(COUNT_URL);
+
+    given().queryParam("actor", "alice").queryParam("type", "process").queryParam("maxCount", 10)
+    .then().expect().statusCode(Status.OK.getStatusCode()).body("count", equalTo(1))
+    .when().get(COUNT_URL);
+
+    for (String wrong : List.of("0", "-1", "1000001", "many")) {
+      given().queryParam("maxCount", wrong).then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).when().get(COUNT_URL);
+    }
+  }
+
+  @Test
   public void shouldRefuseWrongParameters() {
     given().queryParam("maxResults", 5000).then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).when().get(EVENT_URL);
     given().queryParam("sortOrder", "up").then().expect().statusCode(Status.BAD_REQUEST.getStatusCode()).when().get(EVENT_URL);

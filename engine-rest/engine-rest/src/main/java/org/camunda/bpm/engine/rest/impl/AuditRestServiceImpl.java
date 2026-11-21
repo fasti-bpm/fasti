@@ -61,6 +61,8 @@ public class AuditRestServiceImpl extends AbstractRestProcessEngineAware impleme
   static final int LIMIT_MAX_RESULTS = 1000;
   /** Pages further in than this need a narrower filter: the database still has to walk to the page. */
   static final int LIMIT_FIRST_RESULT = 1_000_000;
+  /** The highest number a count may be asked to stop at. */
+  static final int LIMIT_MAX_COUNT = 1_000_000;
   /** Exports beyond this need a narrower filter. */
   static final int LIMIT_EXPORT = 100_000;
   static final String ACTOR_SYSTEM = "system";
@@ -108,7 +110,28 @@ public class AuditRestServiceImpl extends AbstractRestProcessEngineAware impleme
 
   @Override
   public CountResultDto getEventCount(UriInfo uriInfo) {
-    return new CountResultDto(query(uriInfo.getQueryParameters()).count());
+    MultivaluedMap<String, String> parameters = uriInfo.getQueryParameters();
+    return new CountResultDto(query(parameters).count(maxCount(parameters.getFirst("maxCount"))));
+  }
+
+  /**
+   * The number at which counting stops ({@code maxCount}), or 0 to count all records: with it, the
+   * count of a large result costs the database no more than reading that many records, and a
+   * count equal to it means "that many or more".
+   */
+  protected long maxCount(String value) {
+    if (value == null) {
+      return 0;
+    }
+    try {
+      int maxCount = Integer.parseInt(value.trim());
+      if (maxCount >= 1 && maxCount <= LIMIT_MAX_COUNT) {
+        return maxCount;
+      }
+    } catch (NumberFormatException e) {
+      // refused below
+    }
+    throw new InvalidRequestException(Status.BAD_REQUEST, "maxCount must be between 1 and " + LIMIT_MAX_COUNT + ".");
   }
 
   /** The query the parameters describe. */

@@ -249,7 +249,8 @@ public class AuditSession implements Session {
     int slot = slot(Thread.currentThread().getId(), settings.getChains(), depth);
     String chainId = last ? settings.endChainId(slot) : settings.chainId(slot);
     Held entry = new Held(settings, connection, chainId, depth, last, commandContext.getTransactionContext(), held);
-    held.add(entry);
+    // marked as held only once it is sure to be given back: registering can fail (Spring, from
+    // an afterCompletion callback, where synchronization is no longer active)
     commandContext.getTransactionContext().addTransactionListener(TransactionState.COMMITTED, context -> release(entry));
     commandContext.getTransactionContext().addTransactionListener(TransactionState.ROLLED_BACK, context -> release(entry));
     // also when the transaction ends in another state (Spring: a commit or rollback that failed)
@@ -257,6 +258,7 @@ public class AuditSession implements Session {
     if (completion != null) {
       completion.accept(() -> release(entry));
     }
+    held.add(entry);
     return chainId;
   }
 

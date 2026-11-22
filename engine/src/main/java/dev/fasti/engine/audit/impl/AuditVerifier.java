@@ -53,6 +53,15 @@ import org.camunda.bpm.engine.impl.interceptor.CommandExecutor;
 public class AuditVerifier {
 
   static final int PAGE = 1000;
+  /**
+   * Readings of one chain at most: a chain is read again when a purge removed records while it was
+   * read, and a purge commits a batch at a time at the start of the chain, which the reading may
+   * meet several times. Each new reading needs a purge that went on since the one before.
+   */
+  static final int MAX_READINGS = 10_000;
+
+  /** Records read at a time. */
+  protected int pageSize = PAGE;
 
   protected final CommandExecutor commandExecutor;
   protected final AuditSettings settings;
@@ -63,10 +72,18 @@ public class AuditVerifier {
   }
 
   public AuditVerification.Chain verifyChain(String chainId) {
-    return verifyChain(chainId, 0);
+    AuditVerification.Chain result = null;
+    for (int reading = 1; result == null; reading++) {
+      result = verifyChain(chainId, reading < MAX_READINGS);
+    }
+    return result;
   }
 
-  protected AuditVerification.Chain verifyChain(String chainId, int attempt) {
+  /**
+   * One reading of the chain; {@code null} if it is to be read again (with {@code mayReadAgain}):
+   * it was empty when its reading began, or a purge removed records while it was read.
+   */
+  protected AuditVerification.Chain verifyChain(String chainId, boolean mayReadAgain) {
     long records = 0;
     long checkpoints = 0;
     long checkpointsVerified = 0;
@@ -191,7 +208,7 @@ public class AuditVerifier {
       if (found != null) {
         break;
       }
-      if (page.size() == PAGE) {
+      if (page.size() == pageSize) {
         page = read(chainId, last);
         continue;
       }
@@ -207,9 +224,9 @@ public class AuditVerifier {
       if (head.sequence > last) {
         List<AuditRecord> more = read(chainId, last);
         if (!more.isEmpty()) {
-          if (records == 0 && firstSequence == 0) {
+          if (records == 0 && firstSequence == 0 && mayReadAgain) {
             // the chain was empty when it was first read
-            return verifyChain(chainId, attempt);
+            return null;
           }
           page = more;
           continue;
@@ -235,11 +252,12 @@ public class AuditVerifier {
           + ", although the chain goes on to record " + last + " and one is written every " + due
           + " records: checkpoints were removed.");
     }
-    if (found != null && attempt < 2 && (Break.SEQUENCE_GAP.equals(found.getReason())
+    if (found != null && mayReadAgain && (Break.SEQUENCE_GAP.equals(found.getReason())
         || Break.MISSING_START.equals(found.getReason()) || Break.PURGE_UNATTESTED.equals(found.getReason()))
         && purgedSince(chainId, purgedThrough)) {
-      // a purge removed records while the chain was read: verify what is left
-      return verifyChain(chainId, attempt + 1);
+      // a purge removed records while the chain was read (a batch of it, since this reading began):
+      // verify what is left
+      return null;
     }
     boolean authenticated = found == null && settings.isSigned() && checkpointsVerified == checkpoints && !gap
         && (purgedThrough == 0 || purgeAttested);
@@ -260,7 +278,7 @@ public class AuditVerifier {
   }
 
   protected List<AuditRecord> read(String chainId, long after) {
-    return commandExecutor.execute(commandContext -> AuditStore.readChain(commandContext, settings, chainId, after, PAGE));
+    return commandExecutor.execute(commandContext -> AuditStore.readChain(commandContext, settings, chainId, after, pageSize));
   }
 
   /** What the purge records of a chain say about the records before its first one. */

@@ -121,6 +121,68 @@ public class AuditPurgeTest {
   }
 
   @Test
+  public void shouldVerifyAChainWhileABatchedPurgeRemovesItsStart() {
+    start("verifying", plugin -> {
+      plugin.setChains(1);
+      plugin.setPurgeBatchSize(3);
+    });
+    writeOldRecords(() -> {
+      engine.getRepositoryService().createDeployment().addModelInstance("v.bpmn", userTaskProcess("v")).deploy();
+      for (int i = 0; i < 3; i++) {
+        engine.getRuntimeService().startProcessInstanceByKey("v", "old-" + i);
+      }
+    });
+    String chainId = "node-verifying/end-0";
+    AuditSettings settings = AuditServiceImpl.settingsOf(configuration);
+    AuditServiceImpl service = new AuditServiceImpl(configuration);
+    Date before = new Date();
+    int[] batches = {0};
+    // reads two records at a time, and a purge commits a batch at the start of the chain before
+    // each further page: the reading meets a gap after every page, many more times than twice
+    AuditVerifier verifier = new AuditVerifier(configuration.getCommandExecutorTxRequired(), settings) {
+      {
+        pageSize = 2;
+      }
+
+      @Override
+      protected List<AuditRecord> read(String chain, long after) {
+        if (after > 0) {
+          long[] batch = configuration.getCommandExecutorTxRequiresNew()
+              .execute(context -> service.purgeBatch(context, settings, before, chain, -1));
+          if (batch != null) {
+            batches[0]++;
+          }
+        }
+        return super.read(chain, after);
+      }
+    };
+    AuditVerification.Chain chain = verifier.verifyChain(chainId);
+    assertThat(batches[0]).isGreaterThan(2);
+    assertThat(chain.getFirstBreak()).isNull();
+    assertThat(chain.isIntact()).isTrue();
+    assertThat(chain.getPurgedThrough()).isPositive();
+    assertThat(chain.isPurgeAttested()).isTrue();
+  }
+
+  @Test
+  public void shouldNotRecreateAMissingHeadInAPurge() {
+    start("headless", plugin -> plugin.setChains(1));
+    writeOldRecords(() -> {
+      engine.getRepositoryService().createDeployment().addModelInstance("h.bpmn", userTaskProcess("h")).deploy();
+      engine.getRuntimeService().startProcessInstanceByKey("h");
+    });
+    String chainId = "node-headless/end-0";
+    AuditTestSupport.sql(engine, "delete from FASTI_AUDIT_HEAD where CHAIN_ID_ = ?", chainId);
+    AuditPurgeResult result = audit.purge(new Date());
+    assertThat(result.getFailedChains()).containsExactly(chainId);
+    assertThat(result.getRemoved()).isZero();
+    // verifying still reports what happened to the head
+    AuditVerification.Chain chain = audit.verify(chainId).getChains().get(0);
+    assertThat(chain.getFirstBreak()).isNotNull();
+    assertThat(chain.getFirstBreak().getReason()).isEqualTo(AuditVerification.Break.HEAD_MISSING);
+  }
+
+  @Test
   public void shouldPurgeTheOtherChainsWhenOneCannotBe() throws Exception {
     start("failing", plugin -> {
       plugin.setChains(2);

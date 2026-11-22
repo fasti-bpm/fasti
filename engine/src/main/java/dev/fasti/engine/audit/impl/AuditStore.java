@@ -231,12 +231,34 @@ public final class AuditStore {
    * created first, in a transaction of its own.
    */
   static Head lockHead(CommandContext commandContext, AuditSettings settings, String chainId) throws SQLException {
+    return lockHead(commandContext, settings, chainId, true);
+  }
+
+  /**
+   * Locks the head row of the chain until the end of the transaction and reads it; with
+   * {@code create} false, a missing head is not created and {@code null} is returned.
+   */
+  static Head lockHead(CommandContext commandContext, AuditSettings settings, String chainId, boolean create)
+      throws SQLException {
     Connection connection = connection(commandContext);
-    if (lockHeadRow(connection, settings, chainId) == 0 && createHead(commandContext, settings, chainId)) {
-      lockHeadRow(connection, settings, chainId);
+    if (lockHeadRow(connection, settings, chainId) == 0) {
+      if (!create) {
+        return null;
+      }
+      // Under REPEATABLE READ or stricter, the update of a missing row can leave a lock on the gap
+      // (MySQL, MariaDB), which an insert in a transaction of its own on another connection would
+      // wait for until the lock wait timeout: then the head is created in this transaction. The
+      // engine asks for READ COMMITTED.
+      if (connection.getTransactionIsolation() < Connection.TRANSACTION_REPEATABLE_READ
+          && createHead(commandContext, settings, chainId)) {
+        lockHeadRow(connection, settings, chainId);
+      }
     }
     Head head = readHead(connection, settings, chainId);
     if (head == null) {
+      if (!create) {
+        return null;
+      }
       // it could not be created on its own: in this transaction, which holds the new row until it
       // ends; a concurrent insert of the same head fails one of the two, like any other conflict
       head = lastRecord(connection, settings, chainId);

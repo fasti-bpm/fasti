@@ -103,8 +103,13 @@ serializes them) but makes them wait for each other. This also holds for a node 
 and a node of 1.1 with the same id, for example two JVMs on one host during an upgrade or a
 rollback: nodes of 1.0 and 1.1 write only to `<node id>/<slot>`, never to the `end-` chains, so
 the two never wait for each other in a cycle on one chain. During such a mixed period, purge
-from a node of this version: a purge of 1.1 locks the head of every chain at once, and can then
-be chosen as a deadlock victim by the database.
+from a node of this version: a purge of 1.1 locks the head of every chain at once, in one
+transaction, and holds them until its delete is done. It can then be chosen as a deadlock victim
+by the database, and the writers of every chain (the `end-` chains included) wait for it and fail
+after `fasti.audit.lock-timeout-seconds` if its delete takes longer. Do not verify from a 1.1 node
+while a purge of this version runs either: a 1.1 verification reads a chain again only twice when
+a purge removes records under it, and a purge of this version removes them batch by batch, so it
+may report a break that is not there.
 
 **Verifying** (`POST /audit/verify`, or the button in the web UI) recomputes every chain, page
 by page, and reports per chain whether it is intact and where it first breaks:
@@ -209,7 +214,8 @@ database to detect a later truncation or rewrite of them.
   most. A chain that cannot be purged (another transaction holds it for longer than the lock
   timeout) does not stop the others: the result lists it in `failedChains` (Java:
   `AuditPurgeResult#getFailedChains`, the cause is in the server log), and `purgedThrough` shows
-  what was purged of it before; purge again to complete it. Records
+  what was purged of it before; purge again to complete it. A chain whose head is missing is
+  not purged either (listed the same way): verify the trail. Records
   younger than `fasti.audit.retention-days` (default 365) are never purged. Export first: the
   JSON export carries every hash, so the removed part can still be verified offline against the
   purge record. Purging needs an administrators group or `DELETE` on `SYSTEM`.
@@ -281,13 +287,16 @@ hashes, not records.
 could not read records"), never the message of the database; that is in the server log. Queries
 and exports stop after `fasti.audit.query-timeout-seconds` (default 120).
 
-**Which filters are fast**: the pages and counts filtered by actor (also `system`), by category,
-by category and action, by process instance, by business key, by chain or by a time range are
-read along an index in the order of the page, so the database stops after the page. A filter
-that no index serves reads records until it has found a page, and as many as the table has when
-few records match: `action` without `type`, `tenantId`, `processDefinitionKey`, `entityId`, and
-the tenant restriction of a reader who is not an administrator. Combine them with one of the
-filters above, such as an action with its category, or with a time range.
+**Which filters are fast**: pages and counts filtered by actor (also `system`), by one category
+with an action, or by a time range (alone or with an actor) are read along an index in the order
+of the page, so the database stops after the page. Filters by process instance, by business key,
+by chain and by category alone (or several categories) are served by an index too: the database
+either reads the matching records and sorts them, which is cheap for few records, or reads along
+the order of the page and skips the others, which is cheap for a category that is common in
+every period. A filter that no index serves reads records until it has found a page, and as many
+as the table has when few records match: `action` without `type`, `tenantId`,
+`processDefinitionKey`, `entityId`, and the tenant restriction of a reader who is not an
+administrator. Combine them with an actor, a category and action, or a time range.
 
 Java: `AuditTrail.of(processEngine)` returns the `AuditService` (`createQuery()`, `verify()`,
 `recordExport(…)`, `purge(before)`); `AuditEventQuery#listPage` pages in the database and
@@ -365,11 +374,13 @@ reads the whole table:
 - MySQL and MariaDB build them online (`ALGORITHM=INPLACE LOCK=NONE`); the script sets
   `lock_wait_timeout` to 10 seconds, so a statement that waits for a long transaction on the
   table gives up instead of making every audited command queue behind it: run it again later.
-- Oracle, SQL Server and DB2 build an index without `ONLINE` by blocking the inserts meanwhile,
-  and every audited command waits, holding the head of its chain, so that the other commands of
-  that chain fail after `fasti.audit.lock-timeout-seconds`. Add `ONLINE` (Oracle Enterprise
-  Edition) or `WITH (ONLINE = ON)` (SQL Server Enterprise Edition, Azure SQL) where the edition
-  has it, or run the script at a quiet time.
+- Oracle and SQL Server build an index without `ONLINE` by blocking the inserts meanwhile, and
+  every audited command waits, holding the head of its chain, so that the other commands of that
+  chain fail after `fasti.audit.lock-timeout-seconds`. Add `ONLINE` (Oracle Enterprise Edition)
+  or `WITH (ONLINE = ON)` (SQL Server Enterprise Edition, Azure SQL) where the edition has it, or
+  run the script at a quiet time.
+- DB2 builds an index while inserts go on. It has no `IF [NOT] EXISTS` for indexes: on a second
+  run the statements fail with SQLSTATE 42710 or 42704, which does no harm.
 
 Until then pages are read as before, only no faster. Nodes of 1.0 and 1.1 keep working on the
 upgraded tables. The drop scripts of 1.0 and 1.1 drop the replaced indexes by name and fail on

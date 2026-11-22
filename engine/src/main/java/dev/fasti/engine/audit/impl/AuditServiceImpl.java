@@ -32,6 +32,7 @@ import dev.fasti.engine.audit.AuditVerificationRunningException;
 import dev.fasti.engine.audit.AuditVerification;
 import org.camunda.bpm.engine.AuthorizationException;
 import org.camunda.bpm.engine.BadUserRequestException;
+import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.interceptor.CommandExecutor;
@@ -254,11 +255,17 @@ public class AuditServiceImpl implements AuditService {
   protected long[] purgeBatch(CommandContext commandContext, AuditSettings settings, Date before, String chainId,
       long boundary) {
     AuditAuthorization.checkPurge(commandContext);
+    AuditStore.Head head;
     try {
       // the head first, so that what is read below is not purged at the same time by another purge
-      AuditStore.lockHead(commandContext, settings, chainId);
+      head = AuditStore.lockHead(commandContext, settings, chainId, false);
     } catch (SQLException e) {
       throw AuditStore.failure("lock chain " + chainId + " for a purge", e);
+    }
+    if (head == null) {
+      // records without a head: not recreated here, so that verifying still reports it
+      LOG.warn("Audit trail chain {} has records but no head; it is not purged. Verify the audit trail.", chainId);
+      throw new ProcessEngineException("The audit trail chain " + chainId + " has no head; verify the audit trail.");
     }
     long end = boundary >= 0 ? boundary : AuditStore.purgeBoundary(commandContext, settings, chainId, before.getTime());
     List<AuditRecord> first = AuditStore.readChain(commandContext, settings, chainId, 0, 1);

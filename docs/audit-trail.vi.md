@@ -100,7 +100,12 @@ nhưng phải chờ nhau. Điều này cũng đúng với một node bản này 
 trên một máy trong lúc nâng cấp hoặc quay về: node 1.0 và 1.1 chỉ ghi vào `<node id>/<slot>`, không
 bao giờ vào các chuỗi `end-`, nên hai node không bao giờ chờ nhau thành vòng trên một chuỗi. Trong
 giai đoạn hỗn hợp như vậy, hãy dọn từ một node bản này: lần dọn của 1.1 khóa head của mọi chuỗi cùng
-lúc, và khi đó có thể bị cơ sở dữ liệu chọn làm nạn nhân của deadlock.
+lúc, trong một giao dịch, và giữ chúng đến khi xóa xong. Khi đó nó có thể bị cơ sở dữ liệu chọn làm
+nạn nhân của deadlock, và các lệnh ghi của mọi chuỗi (cả các chuỗi `end-`) phải chờ nó và thất bại
+sau `fasti.audit.lock-timeout-seconds` nếu việc xóa kéo dài hơn. Cũng đừng kiểm tra từ một node 1.1
+khi một lần dọn của bản này đang chạy: việc kiểm tra của 1.1 chỉ đọc lại một chuỗi hai lần khi một
+lần dọn xóa bản ghi dưới nó, còn lần dọn của bản này xóa theo từng lô, nên nó có thể báo một chỗ
+đứt không có thật.
 
 **Kiểm tra** (`POST /audit/verify`, hoặc nút trong giao diện web) tính lại từng chuỗi, theo từng
 trang, và báo cho mỗi chuỗi nó còn toàn vẹn hay không và đứt ở đâu đầu tiên:
@@ -202,7 +207,8 @@ lại chúng về sau.
   dọn riêng, nên các lệnh ghi vào chuỗi chỉ phải chờ nhiều nhất một lô. Một chuỗi không dọn được
   (giao dịch khác giữ nó lâu hơn thời gian chờ khóa) không chặn các chuỗi khác: kết quả liệt kê nó
   trong `failedChains` (Java: `AuditPurgeResult#getFailedChains`, nguyên nhân nằm trong log máy
-  chủ), và `purgedThrough` cho biết phần đã dọn của nó trước đó; dọn lại để hoàn tất. Bản ghi mới hơn
+  chủ), và `purgedThrough` cho biết phần đã dọn của nó trước đó; dọn lại để hoàn tất. Chuỗi bị mất
+  head cũng không được dọn (liệt kê như vậy): hãy kiểm tra nhật ký. Bản ghi mới hơn
   `fasti.audit.retention-days` (mặc định 365) ngày không bao giờ bị dọn. Hãy xuất trước: bản xuất
   JSON có đủ mọi mã băm, nên phần đã xóa vẫn kiểm tra được ngoại tuyến với bản ghi dọn. Dọn cần
   nhóm quản trị hoặc quyền `DELETE` trên `SYSTEM`.
@@ -272,13 +278,15 @@ trả về bản ghi.
 read records"), không bao giờ nêu thông báo của cơ sở dữ liệu; thông báo đó nằm trong log máy
 chủ. Truy vấn và xuất dừng sau `fasti.audit.query-timeout-seconds` (mặc định 120) giây.
 
-**Bộ lọc nào nhanh**: các trang và phép đếm lọc theo người thực hiện (cả `system`), theo loại, theo
-loại và hành động, theo thực thể quy trình, theo business key, theo chuỗi hoặc theo khoảng thời gian
-được đọc theo một chỉ mục đúng thứ tự của trang, nên cơ sở dữ liệu dừng sau trang đó. Bộ lọc không có
-chỉ mục phục vụ thì đọc bản ghi cho đến khi đủ một trang, và đọc cả bảng khi có ít bản ghi khớp:
-`action` không kèm `type`, `tenantId`, `processDefinitionKey`, `entityId`, và giới hạn tenant của
-người đọc không phải quản trị. Hãy kết hợp chúng với một bộ lọc ở trên, chẳng hạn hành động cùng
-loại của nó, hoặc với một khoảng thời gian.
+**Bộ lọc nào nhanh**: các trang và phép đếm lọc theo người thực hiện (cả `system`), theo một loại
+kèm hành động, hoặc theo khoảng thời gian (riêng hoặc kèm người thực hiện) được đọc theo một chỉ mục
+đúng thứ tự của trang, nên cơ sở dữ liệu dừng sau trang đó. Lọc theo thực thể quy trình, theo
+business key, theo chuỗi và chỉ theo loại (hoặc nhiều loại) cũng có chỉ mục phục vụ: cơ sở dữ liệu
+hoặc đọc các bản ghi khớp rồi sắp xếp, rẻ khi có ít bản ghi, hoặc đọc theo thứ tự của trang và bỏ
+qua bản ghi khác, rẻ với loại phổ biến trong mọi khoảng thời gian. Bộ lọc không có chỉ mục phục vụ
+thì đọc bản ghi cho đến khi đủ một trang, và đọc cả bảng khi có ít bản ghi khớp: `action` không kèm
+`type`, `tenantId`, `processDefinitionKey`, `entityId`, và giới hạn tenant của người đọc không phải
+quản trị. Hãy kết hợp chúng với người thực hiện, loại kèm hành động, hoặc khoảng thời gian.
 
 Java: `AuditTrail.of(processEngine)` trả về `AuditService` (`createQuery()`, `verify()`,
 `recordExport(…)`, `purge(before)`); `AuditEventQuery#listPage` phân trang trong cơ sở dữ liệu và
@@ -353,11 +361,13 @@ vốn được chúng thay thế (mỗi lần insert vẫn cập nhật bảy ch
 - MySQL và MariaDB tạo chúng trực tuyến (`ALGORITHM=INPLACE LOCK=NONE`); script đặt
   `lock_wait_timeout` là 10 giây, nên một lệnh phải chờ giao dịch dài trên bảng sẽ bỏ cuộc thay vì
   bắt mọi lệnh có ghi kiểm toán xếp hàng sau nó: chạy lại sau.
-- Oracle, SQL Server và DB2 tạo chỉ mục không có `ONLINE` bằng cách chặn insert trong lúc đó, và mọi
+- Oracle và SQL Server tạo chỉ mục không có `ONLINE` bằng cách chặn insert trong lúc đó, và mọi
   lệnh có ghi kiểm toán phải chờ trong khi giữ head của chuỗi, nên các lệnh khác của chuỗi đó thất
   bại sau `fasti.audit.lock-timeout-seconds`. Thêm `ONLINE` (Oracle Enterprise Edition) hoặc
   `WITH (ONLINE = ON)` (SQL Server Enterprise Edition, Azure SQL) nếu phiên bản có, hoặc chạy vào
   lúc vắng.
+- DB2 tạo chỉ mục trong khi insert vẫn tiếp tục. DB2 không có `IF [NOT] EXISTS` cho chỉ mục: chạy
+  lần hai thì các lệnh lỗi với SQLSTATE 42710 hoặc 42704, không gây hại.
 
 Chưa chạy thì các trang vẫn được đọc như trước, chỉ là không nhanh hơn. Node 1.0 và 1.1 vẫn chạy
 bình thường trên bảng đã nâng cấp. Script drop của 1.0 và 1.1 xóa các chỉ mục bị thay thế theo tên

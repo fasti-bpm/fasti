@@ -26,3 +26,7 @@ camunda-h2-dbs
 
 # package cache written by Jython 2.7 during tests
 .jython_cache
+
+# JVM crash dumps and compiler replay files
+hs_err_pid*.log
+replay_pid*.log

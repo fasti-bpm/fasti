@@ -2,8 +2,8 @@
 
 # Hiệu năng cơ sở dữ liệu
 
-> **Mới từ bản phát hành sau 1.1.0.** Các bản trước không có các script chỉ mục tùy chọn và các
-> cảnh báo khi khởi động.
+> **Có từ 1.2.0.** Các bản trước không có các script chỉ mục tùy chọn và các cảnh báo khi khởi
+> động.
 
 Cơ sở dữ liệu của Fasti BPM dùng nguyên schema của Camunda 7.24. Schema đó đánh chỉ mục khóa ngoại
 khá đầy đủ, nhưng một số truy vấn mà engine và giao diện web chạy liên tục không có chỉ mục phù hợp

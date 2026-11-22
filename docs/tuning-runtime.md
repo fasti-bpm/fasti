@@ -18,7 +18,7 @@ jobs and locks them, puts them into a queue of `queue-capacity`, and up to `max-
 threads execute them. Every executing job holds one database connection, like every request
 that reads or writes the engine.
 
-| Setting | Up to 1.1 (Run, image) | After 1.1 (Run, image) | Engine / starter default |
+| Setting | Up to 1.1 (Run, image) | From 1.2 (Run, image) | Engine / starter default |
 |---|---|---|---|
 | `camunda.bpm.job-execution.core-pool-size` | 3 | 10 (follows `max-pool-size`) | 3 |
 | `camunda.bpm.job-execution.max-pool-size` | 10 | 10 | 10 |
@@ -63,7 +63,7 @@ alternating, three measured rounds each; another workload loaded the machine mea
 | Configuration | Median | Range |
 |---|---|---|
 | Up to 1.1 (3 per acquisition, queue 3, core 3, pool 10) | 267 jobs/s | 190 to 286 |
-| After 1.1 (10, 10, 10, pool 20) | 285 jobs/s | 225 to 299 |
+| From 1.2 (10, 10, 10, pool 20) | 285 jobs/s | 225 to 299 |
 
 On that loaded machine the gain was small (+7 %, and steadier): the database was the limit, not
 the acquisition. The new values matter most when jobs wait on something other than the database
@@ -124,9 +124,9 @@ the chains of the node and locks the head row of that chain until its transactio
 ([audit-trail.md](audit-trail.md)). Transactions that map to the same chain wait for each other
 while the head is locked.
 
-**The lock is short after 1.1.** Up to 1.1 the records were written before the statements of the
-engine, so the head was locked while the engine sent all its inserts, updates and deletes. After
-1.1 a command whose transaction ends with it writes its records last: the head is locked for the
+**The lock is short from 1.2 on.** Up to 1.1 the records were written before the statements of the
+engine, so the head was locked while the engine sent all its inserts, updates and deletes. From
+1.2 a command whose transaction ends with it writes its records last: the head is locked for the
 audit statements (lock, read, insert, update) and the commit only, including what the
 transaction manager writes at commit (with JPA the entity changes Hibernate flushes then). That
 is every request and
@@ -241,7 +241,7 @@ the count. In Java: `AuditEventQuery.count(long limit)`.
 
 The gauges of the engine state (`fasti.engine.process.instances.active`, `tasks.open`,
 `incidents.open`, `jobs.executable`, `jobs.failed`, `external.tasks.open`) are six count queries.
-After 1.1 a scrape never runs them: it returns the values read last, and when they are older than
+From 1.2 a scrape never runs them: it returns the values read last, and when they are older than
 `fasti.metrics.engine.gauges.refresh-interval` (default 30 s) it starts one round of the queries
 on a background thread, whose result the next scrape gets. A value is therefore up to one
 refresh interval plus one scrape interval old; before the first round has finished the gauges
@@ -305,7 +305,7 @@ compiler, scripts run in the interpreter.
 For models that evaluate many scripts per second, prefer expressions (JUEL), Groovy (compiled
 and cached per script) or Java delegates on the hot path, and keep JavaScript for the rest.
 
-## Smaller changes after 1.1
+## Smaller changes in 1.2
 
 - **Parameter binding.** MyBatis binds every statement parameter through a statement wrapper
   that hides the parameter metadata of the driver. The wrapper is now a plain class instead of a

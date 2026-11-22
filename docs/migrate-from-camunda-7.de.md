@@ -34,7 +34,7 @@ Start und nennt die auszuführenden Skripte.
    (`camunda.bpm.run.auth.enabled`), Berechtigungen (`camunda.bpm.authorization.enabled`),
    Plugins, LDAP/SSO, JVM-Zeitzone, Passwort-Hashing (`passwordEncryptor`, `saltGenerator`),
    Tabellenpräfix/Schema.
-4. **Laden Sie das Image** `fastidev/fasti-bpm:1.1.0` herunter (oder bauen Sie es aus dem Quellcode,
+4. **Laden Sie das Image** `fastidev/fasti-bpm:1.2.0` herunter (oder bauen Sie es aus dem Quellcode,
    wie in [distro/docker/README.md](../distro/docker/README.md) beschrieben).
 5. **Starten Sie Fasti mit denselben `DB_*`-Variablen** (und demselben `TZ`). Anders als Camunda Run
    **verlangt das Fasti-Image standardmäßig REST-Authentifizierung und erzwingt Berechtigungen**: Datenbank-

@@ -23,7 +23,7 @@ người dùng này; với hệ thật hãy dùng người dùng và mật khẩ
 ```bash
 docker run -d --name fasti-api -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=demo -e FASTI_ADMIN_PASSWORD=demo \
-  fastidev/fasti-bpm:1.1.0 --webapps --rest
+  fastidev/fasti-bpm:1.2.0 --webapps --rest
 ```
 
 Đợi `curl -s http://localhost:8080/actuator/health/readiness` trả `{"status":"UP"}`, rồi đặt hai
@@ -251,7 +251,7 @@ Artifact `dev.fasti.platform:fasti-external-task-client` (thay cho
 `org.camunda.bpm:camunda-external-task-client`; package `org.camunda.bpm.client` giữ nguyên).
 Chưa có trên Maven Central: hãy build từ mã nguồn
 (`./mvnw -pl clients/java/client -am install -DskipTests`) và đặt `fasti.version` là
-`1.1.0`.
+`1.2.0`.
 
 ```xml
 <dependency>

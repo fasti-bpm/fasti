@@ -22,7 +22,7 @@ Container Registry (`ghcr.io/fasti-bpm/fasti-bpm`), for amd64 and arm64:
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.1.0
+  fastidev/fasti-bpm:1.2.0
 ```
 
 Open <http://localhost:8080/fasti/> and sign in. Without `DB_URL` the image uses an H2 database
@@ -120,13 +120,14 @@ terms, write to <contact@fasti.dev>.
 
 ## Roadmap
 
-This is a plan, not a commitment to dates. Released in `1.1.0`: a Helm chart and Kubernetes
-manifests, Prometheus metrics, OpenTelemetry tracing, structured JSON logs, a substitute during
-absence, four-eyes control for approvals, an immutable audit trail, an MCP server for AI
-assistants, and cases (CMMN) in the new interface. Next in `1.x`: publishing the Maven artifacts
-on Maven Central, verification on DB2, a native-speaker review of the translations, and retiring
-the AngularJS applications. The timeline, from the end of Camunda 7 CE to the goals for 2027:
-<https://fasti.dev/#timeline>.
+This is a plan, not a commitment to dates. Released in `1.2.0`, focused on performance: a workload
+endpoint for task counts, optional database indexes, a startup performance advisor, audit trail
+tuning and a faster web UI. Released in `1.1.0`: a Helm chart and Kubernetes manifests, Prometheus
+metrics, OpenTelemetry tracing, structured JSON logs, a substitute during absence, four-eyes control
+for approvals, an immutable audit trail, an MCP server for AI assistants, and cases (CMMN) in the
+new interface. Next in `1.x`: publishing the Maven artifacts on Maven Central, verification on DB2,
+a native-speaker review of the translations, and retiring the AngularJS applications. The timeline,
+from the end of Camunda 7 CE to the goals for 2027: <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>
 
@@ -149,7 +150,7 @@ On [fasti.dev](https://fasti.dev): [Install with Docker](https://fasti.dev/insta
 | [docs/absence.md](docs/absence.md) | Substitutes during absence (from 1.1.0) |
 | [docs/four-eyes.md](docs/four-eyes.md) | Four-eyes control for approvals (from 1.1.0) |
 | [docs/audit-trail.md](docs/audit-trail.md) | Immutable audit trail (from 1.1.0) |
-| [docs/performance.md](docs/performance.md) | Database performance: optional indexes, startup hints, engine settings, measurements |
+| [docs/performance.md](docs/performance.md) | Database performance: optional indexes, startup hints, engine settings, measurements (from 1.2.0) |
 | [docs/single-sign-on.md](docs/single-sign-on.md) | Single sign-on (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.md](docs/api/README.md) | REST API integration, Java and JavaScript external task clients |
 | [distro/docker/README.md](distro/docker/README.md) | Image: environment variables, drivers, operations, tuning |

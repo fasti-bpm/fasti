@@ -24,7 +24,7 @@ Container Registry（`ghcr.io/fasti-bpm/fasti-bpm`）で公開しています。
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.1.0
+  fastidev/fasti-bpm:1.2.0
 ```
 
 <http://localhost:8080/fasti/> を開いてサインインしてください。`DB_URL` を指定しない場合、イメージは
@@ -113,7 +113,9 @@ Camunda 7 を引き継ぐ優れたプロジェクトはいくつもあります�
 
 ## ロードマップ
 
-これは計画であり、日程の約束ではありません。`1.1.0` でリリースしたもの：
+これは計画であり、日程の約束ではありません。`1.2.0` でリリースしたもの（パフォーマンスの改善）：
+ワークロード集計エンドポイント、オプションのデータベースインデックス、起動時のパフォーマンス診断、
+監査証跡のチューニング、Web UI の高速化。`1.1.0` でリリースしたもの：
 Helm チャートと Kubernetes マニフェスト、Prometheus メトリクス、OpenTelemetry トレーシング、構造化 JSON
 ログ、不在時の代理者設定、承認に対する四眼原則（フォーアイズ）による統制、改ざん不能な監査証跡、
 AI アシスタント向けの MCP サーバー、新しいインターフェースでのケース（CMMN）対応。`1.x` で次に

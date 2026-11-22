@@ -16,8 +16,8 @@ Full migration guide (steps, rollback, mixed operation, limits):
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
-docker build -t fasti-bpm:1.1.0 \
-  --build-arg VERSION=1.1.0 --build-arg REVISION=$(git rev-parse --short HEAD) \
+docker build -t fasti-bpm:1.2.0 \
+  --build-arg VERSION=1.2.0 --build-arg REVISION=$(git rev-parse --short HEAD) \
   distro/docker/target/docker
 ```
 
@@ -92,7 +92,7 @@ docker run -d --name fasti -p 8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=UTC \
-  fasti-bpm:1.1.0
+  fasti-bpm:1.2.0
 ```
 
 `DB_PASSWORD_FILE` must name a file inside the container (a Docker/Kubernetes secret, or
@@ -108,7 +108,7 @@ The names of the former Camunda 7 Run image and `FASTI_*` aliases are accepted (
 set, the `FASTI_*` value is used; `DEBUG` and `JMX_PROMETHEUS` are on if either name is `true`).
 Any Spring Boot property can be set as an environment variable too (for example
 `CAMUNDA_BPM_RUN_AUTH_ENABLED=true`). Entries marked **from 1.1.0** are not in the 1.0.x
-images; entries marked **after 1.1.0** are not in the 1.1.x images.
+images; entries marked **from 1.2.0** are not in the 1.1.x images.
 
 | Variable | Default | Meaning |
 |---|---|---|
@@ -155,8 +155,8 @@ images; entries marked **after 1.1.0** are not in the 1.1.x images.
 | `FASTI_FOUR_EYES_ENABLED` | `true` | **From 1.1.0.** [Four-eyes control](../../docs/four-eyes.md) for user tasks whose model declares `fasti:fourEyes`; `false` turns it off |
 | `FASTI_AUDIT_ENABLED` | `false` | **From 1.1.0.** `true`: [immutable audit trail](../../docs/audit-trail.md), on every node. Unless `FASTI_DB_SCHEMA_UPDATE=true`, create its tables first with `/fasti/configuration/sql/create/<database>_fasti_audit.sql` |
 | `FASTI_AUDIT_HMAC_KEY`, `FASTI_AUDIT_HMAC_KEY_FILE` | | **From 1.1.0.** Key that signs the checkpoints of the audit trail (at least 32 bytes), or the path of a file that holds it (Docker/Kubernetes secret) |
-| `FASTI_PERFORMANCE_INDEX_CHECK` | `warn` | **After 1.1.0.** One warning at start listing the [optional performance indexes](../../docs/performance.md) of `/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql` that the database does not have; `off` silences it |
-| `FASTI_PERFORMANCE_CONFIG_CHECK` | `warn` | **After 1.1.0.** Warnings at start for settings that cost performance as the data grows (history without cleanup window, connection pool smaller than the job executor needs, …); `off` silences them |
+| `FASTI_PERFORMANCE_INDEX_CHECK` | `warn` | **From 1.2.0.** One warning at start listing the [optional performance indexes](../../docs/performance.md) of `/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql` that the database does not have; `off` silences it |
+| `FASTI_PERFORMANCE_CONFIG_CHECK` | `warn` | **From 1.2.0.** Warnings at start for settings that cost performance as the data grows (history without cleanup window, connection pool smaller than the job executor needs, …); `off` silences them |
 | `FASTI_APPCDS`, `FASTI_APPCDS_FILE` | `false`, `/fasti/data/fasti-appcds.jsa` | class data sharing for faster startup (see Performance tuning) |
 | `FASTI_BASE64_INTRINSICS` | `false` | `false` adds `-XX:-UseBASE64Intrinsics` to mitigate CVE-2026-114938 ("Java4Shell"); `true` keeps the JVM Base64 intrinsic. See [docs/security/CVE-2026-114938.md](../../docs/security/CVE-2026-114938.md) |
 
@@ -256,6 +256,6 @@ about 50k process instances, 360k history rows, 10k open tasks):
   the new web UI are cached for a year (`immutable`); `index.html` is always revalidated
   (`no-cache`).
 - **Database indexes:** the image adds or changes no index; the schema stays identical to 7.24.0.
-  **After 1.1.0:** optional indexes for large databases are scripts an administrator runs,
+  **From 1.2.0:** optional indexes for large databases are scripts an administrator runs,
   `/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql` (and `_drop.sql`),
   safe next to Camunda 7.24 nodes ([performance guide](../../docs/performance.md)).

@@ -12,6 +12,8 @@ các mục dưới đây là khác biệt so với bản đó.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-22
+
 ### Added
 
 - REST: `GET` and `POST /task/workload` count the open tasks the caller may read in one request:

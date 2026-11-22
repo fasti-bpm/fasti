@@ -2,8 +2,8 @@ English | [Tiếng Việt](performance.vi.md)
 
 # Database performance
 
-> **New in the release after 1.1.0.** Earlier releases do not ship the optional index scripts or
-> the startup hints.
+> **New in 1.2.0.** Earlier releases do not ship the optional index scripts or the startup
+> hints.
 
 A Fasti BPM database works on the Camunda 7.24 schema unchanged. That schema indexes foreign keys
 well, but a few queries that the engine and the web interface run all the time have no index that

@@ -2,9 +2,9 @@ English | [Tiếng Việt](performance-web-ui.vi.md)
 
 # Request volume of the web UI
 
-> **New after 1.1.0.** These numbers compare the web UI of 1.1.0 with the next release. A web UI
-> of the next release that talks to a 1.1.0 server works too: the workload board then falls
-> back to its per-row task queries (see below).
+> **New in 1.2.0.** These numbers compare the web UI of 1.1.0 with that of 1.2.0. A web UI of
+> 1.2.0 that talks to a 1.1.0 server works too: the workload board then falls back to its
+> per-row task queries (see below).
 
 The pages of the web UI refresh themselves while they are open. With many groups and users, or
 with many people at the screen, those refreshes are a large part of what the engine has to
@@ -26,7 +26,8 @@ node scripts/request-trace.mjs --base http://localhost:8080/fasti/ --seed 46 --w
 - Only requests to the REST API and the web application API count as "API requests"; scripts,
   styles and fonts are listed under "all requests" of the first load only.
 
-Both runs used the same script, data and machine: 1.1.0 (commit `7df3ab864e`) and this branch.
+Both runs used the same script, data and machine: 1.1.0 (commit `7df3ab864e`) and the branch that
+became 1.2.0.
 
 ## Results
 
@@ -126,7 +127,7 @@ of after them.
 
 Sizes of `vite build`, minified (gzip in brackets):
 
-| Chunk | 1.1.0 | Now |
+| Chunk | 1.1.0 | 1.2.0 |
 |---|---:|---:|
 | `index` (entry) | 396.5 kB (123.0) | 91.7 kB (27.0) |
 | `react` (React, React DOM, router, scheduler) | in `index` | 315.1 kB (99.3) |

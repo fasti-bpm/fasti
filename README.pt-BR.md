@@ -24,7 +24,7 @@ Container Registry (`ghcr.io/fasti-bpm/fasti-bpm`), para amd64 e arm64:
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.1.0
+  fastidev/fasti-bpm:1.2.0
 ```
 
 Abra <http://localhost:8080/fasti/> e entre. Sem `DB_URL`, a imagem usa um banco de dados H2
@@ -124,13 +124,15 @@ produção, e para condições de suporte, escreva para <contact@fasti.dev>.
 
 ## Plano de evolução
 
-Isto é um plano, não um compromisso com datas. Lançado na `1.1.0`: um Helm chart e manifestos
-Kubernetes, métricas Prometheus, tracing com OpenTelemetry, logs estruturados em JSON, um
-substituto durante ausências, controle de quatro olhos para aprovações, uma trilha de auditoria
-imutável, um servidor MCP para assistentes de IA e casos (CMMN) na nova interface. A seguir na
-linha `1.x`: a publicação dos artefatos Maven no Maven Central, a verificação com DB2, a revisão
-das traduções por falantes nativos e a retirada das aplicações AngularJS. A linha do tempo, do
-fim do Camunda 7 CE às metas para 2027: <https://fasti.dev/#timeline>.
+Isto é um plano, não um compromisso com datas. Lançado na `1.2.0`, com foco em desempenho: um
+endpoint de carga de trabalho, índices opcionais para o banco de dados, avisos de desempenho na
+inicialização, ajustes na trilha de auditoria e uma interface web mais rápida. Lançado na `1.1.0`:
+um Helm chart e manifestos Kubernetes, métricas Prometheus, tracing com OpenTelemetry, logs
+estruturados em JSON, um substituto durante ausências, controle de quatro olhos para aprovações, uma
+trilha de auditoria imutável, um servidor MCP para assistentes de IA e casos (CMMN) na nova
+interface. A seguir na linha `1.x`: a publicação dos artefatos Maven no Maven Central, a verificação
+com DB2, a revisão das traduções por falantes nativos e a retirada das aplicações AngularJS. A linha
+do tempo, do fim do Camunda 7 CE às metas para 2027: <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>
 

@@ -24,7 +24,7 @@ Container Registry (`ghcr.io/fasti-bpm/fasti-bpm`) पर amd64 और arm64 क
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.1.0
+  fastidev/fasti-bpm:1.2.0
 ```
 
 <http://localhost:8080/fasti/> खोलें और साइन इन करें। `DB_URL` के बिना इमेज कंटेनर के भीतर H2 डेटाबेस
@@ -122,12 +122,14 @@ patch releases के रूप में। कृपया security समस�
 
 ## रोडमैप
 
-यह एक योजना है, तारीख़ों का वादा नहीं। `1.1.0` में जारी: Helm chart और Kubernetes manifests,
-Prometheus metrics, OpenTelemetry tracing, structured JSON logs, अनुपस्थिति में substitute, approvals
-के लिए four-eyes control, immutable audit trail, AI assistants के लिए MCP server, और नए इंटरफ़ेस में
-केस (CMMN)। `1.x` में आगे: Maven आर्टिफ़ैक्ट को Maven Central पर प्रकाशित करना, DB2 पर सत्यापन,
-मूल भाषियों द्वारा अनुवादों की समीक्षा, और AngularJS एप्लिकेशन को हटाना। Camunda 7 CE के अंत से
-2027 के लक्ष्यों तक की टाइमलाइन:
+यह एक योजना है, तारीख़ों का वादा नहीं। `1.2.0` में जारी, प्रदर्शन पर केंद्रित: task गिनती के लिए
+workload endpoint, वैकल्पिक डेटाबेस इंडेक्स, startup पर प्रदर्शन संबंधी सलाह, audit trail की ट्यूनिंग,
+और तेज़ वेब इंटरफ़ेस। `1.1.0` में जारी: Helm chart और Kubernetes manifests, Prometheus metrics,
+OpenTelemetry tracing, structured JSON logs, अनुपस्थिति में substitute, approvals के लिए four-eyes
+control, immutable audit trail, AI assistants के लिए MCP server, और नए इंटरफ़ेस में केस (CMMN)।
+`1.x` में आगे: Maven आर्टिफ़ैक्ट को Maven Central पर प्रकाशित करना, DB2 पर सत्यापन, मूल भाषियों
+द्वारा अनुवादों की समीक्षा, और AngularJS एप्लिकेशन को हटाना। Camunda 7 CE के अंत से 2027 के
+लक्ष्यों तक की टाइमलाइन:
 <https://fasti.dev/#timeline>।
 
 <a id="documentation"></a>

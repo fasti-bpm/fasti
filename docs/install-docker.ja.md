@@ -28,17 +28,17 @@ H2 での簡単な試用、PostgreSQL を使用した本番運用（`docker run`
 amd64 および arm64 向けのイメージを、次の 2 か所で公開しています。
 
 ```bash
-docker pull fastidev/fasti-bpm:1.1.0              # Docker Hub
-docker pull ghcr.io/fasti-bpm/fasti-bpm:1.1.0     # GitHub Container Registry
+docker pull fastidev/fasti-bpm:1.2.0              # Docker Hub
+docker pull ghcr.io/fasti-bpm/fasti-bpm:1.2.0     # GitHub Container Registry
 ```
 
-タグ：`1.1.0`（そのリリースを厳密に指定）、`1.1`（1.1 の最新パッチリリース）、`latest`（最後に公開された
+タグ：`1.2.0`（そのリリースを厳密に指定）、`1.2`（1.2 の最新パッチリリース）、`latest`（最後に公開された
 リリース）。イメージは cosign（キーレス、GitHub OIDC）で署名されており、SBOM と来歴証明が付属しています。
 1.0.1 以降の署名は cosign 3 の Sigstore バンドル形式です。1.0.0 のイメージには旧来の cosign 2 形式の署名が付いています。
 
 ソースからイメージをビルドすることもできます（JDK 17+ と、Maven
 Central、nodejs.org、npm レジストリへのネットワークアクセスが必要です）。その場合、以降のすべてのコマンドで
-`fastidev/fasti-bpm:1.1.0` の代わりに `fasti-bpm:local` を使用してください。
+`fastidev/fasti-bpm:1.2.0` の代わりに `fasti-bpm:local` を使用してください。
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
@@ -53,7 +53,7 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
   -v fasti-data:/fasti/data \
-  fastidev/fasti-bpm:1.1.0
+  fastidev/fasti-bpm:1.2.0
 ```
 
 - <http://localhost:8080/fasti/> を開き、`admin` としてサインインします。
@@ -101,7 +101,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
   -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
-  fastidev/fasti-bpm:1.1.0 --production
+  fastidev/fasti-bpm:1.2.0 --production
 ```
 
 - `FASTI_DB_SCHEMA_UPDATE=true` は、新しいデータベースに不足しているテーブルを作成するだけです。Fasti が
@@ -130,7 +130,7 @@ docker compose -f docker-compose.postgres.yml up -d
 docker compose -f docker-compose.postgres.yml ps      # both services "healthy"
 ```
 
-起動時に設定できる変数：`FASTI_IMAGE`（既定値は `fastidev/fasti-bpm:1.1.0`。設定例：
+起動時に設定できる変数：`FASTI_IMAGE`（既定値は `fastidev/fasti-bpm:1.2.0`。設定例：
 `FASTI_IMAGE=fasti-bpm:local`）、`FASTI_HOST_PORT`（既定値は `8080`）、`TZ`（既定値は `UTC`）。
 
 <a id="6-connecting-to-an-existing-camunda-7-database"></a>
@@ -158,7 +158,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=UTC \
-  fastidev/fasti-bpm:1.1.0 --production
+  fastidev/fasti-bpm:1.2.0 --production
 ```
 
 - ポートはこのマシンにのみバインドされます。リモートアクセスには、HTTPS 対応のリバースプロキシを経由してください。
@@ -231,12 +231,12 @@ Kubernetes：`livenessProbe` → `/actuator/health/liveness`、`readinessProbe` 
 
 ## 10. アップグレードとロールバック
 
-**Fasti のアップグレード**（例：`1.0.1` → `1.1.0`）：
+**Fasti のアップグレード**（例：`1.1.0` → `1.2.0`）：
 
 ```bash
-docker pull fastidev/fasti-bpm:1.1.0
+docker pull fastidev/fasti-bpm:1.2.0
 docker stop -t 60 fasti && docker rm fasti
-docker run -d --name fasti ... fastidev/fasti-bpm:1.1.0 --production   # same options as before
+docker run -d --name fasti ... fastidev/fasti-bpm:1.2.0 --production   # same options as before
 ```
 
 Docker Compose の場合：`FASTI_IMAGE`（または `image:` 行）を変更し、

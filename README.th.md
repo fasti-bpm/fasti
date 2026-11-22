@@ -24,7 +24,7 @@ Container Registry (`ghcr.io/fasti-bpm/fasti-bpm`) สำหรับ amd64 แ�
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.1.0
+  fastidev/fasti-bpm:1.2.0
 ```
 
 เปิด <http://localhost:8080/fasti/> แล้วเข้าสู่ระบบ หากไม่ได้กำหนด `DB_URL` อิมเมจจะใช้ฐานข้อมูล H2
@@ -114,7 +114,9 @@ external task worker ต้องส่งข้อมูลรับรอง�
 
 ## แผนงาน
 
-นี่คือแผน ไม่ใช่คำมั่นเรื่องวันที่ เผยแพร่แล้วใน `1.1.0`: Helm chart และ manifest ของ Kubernetes,
+นี่คือแผน ไม่ใช่คำมั่นเรื่องวันที่ เผยแพร่แล้วใน `1.2.0` (เน้นประสิทธิภาพ): endpoint สรุปปริมาณงาน,
+ดัชนีเสริมของฐานข้อมูล, คำแนะนำด้านประสิทธิภาพตอนเริ่มระบบ, การปรับแต่ง audit trail
+และอินเทอร์เฟซเว็บที่เร็วขึ้น เผยแพร่แล้วใน `1.1.0`: Helm chart และ manifest ของ Kubernetes,
 metrics ของ Prometheus, tracing ของ OpenTelemetry, log แบบมีโครงสร้างในรูปแบบ JSON,
 ผู้ปฏิบัติงานแทนระหว่างที่ไม่อยู่, การควบคุมแบบ four-eyes สำหรับการอนุมัติ, audit trail ที่แก้ไขไม่ได้,
 MCP server สำหรับผู้ช่วย AI และเคส (CMMN) ในอินเทอร์เฟซใหม่ ลำดับถัดไปใน `1.x`: การเผยแพร่อาร์ติแฟกต์

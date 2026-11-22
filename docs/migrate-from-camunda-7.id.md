@@ -34,7 +34,7 @@ memulai pada skema lama dan menyebutkan skrip yang perlu dijalankan.
    (`camunda.bpm.run.auth.enabled`), otorisasi (`camunda.bpm.authorization.enabled`),
    plugin, LDAP/SSO, zona waktu JVM, hashing kata sandi (`passwordEncryptor`, `saltGenerator`),
    prefiks tabel/skema.
-4. **Tarik image** `fastidev/fasti-bpm:1.1.0` (atau bangun dari kode sumber seperti yang dijelaskan dalam
+4. **Tarik image** `fastidev/fasti-bpm:1.2.0` (atau bangun dari kode sumber seperti yang dijelaskan dalam
    [distro/docker/README.md](../distro/docker/README.md)).
 5. **Jalankan Fasti dengan variabel `DB_*` yang sama** (dan `TZ` yang sama). Berbeda dengan Camunda Run,
    image Fasti **mewajibkan autentikasi REST dan menerapkan otorisasi secara default**: akun basis data

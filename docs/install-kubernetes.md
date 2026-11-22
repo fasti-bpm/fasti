@@ -61,7 +61,7 @@ Write the settings into a values file, for example `fasti-values.yaml`:
 
 ```yaml
 image:
-  tag: "1.1.0"
+  tag: "1.2.0"
   # digest: sha256:...            # recommended: pin the image
 database:
   url: jdbc:postgresql://postgres.db.svc.cluster.local:5432/fasti
@@ -129,7 +129,7 @@ resources:
   - ../fasti/distro/kubernetes/manifests
 images:
   - name: fastidev/fasti-bpm
-    newTag: "1.1.0"
+    newTag: "1.2.0"
 patches:
   - target: {kind: Deployment, name: fasti}
     patch: |

@@ -8,7 +8,7 @@
   <parent>
     <groupId>dev.fasti.platform.dmn</groupId>
     <artifactId>fasti-engine-dmn-root</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
   </parent>
 
   <artifactId>fasti-engine-feel-scala</artifactId>

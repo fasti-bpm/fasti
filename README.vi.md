@@ -22,7 +22,7 @@ Image có trên Docker Hub (`fastidev/fasti-bpm`) và GitHub Container Registry
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='đổi-mật-khẩu-này' \
-  fastidev/fasti-bpm:1.1.0
+  fastidev/fasti-bpm:1.2.0
 ```
 
 Mở <http://localhost:8080/fasti/> và đăng nhập. Không đặt `DB_URL` thì image dùng H2 bên trong
@@ -120,12 +120,14 @@ trợ cài đặt, chuyển đổi hoặc vận hành production, hay thống nh
 
 ## Lộ trình
 
-Đây là kế hoạch, không phải cam kết về ngày. Đã phát hành trong `1.1.0`: Helm chart và manifest
-Kubernetes, metrics cho Prometheus, tracing bằng OpenTelemetry, log có cấu trúc dạng JSON, người
-thay thế khi vắng mặt, nguyên tắc bốn mắt khi phê duyệt, nhật ký kiểm toán không thể sửa đổi, MCP
-server cho trợ lý AI, và hồ sơ (CMMN) trong giao diện mới. Tiếp theo trong `1.x`: phát hành
-artifact Maven lên Maven Central, kiểm chứng trên DB2, người bản ngữ rà soát các bản dịch, và
-ngừng dùng các ứng dụng AngularJS. Dòng thời gian, từ khi Camunda 7 CE kết thúc tới các mục tiêu
+Đây là kế hoạch, không phải cam kết về ngày. Đã phát hành trong `1.2.0`, tập trung vào hiệu năng:
+endpoint đếm khối lượng công việc, các chỉ mục cơ sở dữ liệu tùy chọn, cảnh báo hiệu năng khi khởi
+động, tinh chỉnh nhật ký kiểm toán và giao diện web nhanh hơn. Đã phát hành trong `1.1.0`: Helm
+chart và manifest Kubernetes, metrics cho Prometheus, tracing bằng OpenTelemetry, log có cấu trúc
+dạng JSON, người thay thế khi vắng mặt, nguyên tắc bốn mắt khi phê duyệt, nhật ký kiểm toán không
+thể sửa đổi, MCP server cho trợ lý AI, và hồ sơ (CMMN) trong giao diện mới. Tiếp theo trong `1.x`:
+phát hành artifact Maven lên Maven Central, kiểm chứng trên DB2, người bản ngữ rà soát các bản dịch,
+và ngừng dùng các ứng dụng AngularJS. Dòng thời gian, từ khi Camunda 7 CE kết thúc tới các mục tiêu
 năm 2027: <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>
@@ -149,7 +151,7 @@ Trên [fasti.dev](https://fasti.dev): [Cài đặt bằng Docker](https://fasti.
 | [docs/absence.vi.md](docs/absence.vi.md) | Người thay thế khi vắng mặt (từ 1.1.0) |
 | [docs/four-eyes.vi.md](docs/four-eyes.vi.md) | Nguyên tắc bốn mắt khi phê duyệt (từ 1.1.0) |
 | [docs/audit-trail.vi.md](docs/audit-trail.vi.md) | Nhật ký kiểm toán không thể sửa đổi (từ 1.1.0) |
-| [docs/performance.vi.md](docs/performance.vi.md) | Hiệu năng cơ sở dữ liệu: chỉ mục tùy chọn, cảnh báo khi khởi động, cấu hình engine, số đo |
+| [docs/performance.vi.md](docs/performance.vi.md) | Hiệu năng cơ sở dữ liệu: chỉ mục tùy chọn, cảnh báo khi khởi động, cấu hình engine, số đo (từ 1.2.0) |
 | [docs/single-sign-on.vi.md](docs/single-sign-on.vi.md) | Đăng nhập một lần (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.vi.md](docs/api/README.vi.md) | Tích hợp qua REST API, client external task Java và JavaScript |
 | [distro/docker/README.vi.md](distro/docker/README.vi.md) | Image: biến môi trường, driver, vận hành, tinh chỉnh |

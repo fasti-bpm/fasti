@@ -2,9 +2,9 @@
 
 # Lượng request của giao diện web
 
-> **Có từ bản sau 1.1.0.** Các số liệu dưới đây so sánh giao diện web của 1.1.0 với bản phát
-> hành tiếp theo. Giao diện web của bản mới vẫn làm việc được với server 1.1.0: khi đó bảng
-> khối lượng việc quay về cách đếm từng dòng bằng task query (xem bên dưới).
+> **Có từ 1.2.0.** Các số liệu dưới đây so sánh giao diện web của 1.1.0 với của 1.2.0. Giao
+> diện web 1.2.0 vẫn làm việc được với server 1.1.0: khi đó bảng khối lượng việc quay về cách
+> đếm từng dòng bằng task query (xem bên dưới).
 
 Các trang của giao diện web tự làm mới khi đang mở. Khi có nhiều nhóm và người dùng, hoặc nhiều
 người cùng ngồi trước màn hình, những lần làm mới này chiếm phần lớn việc engine phải trả lời.
@@ -26,7 +26,8 @@ node scripts/request-trace.mjs --base http://localhost:8080/fasti/ --seed 46 --w
 - Chỉ các request tới REST API và API của ứng dụng web được tính là "API request"; script,
   style và font chỉ được tính vào "mọi request" của lần tải đầu.
 
-Hai lần đo dùng cùng script, dữ liệu và máy: 1.1.0 (commit `7df3ab864e`) và nhánh này.
+Hai lần đo dùng cùng script, dữ liệu và máy: 1.1.0 (commit `7df3ab864e`) và nhánh đã trở
+thành 1.2.0.
 
 ## Kết quả
 
@@ -127,7 +128,7 @@ nó.
 
 Kích thước của `vite build`, đã minify (gzip trong ngoặc):
 
-| Chunk | 1.1.0 | Nay |
+| Chunk | 1.1.0 | 1.2.0 |
 |---|---:|---:|
 | `index` (entry) | 396,5 kB (123,0) | 91,7 kB (27,0) |
 | `react` (React, React DOM, router, scheduler) | nằm trong `index` | 315,1 kB (99,3) |

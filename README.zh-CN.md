@@ -23,7 +23,7 @@ Container Registry（`ghcr.io/fasti-bpm/fasti-bpm`）上提供，支持 amd64 �
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.1.0
+  fastidev/fasti-bpm:1.2.0
 ```
 
 打开 <http://localhost:8080/fasti/> 并登录。未设置 `DB_URL` 时，镜像使用容器内的 H2 数据库，
@@ -107,11 +107,12 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 
 ## 路线图
 
-这是一份计划，而不是对日期的承诺。已随 `1.1.0` 发布的内容：Helm chart 和 Kubernetes 清单、Prometheus
-指标、OpenTelemetry 链路追踪、结构化 JSON 日志、缺勤期间的代理人、审批的四眼原则控制、不可篡改的审计轨迹、
-面向 AI 助手的 MCP 服务器，以及新界面中的案例 (CMMN)。`1.x` 的后续计划：将 Maven 构件发布到 Maven
-Central、在 DB2 上验证、由母语者审校译文，以及停用 AngularJS 应用。从 Camunda 7 CE 终止到 2027
-年目标的时间线：
+这是一份计划，而不是对日期的承诺。已随 `1.2.0` 发布的内容（性能改进）：工作量统计接口、可选的数据库
+索引、启动时的性能诊断、审计轨迹调优，以及更快的 Web 界面。已随 `1.1.0` 发布的内容：Helm chart 和
+Kubernetes 清单、Prometheus 指标、OpenTelemetry 链路追踪、结构化 JSON 日志、缺勤期间的代理人、审批的
+四眼原则控制、不可篡改的审计轨迹、面向 AI 助手的 MCP 服务器，以及新界面中的案例 (CMMN)。`1.x` 的后续
+计划：将 Maven 构件发布到 Maven Central、在 DB2 上验证、由母语者审校译文，以及停用 AngularJS 应用。从
+Camunda 7 CE 终止到 2027 年目标的时间线：
 <https://fasti.dev/#timeline>。
 
 <a id="documentation"></a>

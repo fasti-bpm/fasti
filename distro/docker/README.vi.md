@@ -17,8 +17,8 @@ Hướng dẫn chuyển đổi đầy đủ (các bước, quay lại, chạy l�
 # 1. bản phân phối Run, driver JDBC và Dockerfile vào distro/docker/target/docker
 ./mvnw -pl distro/docker -am package -DskipTests
 # 2. image
-docker build -t fasti-bpm:1.1.0 \
-  --build-arg VERSION=1.1.0 --build-arg REVISION=$(git rev-parse --short HEAD) \
+docker build -t fasti-bpm:1.2.0 \
+  --build-arg VERSION=1.2.0 --build-arg REVISION=$(git rev-parse --short HEAD) \
   distro/docker/target/docker
 ```
 
@@ -95,7 +95,7 @@ docker run -d --name fasti -p 8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=UTC \
-  fasti-bpm:1.1.0
+  fasti-bpm:1.2.0
 ```
 
 `DB_PASSWORD_FILE` phải trỏ tới một file có trong container (ví dụ Docker/Kubernetes secret, hoặc
@@ -113,7 +113,7 @@ cấu hình riêng): image dùng H2 trong `/fasti/data`, chỉ để thử.
 Tên biến của image cũ và các bí danh `FASTI_*` đều được chấp nhận (khi đặt cả hai, giá trị `FASTI_*` được dùng;
 với `DEBUG` và `JMX_PROMETHEUS`, chỉ cần một trong hai tên là `true`). Mọi thuộc tính
 Spring Boot cũng đặt được bằng biến môi trường (ví dụ `CAMUNDA_BPM_RUN_AUTH_ENABLED=true`). Các
-mục ghi **từ 1.1.0** chưa có trong các image 1.0.x; các mục ghi **sau 1.1.0** chưa có trong các
+mục ghi **từ 1.1.0** chưa có trong các image 1.0.x; các mục ghi **từ 1.2.0** chưa có trong các
 image 1.1.x.
 
 | Biến | Mặc định | Ý nghĩa |
@@ -161,8 +161,8 @@ image 1.1.x.
 | `FASTI_FOUR_EYES_ENABLED` | `true` | **Từ 1.1.0.** [Kiểm soát bốn mắt](../../docs/four-eyes.vi.md) cho các user task mà mô hình khai báo `fasti:fourEyes`; `false` để tắt |
 | `FASTI_AUDIT_ENABLED` | `false` | **Từ 1.1.0.** `true`: [nhật ký kiểm toán bất biến](../../docs/audit-trail.vi.md), trên mọi node. Trừ khi `FASTI_DB_SCHEMA_UPDATE=true`, hãy tạo bảng trước bằng `/fasti/configuration/sql/create/<database>_fasti_audit.sql` |
 | `FASTI_AUDIT_HMAC_KEY`, `FASTI_AUDIT_HMAC_KEY_FILE` | | **Từ 1.1.0.** Khóa ký các điểm kiểm tra của nhật ký kiểm toán (ít nhất 32 byte), hoặc đường dẫn tệp chứa khóa (secret của Docker/Kubernetes) |
-| `FASTI_PERFORMANCE_INDEX_CHECK` | `warn` | **Sau 1.1.0.** Một cảnh báo khi khởi động liệt kê các [chỉ mục hiệu năng tùy chọn](../../docs/performance.vi.md) của `/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql` mà cơ sở dữ liệu chưa có; `off` để tắt |
-| `FASTI_PERFORMANCE_CONFIG_CHECK` | `warn` | **Sau 1.1.0.** Cảnh báo khi khởi động cho các cấu hình tốn hiệu năng khi dữ liệu lớn dần (lịch sử không có khung giờ dọn, connection pool nhỏ hơn mức job executor cần, …); `off` để tắt |
+| `FASTI_PERFORMANCE_INDEX_CHECK` | `warn` | **Từ 1.2.0.** Một cảnh báo khi khởi động liệt kê các [chỉ mục hiệu năng tùy chọn](../../docs/performance.vi.md) của `/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql` mà cơ sở dữ liệu chưa có; `off` để tắt |
+| `FASTI_PERFORMANCE_CONFIG_CHECK` | `warn` | **Từ 1.2.0.** Cảnh báo khi khởi động cho các cấu hình tốn hiệu năng khi dữ liệu lớn dần (lịch sử không có khung giờ dọn, connection pool nhỏ hơn mức job executor cần, …); `off` để tắt |
 | `FASTI_APPCDS`, `FASTI_APPCDS_FILE` | `false`, `/fasti/data/fasti-appcds.jsa` | class data sharing để khởi động nhanh hơn (xem Tinh chỉnh hiệu năng) |
 | `FASTI_BASE64_INTRINSICS` | `false` | `false` thêm `-XX:-UseBASE64Intrinsics` để giảm thiểu CVE-2026-114938 ("Java4Shell"); `true` giữ intrinsic Base64 của JVM. Xem [docs/security/CVE-2026-114938.vi.md](../../docs/security/CVE-2026-114938.vi.md) |
 
@@ -187,7 +187,7 @@ deployment ở `/camunda/configuration/resources`. Đường dẫn riêng của 
 | Oracle | không | giấy phép riêng: thêm `ojdbc11.jar` |
 | DB2 | không | giấy phép riêng: thêm `jcc.jar` |
 
-Thêm driver: image con (`FROM fasti-bpm:1.1.0` + `COPY ojdbc11.jar /fasti/configuration/userlib/`)
+Thêm driver: image con (`FROM fasti-bpm:1.2.0` + `COPY ojdbc11.jar /fasti/configuration/userlib/`)
 hoặc gắn thư mục và đặt `FASTI_EXTRA_LIB=/drivers`.
 
 MySQL và MariaDB lưu thời gian của engine đến từng giây (schema Camunda 7.24 không có phần lẻ của
@@ -266,7 +266,7 @@ Số đo tham khảo (image này, PostgreSQL 16 cùng máy, 16 nhân, container 
   (`server.compression.enabled=false` nếu proxy đã nén). File của web UI mới có hash trong tên
   được cache một năm (`immutable`); `index.html` luôn được kiểm tra lại (`no-cache`).
 - **Chỉ mục cơ sở dữ liệu:** image không thêm hay đổi chỉ mục; schema giữ nguyên như 7.24.0.
-  **Sau 1.1.0:** chỉ mục tùy chọn cho cơ sở dữ liệu lớn là các script do quản trị viên chạy,
+  **Từ 1.2.0:** chỉ mục tùy chọn cho cơ sở dữ liệu lớn là các script do quản trị viên chạy,
   `/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql` (và `_drop.sql`),
   an toàn khi chạy cạnh node Camunda 7.24 ([hướng dẫn hiệu năng](../../docs/performance.vi.md)).
 

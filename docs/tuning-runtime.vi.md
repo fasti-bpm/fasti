@@ -18,7 +18,7 @@ Bộ thực thi job chạy theo chu kỳ: một lần lấy job chọn tối đa
 hạn và khóa chúng, đưa vào hàng đợi `queue-capacity`, rồi tối đa `max-pool-size` luồng thực thi.
 Mỗi job đang chạy giữ một kết nối cơ sở dữ liệu, như mọi yêu cầu đọc hoặc ghi engine.
 
-| Thiết lập | Đến 1.1 (Run, image) | Sau 1.1 (Run, image) | Mặc định của engine / starter |
+| Thiết lập | Đến 1.1 (Run, image) | Từ 1.2 (Run, image) | Mặc định của engine / starter |
 |---|---|---|---|
 | `camunda.bpm.job-execution.core-pool-size` | 3 | 10 (theo `max-pool-size`) | 3 |
 | `camunda.bpm.job-execution.max-pool-size` | 10 | 10 | 10 |
@@ -62,7 +62,7 @@ lần ba vòng đo; trong lúc đó máy còn chạy một tải khác):
 | Cấu hình | Trung vị | Khoảng |
 |---|---|---|
 | Đến 1.1 (3 mỗi lần lấy, hàng đợi 3, lõi 3, pool 10) | 267 job/s | 190 đến 286 |
-| Sau 1.1 (10, 10, 10, pool 20) | 285 job/s | 225 đến 299 |
+| Từ 1.2 (10, 10, 10, pool 20) | 285 job/s | 225 đến 299 |
 
 Trên máy đang tải nặng đó mức tăng nhỏ (+7 %, và ổn định hơn): giới hạn là cơ sở dữ liệu, không
 phải việc lấy job. Giá trị mới có ích nhất khi job phải chờ thứ khác ngoài cơ sở dữ liệu (gọi HTTP,
@@ -121,8 +121,8 @@ Khi bật `fasti.audit.enabled`, mỗi lệnh tạo lịch sử nối các bản
 và khóa dòng head của chuỗi đó đến khi giao dịch kết thúc ([audit-trail.vi.md](audit-trail.vi.md)).
 Các giao dịch rơi vào cùng một chuỗi phải chờ nhau trong lúc head bị khóa.
 
-**Sau 1.1 khóa được giữ ngắn.** Đến 1.1 các bản ghi được ghi trước các lệnh của engine, nên head bị
-khóa suốt lúc engine gửi mọi lệnh insert, update và delete. Sau 1.1, lệnh có giao dịch kết thúc
+**Từ 1.2 khóa được giữ ngắn.** Đến 1.1 các bản ghi được ghi trước các lệnh của engine, nên head bị
+khóa suốt lúc engine gửi mọi lệnh insert, update và delete. Từ 1.2, lệnh có giao dịch kết thúc
 cùng nó ghi bản ghi sau cùng: head chỉ bị khóa trong các lệnh kiểm toán (khóa, đọc, insert,
 update) và lúc commit, kể cả những gì trình quản lý giao dịch ghi khi commit (với JPA là các
 thay đổi entity mà Hibernate flush lúc đó). Đó là mọi yêu cầu và mọi job của Fasti BPM Run và container image, và mọi
@@ -232,7 +232,7 @@ nhiều hơn một bản ghi so với số hiển thị và bỏ qua lệnh đ�
 
 Các gauge về trạng thái engine (`fasti.engine.process.instances.active`, `tasks.open`,
 `incidents.open`, `jobs.executable`, `jobs.failed`, `external.tasks.open`) là sáu truy vấn đếm.
-Sau 1.1, một lần scrape không bao giờ chạy chúng: nó trả các giá trị đọc gần nhất, và khi các giá
+Từ 1.2, một lần scrape không bao giờ chạy chúng: nó trả các giá trị đọc gần nhất, và khi các giá
 trị cũ hơn `fasti.metrics.engine.gauges.refresh-interval` (mặc định 30 giây) thì khởi động một
 lượt truy vấn trên luồng nền, kết quả dành cho lần scrape sau. Vì vậy một giá trị có thể cũ đến
 một chu kỳ làm mới cộng một chu kỳ scrape; trước khi lượt đầu xong, các gauge báo `NaN`. Một lệnh
@@ -297,7 +297,7 @@ Với mô hình đánh giá nhiều script mỗi giây, hãy ưu tiên biểu th
 và giữ lại theo từng script) hoặc Java delegate trên đường xử lý nóng, và dùng JavaScript cho phần
 còn lại.
 
-## Các thay đổi nhỏ hơn sau 1.1
+## Các thay đổi nhỏ hơn trong 1.2
 
 - **Gán tham số.** MyBatis gán mọi tham số của câu lệnh qua một lớp bọc statement che metadata
   tham số của driver. Lớp bọc giờ là một lớp thường thay vì dynamic proxy, nên gán một tham số là

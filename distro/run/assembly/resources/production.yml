@@ -121,6 +121,11 @@ fasti.four-eyes.enabled: true
 #fasti.performance:
 #  index-check: "off"
 #  config-check: "off"
+# History cleanup runs only inside a batch window (or when started by hand). Example, quoted so
+# that YAML does not read 22:00 as a number; it stays commented out, as no window fits everyone:
+#camunda.bpm.generic-properties.properties:
+#  history-cleanup-batch-window-start-time: "22:00"
+#  history-cleanup-batch-window-end-time: "06:00"
 
 # Immutable audit trail (docs/audit-trail.md), off by default. Turn it on for every node of a
 # cluster, give each node a stable node-id, keep the signing key outside the database (environment

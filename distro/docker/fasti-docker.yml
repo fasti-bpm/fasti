@@ -88,6 +88,12 @@ fasti:
   performance:
     index-check: warn
     config-check: warn
+  # history cleanup runs only inside a batch window (or when started by hand). Example for a
+  # mounted file named in FASTI_CONFIG, quoted so that YAML does not read 22:00 as a number; no
+  # window is set here, as none fits every installation:
+  #   camunda.bpm.generic-properties.properties:
+  #     history-cleanup-batch-window-start-time: "22:00"
+  #     history-cleanup-batch-window-end-time: "06:00"
   # immutable audit trail (docs/audit-trail.md): off, as it adds the tables FASTI_AUDIT_EVENT and
   # FASTI_AUDIT_HEAD and a write per command; FASTI_AUDIT_ENABLED=true turns it on (on every node).
   # With FASTI_DB_SCHEMA_UPDATE left off, create the tables first

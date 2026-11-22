@@ -127,9 +127,14 @@ không thêm bảng hay cột, vẫn quay lui được.
 - Lịch vắng mặt đã kết thúc bị xóa vào lần kế tiếp có bất kỳ lịch nào được đặt hoặc kết thúc,
   nên bảng chỉ chứa lịch đang hiệu lực và sắp tới. Cho đến lúc đó `GET /user/{id}/absence` vẫn
   trả `status: ended`.
-- `ACT_ID_INFO` không có index trên người dùng hay khóa (và sẽ không có: schema không đổi), nên
-  mỗi lần tra cứu đọc cả bảng. Một lệnh chỉ tra một người dùng một lần; công việc có nhiều
-  candidate user và danh sách "tôi đang thay cho ai" đọc mọi lịch vắng mặt bằng một câu lệnh.
+- Schema Camunda 7.24 không có index bắt đầu bằng `USER_ID_` trên `ACT_ID_INFO`, và Fasti không
+  thêm index nào vào schema. Khi không có index này, mỗi lần tra cứu đọc cả bảng: một lệnh chỉ tra
+  một người dùng một lần, người đầu tiên một lệnh hỏi được đọc riêng, người thứ hai khiến lệnh đọc
+  mọi lịch vắng mặt bằng một câu lệnh, trả lời luôn mọi lần tra cứu sau đó (chuỗi ba người thay thế
+  gửi hai câu lệnh thay vì bốn). Có index tùy chọn `FASTI_IDX_ID_INFO_USER`
+  ([hiệu năng](performance.vi.md)) do quản trị viên tạo, mỗi lần tra cứu là một lần seek index và
+  engine tra từng người; engine kiểm tra index khi khởi động. Danh sách "tôi đang thay cho ai" đọc
+  mọi lịch vắng mặt bằng một câu lệnh.
 - Thao tác ghi lịch vắng mặt giữ khóa độc quyền của engine (dòng `ACT_GE_PROPERTY` mà thao tác
   deploy khóa), nên hai lần ghi đầu tiên cho cùng một người dùng cùng lúc không bị trộn lẫn, và
   hai người dùng chọn nhau làm người thay thế cùng lúc không được chấp nhận cả hai (việc kiểm

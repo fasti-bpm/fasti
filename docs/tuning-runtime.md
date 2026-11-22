@@ -306,10 +306,12 @@ and cached per script) or Java delegates on the hot path, and keep JavaScript fo
 
 - **Commands that record nothing** (queries) no longer copy the bulk operations of the command
   to look for deployments when the audit trail is on.
-- **Absences.** `ACT_ID_INFO` has no index on the user (the schema stays that of Camunda 7.24),
-  so every absence lookup reads the table. The first user a command asks for is still read alone;
-  the second makes the command read all absences with one statement, which answers every later
-  lookup: a chain of three substitutes sends two statements instead of four.
+- **Absences.** Without an index on `ACT_ID_INFO (USER_ID_, …)` (the Camunda 7.24 schema has
+  none) every absence lookup reads the table. There the first user a command asks for is read
+  alone and the second makes the command read all absences with one statement, which answers
+  every later lookup: a chain of three substitutes sends two statements instead of four. With the
+  optional `FASTI_IDX_ID_INFO_USER` ([performance](performance.md)) each lookup is an index seek
+  and users are read one by one. The engine checks for the index at start.
 
 ## Other settings worth knowing
 

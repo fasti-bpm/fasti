@@ -300,10 +300,12 @@ còn lại.
 
 - **Lệnh không ghi nhận gì** (truy vấn) không còn sao chép các thao tác hàng loạt của lệnh để tìm
   deployment khi bật nhật ký kiểm toán.
-- **Vắng mặt.** `ACT_ID_INFO` không có chỉ mục theo người dùng (lược đồ giữ nguyên như Camunda
-  7.24), nên mỗi lần tra cứu vắng mặt đều đọc cả bảng. Người dùng đầu tiên một lệnh hỏi vẫn được
-  đọc riêng; người thứ hai khiến lệnh đọc mọi thông tin vắng mặt bằng một câu lệnh, trả lời luôn
-  mọi lần tra cứu sau đó: một chuỗi ba người thay thế gửi hai câu lệnh thay vì bốn.
+- **Vắng mặt.** Khi `ACT_ID_INFO` không có chỉ mục bắt đầu bằng `USER_ID_` (lược đồ Camunda 7.24
+  không có), mỗi lần tra cứu vắng mặt đều đọc cả bảng: người đầu tiên một lệnh hỏi được đọc riêng,
+  người thứ hai khiến lệnh đọc mọi thông tin vắng mặt bằng một câu lệnh, trả lời luôn mọi lần tra
+  cứu sau đó (chuỗi ba người thay thế gửi hai câu lệnh thay vì bốn). Có chỉ mục tùy chọn
+  `FASTI_IDX_ID_INFO_USER` ([hiệu năng](performance.vi.md)), mỗi lần tra cứu là một lần seek chỉ
+  mục và engine tra từng người; engine kiểm tra chỉ mục khi khởi động.
 
 ## Các thiết lập khác nên biết
 

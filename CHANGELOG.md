@@ -35,17 +35,27 @@ các mục dưới đây là khác biệt so với bản đó.
   listed with their numbers in the docs. The schema of Camunda 7.24 stays unchanged: the scripts
   are run by an administrator, never by the engine, are not recorded in `ACT_GE_SCHEMA_LOG`, and
   are safe next to 7.24 nodes; the drop script removes them. The Oracle, SQL Server and Db2
-  scripts are reviewed but not yet verified on those databases.
+  scripts are reviewed but not yet verified on those databases. The scripts set a lock timeout at
+  the top (MySQL/MariaDB, Oracle, SQL Server, Db2, H2). On databases without partial indexes the
+  job index is `(SUSPENSION_STATE_, DUEDATE_, RETRIES_)`, so an idle acquisition does not read
+  every failed and suspended job. The commented second group can be run again.
 - Performance hints at engine start: one warning listing the optional indexes the database does
-  not have (matched by columns, so an administrator's own index counts; INFO on H2), and warnings
+  not have (matched by columns, so an administrator's own index counts), and warnings
   for history without cleanup window, end-time based cleanup, a connection pool smaller than the
   job executor needs, `ensureJobDueDateNotNull` with jobs that have no due date, and acquisition by
   due date that allows jobs without one. They only read and never fail the start;
   `fasti.performance.index-check` / `config-check` (`warn` or `off`; image
   `FASTI_PERFORMANCE_INDEX_CHECK` / `FASTI_PERFORMANCE_CONFIG_CHECK`; Tomcat and WildFly plugin
-  `PerformanceAdvisorPlugin`). The `bpm-platform.xml` (Tomcat) and `standalone*.xml` (WildFly) of
-  this release enable the plugin, which Fasti BPM 1.1 does not have: to roll back to 1.1
-  binaries with these files, remove the `PerformanceAdvisorPlugin` element first.
+  `PerformanceAdvisorPlugin`). An unknown `fasti.performance.*` value logs a warning instead of
+  failing the start. Catalog reads have a 10 s timeout and no unbounded fallback. On PostgreSQL
+  only B-tree indexes count, and the job index must be `NULLS FIRST` when jobs are acquired by due
+  date. FASTI-PERF-006 appears only on PostgreSQL, Oracle and Db2 nodes that run jobs. On H2 all
+  findings are logged at INFO. The messages point to
+  https://github.com/fasti-bpm/fasti/blob/main/docs/performance.md and to the Maven artifact of
+  the scripts, `dev.fasti.platform.distro:fasti-sql-scripts`. The `bpm-platform.xml` (Tomcat)
+  and `standalone*.xml` (WildFly) of this release enable the plugin, which Fasti BPM 1.1 does not
+  have: to roll back to 1.1 binaries with these files, remove the `PerformanceAdvisorPlugin`
+  element first.
 
 ### Changed
 
@@ -115,9 +125,12 @@ các mục dưới đây là khác biệt so với bản đó.
 - Statement parameters are bound through a plain statement wrapper instead of a dynamic proxy
   (no reflective call per parameter; while MyBatis logs a mapper's statements at `DEBUG` they are
   bound through the proxy as before).
-- Absence substitution: the second absence lookup of a command reads all absences with one
-  statement, which answers every later lookup of the command (a chain of three substitutes sends
-  two statements instead of four).
+- Absence substitution: with an index led by `USER_ID_` on `ACT_ID_INFO` (the optional
+  `FASTI_IDX_ID_INFO_USER`) absences are read user by user, each lookup an index seek. Without
+  one, a command that looks up several users still reads all absences at once: the second lookup
+  reads them with one statement, which answers every later lookup of the command (a chain of
+  three substitutes sends two statements instead of four). The index is detected at engine start.
+  Reading all absences no longer fills the entity cache.
 
 ### Fixed
 

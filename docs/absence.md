@@ -127,9 +127,14 @@ table or column, rollback stays possible.
 - Ended absences are removed the next time any absence is set or ended, so the table holds
   current and upcoming absences only. Until then `GET /user/{id}/absence` still answers
   `status: ended`.
-- `ACT_ID_INFO` has no index on the user or the key (and gets none: the schema is not changed),
-  so each lookup reads the table. A command looks a user up once, a task with several candidate
-  users and the list "who do I stand in for" read all absences with one statement.
+- The Camunda 7.24 schema has no index on `ACT_ID_INFO (USER_ID_, …)`, and Fasti does not add
+  one to the schema. Without such an index every lookup reads the table: a command looks a user
+  up once, the first user a command asks for is read alone, and the second makes the command read
+  all absences with one statement, which answers every later lookup (a chain of three substitutes
+  sends two statements instead of four). With the optional index `FASTI_IDX_ID_INFO_USER`
+  ([performance](performance.md)), which an administrator creates, each lookup is an index seek
+  and users are read one by one. The engine checks for the index at start. The list "who do I
+  stand in for" reads all absences with one statement.
 - Writes of absences hold the exclusive lock of the engine (the row of `ACT_GE_PROPERTY` that
   deployments lock), so two first writes for the same user at the same time cannot mix, and two
   users who name each other at the same time are not both accepted (the check for a way back

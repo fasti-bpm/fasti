@@ -150,9 +150,10 @@
       </exclusions>
     </dependency>
     <dependency>
+      <!-- the audit trail asks a JtaTransactionManager for the status of the transaction -->
       <groupId>jakarta.transaction</groupId>
       <artifactId>jakarta.transaction-api</artifactId>
-      <scope>test</scope>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>

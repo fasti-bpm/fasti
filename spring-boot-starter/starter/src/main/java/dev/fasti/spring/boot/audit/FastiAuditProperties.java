@@ -107,6 +107,12 @@ public class FastiAuditProperties {
    */
   private int queryTimeoutSeconds = AuditSettings.DEFAULT_QUERY_TIMEOUT_SECONDS;
 
+  /**
+   * Records a purge removes from a chain in one transaction: the head of the chain is held for one
+   * batch at a time, and each batch leaves a purge record.
+   */
+  private int purgeBatchSize = AuditSettings.DEFAULT_PURGE_BATCH_SIZE;
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -217,6 +223,14 @@ public class FastiAuditProperties {
 
   public void setQueryTimeoutSeconds(int queryTimeoutSeconds) {
     this.queryTimeoutSeconds = queryTimeoutSeconds;
+  }
+
+  public int getPurgeBatchSize() {
+    return purgeBatchSize;
+  }
+
+  public void setPurgeBatchSize(int purgeBatchSize) {
+    this.purgeBatchSize = purgeBatchSize;
   }
 
   @Override

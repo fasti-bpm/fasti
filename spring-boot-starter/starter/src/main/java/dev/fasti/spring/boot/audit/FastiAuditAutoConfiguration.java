@@ -17,13 +17,13 @@
 package dev.fasti.spring.boot.audit;
 
 import dev.fasti.engine.audit.AuditTrailPlugin;
+import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.spring.boot.starter.property.CamundaBpmProperties;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * Registers the audit trail plugin with the process engine when {@code fasti.audit.enabled=true}.
@@ -39,7 +39,7 @@ public class FastiAuditAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean(AuditTrailPlugin.class)
   static AuditTrailPlugin fastiAuditTrailPlugin(FastiAuditProperties properties) {
-    AuditTrailPlugin plugin = new AuditTrailPlugin();
+    SpringAuditTrailPlugin plugin = new SpringAuditTrailPlugin();
     plugin.setNodeId(properties.getNodeId());
     plugin.setChains(properties.getChains());
     plugin.setTypes(properties.getTypes());
@@ -53,9 +53,29 @@ public class FastiAuditAutoConfiguration {
     plugin.setRetiredKeyIds(properties.getRetiredKeyIds());
     plugin.setLockTimeoutSeconds(properties.getLockTimeoutSeconds());
     plugin.setQueryTimeoutSeconds(properties.getQueryTimeoutSeconds());
-    // a command that finds no Spring transaction to join begins and ends its own: its records are
-    // then written after the statements of the engine
-    plugin.setTransactionActive(TransactionSynchronizationManager::isActualTransactionActive);
+    plugin.setPurgeBatchSize(properties.getPurgeBatchSize());
+    // a command that finds no transaction of the transaction manager of the engine to join begins
+    // and ends its own: its records are then written after the statements of the engine
+    plugin.setTransactionActive(plugin.probe);
+    // the engine reports commits and rollbacks only, Spring also a commit or rollback that failed
+    plugin.setTransactionCompletion(SpringTransactionProbe::afterCompletion);
     return plugin;
+  }
+
+  /** The plugin with a probe that asks the transaction manager of the engine it is registered with. */
+  static class SpringAuditTrailPlugin extends AuditTrailPlugin {
+
+    final SpringTransactionProbe probe = new SpringTransactionProbe();
+
+    @Override
+    public void preInit(ProcessEngineConfigurationImpl configuration) {
+      probe.configure(configuration);
+      super.preInit(configuration);
+    }
+
+    @Override
+    public String toString() {
+      return AuditTrailPlugin.class.getSimpleName();
+    }
   }
 }

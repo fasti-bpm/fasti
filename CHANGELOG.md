@@ -18,8 +18,12 @@ các mục dưới đây là khác biệt so với bản đó.
   in total, per candidate group and per assignee asked for (at most 200 of each), with the
   unclaimed and overdue ones and the oldest. The grouped statements wrap the task query of the
   engine, so its authorization check (revoked permissions included), tenant check and CMMN
-  handling apply unchanged. Java: `dev.fasti.engine.workload.TaskWorkloads.query(engine)`.
-  Documented in the OpenAPI document and the [REST guide](docs/api/README.md).
+  handling apply unchanged. Counts are reported under the ids asked for, also on databases whose
+  collation ignores case (SQL Server, MySQL, MariaDB). `tenantIdIn` takes at most 200 ids, every
+  id at most 255 characters, and empty ids are refused (`400`); an engine whose MyBatis mappings
+  lack the workload statements (an application's own `mappings.xml`) answers `501`. Java:
+  `dev.fasti.engine.workload.TaskWorkloads.query(engine)`. Documented in the OpenAPI document and
+  the [REST guide](docs/api/README.md).
 - [Runtime tuning](docs/tuning-runtime.md): job executor and pool sizing, the audit trail under
   load, the engine gauges, and the trade-off of the history removal time strategy `start`.
 - Optional performance indexes ([docs](docs/performance.md)): `sql/optional/<database>_fasti_perf_indexes_create.sql`
@@ -70,10 +74,22 @@ các mục dưới đây là khác biệt so với bản đó.
   with every refresh. Pages refresh every 60 s after two minutes without input and every five
   minutes after ten. The activity tree of an instance keeps the parts that did not change and
   is read less often when large or unchanged.
-- Web UI: `config.json` is read with a three-second limit, after which the page starts with the
-  defaults; a stored language loads beside it. React and the router are a chunk of their own
+- Web UI: the page starts with the defaults when `config.json` has not answered after three
+  seconds and applies it when it arrives (CSRF cookie name, default language, `idlePacing`); a
+  failed request is retried and requests that change data wait for it (up to 20 s). A stored
+  language loads beside it. React and the router are a chunk of their own
   (entry chunk 397 kB to 92 kB), icons used by several pages one chunk (54 files under 1.5 kB
   to 13), and the case timeline of the task detail is loaded when its tab is opened.
+- Web UI: the workload board and the dashboard fall back to counting row by row whenever the
+  server answers `404`, `405` or `501` for `/task/workload` (older nodes during a rolling upgrade
+  or a rollback), not only before the first answer, and show an error instead of empty or
+  endlessly loading tiles when their numbers fail. With new-task notices on, the task list is
+  read at least once a minute (also in a hidden tab when notifications are allowed). Coming back
+  after idle refetches only lists that refresh by themselves; input inside an embedded form
+  counts as presence; `idlePacing: false` in `config.json` or `?idlePacing=false` keeps the full
+  refresh rate (wall displays). A part of an older build that fails to load after an upgrade
+  offers a reload in its place and keeps an open task form. Hashed web UI assets are served with
+  `Cache-Control: public, max-age=31536000, immutable`.
 - Audit trail: a command whose transaction ends with it (every request and job of Run and the
   container image, every command of a standalone engine) writes its records after the statements
   of the engine, on chains of its own (`<node>/end-<slot>`), so the head row of a chain is locked

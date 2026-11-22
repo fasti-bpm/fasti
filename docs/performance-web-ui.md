@@ -67,7 +67,8 @@ the endpoint goes away and uses it again once it is back.
 - The two `statistics-count` requests, whose results were not used, are gone.
 - Batches with failures are counted by `/batch/statistics/count` instead of listing every batch.
 - Definitions, deployments and the trends over days of history are read every five minutes
-  instead of every 30 s. The 8 history counts of the trends remain at load.
+  instead of every 30 s. The 22 history counts remain at load: 8 for the trends and 14 for
+  the instances started per day.
 - "Nothing needs attention" is shown only once the overdue tasks are counted, and a tile whose
   numbers cannot be read says so instead of waiting forever.
 

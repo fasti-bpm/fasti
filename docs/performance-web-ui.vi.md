@@ -68,7 +68,8 @@ cách cũ khi endpoint mất đi và dùng lại nó khi nó trở lại.
 - Bỏ hai request `statistics-count` vốn không được dùng.
 - Batch có lỗi được đếm bằng `/batch/statistics/count` thay vì liệt kê mọi batch.
 - Định nghĩa, deployment và xu hướng theo ngày của lịch sử được đọc năm phút một lần thay vì
-  30 giây. 8 lần đếm lịch sử cho xu hướng vẫn chạy khi tải trang.
+  30 giây. 22 lần đếm lịch sử vẫn chạy khi tải trang: 8 cho xu hướng và 14 cho số instance
+  bắt đầu theo ngày.
 - Dòng "Không có gì cần xử lý" chỉ hiện khi đã đếm xong số task quá hạn, và ô số liệu nào không
   đọc được sẽ báo lỗi thay vì chờ mãi.
 

@@ -127,7 +127,9 @@ while the head is locked.
 **The lock is short after 1.1.** Up to 1.1 the records were written before the statements of the
 engine, so the head was locked while the engine sent all its inserts, updates and deletes. After
 1.1 a command whose transaction ends with it writes its records last: the head is locked for the
-audit statements (lock, read, insert, update) and the commit only. That is every request and
+audit statements (lock, read, insert, update) and the commit only, including what the
+transaction manager writes at commit (with JPA the entity changes Hibernate flushes then). That
+is every request and
 every job of Fasti BPM Run and the container image, and every command of a standalone engine
 (the Tomcat distribution).
 
@@ -137,11 +139,15 @@ records something until the outer commit, and goes on writing engine rows meanwh
 that writes last shared that chain, it would hold its engine rows while it waited for the head,
 and could wait for a transaction that next wants one of those rows: the two would wait for each
 other until the database picked a victim or the lock timeout ended one of them. So a command
-that joins a transaction writes its records first, as up to 1.1, on chains of its own
-(`<node>/ext-<slot>`, created on first use), which commands that write last never wait for. The
-starter tells the two apart by asking Spring whether a transaction is active before the engine
-begins one. An engine that cannot tell (JTA, as in the WildFly distribution, or Spring without
-the starter) writes every record first, on the usual chains, as up to 1.1.
+that joins a transaction writes its records first on the chains `<node>/<slot>`, as up to 1.1,
+while commands that write last use chains of their own (`<node>/end-<slot>`), so that the two
+kinds never wait for each other's head and a node of 1.1 with the same node id writes only to the
+first kind. The heads of the first band are created at startup. The starter tells the two apart
+by asking the transaction manager of the engine whether it already has a transaction on the
+thread (its DataSource or EntityManagerFactory bound, or the status of a JTA transaction): a
+transaction of another manager (a second database, JMS, Kafka) does not make a command write
+first. An engine that cannot tell (JTA without the starter, as in the WildFly distribution, or
+Spring without the starter) writes every record first, on `<node>/<slot>`, as up to 1.1.
 
 Writing transactions per second of one engine with the audit trail on
 (`AuditLockWindowBenchmark` in the engine tests: 16 threads, 4 chains; each thread starts an
@@ -174,7 +180,7 @@ What still decides the throughput with the audit trail on:
   plus busy request threads) when `pg_stat_activity` or the equivalent shows sessions waiting for
   `FASTI_AUDIT_HEAD`. More chains cost nothing while writing; verification reads each chain.
 - **Long transactions.** An application transaction that spans several engine commands (Spring
-  `@Transactional` around them) locks its `ext-` chain at the end of the first command that
+  `@Transactional` around them) locks its chain (`<node>/<slot>`) at the end of the first command that
   records something and holds it until the outer commit; other such transactions of the same slot
   wait meanwhile. As up to 1.1, two such transactions of one slot can still wait for each other
   when one of them wrote an engine row in an earlier command that recorded nothing (the other one
@@ -188,38 +194,46 @@ direction (records of the same millisecond in different chains appear in reverse
 when the newest are listed first). The index `FASTI_IDX_AUDIT_ORDER (TIME_, CHAIN_ID_, SEQ_)`
 gives that order, so the database reads one page instead of sorting every record of the
 filter. New audit tables have it. **Existing audit tables** (created by 1.0 or 1.1) need the
-upgrade script once: `fasti.<database>.upgrade.audit.after_1.1.sql` in the engine jar below
-`dev/fasti/engine/audit/db/upgrade` (it creates the index and drops `FASTI_IDX_AUDIT_TIME`,
-which the new index replaces). Without it everything works as before, only no faster. Creating
-the index reads the table once; on a large table run it outside peak hours.
+upgrade script once: `sql/upgrade/<db>_fasti_audit_after_1.1.sql`, in every distribution (it
+creates `FASTI_IDX_AUDIT_ORDER`, `FASTI_IDX_AUDIT_ACTOR_ORDER` and `FASTI_IDX_AUDIT_TYPE_ORDER`
+and drops `FASTI_IDX_AUDIT_TIME`, `FASTI_IDX_AUDIT_ACTOR` and `FASTI_IDX_AUDIT_TYPE`, which they
+replace; it can be run again). Without it everything works as before, only no faster. Creating
+the indexes reads the table: PostgreSQL builds concurrently and MySQL/MariaDB online; on Oracle,
+SQL Server and Db2 add ONLINE where the edition has it, else every audited insert waits during
+the build. Drop upgraded tables with the drop script of this version; those of 1.1 fail on them.
 
 Time the database spends on one statement, 2 million audit records in 4 chains (500 actors),
 before (indexes of 1.1, mixed order) and after the upgrade script (PostgreSQL `EXPLAIN ANALYZE`,
 MariaDB `ANALYZE FORMAT=JSON` with its default 128 MB buffer pool; one run of each statement
-after `ANALYZE` of the table, so take the values as orders of magnitude):
+after `ANALYZE` of the table, so take the values as orders of magnitude). The "after" columns
+were measured with `FASTI_IDX_AUDIT_ORDER` only, before the actor and type indexes replaced their
+predecessors; filters by actor are measured below:
 
 | Statement | PostgreSQL 16 before | after | MariaDB 11.4 before | after |
 |---|---|---|---|---|
 | First page, newest first (25 records) | 0.13 ms | 0.05 ms | 25.3 s (sorts all 2 million) | 9 ms |
 | Page at offset 10,000 | 6.5 ms | 4.1 ms | – | – |
 | First page filtered by type | 0.07 ms | 0.06 ms | – | – |
-| First page filtered by one actor (0.2 % of the records) | 2.8 ms | 2.9 ms | 1.3 s | 3.2 s |
 | Count of all records | 202 ms | 176 ms | 2.3 s | 2.9 s |
 | Count with `maxCount=10000` | – | 1.8 ms | – | 17 ms |
-| Creating the index (upgrade script) | | 5.9 s | | 26.7 s |
+| Creating `FASTI_IDX_AUDIT_ORDER` | | 5.9 s | | 26.7 s |
 
 PostgreSQL 16 already sorted the old order incrementally along `FASTI_IDX_AUDIT_TIME`, so pages
 were cheap there before; MariaDB and MySQL (and other databases without incremental sort) sorted
-every record the filter selected for each page. **Trade-off:** a filter that matches a small share
-of the records without an index of its own that gives the order (one actor of 500 above) may now
-be read along `FASTI_IDX_AUDIT_ORDER` until a page is full, which on MariaDB read about three
-times as many rows as the actor index plus a sort did (12,500 instead of 4,000); with a buffer
-pool that holds the table both take milliseconds. Filters by process instance and business key
-select few rows and keep using their indexes.
+every record the filter selected for each page.
+
+Pages filtered by actor (also `system`), by category and action, by process instance or by
+business key are read along an index in page order and stop after the page. A filter without
+such an index (an action without its category, a tenant restriction, `processDefinitionKey`,
+`entityId`) reads records until a page is full, the whole table when few match. Measured on
+MariaDB 11.4 with 500k records: an actor whose 6,000 records are all in the oldest quarter needed
+375,000 index entries and row lookups (1.6 s on tmpfs, minutes on disk) before, 25 rows (0.5 ms)
+after.
 
 **Counting.** `GET /audit/event/count` counts every record the filter selects, which reads the
 whole table when there is no filter. With `maxCount=<n>` (1 to 1,000,000) the database stops at
-`n` records; a result equal to `n` means "`n` or more". A client that only needs to know whether
+`n` records counted (a filter without an index may still examine more rows); a result equal to
+`n` means "`n` or more". A client that only needs to know whether
 there is a next page can also ask `GET /audit/event` for one record more than it shows and skip
 the count. In Java: `AuditEventQuery.count(long limit)`.
 

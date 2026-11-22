@@ -76,29 +76,37 @@ các mục dưới đây là khác biệt so với bản đó.
   to 13), and the case timeline of the task detail is loaded when its tab is opened.
 - Audit trail: a command whose transaction ends with it (every request and job of Run and the
   container image, every command of a standalone engine) writes its records after the statements
-  of the engine, not before them, so the head row of a chain is locked for the audit statements
-  and the commit only and no longer while the engine sends its inserts, updates and deletes.
-  Transactions of one node that share a chain wait for each other for a shorter time
-  ([runtime tuning](docs/tuning-runtime.md#audit-trail)). A command that joins a transaction that
-  goes on after it (Spring `@Transactional` around engine calls) writes its records first, as
-  before, on chains of its own (`<node>/ext-<slot>`), so that the two kinds never wait for each
-  other's head while holding engine rows. Engines that cannot tell the two apart (JTA, Spring
-  without the starter) write as before. The records, their hashes and the transaction they
-  belong to are unchanged. `AuditTrailPlugin.setTransactionActive` tells the plugin whether a
-  transaction is active; the starter sets it.
-- Audit trail purge: each chain is purged in a transaction of its own, which locks the head of
+  of the engine, on chains of its own (`<node>/end-<slot>`), so the head row of a chain is locked
+  for the audit statements and the commit only and no longer while the engine sends its inserts,
+  updates and deletes ([runtime tuning](docs/tuning-runtime.md#audit-trail)). A command that
+  joins a transaction that goes on after it writes first, as before, on `<node>/<slot>`, the
+  chains 1.0 and 1.1 write to. A node of 1.1 and one of this version that share a node id (during
+  an upgrade or a rollback) therefore never mix the two write orders on one chain. The heads of
+  the first band are created at startup; any other missing head is created in a transaction of
+  its own. The starter asks the transaction manager of the engine whether a command joins a
+  transaction (resource bound, or JTA status), and releases what a transaction held even when its
+  commit or rollback fails. The records, their hashes and the transaction they belong to are
+  unchanged.
+- Audit trail purge: each chain is purged in batches of `fasti.audit.purge-batch-size` records
+  (default 10,000), each in its own transaction with its own purge record, which locks the head of
   the chain before it reads what to purge. A purge holds one head at a time and can no longer
-  wait for a transaction that waits for it; one that fails half-way leaves the chains done so far
-  purged, each with its purge record.
+  wait for a transaction that waits for it. A chain that cannot be purged no longer stops the
+  others; the result lists it in `failedChains` (REST and `AuditPurgeResult`).
 - Audit trail pages are ordered by time, chain and position in one direction (newest first:
   all descending), served by the new index `FASTI_IDX_AUDIT_ORDER (TIME_, CHAIN_ID_, SEQ_)`, which
   replaces `FASTI_IDX_AUDIT_TIME`. Records of the same millisecond in different chains change
-  their relative order when the newest are listed first. **Existing audit tables** need
-  `fasti.<database>.upgrade.audit.after_1.1.sql` (engine jar, `dev/fasti/engine/audit/db/upgrade`)
-  once to get the index; without it pages are read as before.
-- `GET /audit/event/count` takes `maxCount` (1 to 1,000,000): the database stops counting there,
-  and a result equal to `maxCount` means "that many or more". `AuditEventQuery.count(long limit)`
-  does the same in Java.
+  their relative order when the newest are listed first. `FASTI_IDX_AUDIT_ACTOR_ORDER (ACTOR_,
+  TIME_, CHAIN_ID_, SEQ_)` and `FASTI_IDX_AUDIT_TYPE_ORDER (TYPE_, ACTION_, TIME_, CHAIN_ID_,
+  SEQ_)` replace `FASTI_IDX_AUDIT_ACTOR` and `FASTI_IDX_AUDIT_TYPE`. Pages filtered by actor (also
+  `system`), or by category and action, read one page even for an actor whose records are all
+  old (MariaDB, 500k records: 375,000 rows / 1.6 s down to 25 rows / 0.5 ms). **Existing audit
+  tables**: `sql/upgrade/<db>_fasti_audit_after_1.1.sql`, now in every distribution, online where
+  the database allows and re-runnable; without it pages are read as before. Drop upgraded tables
+  with this version's drop script (the 1.1 drop scripts fail on them).
+- `GET /audit/event/count` takes `maxCount` (1 to 1,000,000), now in the OpenAPI document: the
+  limit caps the records counted, not the rows the database examines, and a result equal to
+  `maxCount` means "that many or more". `AuditEventQuery.count(long limit)` does the same in Java.
+  The export counts at most 100,001 records before refusing.
 - The gauges of the engine state (`fasti.engine.*.active`, `.open`, `.executable`, `.failed`) are
   read on a background thread. A Prometheus scrape returns the values read last and never waits
   for the six count queries; a value is up to one refresh interval plus one scrape interval old,

@@ -124,7 +124,8 @@ Các giao dịch rơi vào cùng một chuỗi phải chờ nhau trong lúc head
 **Sau 1.1 khóa được giữ ngắn.** Đến 1.1 các bản ghi được ghi trước các lệnh của engine, nên head bị
 khóa suốt lúc engine gửi mọi lệnh insert, update và delete. Sau 1.1, lệnh có giao dịch kết thúc
 cùng nó ghi bản ghi sau cùng: head chỉ bị khóa trong các lệnh kiểm toán (khóa, đọc, insert,
-update) và lúc commit. Đó là mọi yêu cầu và mọi job của Fasti BPM Run và container image, và mọi
+update) và lúc commit, kể cả những gì trình quản lý giao dịch ghi khi commit (với JPA là các
+thay đổi entity mà Hibernate flush lúc đó). Đó là mọi yêu cầu và mọi job của Fasti BPM Run và container image, và mọi
 lệnh của engine standalone (bản phân phối Tomcat).
 
 **Giao dịch trải qua nhiều lệnh** (Spring `@Transactional` bọc ngoài các lời gọi engine) được xử
@@ -133,11 +134,14 @@ ngoài, và trong lúc đó vẫn tiếp tục ghi các dòng của engine. Nế
 chuỗi đó, nó sẽ giữ các dòng engine của mình trong lúc chờ head, và có thể chờ một giao dịch mà
 tiếp theo lại cần một trong các dòng đó: hai bên chờ nhau cho đến khi cơ sở dữ liệu chọn một bên
 để hủy hoặc thời gian chờ khóa kết thúc một bên. Vì vậy lệnh tham gia một giao dịch có sẵn ghi bản
-ghi trước, như đến 1.1, trên các chuỗi riêng (`<node>/ext-<slot>`, tạo khi dùng lần đầu) mà các
-lệnh ghi sau cùng không bao giờ phải chờ. Starter phân biệt hai loại bằng cách hỏi Spring xem có
-giao dịch đang hoạt động hay không trước khi engine bắt đầu giao dịch. Engine không phân biệt được
-(JTA, như bản phân phối WildFly, hoặc Spring không dùng starter) ghi mọi bản ghi trước, trên các
-chuỗi thông thường, như đến 1.1.
+ghi trước trên các chuỗi `<node>/<slot>`, như đến 1.1, còn các lệnh ghi sau cùng dùng chuỗi riêng
+(`<node>/end-<slot>`), để hai loại không bao giờ chờ head của nhau và một node 1.1 có cùng node id
+chỉ ghi vào loại thứ nhất. Head của dải thứ nhất được tạo khi khởi động. Starter phân biệt hai loại
+bằng cách hỏi trình quản lý giao dịch của engine xem nó đã có giao dịch trên luồng hay chưa
+(DataSource hoặc EntityManagerFactory của nó đã được gắn, hoặc trạng thái của giao dịch JTA): giao
+dịch của một trình quản lý khác (cơ sở dữ liệu thứ hai, JMS, Kafka) không khiến lệnh ghi trước.
+Engine không phân biệt được (JTA không có starter, như bản phân phối WildFly, hoặc Spring không
+dùng starter) ghi mọi bản ghi trước, trên `<node>/<slot>`, như đến 1.1.
 
 Số giao dịch ghi mỗi giây của một engine khi bật nhật ký kiểm toán (`AuditLockWindowBenchmark`
 trong test của engine: 16 luồng, 4 chuỗi; mỗi luồng bắt đầu một phiên bản với năm biến rồi hoàn
@@ -169,7 +173,7 @@ Những gì vẫn quyết định thông lượng khi bật nhật ký kiểm to
   hoặc công cụ tương đương cho thấy các phiên chờ `FASTI_AUDIT_HEAD`. Thêm chuỗi không tốn gì khi
   ghi; việc kiểm tra đọc từng chuỗi.
 - **Giao dịch dài.** Một giao dịch của ứng dụng bao nhiều lệnh engine (Spring `@Transactional` bọc
-  ngoài) khóa chuỗi `ext-` của nó khi kết thúc lệnh đầu tiên có ghi nhận và giữ đến lần commit bên
+  ngoài) khóa chuỗi của nó (`<node>/<slot>`) khi kết thúc lệnh đầu tiên có ghi nhận và giữ đến lần commit bên
   ngoài; các giao dịch như vậy cùng slot phải chờ trong lúc đó. Như đến 1.1, hai giao dịch như vậy
   cùng slot vẫn có thể chờ nhau khi một bên đã ghi một dòng engine trong một lệnh trước đó không
   ghi nhận gì (bên kia lại cần dòng đó trong lúc giữ chuỗi); cơ sở dữ liệu kết thúc tình huống này
@@ -181,38 +185,46 @@ cùng một chiều (các bản ghi cùng mili giây ở các chuỗi khác nhau
 ngược khi bản ghi mới nhất đứng trước). Chỉ mục `FASTI_IDX_AUDIT_ORDER (TIME_, CHAIN_ID_, SEQ_)`
 cho đúng thứ tự đó, nên cơ sở dữ liệu đọc một trang thay vì sắp xếp mọi bản ghi khớp bộ lọc. Bảng
 kiểm toán mới có sẵn chỉ mục này. **Bảng kiểm toán đã có** (do 1.0 hoặc 1.1 tạo) cần chạy script
-nâng cấp một lần: `fasti.<database>.upgrade.audit.after_1.1.sql` trong jar engine, dưới
-`dev/fasti/engine/audit/db/upgrade` (tạo chỉ mục và xóa `FASTI_IDX_AUDIT_TIME`, vốn được chỉ mục
-mới thay thế). Chưa chạy thì mọi thứ vẫn hoạt động như trước, chỉ là không nhanh hơn. Tạo chỉ mục
-phải đọc cả bảng một lần; với bảng lớn hãy chạy ngoài giờ cao điểm.
+nâng cấp một lần: `sql/upgrade/<db>_fasti_audit_after_1.1.sql`, có trong mọi bản phân phối (tạo
+`FASTI_IDX_AUDIT_ORDER`, `FASTI_IDX_AUDIT_ACTOR_ORDER` và `FASTI_IDX_AUDIT_TYPE_ORDER`, xóa
+`FASTI_IDX_AUDIT_TIME`, `FASTI_IDX_AUDIT_ACTOR` và `FASTI_IDX_AUDIT_TYPE` mà chúng thay thế; chạy
+lại được). Chưa chạy thì mọi thứ vẫn hoạt động như trước, chỉ là không nhanh hơn. Tạo chỉ mục phải
+đọc cả bảng: PostgreSQL tạo song song (concurrently) và MySQL/MariaDB tạo trực tuyến (online); trên
+Oracle, SQL Server và Db2 hãy thêm ONLINE nếu phiên bản có hỗ trợ, nếu không mọi lệnh insert có
+ghi nhận kiểm toán phải chờ trong lúc tạo. Xóa bảng đã nâng cấp bằng script drop của phiên bản này;
+script drop của 1.1 sẽ lỗi trên các bảng đó.
 
 Thời gian cơ sở dữ liệu dành cho một câu lệnh, 2 triệu bản ghi kiểm toán trong 4 chuỗi (500 người
 thực hiện), trước (chỉ mục của 1.1, thứ tự hỗn hợp) và sau script nâng cấp (PostgreSQL
 `EXPLAIN ANALYZE`, MariaDB `ANALYZE FORMAT=JSON` với buffer pool mặc định 128 MB; mỗi câu lệnh chạy
-một lần sau khi `ANALYZE` bảng, nên hãy xem các giá trị như bậc độ lớn):
+một lần sau khi `ANALYZE` bảng, nên hãy xem các giá trị như bậc độ lớn). Các cột "sau" được đo
+chỉ với `FASTI_IDX_AUDIT_ORDER`, trước khi các chỉ mục theo người thực hiện và theo loại thay thế
+chỉ mục cũ; bộ lọc theo người thực hiện được đo ở bên dưới:
 
 | Câu lệnh | PostgreSQL 16 trước | sau | MariaDB 11.4 trước | sau |
 |---|---|---|---|---|
 | Trang đầu, mới nhất trước (25 bản ghi) | 0,13 ms | 0,05 ms | 25,3 s (sắp xếp cả 2 triệu) | 9 ms |
 | Trang ở vị trí 10.000 | 6,5 ms | 4,1 ms | – | – |
 | Trang đầu lọc theo loại | 0,07 ms | 0,06 ms | – | – |
-| Trang đầu lọc theo một người thực hiện (0,2 % số bản ghi) | 2,8 ms | 2,9 ms | 1,3 s | 3,2 s |
 | Đếm mọi bản ghi | 202 ms | 176 ms | 2,3 s | 2,9 s |
 | Đếm với `maxCount=10000` | – | 1,8 ms | – | 17 ms |
-| Tạo chỉ mục (script nâng cấp) | | 5,9 s | | 26,7 s |
+| Tạo `FASTI_IDX_AUDIT_ORDER` | | 5,9 s | | 26,7 s |
 
 PostgreSQL 16 vốn đã sắp xếp thứ tự cũ theo kiểu tăng dần (incremental sort) dọc
 `FASTI_IDX_AUDIT_TIME`, nên trước đây các trang đã rẻ; MariaDB và MySQL (và các cơ sở dữ liệu khác
-không có incremental sort) phải sắp xếp mọi bản ghi khớp bộ lọc cho mỗi trang. **Đánh đổi:** một bộ
-lọc chỉ khớp một phần nhỏ bản ghi mà không có chỉ mục riêng cho đúng thứ tự (một trong 500 người
-thực hiện ở trên) giờ có thể được đọc dọc `FASTI_IDX_AUDIT_ORDER` cho đến khi đủ một trang; trên
-MariaDB việc này đọc khoảng gấp ba số dòng so với dùng chỉ mục người thực hiện rồi sắp xếp (12.500
-thay vì 4.000); khi buffer pool chứa được cả bảng thì cả hai đều chỉ mất vài mili giây. Bộ lọc theo
-phiên bản quy trình và business key chọn ít dòng và vẫn dùng chỉ mục của chúng.
+không có incremental sort) phải sắp xếp mọi bản ghi khớp bộ lọc cho mỗi trang.
+
+Các trang lọc theo người thực hiện (kể cả `system`), theo loại và hành động, theo phiên bản quy
+trình hoặc theo business key được đọc dọc một chỉ mục theo đúng thứ tự trang và dừng sau khi đủ
+trang. Bộ lọc không có chỉ mục như vậy (hành động mà không có loại, giới hạn tenant,
+`processDefinitionKey`, `entityId`) đọc bản ghi cho đến khi đủ một trang, tức cả bảng khi ít bản ghi
+khớp. Đo trên MariaDB 11.4 với 500 nghìn bản ghi: một người thực hiện có 6.000 bản ghi đều nằm trong
+một phần tư cũ nhất trước đây cần 375.000 mục chỉ mục và lần tra dòng (1,6 s trên tmpfs, vài phút
+trên đĩa), nay 25 dòng (0,5 ms).
 
 **Đếm.** `GET /audit/event/count` đếm mọi bản ghi khớp bộ lọc, tức là đọc cả bảng khi không có bộ
-lọc. Với `maxCount=<n>` (1 đến 1.000.000) cơ sở dữ liệu dừng ở `n` bản ghi; kết quả bằng `n` nghĩa
-là "`n` trở lên". Client chỉ cần biết còn trang sau hay không cũng có thể xin `GET /audit/event`
+lọc. Với `maxCount=<n>` (1 đến 1.000.000) cơ sở dữ liệu dừng khi đã đếm `n` bản ghi (bộ lọc không có
+chỉ mục vẫn có thể phải xét nhiều dòng hơn); kết quả bằng `n` nghĩa là "`n` trở lên". Client chỉ cần biết còn trang sau hay không cũng có thể xin `GET /audit/event`
 nhiều hơn một bản ghi so với số hiển thị và bỏ qua lệnh đếm. Trong Java:
 `AuditEventQuery.count(long limit)`.
 

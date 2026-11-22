@@ -108,6 +108,9 @@ các mục dưới đây là khác biệt so với bản đó.
   the chain before it reads what to purge. A purge holds one head at a time and can no longer
   wait for a transaction that waits for it. A chain that cannot be purged no longer stops the
   others; the result lists it in `failedChains` (REST and `AuditPurgeResult`).
+  A purge no longer recreates a missing head (such a chain is listed in `failedChains` and
+  verification still reports it), and a verification reads a chain again for as long as a purge
+  removes records under it.
 - Audit trail pages are ordered by time, chain and position in one direction (newest first:
   all descending), served by the new index `FASTI_IDX_AUDIT_ORDER (TIME_, CHAIN_ID_, SEQ_)`, which
   replaces `FASTI_IDX_AUDIT_TIME`. Records of the same millisecond in different chains change

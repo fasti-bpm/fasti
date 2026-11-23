@@ -2,6 +2,8 @@ English | [Tiếng Việt](install-docker.vi.md) | [Deutsch](install-docker.de.m
 
 # Installing Fasti BPM with Docker
 
+> **Translation help wanted.** The non-English translations of this guide were machine-translated and may contain awkward wording. Native speakers are welcome to open a pull request with corrections — see [issue #20](https://github.com/fasti-bpm/fasti-bpm/issues/20) for details. Please keep code blocks, commands, URLs and `<a id="…">` anchors unchanged.
+
 A step-by-step guide: a quick trial with H2, production with PostgreSQL (`docker run` or
 `docker compose`), connecting to an existing Camunda 7 database, side-by-side mode, health
 checks, upgrade, rollback, troubleshooting and observability (JSON logs, Prometheus metrics,

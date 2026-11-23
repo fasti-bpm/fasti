@@ -18,6 +18,9 @@ and the absence lookup at each task assignment. This page describes
 - and the **measurements** behind every index in the scripts, including the candidates that were
   rejected.
 
+For a side-by-side measurement of Fasti BPM 1.2.0 and Camunda 7.24.0 (startup, memory, job
+throughput, REST and the workload endpoint), see [Compared with Camunda 7.24](benchmark-camunda-7.24.md).
+
 ## The optional index scripts
 
 Every distribution ships one create and one drop script per database:

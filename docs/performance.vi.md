@@ -16,6 +16,9 @@ và việc tra cứu vắng mặt mỗi lần giao task. Trang này mô tả
 - các **cấu hình engine** nên xem lại khi cơ sở dữ liệu lớn,
 - và **số đo** làm căn cứ cho từng chỉ mục trong script, kể cả các ứng viên bị loại.
 
+Số đo đặt Fasti BPM 1.2.0 cạnh Camunda 7.24.0 (khởi động, bộ nhớ, thông lượng job, REST và endpoint
+khối lượng công việc) nằm ở [So sánh với Camunda 7.24](benchmark-camunda-7.24.vi.md).
+
 ## Các script chỉ mục tùy chọn
 
 Mỗi bản phân phối có một script tạo và một script xóa cho mỗi loại cơ sở dữ liệu:

@@ -63,7 +63,7 @@ public class AuditConcurrencyTest {
       plugin.setCheckpointInterval(10);
     }, configuration -> {
       if (database != null && configuration.getJdbcUrl().startsWith("jdbc:h2:mem:")) {
-        configuration.setJdbcUrl("jdbc:h2:mem:fasti-audit-" + database + ";DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=20000");
+        configuration.setJdbcUrl("jdbc:h2:mem:fasti-audit-" + database + ";DB_CLOSE_DELAY=10;LOCK_TIMEOUT=20000");
       }
       configuration.setJdbcMaxActiveConnections(THREADS + 2);
       // as in a cluster: ids that need no shared block of the database

@@ -54,7 +54,7 @@ public class FourEyesMixedNodesTest {
   static ProcessEngineConfigurationImpl configuration(String name, String schemaUpdate) {
     ProcessEngineConfigurationImpl configuration = (ProcessEngineConfigurationImpl) ProcessEngineConfiguration
         .createStandaloneInMemProcessEngineConfiguration();
-    configuration.setJdbcUrl("jdbc:h2:mem:fasti-foureyes-mixed;DB_CLOSE_DELAY=-1");
+    configuration.setJdbcUrl("jdbc:h2:mem:fasti-foureyes-mixed;DB_CLOSE_DELAY=10");
     configuration.setDatabaseSchemaUpdate(schemaUpdate);
     configuration.setProcessEngineName("foureyes-" + name);
     configuration.setHistory(ProcessEngineConfiguration.HISTORY_FULL);

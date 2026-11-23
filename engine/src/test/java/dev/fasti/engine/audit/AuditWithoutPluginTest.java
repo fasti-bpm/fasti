@@ -68,7 +68,7 @@ public class AuditWithoutPluginTest {
   @Test
   public void shouldNotRecordWhatANodeWithoutThePluginDoes() {
     audited = AuditTestSupport.engine("mixed1", plugin -> { }, configuration -> configuration
-        .setJdbcUrl(configuration.getJdbcUrl().startsWith("jdbc:h2:mem:") ? "jdbc:h2:mem:fasti-audit-mixed;DB_CLOSE_DELAY=-1"
+        .setJdbcUrl(configuration.getJdbcUrl().startsWith("jdbc:h2:mem:") ? "jdbc:h2:mem:fasti-audit-mixed;DB_CLOSE_DELAY=10"
             : configuration.getJdbcUrl()));
     ProcessEngineConfigurationImpl plainConfiguration = AuditTestSupport.configuration("mixed2");
     plainConfiguration.setJdbcUrl(((ProcessEngineConfigurationImpl) audited.getProcessEngineConfiguration()).getJdbcUrl());

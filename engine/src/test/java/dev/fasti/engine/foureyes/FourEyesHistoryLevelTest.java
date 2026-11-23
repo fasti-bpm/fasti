@@ -45,7 +45,7 @@ public abstract class FourEyesHistoryLevelTest {
 
   static ProcessEngineBootstrapRule engine(String name, String historyLevel) {
     return new ProcessEngineBootstrapRule(configuration -> {
-      configuration.setJdbcUrl("jdbc:h2:mem:fasti-foureyes-" + name + ";DB_CLOSE_DELAY=-1");
+      configuration.setJdbcUrl("jdbc:h2:mem:fasti-foureyes-" + name + ";DB_CLOSE_DELAY=10");
       configuration.setDatabaseSchemaUpdate("create-drop");
       configuration.setProcessEngineName("foureyes-" + name);
       configuration.setHistory(historyLevel);

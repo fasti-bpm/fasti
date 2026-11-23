@@ -40,7 +40,7 @@ public class TaskWorkloadCollationTest {
 
   @ClassRule
   public static ProcessEngineBootstrapRule bootstrapRule = new ProcessEngineBootstrapRule(configuration -> {
-    configuration.setJdbcUrl("jdbc:h2:mem:fasti-workload-ignorecase;IGNORECASE=TRUE;DB_CLOSE_DELAY=-1");
+    configuration.setJdbcUrl("jdbc:h2:mem:fasti-workload-ignorecase;IGNORECASE=TRUE;DB_CLOSE_DELAY=10");
     configuration.setDatabaseSchemaUpdate("create-drop");
     configuration.setProcessEngineName("workload-ignorecase");
   });

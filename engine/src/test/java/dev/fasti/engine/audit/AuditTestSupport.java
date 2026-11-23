@@ -48,7 +48,7 @@ public final class AuditTestSupport {
     ProcessEngineConfigurationImpl configuration = (ProcessEngineConfigurationImpl) ProcessEngineConfiguration
         .createProcessEngineConfigurationFromResource("camunda.cfg.xml");
     if (configuration.getJdbcUrl().startsWith("jdbc:h2:mem:")) {
-      configuration.setJdbcUrl("jdbc:h2:mem:fasti-audit-" + name + ";DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=10000");
+      configuration.setJdbcUrl("jdbc:h2:mem:fasti-audit-" + name + ";DB_CLOSE_DELAY=10;LOCK_TIMEOUT=10000");
     }
     configuration.setProcessEngineName("audit-" + name);
     configuration.setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE);

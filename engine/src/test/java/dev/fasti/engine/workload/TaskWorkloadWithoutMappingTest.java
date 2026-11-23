@@ -60,7 +60,7 @@ public class TaskWorkloadWithoutMappingTest {
   @BeforeClass
   public static void buildEngine() {
     ProcessEngineConfigurationImpl configuration = new CustomMappingsConfiguration();
-    configuration.setJdbcUrl("jdbc:h2:mem:fasti-workload-nomapping;DB_CLOSE_DELAY=-1");
+    configuration.setJdbcUrl("jdbc:h2:mem:fasti-workload-nomapping;DB_CLOSE_DELAY=10");
     configuration.setDatabaseSchemaUpdate("create-drop");
     configuration.setProcessEngineName("workload-nomapping");
     configuration.setJobExecutorActivate(false);

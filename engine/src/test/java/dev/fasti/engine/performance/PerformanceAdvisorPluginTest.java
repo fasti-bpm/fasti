@@ -63,7 +63,7 @@ public class PerformanceAdvisorPluginTest {
   protected static final String CREATE_SCRIPT = SCRIPTS + "fasti.h2.create.perf.indexes.sql";
   protected static final String DROP_SCRIPT = SCRIPTS + "fasti.h2.drop.perf.indexes.sql";
 
-  protected final String jdbcUrl = "jdbc:h2:mem:fasti-perf-" + UUID.randomUUID() + ";DB_CLOSE_DELAY=-1";
+  protected final String jdbcUrl = "jdbc:h2:mem:fasti-perf-" + UUID.randomUUID() + ";DB_CLOSE_DELAY=10";
   protected final List<ProcessEngine> engines = new ArrayList<>();
 
   @After

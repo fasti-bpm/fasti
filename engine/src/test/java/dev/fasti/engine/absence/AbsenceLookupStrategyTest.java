@@ -58,7 +58,7 @@ public class AbsenceLookupStrategyTest {
   protected static final Instant NOW = Instant.parse("2026-03-02T10:00:00Z");
   protected static final String IDENTITY_INFO_LOGGER = "org.camunda.bpm.engine.impl.persistence.entity.IdentityInfoEntity";
 
-  protected final String jdbcUrl = "jdbc:h2:mem:fasti-absence-lookup-" + UUID.randomUUID() + ";DB_CLOSE_DELAY=-1";
+  protected final String jdbcUrl = "jdbc:h2:mem:fasti-absence-lookup-" + UUID.randomUUID() + ";DB_CLOSE_DELAY=10";
   protected final List<ProcessEngine> engines = new ArrayList<>();
   protected final Logger statementLogger = (Logger) LoggerFactory.getLogger(IDENTITY_INFO_LOGGER);
   protected final ListAppender<ILoggingEvent> statements = new ListAppender<>();

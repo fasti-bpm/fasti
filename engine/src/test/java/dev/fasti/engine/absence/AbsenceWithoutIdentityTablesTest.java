@@ -41,7 +41,7 @@ public class AbsenceWithoutIdentityTablesTest {
 
   @ClassRule
   public static ProcessEngineBootstrapRule bootstrapRule = new ProcessEngineBootstrapRule(configuration -> {
-    configuration.setJdbcUrl("jdbc:h2:mem:fasti-absence-noidentity;DB_CLOSE_DELAY=-1");
+    configuration.setJdbcUrl("jdbc:h2:mem:fasti-absence-noidentity;DB_CLOSE_DELAY=10");
     configuration.setDatabaseSchemaUpdate("create-drop");
     configuration.setProcessEngineName("absence-noidentity");
     configuration.setDbIdentityUsed(false);

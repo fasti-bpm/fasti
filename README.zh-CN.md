@@ -63,11 +63,11 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**Docker 镜像**（`fastidev/fasti-bpm`，支持 amd64 和 arm64）：<https://fasti.dev/install>；分步说明见
   [docs/install-docker.zh-CN.md](docs/install-docker.zh-CN.md)，全部变量见
   [distro/docker/README.md](distro/docker/README.md#environment-variables)。
-- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Tomcat 捆绑包**（不使用 Docker）：<https://fasti.dev/download>。预构建的 Tomcat 1.1.0 捆绑包：
-  - [fasti-bpm-tomcat-1.1.0.zip](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.zip)（[SHA-256](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.zip.sha256)）
-  - [fasti-bpm-tomcat-1.1.0.tar.gz](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.tar.gz)（[SHA-256](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.tar.gz.sha256)）
+- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Tomcat 捆绑包**（不使用 Docker）：<https://fasti.dev/download>。预构建的 Tomcat 1.2.0 捆绑包：
+  - [fasti-bpm-tomcat-1.2.0.zip](https://assets.fasti.dev/releases/1.2.0/fasti-bpm-tomcat-1.2.0.zip)（[SHA-256](https://assets.fasti.dev/releases/1.2.0/fasti-bpm-tomcat-1.2.0.zip.sha256)）
+  - [fasti-bpm-tomcat-1.2.0.tar.gz](https://assets.fasti.dev/releases/1.2.0/fasti-bpm-tomcat-1.2.0.tar.gz)（[SHA-256](https://assets.fasti.dev/releases/1.2.0/fasti-bpm-tomcat-1.2.0.tar.gz.sha256)）
 
-  解压前请验证校验和，例如执行 `sha256sum -c fasti-bpm-tomcat-1.1.0.zip.sha256`。启动前请阅读
+  解压前请验证校验和，例如执行 `sha256sum -c fasti-bpm-tomcat-1.2.0.zip.sha256`。启动前请阅读
   捆绑包中的 `README.txt`。
 - **嵌入式**，用于 Spring Boot 或其他 Java 应用：新的 Maven 坐标（`dev.fasti.platform:fasti-*`），
   相同的 `org.camunda.bpm.*` 包；参见 [docs/embedding.zh-CN.md](docs/embedding.zh-CN.md)。

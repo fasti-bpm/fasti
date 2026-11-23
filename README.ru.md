@@ -67,11 +67,11 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**Образ Docker** (`fastidev/fasti-bpm`, amd64 и arm64): <https://fasti.dev/install>; пошаговая
   инструкция — в [docs/install-docker.ru.md](docs/install-docker.ru.md), все переменные — в
   [distro/docker/README.md](distro/docker/README.md#environment-variables).
-- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Дистрибутив Tomcat**, без Docker: <https://fasti.dev/download>. Готовый дистрибутив Tomcat 1.1.0:
-  - [fasti-bpm-tomcat-1.1.0.zip](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.zip.sha256))
-  - [fasti-bpm-tomcat-1.1.0.tar.gz](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.1.0/fasti-bpm-tomcat-1.1.0.tar.gz.sha256))
+- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Дистрибутив Tomcat**, без Docker: <https://fasti.dev/download>. Готовый дистрибутив Tomcat 1.2.0:
+  - [fasti-bpm-tomcat-1.2.0.zip](https://assets.fasti.dev/releases/1.2.0/fasti-bpm-tomcat-1.2.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.2.0/fasti-bpm-tomcat-1.2.0.zip.sha256))
+  - [fasti-bpm-tomcat-1.2.0.tar.gz](https://assets.fasti.dev/releases/1.2.0/fasti-bpm-tomcat-1.2.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.2.0/fasti-bpm-tomcat-1.2.0.tar.gz.sha256))
 
-  Перед распаковкой проверьте контрольную сумму, например командой `sha256sum -c fasti-bpm-tomcat-1.1.0.zip.sha256`,
+  Перед распаковкой проверьте контрольную сумму, например командой `sha256sum -c fasti-bpm-tomcat-1.2.0.zip.sha256`,
   а перед запуском прочитайте `README.txt` в дистрибутиве.
 - **Встраивание** в Spring Boot или другое Java-приложение: новые координаты Maven
   (`dev.fasti.platform:fasti-*`), те же пакеты `org.camunda.bpm.*`; см.

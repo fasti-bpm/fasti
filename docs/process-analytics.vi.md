@@ -74,13 +74,20 @@ các tham số `processDefinitionIdIn`, `tenantIdIn`, `finishedAfter`, `finished
 
 | Lệnh gọi | Trả về |
 |---|---|
-| `GET .../activities` | Mỗi bước một mục: số lượt, thống kê thời lượng, đang chạy quá P90, làm lại, sự cố |
+| `GET .../activities` | Mỗi bước một mục: số lượt, thống kê thời lượng, đang chạy quá P90, làm lại, sự cố; `rework=false` bỏ phần làm lại |
+| `GET .../rework` | Làm lại theo từng bước, gọi riêng: phần tốn kém nhất khi lịch sử dài |
 | `GET .../activities/{activityId}/instances` | Các lượt đã xong chậm nhất, hoặc với `running=true` các lượt đang chạy lâu nhất (`maxResults`, tối đa 200) |
 | `GET .../instances` | Instance hoàn thành, bị dừng và đang chạy, thống kê thời lượng, đạt mục tiêu |
 | `GET .../trend?boundaries=...` | Theo từng khoảng giữa các mốc (2 đến 63): bắt đầu, hoàn thành, thống kê thời lượng |
 | `GET .../user-tasks` | Thời gian chờ và xử lý theo task và theo người (`maxTasks`, mặc định 50.000) |
 
 Chi tiết và ví dụ: tài liệu OpenAPI của REST API (tag *Process Analytics*).
+
+Kết quả được giữ 60 giây cho cùng một truy vấn (`fasti.analytics.cache-ttl`, trên image là
+`FASTI_ANALYTICS_CACHE_TTL`, `0` để tắt), nên mở lại một góc nhìn hoặc đồng nghiệp mở cùng góc nhìn
+sẽ không phải đọc lại lịch sử; quyền vẫn được kiểm tra ở mỗi lần gọi, còn số liệu đang chạy có thể
+cũ tối đa chừng ấy. Giao diện web hỏi khoảng thời gian tới phút tròn kế tiếp và đọc phần làm lại sau
+bản đồ nhiệt.
 
 ## Java
 

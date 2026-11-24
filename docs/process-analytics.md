@@ -72,13 +72,20 @@ parameters `processDefinitionIdIn`, `tenantIdIn`, `finishedAfter`, `finishedBefo
 
 | Call | Answer |
 |---|---|
-| `GET .../activities` | One entry per activity: counts, duration statistics, running over P90, rework, incidents |
+| `GET .../activities` | One entry per activity: counts, duration statistics, running over P90, rework, incidents; `rework=false` leaves rework out |
+| `GET .../rework` | Rework per activity on its own: the costly part on a long history |
 | `GET .../activities/{activityId}/instances` | The slowest finished runs, or with `running=true` the oldest running ones (`maxResults`, at most 200) |
 | `GET .../instances` | Completed, terminated and running instances, duration statistics, within target |
 | `GET .../trend?boundaries=...` | Per period between the given dates (2 to 63): started, completed, duration statistics |
 | `GET .../user-tasks` | Waiting and working time per task and per assignee (`maxTasks`, 50,000 by default) |
 
 Details and examples: the OpenAPI document of the REST API (tag *Process Analytics*).
+
+Answers are kept for 60 seconds for the same query (`fasti.analytics.cache-ttl`, image
+`FASTI_ANALYTICS_CACHE_TTL`, `0` turns this off), so a view opened again or by a colleague is
+answered without reading the history; the permission is checked on every call, and what runs now
+may be up to that much older. The web interface asks for the range up to the next full minute and
+reads rework after the heat map.
 
 ## Java
 

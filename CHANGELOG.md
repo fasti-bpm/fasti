@@ -22,8 +22,10 @@ các mục dưới đây là khác biệt so với bản đó.
   to their instances); a bottleneck ranking by the time spent with the time beyond the median;
   instance tiles with the share within a target duration; the median and P90 per day, week or
   month; and waiting vs working time of user tasks per task and per assignee. REST:
-  `GET /analytics/process-definition/key/{key}/activities`, `.../activities/{activityId}/instances`,
-  `.../instances`, `.../trend` and `.../user-tasks`; Java: `dev.fasti.engine.analytics.ProcessAnalytics`.
+  `GET /analytics/process-definition/key/{key}/activities`, `.../rework`,
+  `.../activities/{activityId}/instances`, `.../instances`, `.../trend` and `.../user-tasks`; Java:
+  `dev.fasti.engine.analytics.ProcessAnalytics`. Answers are kept 60 s for the same query
+  (`fasti.analytics.cache-ttl`, image `FASTI_ANALYTICS_CACHE_TTL`).
   Requires `READ_HISTORY` on the process definition key; the tenant check applies. Percentiles of
   activities and instances come from a histogram the database computes (within about 12 %); counts,
   totals, the share within a target and user task times are exact. Plain SQL for every supported

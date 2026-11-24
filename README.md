@@ -39,23 +39,60 @@ Full guide, including your own database: <https://fasti.dev/install>
 
 ## Highlights
 
-- **Change the connection. That is the migration.** The Camunda 7.24 schema is used as it is; the
-  `org.camunda.bpm.*` packages stay ([migration](https://fasti.dev/install#migrate)).
-- **One container, one command**, with the same `DB_*` variables as Camunda Run ([install](https://fasti.dev/install)).
-- **Built for the people who work the queue**: a new web interface in 13 languages, light and
-  dark, usable on a phone ([features](https://fasti.dev/#features)).
-- **Model and deploy in the browser**: BPMN, DMN and forms ([modeler](https://fasti.dev/#modeler)).
-- **The tools to run it are in the box**: history, instance repair, bulk retry, operation log
-  ([operations](https://fasti.dev/#operate)).
-- **Closed by default in the container image**: sign-in required from the first start, no
-  default user, settings that turn REST authentication or authorizations off are refused, and
-  Java4Shell is mitigated. Tomcat and WildFly require credentials for the REST API and create no
-  users (the first administrator is created on the setup page); the Run zip and the Spring Boot
-  starter keep the Camunda 7 defaults. Every distribution has the security fixes and warns at
-  startup on a JVM exposed to Java4Shell ([security](https://fasti.dev/security)).
-- **Single sign-on**: OpenID Connect and JWT bearer tokens ([guide](docs/single-sign-on.md)).
-- **Current platform**: Java 17 or later, Spring Boot 4.1, GraalJS 25, Jackson 2.21
-  ([performance](https://fasti.dev/#performance)).
+**Change the connection. That is the migration.** The Camunda 7.24 schema is used as it is, the
+`org.camunda.bpm.*` packages stay, and the image takes the same `DB_*` variables as Camunda Run.
+Fasti and 7.24 nodes can share one database, and you can go back
+([migration](https://fasti.dev/install#migrate)).
+
+### Secure by default
+
+- **Closed from the first start** (container image): sign-in required, no default or demo user,
+  and settings that turn REST authentication or authorizations off are refused. Tomcat and
+  WildFly require credentials for the REST API and create no users.
+- **Security fixes over 7.24.0** in every distribution: the publicly disclosed issues of the 7.x
+  line (expressions in queries, initial setup, access to attachments and comments, Cockpit
+  permissions, open redirect).
+- **Further safeguards:** an allow-list for expressions in queries and filters, attachment and
+  comment checks inside the engine, hardened security filters, headers and cookies in the web
+  applications, and a startup warning on a JVM exposed to Java4Shell
+  ([security](https://fasti.dev/security), [what differs](docs/migrate-from-camunda-7.md#what-differs)).
+- **Single sign-on:** OpenID Connect and JWT bearer tokens ([guide](docs/single-sign-on.md)).
+
+### A new web interface
+
+- **One modern application** for the task list, monitoring, cases (CMMN) and administration, in
+  13 languages, light and dark, usable on a phone ([features](https://fasti.dev/#features)).
+- **Modeler built in:** edit BPMN, DMN and forms and deploy them from the same interface
+  ([modeler](https://fasti.dev/#modeler)).
+- **The tools to run it:** history, instance modification and restart, migration, batch
+  operations, bulk retry and the operation log ([operations](https://fasti.dev/#operate)).
+- **Light on the server:** the workload board loads with 11 API requests instead of 344
+  ([web UI performance](docs/performance-web-ui.md)).
+
+### Faster, with security on
+
+Measured on PostgreSQL 16 with 1,000,000 tasks and 2,200,000 authorizations, REST as an
+administrator, against Camunda Run 7.24.0 on the same machine
+([comparison](docs/benchmark-camunda-7.24.md)):
+
+| | Camunda 7.24, authorization on | Fasti 1.2.0 | Fasti 1.2.1 |
+|---|---|---|---|
+| Overdue task list | 138 ms | 156 ms | **14 ms** |
+| Task board, 145 requests | 20.8 s | 21.0 s | **8.8 s** |
+| Image, uncompressed | 338 MB¹ | 554 MB | **390 MB** |
+| `Started in` | 4.5 s¹ | 5.6 s | **4.8 s** |
+| Idle memory | 393 MB¹ | 518 MB | **362 MB** |
+
+¹ Camunda Run as shipped (authorization off).
+
+- **Optional index scripts** for six databases: an idle job poll 162 ms → 0.1 ms, overdue tasks
+  sorted by due date 61 ms → 0.3 ms ([database performance](docs/performance.md)).
+- **One request for a team's workload** (`/task/workload`) instead of 145.
+
+### Current platform
+
+Java 17 or later, Spring Boot 4.1, GraalJS 25, Jackson 2.21 and libraries upgraded to releases
+with security fixes.
 
 <a id="installation"></a><a id="get-fasti"></a>
 

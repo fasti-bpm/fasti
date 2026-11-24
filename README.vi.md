@@ -39,23 +39,60 @@ Hướng dẫn đầy đủ, kể cả dùng cơ sở dữ liệu của bạn: <
 
 ## Tính năng nổi bật
 
-- **Đổi kết nối. Việc chuyển đổi chỉ có vậy.** Fasti dùng nguyên schema của Camunda 7.24; các
-  package `org.camunda.bpm.*` giữ nguyên ([chuyển đổi](https://fasti.dev/install#migrate)).
-- **Một container. Một lệnh.** Dùng cùng các biến `DB_*` như Camunda Run ([cài đặt](https://fasti.dev/install)).
-- **Dành cho những người xử lý hàng đợi công việc**: giao diện web mới, 13 ngôn ngữ, sáng và tối,
-  dùng tốt trên điện thoại ([tính năng](https://fasti.dev/#features)).
-- **Mô hình hóa và triển khai ngay trên trình duyệt**: BPMN, DMN và biểu mẫu ([modeler](https://fasti.dev/#modeler)).
-- **Công cụ vận hành đã có sẵn**: lịch sử có thể tìm kiếm, sửa instance đang chạy, chạy lại job
-  lỗi hàng loạt, nhật ký thao tác ([vận hành](https://fasti.dev/#operate)).
-- **Image container mặc định là đóng**: phải đăng nhập ngay từ lần chạy đầu, không có người dùng
-  mặc định, từ chối các thiết lập tắt xác thực REST hoặc phân quyền, và đã giảm thiểu Java4Shell.
-  Tomcat và WildFly yêu cầu thông tin đăng nhập cho REST API và không tạo người dùng nào (quản trị
-  viên đầu tiên được tạo trên trang setup); Run zip và Spring Boot starter giữ mặc định của
-  Camunda 7. Mọi bản phân phối đều có các bản vá bảo mật và cảnh báo khi khởi động nếu JVM bị
-  Java4Shell ảnh hưởng ([bảo mật](https://fasti.dev/security)).
-- **Đăng nhập một lần (SSO)**: OpenID Connect và JWT bearer token ([hướng dẫn](docs/single-sign-on.vi.md)).
-- **Nền tảng:** Java 17 trở lên, Spring Boot 4.1, GraalJS 25, Jackson 2.21
-  ([hiệu năng](https://fasti.dev/#performance)).
+**Đổi kết nối. Việc chuyển đổi chỉ có vậy.** Fasti dùng nguyên schema của Camunda 7.24, các
+package `org.camunda.bpm.*` giữ nguyên, và image nhận cùng các biến `DB_*` như Camunda Run. Node
+Fasti và node 7.24 có thể dùng chung một cơ sở dữ liệu, và bạn có thể quay lại
+([chuyển đổi](https://fasti.dev/install#migrate)).
+
+### An toàn ngay từ mặc định
+
+- **Đóng ngay từ lần chạy đầu** (image container): phải đăng nhập, không có người dùng mặc định
+  hay người dùng demo, và các thiết lập tắt xác thực REST hoặc phân quyền bị từ chối. Tomcat và
+  WildFly yêu cầu thông tin đăng nhập cho REST API và không tạo người dùng nào.
+- **Các bản vá bảo mật so với 7.24.0** trong mọi bản phân phối: các lỗi đã công bố của dòng 7.x
+  (expression trong query, initial setup, truy cập attachment và comment, phân quyền Cockpit,
+  open redirect).
+- **Lớp bảo vệ thêm:** allow-list cho expression trong query và filter, kiểm quyền attachment và
+  comment ngay trong engine, gia cố security filter, header và cookie của các ứng dụng web, và
+  cảnh báo khi khởi động nếu JVM bị Java4Shell ảnh hưởng
+  ([bảo mật](https://fasti.dev/security), [cái gì khác](docs/migrate-from-camunda-7.vi.md#what-differs)).
+- **Đăng nhập một lần (SSO):** OpenID Connect và JWT bearer token ([hướng dẫn](docs/single-sign-on.vi.md)).
+
+### Giao diện web mới
+
+- **Một ứng dụng hiện đại** cho danh sách task, giám sát, hồ sơ (CMMN) và quản trị, 13 ngôn ngữ,
+  sáng và tối, dùng tốt trên điện thoại ([tính năng](https://fasti.dev/#features)).
+- **Có sẵn modeler:** sửa BPMN, DMN và biểu mẫu rồi triển khai ngay trong cùng giao diện
+  ([modeler](https://fasti.dev/#modeler)).
+- **Công cụ vận hành:** lịch sử, sửa và khởi động lại instance, migration, thao tác hàng loạt,
+  chạy lại job lỗi hàng loạt và nhật ký thao tác ([vận hành](https://fasti.dev/#operate)).
+- **Nhẹ cho máy chủ:** bảng khối lượng công việc mở ra với 11 request API thay cho 344
+  ([hiệu năng giao diện web](docs/performance-web-ui.vi.md)).
+
+### Nhanh hơn, khi vẫn bật bảo mật
+
+Đo trên PostgreSQL 16 với 1.000.000 task và 2.200.000 bản ghi phân quyền, gọi REST bằng tài khoản
+quản trị, so với Camunda Run 7.24.0 trên cùng máy
+([bản so sánh](docs/benchmark-camunda-7.24.vi.md)):
+
+| | Camunda 7.24 bật phân quyền | Fasti 1.2.0 | Fasti 1.2.1 |
+|---|---|---|---|
+| Danh sách task quá hạn | 138 ms | 156 ms | **14 ms** |
+| Bảng task, 145 request | 20,8 s | 21,0 s | **8,8 s** |
+| Image, chưa nén | 338 MB¹ | 554 MB | **390 MB** |
+| `Started in` | 4,5 s¹ | 5,6 s | **4,8 s** |
+| Bộ nhớ khi rảnh | 393 MB¹ | 518 MB | **362 MB** |
+
+¹ Camunda Run theo cấu hình mặc định (tắt phân quyền).
+
+- **Script chỉ mục tùy chọn** cho sáu loại cơ sở dữ liệu: một lần quét job khi rảnh 162 ms → 0,1 ms,
+  task quá hạn sắp theo hạn 61 ms → 0,3 ms ([hiệu năng cơ sở dữ liệu](docs/performance.vi.md)).
+- **Một request cho khối lượng công việc của cả nhóm** (`/task/workload`) thay cho 145.
+
+### Nền tảng hiện tại
+
+Java 17 trở lên, Spring Boot 4.1, GraalJS 25, Jackson 2.21 và các thư viện đã nâng lên bản có bản
+vá bảo mật.
 
 <a id="installation"></a><a id="get-fasti"></a>
 

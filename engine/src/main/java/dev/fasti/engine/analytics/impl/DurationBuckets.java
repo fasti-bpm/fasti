@@ -168,7 +168,8 @@ public final class DurationBuckets {
         if (seen + inBucket >= rank) {
           double low = Math.max(lower(bucket), minimum);
           Long upper = upper(bucket);
-          double high = Math.min(upper == null ? maximum : upper, maximum);
+          // durations are whole milliseconds: the highest value a bucket can hold is its end minus one
+          double high = Math.min(upper == null ? maximum : upper - 1, maximum);
           if (high <= low) {
             return Math.round(low);
           }

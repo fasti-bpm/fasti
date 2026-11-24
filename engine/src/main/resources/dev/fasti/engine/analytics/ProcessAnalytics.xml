@@ -165,7 +165,7 @@
 
   <!-- per activity: scopes that ran it more than once in the range, and the runs beyond the first.
     Gateways are left out (a joining gateway writes one history row per arriving branch), and so are
-    start and end events, which do not repeat in a scope. The iterations of
+    start, end and boundary events (a boundary event fires once per run of its activity). The iterations of
     a multi-instance activity share their parent, the body; the caller drops those activities. -->
   <select id="selectFastiAnalyticsRepeats" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="keyCountRow">
     select R.ACT_ID_ as KEY_, count(*) as COUNT_, sum(R.RUNS_ - 1) as EXTRA_
@@ -177,6 +177,7 @@
         and A.ACT_TYPE_ not in ('exclusiveGateway', 'parallelGateway', 'inclusiveGateway',
           'eventBasedGateway', 'complexGateway', 'multiInstanceBody')
         and A.ACT_TYPE_ not like 'start%' and A.ACT_TYPE_ not like '%StartEvent' and A.ACT_TYPE_ not like '%EndEvent'
+        and A.ACT_TYPE_ not like 'boundary%'
       group by A.ACT_ID_, A.PARENT_ACT_INST_ID_
       having count(*) &gt; 1
     ) R
@@ -267,30 +268,38 @@
 
   <!-- the runs of one activity finished in the range, longest first -->
   <select id="selectFastiAnalyticsSlowest" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="slowInstance">
-    <include refid="limitOpen"/>
-    select <include refid="limitTop"/> A.ID_ as ACT_INST_ID_, A.PROC_INST_ID_, A.PROC_DEF_ID_, P.BUSINESS_KEY_, A.START_TIME_, A.END_TIME_, A.DURATION_
-    from ${prefix}ACT_HI_ACTINST A
-    left join ${prefix}ACT_HI_PROCINST P on P.ID_ = A.PROC_INST_ID_
-    where <include refid="scope"><property name="alias" value="A"/></include>
-      and A.ACT_ID_ = #{activityId}
-      and A.END_TIME_ &gt;= #{after} and A.END_TIME_ &lt; #{before}
-      and A.DURATION_ is not null
-      and (A.ACT_INST_STATE_ is null or A.ACT_INST_STATE_ &lt;&gt; 2)
-    order by A.DURATION_ desc, A.ID_
-    <include refid="limitClose"/>
+    select R.ACT_INST_ID_, R.PROC_INST_ID_, R.PROC_DEF_ID_, P.BUSINESS_KEY_, R.START_TIME_, R.END_TIME_, R.DURATION_
+    from (
+      <include refid="limitOpen"/>
+      select <include refid="limitTop"/> A.ID_ as ACT_INST_ID_, A.PROC_INST_ID_, A.PROC_DEF_ID_, A.START_TIME_, A.END_TIME_, A.DURATION_
+      from ${prefix}ACT_HI_ACTINST A
+      where <include refid="scope"><property name="alias" value="A"/></include>
+        and A.ACT_ID_ = #{activityId}
+        and A.END_TIME_ &gt;= #{after} and A.END_TIME_ &lt; #{before}
+        and A.DURATION_ is not null
+        and (A.ACT_INST_STATE_ is null or A.ACT_INST_STATE_ &lt;&gt; 2)
+      order by A.DURATION_ desc, A.ID_
+      <include refid="limitClose"/>
+    ) R
+    left join ${prefix}ACT_HI_PROCINST P on P.ID_ = R.PROC_INST_ID_
+    order by R.DURATION_ desc, R.ACT_INST_ID_
   </select>
 
   <!-- the runs of one activity running now, oldest first -->
   <select id="selectFastiAnalyticsOldestRunning" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="slowInstance">
-    <include refid="limitOpen"/>
-    select <include refid="limitTop"/> A.ID_ as ACT_INST_ID_, A.PROC_INST_ID_, A.PROC_DEF_ID_, P.BUSINESS_KEY_, A.START_TIME_, A.END_TIME_, A.DURATION_
-    from ${prefix}ACT_HI_ACTINST A
-    left join ${prefix}ACT_HI_PROCINST P on P.ID_ = A.PROC_INST_ID_
-    where <include refid="scope"><property name="alias" value="A"/></include>
-      and A.ACT_ID_ = #{activityId}
-      and A.END_TIME_ is null
-    order by A.START_TIME_ asc, A.ID_
-    <include refid="limitClose"/>
+    select R.ACT_INST_ID_, R.PROC_INST_ID_, R.PROC_DEF_ID_, P.BUSINESS_KEY_, R.START_TIME_, R.END_TIME_, R.DURATION_
+    from (
+      <include refid="limitOpen"/>
+      select <include refid="limitTop"/> A.ID_ as ACT_INST_ID_, A.PROC_INST_ID_, A.PROC_DEF_ID_, A.START_TIME_, A.END_TIME_, A.DURATION_
+      from ${prefix}ACT_HI_ACTINST A
+      where <include refid="scope"><property name="alias" value="A"/></include>
+        and A.ACT_ID_ = #{activityId}
+        and A.END_TIME_ is null
+      order by A.START_TIME_ asc, A.ID_
+      <include refid="limitClose"/>
+    ) R
+    left join ${prefix}ACT_HI_PROCINST P on P.ID_ = R.PROC_INST_ID_
+    order by R.START_TIME_ asc, R.ACT_INST_ID_
   </select>
 
   <!-- the newest #{maxResults} user tasks completed in the range, with their first assignment
@@ -309,6 +318,7 @@
       order by T.END_TIME_ desc, T.ID_
       <include refid="limitClose"/>
     ) N
+    order by N.END_TIME_ desc, N.ID_
   </select>
 
 </mapper>

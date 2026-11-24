@@ -68,6 +68,17 @@ public class DurationBucketsTest {
   }
 
   @Test
+  public void shouldGiveExactValuesForShortDurations() {
+    Histogram histogram = new Histogram();
+    for (int run = 0; run < 50; run++) {
+      histogram.add(0);
+      histogram.add(3);
+    }
+    assertThat(histogram.percentile(0.25)).isZero();
+    assertThat(histogram.percentile(0.9)).isEqualTo(3);
+  }
+
+  @Test
   public void shouldComputeExactStatisticsFromValues() {
     DurationStatistics statistics = DurationBuckets.exact(new long[] { 5, 1, 4, 2, 3 }, 3L);
     assertThat(statistics.isApproximate()).isFalse();

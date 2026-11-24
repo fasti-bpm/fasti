@@ -102,6 +102,7 @@ const messages = {
   'an.pick': 'Atividade',
   'an.pick.none': 'Escolha uma atividade…',
   'an.target.invalid': 'Não é uma duração: use por exemplo 90m, 4h ou 2d.',
+  'an.updating': 'Atualizando…',
 };
 
 export default messages;

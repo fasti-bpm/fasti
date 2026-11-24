@@ -292,6 +292,9 @@ export function AnalyticsTab({
         <TargetInput value={targetParam} onChange={(text) => setParams({ target: text || null })} />
       </div>
 
+      <p className="analytics__updating" aria-live="polite">
+        {activities.isPlaceholderData || instances.isPlaceholderData ? t('an.updating') : ''}
+      </p>
       <InstanceTiles instances={instances.data} error={instances.data === undefined ? instances.error : null} target={target} />
 
       <div className="toolbar" role="group" aria-label={t('an.measure')}>
@@ -525,9 +528,10 @@ function ActivityPanel({
 }) {
   const { t, locale } = useI18n();
   const heading = useRef<HTMLHeadingElement>(null);
-  // opened from the table below or the picker: bring it into view and to the keyboard
+  const section = useRef<HTMLElement>(null);
+  // opened from the table below or the picker: bring the whole panel into view and the heading to the keyboard
   useEffect(() => {
-    heading.current?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+    section.current?.scrollIntoView?.({ block: 'start', inline: 'nearest', behavior: 'smooth' });
     heading.current?.focus({ preventScroll: true });
   }, [activity.activityId]);
   const slowest = useQuery({
@@ -558,7 +562,7 @@ function ActivityPanel({
     { id: 'duration', header: live ? t('an.run.age') : t('an.run.duration'), align: 'end', cell: (row) => formatDuration(row.duration, locale) },
   ];
   return (
-    <section className="card analytics__panel" aria-label={t('an.panel.label', { name })}>
+    <section ref={section} className="card analytics__panel" aria-label={t('an.panel.label', { name })}>
       <header className="card__header">
         <h3 className="card__title" ref={heading} tabIndex={-1}>
           {name}

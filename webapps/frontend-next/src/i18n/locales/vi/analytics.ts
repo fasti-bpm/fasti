@@ -95,6 +95,7 @@ const messages = {
   'an.pick': 'Bước',
   'an.pick.none': 'Chọn một bước…',
   'an.target.invalid': 'Không phải thời lượng: dùng ví dụ 90m, 4h hoặc 2d.',
+  'an.updating': 'Đang cập nhật…',
 };
 
 export default messages;

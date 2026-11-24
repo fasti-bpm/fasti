@@ -95,6 +95,7 @@ const messages = {
   'an.pick': 'アクティビティ',
   'an.pick.none': 'アクティビティを選択…',
   'an.target.invalid': '時間として認識できません。例: 90m、4h、2d。',
+  'an.updating': '更新中…',
 };
 
 export default messages;

@@ -2222,6 +2222,7 @@ a.trend:hover {
   display: flex;
   align-items: flex-end;
   gap: 2px;
+  overflow: hidden;
   height: 72px;
   padding: var(--s-1) 0;
   border-bottom: 1px solid var(--border);
@@ -2229,7 +2230,7 @@ a.trend:hover {
 
 .analytics__bar {
   flex: 1 1 0;
-  min-width: 3px;
+  min-width: 1px;
   max-width: 24px;
   border-radius: var(--r-xs) var(--r-xs) 0 0;
   background: var(--accent);
@@ -2357,6 +2358,7 @@ a.trend:hover {
 
 .analytics__figure {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s-1);
   margin: 0;
 }
@@ -2379,6 +2381,19 @@ a.trend:hover {
 
 .analytics .field__hint.is-danger {
   color: var(--danger);
+}
+
+.analytics__updating {
+  margin: 0;
+  padding: 0 var(--s-4);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+@media (max-width: 640px) {
+  .analytics__histogram {
+    gap: 1px;
+  }
 }
 
 .analytics__key--target {

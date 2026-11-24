@@ -102,6 +102,7 @@ const messages = {
   'an.pick': 'Aktivität',
   'an.pick.none': 'Aktivität wählen …',
   'an.target.invalid': 'Keine Dauer: zum Beispiel 90m, 4h oder 2d.',
+  'an.updating': 'Wird aktualisiert …',
 };
 
 export default messages;

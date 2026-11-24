@@ -102,6 +102,7 @@ const messages = {
   'an.pick': 'गतिविधि',
   'an.pick.none': 'गतिविधि चुनें…',
   'an.target.invalid': 'यह अवधि नहीं है: जैसे 90m, 4h या 2d लिखें।',
+  'an.updating': 'अपडेट हो रहा है…',
 };
 
 export default messages;

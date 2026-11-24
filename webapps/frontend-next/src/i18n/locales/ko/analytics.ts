@@ -95,6 +95,7 @@ const messages = {
   'an.pick': '활동',
   'an.pick.none': '활동 선택…',
   'an.target.invalid': '시간 형식이 아닙니다. 예: 90m, 4h, 2d.',
+  'an.updating': '업데이트 중…',
 };
 
 export default messages;

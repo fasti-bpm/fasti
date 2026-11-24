@@ -217,7 +217,7 @@ test.describe('Cockpit', () => {
     await main(app).getByRole('tab', { name: 'Analytics' }).click();
     const analytics = main(app).getByRole('tabpanel', { name: 'Analytics' });
     await expect(analytics).toBeVisible();
-    await expect(analytics.getByText('Instances completed')).toBeVisible();
+    await expect(analytics.getByText('Instances completed', { exact: true })).toBeVisible();
     // the heat map colours the activities by how often they ran
     await analytics.getByRole('button', { name: 'Reached', exact: true }).click();
     await expect(main(app).locator('[data-element-id="review"][class*="heat-"]').first()).toBeAttached();

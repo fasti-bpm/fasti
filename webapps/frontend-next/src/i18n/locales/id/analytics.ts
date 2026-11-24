@@ -95,6 +95,7 @@ const messages = {
   'an.pick': 'Aktivitas',
   'an.pick.none': 'Pilih aktivitas…',
   'an.target.invalid': 'Bukan durasi: gunakan misalnya 90m, 4h atau 2d.',
+  'an.updating': 'Memperbarui…',
 };
 
 export default messages;

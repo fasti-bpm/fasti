@@ -95,6 +95,7 @@ const messages = {
   'an.pick': '活动',
   'an.pick.none': '选择活动…',
   'an.target.invalid': '不是时长:请使用如 90m、4h 或 2d。',
+  'an.updating': '正在更新…',
 };
 
 export default messages;

@@ -95,6 +95,7 @@ const messages = {
   'an.pick': 'Активность',
   'an.pick.none': 'Выберите активность…',
   'an.target.invalid': 'Это не длительность: например 90m, 4h или 2d.',
+  'an.updating': 'Обновление…',
 };
 
 export default messages;

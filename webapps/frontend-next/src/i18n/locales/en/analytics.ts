@@ -102,6 +102,7 @@ const messages = {
   'an.pick': 'Activity',
   'an.pick.none': 'Choose an activity…',
   'an.target.invalid': 'Not a duration: use for example 90m, 4h or 2d.',
+  'an.updating': 'Updating…',
 };
 
 export default messages;

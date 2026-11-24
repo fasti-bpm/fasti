@@ -95,6 +95,7 @@ const messages = {
   'an.pick': 'กิจกรรม',
   'an.pick.none': 'เลือกกิจกรรม…',
   'an.target.invalid': 'ไม่ใช่ระยะเวลา: ใช้ เช่น 90m 4h หรือ 2d',
+  'an.updating': 'กำลังอัปเดต…',
 };
 
 export default messages;

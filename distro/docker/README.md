@@ -133,6 +133,7 @@ images; entries marked **from 1.2.0** are not in the 1.1.x images.
 | `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | `false` | runs only jobs of deployments registered on this node |
 | `FASTI_INSECURE_DEMO` | `false` | `true`: **turns off** REST authentication and authorization, for demos only (see Secure by default) |
 | `FASTI_REST_AUTH` | `true` | always on; `false` is refused (use `FASTI_INSECURE_DEMO`) |
+| `FASTI_REST_AUTH_CACHE_TTL` | `30s` | **From 1.2.1.** How long a successful basic authentication of the REST API is remembered, with the user's groups and tenants, so that repeated requests do not read them again (`0` turns it off). A deleted or locked user and changed memberships take effect after this time at the latest; changes made through the REST API of the same node clear it at once. Setting `fasti.rest.auth-cache-ttl` |
 | `FASTI_INITIAL_SETUP` | `false` | `true`: enables the page that creates the first administrator when there is none |
 | `FASTI_CORS_ALLOWED_ORIGINS` | (off) | enables CORS for REST; `*` matches the former Run default |
 | `FASTI_ADMIN_USER`, `FASTI_ADMIN_PASSWORD` (+`_FILE`) | | creates the administrator if missing; pass the password in an environment variable, not on the command line |

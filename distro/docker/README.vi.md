@@ -139,6 +139,7 @@ image 1.1.x.
 | `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | `false` | chỉ chạy job của deployment đã đăng ký trên node này |
 | `FASTI_INSECURE_DEMO` | `false` | `true`: **tắt** xác thực REST và phân quyền, chỉ để demo (xem Bảo mật mặc định) |
 | `FASTI_REST_AUTH` | `true` | luôn bật; giá trị `false` bị từ chối (dùng `FASTI_INSECURE_DEMO`) |
+| `FASTI_REST_AUTH_CACHE_TTL` | `30s` | **Có từ 1.2.1.** Thời gian ghi nhớ một lần xác thực basic thành công của REST API, cùng nhóm và tenant của người dùng, để các request lặp lại không phải đọc lại (`0` để tắt). Người dùng bị xoá hoặc bị khoá và thay đổi thành viên nhóm có hiệu lực chậm nhất sau khoảng này; thay đổi qua REST API của cùng node xoá cache ngay. Thiết lập `fasti.rest.auth-cache-ttl` |
 | `FASTI_INITIAL_SETUP` | `false` | `true`: bật trang tạo admin đầu tiên khi chưa có admin |
 | `FASTI_CORS_ALLOWED_ORIGINS` | (tắt) | bật CORS cho REST; `*` như Run trước đây |
 | `FASTI_ADMIN_USER`, `FASTI_ADMIN_PASSWORD` (+`_FILE`) | | tạo admin nếu chưa có; mật khẩu truyền qua biến môi trường, không qua dòng lệnh |

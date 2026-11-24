@@ -37,6 +37,7 @@ import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.identity.Group;
 import org.camunda.bpm.engine.identity.Tenant;
 import org.camunda.bpm.engine.rest.dto.ExceptionDto;
+import org.camunda.bpm.engine.rest.security.auth.impl.HttpBasicAuthenticationProvider;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
 import org.camunda.bpm.engine.rest.impl.NamedProcessEngineRestServiceImpl;
 import org.camunda.bpm.engine.rest.util.EngineUtil;
@@ -82,6 +83,17 @@ public class ProcessEngineAuthenticationFilter implements Filter {
   public static final String SERVLET_PATH_PREFIX = "rest-url-pattern-prefix";
 
   /**
+   * Fasti: init-param, milliseconds for which a successful HTTP basic authentication is cached
+   * (see {@link HttpBasicAuthenticationProvider#setCacheTimeToLiveMillis(long)}); absent or 0
+   * means no cache. Requests that change users, groups, tenants or memberships clear the cache.
+   */
+  public static final String BASIC_AUTHENTICATION_CACHE_TTL_PARAM = "basic-authentication-cache-ttl-millis";
+
+  /** Fasti: requests after which cached authentications may be outdated. */
+  protected static final Pattern IDENTITY_CHANGE_URL_PATTERN =
+      Pattern.compile("^(" + NamedProcessEngineRestServiceImpl.PATH + "/[^/]+)?/(user|group|tenant|identity)(/.*)?$");
+
+  /**
    * Request attribute set while a request is processed on behalf of a user that
    * an authentication filter of this kind has authenticated. Further filters of
    * this kind in the same chain let such a request pass, so that several of them
@@ -118,6 +130,18 @@ public class ProcessEngineAuthenticationFilter implements Filter {
     }
 
     servletPathPrefix = filterConfig.getInitParameter(SERVLET_PATH_PREFIX);
+
+    String cacheTimeToLive = filterConfig.getInitParameter(BASIC_AUTHENTICATION_CACHE_TTL_PARAM);
+    if (cacheTimeToLive != null && !cacheTimeToLive.isBlank()
+        && authenticationProvider instanceof HttpBasicAuthenticationProvider) {
+      try {
+        ((HttpBasicAuthenticationProvider) authenticationProvider)
+            .setCacheTimeToLiveMillis(Long.parseLong(cacheTimeToLive.trim()));
+      } catch (IllegalArgumentException e) {
+        throw new ServletException("Cannot instantiate authentication filter: invalid init-param "
+            + BASIC_AUTHENTICATION_CACHE_TTL_PARAM + " '" + cacheTimeToLive + "'", e);
+      }
+    }
   }
 
   @Override
@@ -177,6 +201,7 @@ public class ProcessEngineAuthenticationFilter implements Filter {
       } finally {
         request.removeAttribute(AUTHENTICATED_REQUEST_ATTRIBUTE);
         clearAuthentication(engine);
+        clearCachedAuthenticationsAfterIdentityChange(req, requestUrl);
       }
     } else {
       resp.setStatus(Status.UNAUTHORIZED.getStatusCode());
@@ -229,6 +254,28 @@ public class ProcessEngineAuthenticationFilter implements Filter {
 
   protected void clearAuthentication(ProcessEngine engine) {
     engine.getIdentityService().clearAuthentication();
+  }
+
+  /**
+   * Fasti: a request that may have changed users, groups, tenants or memberships clears the
+   * authentication cache of this filter. Changes made elsewhere (another node, the Java API, the
+   * admin web application) take effect after the cache time to live.
+   */
+  protected void clearCachedAuthenticationsAfterIdentityChange(HttpServletRequest request, String requestUrl) {
+    if (!(authenticationProvider instanceof HttpBasicAuthenticationProvider)) {
+      return;
+    }
+    HttpBasicAuthenticationProvider provider = (HttpBasicAuthenticationProvider) authenticationProvider;
+    if (provider.getCacheTimeToLiveMillis() == 0) {
+      return;
+    }
+    String method = request.getMethod();
+    if ("GET".equals(method) || "HEAD".equals(method) || "OPTIONS".equals(method)) {
+      return;
+    }
+    if (IDENTITY_CHANGE_URL_PATTERN.matcher(requestUrl).matches()) {
+      provider.clearCache();
+    }
   }
 
   /**

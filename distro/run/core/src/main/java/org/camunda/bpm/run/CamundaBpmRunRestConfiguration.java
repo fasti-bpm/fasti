@@ -36,6 +36,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
+import java.time.Duration;
 import java.util.Collections;
 
 @EnableConfigurationProperties(CamundaBpmRunProperties.class)
@@ -51,6 +52,10 @@ public class CamundaBpmRunRestConfiguration {
   Environment environment;
 
   protected static final String BEARER_ENABLED_PROPERTY = "fasti.security.oidc.rest.bearer-enabled";
+  /** Fasti: how long a successful basic authentication of the REST API is cached. */
+  protected static final String AUTH_CACHE_TTL_PROPERTY = "fasti.rest.auth-cache-ttl";
+  protected static final Duration DEFAULT_AUTH_CACHE_TTL = Duration.ofSeconds(30);
+
   protected static final String BEARER_AUTHENTICATION_PROVIDER =
       "org.camunda.bpm.spring.boot.starter.security.oauth2.impl.BearerTokenAuthenticationProvider";
 
@@ -90,6 +95,13 @@ public class CamundaBpmRunRestConfiguration {
           : "org.camunda.bpm.engine.rest.security.auth.impl.HttpBasicAuthenticationProvider";
       registration.addInitParameter("authentication-provider", provider);
     }
+    // Fasti: successful basic authentications are cached briefly (0 turns it off)
+    Duration cacheTimeToLive = environment.getProperty(AUTH_CACHE_TTL_PROPERTY, Duration.class, DEFAULT_AUTH_CACHE_TTL);
+    if (cacheTimeToLive.isNegative()) {
+      throw new IllegalArgumentException(AUTH_CACHE_TTL_PROPERTY + " must not be negative: " + cacheTimeToLive);
+    }
+    registration.addInitParameter(ProcessEngineAuthenticationFilter.BASIC_AUTHENTICATION_CACHE_TTL_PARAM,
+        String.valueOf(cacheTimeToLive.toMillis()));
     return registration;
   }
 

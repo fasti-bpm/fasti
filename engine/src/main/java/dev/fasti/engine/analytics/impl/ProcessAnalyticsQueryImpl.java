@@ -24,12 +24,10 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
 
@@ -50,38 +48,47 @@ import dev.fasti.engine.analytics.impl.AnalyticsRows.KeyCountRow;
 import dev.fasti.engine.analytics.impl.AnalyticsRows.UserTaskRow;
 import dev.fasti.engine.analytics.impl.DurationBuckets.Histogram;
 import org.apache.ibatis.session.Configuration;
-import org.apache.ibatis.session.RowBounds;
 import org.camunda.bpm.engine.BadUserRequestException;
+import org.camunda.bpm.engine.exception.NotFoundException;
 import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.identity.Authentication;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.camunda.bpm.engine.impl.util.ClockUtil;
+import org.camunda.bpm.engine.repository.ProcessDefinition;
 
 public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
 
   static final String ACTIVITY_BUCKETS = "selectFastiAnalyticsActivityBuckets";
   static final String ACTIVITY_COUNTS = "selectFastiAnalyticsActivityCounts";
+  static final String ACTIVITY_RUNNING = "selectFastiAnalyticsActivityRunning";
   static final String RUNNING_SINCE = "selectFastiAnalyticsRunningSince";
   static final String REPEATS = "selectFastiAnalyticsRepeats";
   static final String INCIDENTS = "selectFastiAnalyticsIncidents";
   static final String INSTANCE_BUCKETS = "selectFastiAnalyticsInstanceBuckets";
   static final String INSTANCE_COUNTS = "selectFastiAnalyticsInstanceCounts";
+  static final String INSTANCE_RUNNING = "selectFastiAnalyticsInstanceRunning";
+  static final String KEY_HISTORY = "selectFastiAnalyticsKeyHistory";
   static final String TREND_BUCKETS = "selectFastiAnalyticsTrendBuckets";
   static final String TREND_STARTED = "selectFastiAnalyticsTrendStarted";
   static final String SLOWEST = "selectFastiAnalyticsSlowest";
   static final String OLDEST_RUNNING = "selectFastiAnalyticsOldestRunning";
   static final String USER_TASKS = "selectFastiAnalyticsUserTasks";
 
-  static final String[] STATEMENTS = { ACTIVITY_BUCKETS, ACTIVITY_COUNTS, RUNNING_SINCE, REPEATS, INCIDENTS,
-      INSTANCE_BUCKETS, INSTANCE_COUNTS, TREND_BUCKETS, TREND_STARTED, SLOWEST, OLDEST_RUNNING, USER_TASKS };
+  static final String[] STATEMENTS = { ACTIVITY_BUCKETS, ACTIVITY_COUNTS, ACTIVITY_RUNNING, RUNNING_SINCE, REPEATS,
+      INCIDENTS, INSTANCE_BUCKETS, INSTANCE_COUNTS, INSTANCE_RUNNING, KEY_HISTORY, TREND_BUCKETS, TREND_STARTED,
+      SLOWEST, OLDEST_RUNNING, USER_TASKS };
 
   static final int MAX_ID_LENGTH = 255;
   static final long DEFAULT_RANGE = 30L * 24 * 60 * 60 * 1000;
-  static final String MULTI_INSTANCE_BODY = "multiInstanceBody";
-  static final String MULTI_INSTANCE_SUFFIX = "#" + MULTI_INSTANCE_BODY;
-  /** At most this many activities are checked for runs slower than their P90. */
-  static final int MAX_RUNNING_CHECKS = 500;
+  /** Activities checked for runs slower than their P90 in one statement, and in total. */
+  static final int RUNNING_CHECKS_PER_STATEMENT = 200;
+  static final int MAX_RUNNING_CHECKS = 2000;
+  /**
+   * The versions of a process are resolved to their ids, so that the statements can seek the
+   * indexes on {@code (PROC_DEF_ID_, END_TIME_)}; with more versions than this the key is used.
+   */
+  static final int MAX_RESOLVED_DEFINITIONS = 500;
 
   protected final ProcessEngineConfigurationImpl configuration;
   protected String processDefinitionKey;
@@ -176,6 +183,7 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
 
     AnalyticsParameter parameter = new AnalyticsParameter();
     parameter.processDefinitionKey = processDefinitionKey;
+    parameter.databaseType = configuration.getDatabaseType();
     for (String id : processDefinitionIds) {
       ProcessDefinitionEntity definition = commandContext.getProcessDefinitionManager().findLatestProcessDefinitionById(id);
       if (definition == null || !processDefinitionKey.equals(definition.getKey())) {
@@ -183,6 +191,17 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
             + ", which is not a version of process " + processDefinitionKey);
       }
       parameter.definitionIds.add(id);
+    }
+    if (processDefinitionIds.isEmpty()) {
+      List<String> versions = definitionIdsOfKey(commandContext);
+      if (versions.isEmpty()) {
+        parameter.maxResults = 1;
+        if (select(commandContext, KEY_HISTORY, parameter).isEmpty()) {
+          throw new NotFoundException("No process with key " + processDefinitionKey);
+        }
+      } else if (versions.size() <= MAX_RESOLVED_DEFINITIONS) {
+        parameter.definitionIds.addAll(versions);
+      }
     }
     parameter.tenantIds = new ArrayList<>(tenantIds);
     if (commandContext.getTenantManager().isTenantCheckEnabled()) {
@@ -206,6 +225,25 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
   }
 
   /**
+   * The ids of the versions of the process that the tenant check lets the user see. The user's
+   * permission is {@code READ_HISTORY} on the key, checked before; reading the definitions needs
+   * no {@code READ} of its own.
+   */
+  protected List<String> definitionIdsOfKey(CommandContext commandContext) {
+    commandContext.disableAuthorizationCheck();
+    try {
+      List<String> ids = new ArrayList<>();
+      for (ProcessDefinition definition : commandContext.getProcessDefinitionManager()
+          .findProcessDefinitionsByKey(processDefinitionKey)) {
+        ids.add(definition.getId());
+      }
+      return ids;
+    } finally {
+      commandContext.enableAuthorizationCheck();
+    }
+  }
+
+  /**
    * The statements live in a mapping file of their own; an application that replaced the default
    * {@code mappings.xml} with a copy that lacks it would otherwise get a MyBatis error that does
    * not say what to do.
@@ -226,11 +264,11 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
         Integer.MAX_VALUE);
   }
 
-  /** Reads at most {@code limit} rows; the database may still sort them all. */
+  /** Reads at most {@code limit} rows: the statement limits its result in SQL. */
   protected <T> List<T> select(CommandContext commandContext, String statement, AnalyticsParameter parameter,
       int limit) {
-    String mapped = configuration.getDbSqlSessionFactory().mapStatement(statement);
-    return commandContext.getDbSqlSession().getSqlSession().selectList(mapped, parameter, new RowBounds(0, limit));
+    parameter.maxResults = limit;
+    return select(commandContext, statement, parameter);
   }
 
   protected static Map<String, Histogram> histograms(List<BucketRow> rows) {
@@ -255,8 +293,9 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
     Date now = ClockUtil.getCurrentTime();
 
     Map<String, ActivityAnalytics> activities = new TreeMap<>();
-    Set<String> multiInstanceInner = new HashSet<>();
-    for (ActivityCountRow row : this.<ActivityCountRow>select(commandContext, ACTIVITY_COUNTS, parameter)) {
+    List<ActivityCountRow> counts = new ArrayList<>(this.<ActivityCountRow>select(commandContext, ACTIVITY_COUNTS, parameter));
+    counts.addAll(this.<ActivityCountRow>select(commandContext, ACTIVITY_RUNNING, parameter));
+    for (ActivityCountRow row : counts) {
       if (row.activityId == null) {
         continue;
       }
@@ -274,9 +313,6 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
           || row.oldestRunning.before(activity.getOldestRunningStart()))) {
         activity.setOldestRunningStart(row.oldestRunning);
       }
-      if (MULTI_INSTANCE_BODY.equals(row.activityType) && row.activityId.endsWith(MULTI_INSTANCE_SUFFIX)) {
-        multiInstanceInner.add(row.activityId.substring(0, row.activityId.length() - MULTI_INSTANCE_SUFFIX.length()));
-      }
     }
 
     Map<String, Histogram> histograms = histograms(select(commandContext, ACTIVITY_BUCKETS, parameter));
@@ -291,27 +327,29 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
       }
     }
 
-    // runs slower than the P90 of the range, among those running now
+    // runs slower than the P90 of the range, among those running now, a batch per statement
+    List<ActivitySince> checks = new ArrayList<>();
     for (ActivityAnalytics activity : activities.values()) {
       Long p90 = activity.getDurations().getP90();
-      if (activity.getRunning() > 0 && p90 != null && parameter.activitySince.size() < MAX_RUNNING_CHECKS) {
-        parameter.activitySince.add(new ActivitySince(activity.getActivityId(), new Date(now.getTime() - p90)));
+      if (activity.getRunning() > 0 && p90 != null && checks.size() < MAX_RUNNING_CHECKS) {
+        checks.add(new ActivitySince(activity.getActivityId(), new Date(now.getTime() - p90)));
       }
     }
-    if (!parameter.activitySince.isEmpty()) {
+    for (int start = 0; start < checks.size(); start += RUNNING_CHECKS_PER_STATEMENT) {
+      parameter.activitySince = new ArrayList<>(
+          checks.subList(start, Math.min(checks.size(), start + RUNNING_CHECKS_PER_STATEMENT)));
       for (KeyCountRow row : this.<KeyCountRow>select(commandContext, RUNNING_SINCE, parameter)) {
         ActivityAnalytics activity = activities.get(row.key);
         if (activity != null) {
           activity.setRunningOverP90(row.count);
         }
       }
-      parameter.activitySince.clear();
     }
+    parameter.activitySince = new ArrayList<>();
 
-    // the iterations of a multi-instance activity share their parent, the body: no rework
     for (KeyCountRow row : this.<KeyCountRow>select(commandContext, REPEATS, parameter)) {
       ActivityAnalytics activity = activities.get(row.key);
-      if (activity != null && !multiInstanceInner.contains(row.key)) {
+      if (activity != null) {
         activity.setRepeatedInstances(row.count);
         activity.setRepeatedExecutions(row.extra);
       }
@@ -344,8 +382,16 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
   public InstanceAnalytics instances() {
     return execute(commandContext -> {
       AnalyticsParameter parameter = prepare(commandContext);
-      List<InstanceCountRow> counts = select(commandContext, INSTANCE_COUNTS, parameter);
-      InstanceCountRow count = counts.isEmpty() || counts.get(0) == null ? new InstanceCountRow() : counts.get(0);
+      InstanceCountRow count = new InstanceCountRow();
+      List<InstanceCountRow> counts = new ArrayList<>(this.<InstanceCountRow>select(commandContext, INSTANCE_COUNTS, parameter));
+      counts.addAll(this.<InstanceCountRow>select(commandContext, INSTANCE_RUNNING, parameter));
+      for (InstanceCountRow row : counts) {
+        if (row != null) {
+          count.completed += row.completed;
+          count.terminated += row.terminated;
+          count.running += row.running;
+        }
+      }
       Histogram histogram = histograms(select(commandContext, INSTANCE_BUCKETS, parameter)).get("");
       DurationStatistics durations = histogram == null ? DurationStatistics.empty(parameter.target)
           : histogram.toStatistics(parameter.target, true);
@@ -453,11 +499,12 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
       Map<String, TaskTimes> byTask = new LinkedHashMap<>();
       Map<String, TaskTimes> byAssignee = new LinkedHashMap<>();
       for (UserTaskRow row : rows) {
-        TaskTimes task = byTask.computeIfAbsent(String.valueOf(row.taskDefinitionKey), ignored -> new TaskTimes(row.taskDefinitionKey));
+        TaskTimes task = byTask.computeIfAbsent(row.taskDefinitionKey, TaskTimes::new);
         if (task.name == null) {
           task.name = row.name;
         }
-        TaskTimes assignee = byAssignee.computeIfAbsent(String.valueOf(row.assignee), ignored -> new TaskTimes(row.assignee));
+        // a task completed without assignee goes under null, apart from a user named "null"
+        TaskTimes assignee = byAssignee.computeIfAbsent(row.assignee, TaskTimes::new);
         task.add(row);
         assignee.add(row);
       }

@@ -26,12 +26,12 @@ import dev.fasti.engine.analytics.DurationStatistics.Bucket;
 /**
  * A histogram of durations that every supported database computes with plain SQL.
  *
- * <p>Ten buckets per power of ten from 1 ms to about three years. The bucket of a duration is a
+ * <p>Twenty buckets per power of ten from 1 ms to about three years. The bucket of a duration is a
  * nested {@code CASE} of constant numbers (a binary search, at most eight comparisons per row),
  * so no database function is needed: logarithms and percentile functions differ between, or are
  * missing in, PostgreSQL, MySQL/MariaDB, Oracle, SQL Server, Db2 and H2. Percentiles are
- * interpolated within their bucket on a logarithmic scale and lie within about 12 % of the exact
- * value.</p>
+ * interpolated within their bucket on a logarithmic scale; a bucket spans a factor of 10^(1/20),
+ * so they lie within about 12 % of the exact value.</p>
  */
 public final class DurationBuckets {
 
@@ -47,8 +47,8 @@ public final class DurationBuckets {
   private static long[] bounds() {
     List<Long> bounds = new ArrayList<>();
     bounds.add(1L);
-    for (int step = 1; step <= 110; step++) {
-      long bound = Math.round(Math.pow(10, step / 10.0));
+    for (int step = 1; step <= 220; step++) {
+      long bound = Math.round(Math.pow(10, step / 20.0));
       if (bound > bounds.get(bounds.size() - 1)) {
         bounds.add(bound);
       }

@@ -249,6 +249,24 @@ public class ProcessAnalyticsTest {
   }
 
   @Test
+  public void shouldNotFindAnUnknownProcess() {
+    assertThatThrownBy(() -> ProcessAnalytics.query(engine).processDefinitionKey("nothing").activities())
+        .isInstanceOf(org.camunda.bpm.engine.exception.NotFoundException.class);
+  }
+
+  @Test
+  public void shouldGiveTheSameAnswerForTheVersionAndForAllVersions() {
+    String id = engine.getRepositoryService().createProcessDefinitionQuery().processDefinitionKey("order")
+        .singleResult().getId();
+    Map<String, ActivityAnalytics> all = byId(query().activities(), ActivityAnalytics::getActivityId);
+    Map<String, ActivityAnalytics> one = byId(query().processDefinitionIdIn(Collections.singletonList(id)).activities(),
+        ActivityAnalytics::getActivityId);
+    assertThat(one.keySet()).isEqualTo(all.keySet());
+    assertThat(one.get("review").getFinished()).isEqualTo(all.get("review").getFinished());
+    assertThat(one.get("review").getRunning()).isEqualTo(1);
+  }
+
+  @Test
   public void shouldRefuseVersionsOfAnotherProcess() {
     assertThatThrownBy(() -> query().processDefinitionIdIn(Collections.singletonList("other:1:1")).activities())
         .isInstanceOf(BadUserRequestException.class);

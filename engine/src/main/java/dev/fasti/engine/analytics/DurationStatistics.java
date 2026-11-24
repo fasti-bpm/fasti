@@ -22,9 +22,9 @@ import java.util.List;
 /**
  * How long something took: count, total, extremes, average and percentiles, in milliseconds.
  *
- * <p>Statistics the engine computes in the database are built from a histogram with ten buckets
- * per power of ten; their percentiles are interpolated within a bucket and are within about
- * 12 % of the exact value ({@link #isApproximate()}). Count, total, minimum, maximum, average and
+ * <p>Statistics the engine computes in the database are built from a histogram with twenty
+ * buckets per power of ten; their percentiles are interpolated within a bucket and are within
+ * about 12 % of the exact value ({@link #isApproximate()}). Count, total, minimum, maximum, average and
  * {@link #getWithinTarget()} are exact.</p>
  */
 public class DurationStatistics {

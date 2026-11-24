@@ -35,6 +35,7 @@ import dev.fasti.engine.analytics.ProcessAnalytics;
 import dev.fasti.engine.analytics.ProcessAnalyticsQuery;
 import dev.fasti.engine.analytics.SlowInstance;
 import dev.fasti.engine.analytics.UserTaskAnalytics;
+import org.camunda.bpm.engine.exception.NotFoundException;
 import org.camunda.bpm.engine.rest.AnalyticsRestService;
 import org.camunda.bpm.engine.rest.dto.converter.DateConverter;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
@@ -57,8 +58,8 @@ public class AnalyticsRestServiceImpl extends AbstractRestProcessEngineAware imp
   @Override
   public List<SlowInstance> getActivityInstances(String key, String activityId, UriInfo uriInfo) {
     MultivaluedMap<String, String> parameters = uriInfo.getQueryParameters();
-    int max = (int) number(parameters, "maxResults", DEFAULT_MAX_RESULTS, Integer.MAX_VALUE);
-    boolean running = Boolean.parseBoolean(parameters.getFirst("running"));
+    int max = (int) number(parameters, "maxResults", DEFAULT_MAX_RESULTS, 1, ProcessAnalyticsQuery.MAX_RESULTS);
+    boolean running = flag(parameters, "running");
     return run(() -> running ? query(key, parameters).oldestRunning(activityId, max)
         : query(key, parameters).slowest(activityId, max));
   }
@@ -82,7 +83,8 @@ public class AnalyticsRestServiceImpl extends AbstractRestProcessEngineAware imp
   @Override
   public UserTaskAnalytics getUserTasks(String key, UriInfo uriInfo) {
     MultivaluedMap<String, String> parameters = uriInfo.getQueryParameters();
-    int max = (int) number(parameters, "maxTasks", ProcessAnalyticsQuery.DEFAULT_USER_TASKS, Integer.MAX_VALUE);
+    int max = (int) number(parameters, "maxTasks", ProcessAnalyticsQuery.DEFAULT_USER_TASKS, 1,
+        ProcessAnalyticsQuery.MAX_USER_TASKS);
     return run(() -> query(key, parameters).userTasks(max));
   }
 
@@ -92,6 +94,8 @@ public class AnalyticsRestServiceImpl extends AbstractRestProcessEngineAware imp
     } catch (AnalyticsNotAvailableException e) {
       // a custom MyBatis configuration without the statements
       throw new RestException(Status.NOT_IMPLEMENTED, e, e.getMessage());
+    } catch (NotFoundException e) {
+      throw new InvalidRequestException(Status.NOT_FOUND, e, e.getMessage());
     }
   }
 
@@ -114,7 +118,7 @@ public class AnalyticsRestServiceImpl extends AbstractRestProcessEngineAware imp
       query.finishedBefore(date("finishedBefore", before));
     }
     if (parameters.getFirst("targetDuration") != null && !parameters.getFirst("targetDuration").isEmpty()) {
-      query.targetDuration(number(parameters, "targetDuration", 0, Long.MAX_VALUE));
+      query.targetDuration(number(parameters, "targetDuration", 0, 0, Long.MAX_VALUE));
     }
     return query;
   }
@@ -147,19 +151,32 @@ public class AnalyticsRestServiceImpl extends AbstractRestProcessEngineAware imp
   }
 
   protected static long number(MultivaluedMap<String, String> parameters, String name, long defaultValue,
-      long maximum) {
+      long minimum, long maximum) {
     String value = parameters.getFirst(name);
     if (value == null || value.isEmpty()) {
       return defaultValue;
     }
     try {
       long number = Long.parseLong(value.trim());
-      if (number < 0 || number > maximum) {
+      if (number < minimum || number > maximum) {
         throw new NumberFormatException();
       }
       return number;
     } catch (NumberFormatException e) {
-      throw new InvalidRequestException(Status.BAD_REQUEST, name + " must be a whole number from 0 to " + maximum);
+      throw new InvalidRequestException(Status.BAD_REQUEST,
+          name + " must be a whole number from " + minimum + " to " + maximum);
     }
+  }
+
+  /** {@code true} or {@code false}; absent is false. */
+  protected static boolean flag(MultivaluedMap<String, String> parameters, String name) {
+    String value = parameters.getFirst(name);
+    if (value == null || value.isEmpty() || "false".equalsIgnoreCase(value.trim())) {
+      return false;
+    }
+    if ("true".equalsIgnoreCase(value.trim())) {
+      return true;
+    }
+    throw new InvalidRequestException(Status.BAD_REQUEST, name + " must be true or false");
   }
 }

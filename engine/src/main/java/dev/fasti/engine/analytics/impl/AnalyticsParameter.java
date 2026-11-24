@@ -57,6 +57,8 @@ public class AnalyticsParameter {
   protected Date periodEnd;
   protected String periodOfEndSql;
   protected String periodOfStartSql;
+  protected String databaseType;
+  protected int maxResults;
 
   public String getProcessDefinitionKey() {
     return processDefinitionKey;
@@ -100,6 +102,16 @@ public class AnalyticsParameter {
 
   public List<Date> getPeriodEnds() {
     return periodEnds;
+  }
+
+  /** The database type of the engine ({@code postgres}, {@code mysql}, {@code oracle}, {@code mssql}, {@code db2}, {@code h2}). */
+  public String getDatabaseType() {
+    return databaseType;
+  }
+
+  /** The row limit of the limited statements. */
+  public int getMaxResults() {
+    return maxResults;
   }
 
   public Date getPeriodStart() {

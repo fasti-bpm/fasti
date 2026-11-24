@@ -195,6 +195,20 @@ public class AnalyticsRestServiceTest extends AbstractRestServiceTest {
   }
 
   @Test
+  public void shouldAnswerNotFoundForAnUnknownKey() {
+    given().pathParam("key", "no-such-process")
+        .then().expect().statusCode(Status.NOT_FOUND.getStatusCode())
+        .when().get(ANALYTICS_URL + "/activities");
+  }
+
+  @Test
+  public void shouldRefuseAFlagThatIsNoBoolean() {
+    given().pathParam("key", "check").pathParam("activityId", "review").queryParam("running", "yes")
+        .then().expect().statusCode(Status.BAD_REQUEST.getStatusCode())
+        .when().get(ANALYTICS_URL + "/activities/{activityId}/instances");
+  }
+
+  @Test
   public void shouldRequireReadHistory() {
     requestAuthentication = new Authentication("eve", Collections.emptyList());
     given().pathParam("key", "check")

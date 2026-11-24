@@ -232,7 +232,7 @@ const messages: Catalog = {
   'ops.stats.rangeAll': 'Sepanjang waktu',
   'ops.stats.rangeDays': '{count} hari terakhir',
   'ops.stats.sampled': 'Berdasarkan {count} instans aktivitas terakhir yang selesai.',
-  'ops.stats.tab': 'Statistik',
+  'ops.stats.tab': 'Analitik',
   'ops.sync': 'Jalankan sekarang',
   'ops.value': 'Nilai',
   'ops.variables.add': 'Tambah variabel',

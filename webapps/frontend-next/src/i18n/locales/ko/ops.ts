@@ -232,7 +232,7 @@ const messages: Catalog = {
   'ops.stats.rangeAll': '전체 기간',
   'ops.stats.rangeDays': '최근 {count}일',
   'ops.stats.sampled': '최근 완료된 액티비티 인스턴스 {count}개 기준입니다.',
-  'ops.stats.tab': '통계',
+  'ops.stats.tab': '분석',
   'ops.sync': '즉시 실행',
   'ops.value': '값',
   'ops.variables.add': '변수 추가',

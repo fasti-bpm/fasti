@@ -92,6 +92,13 @@
 }
 
 /* finished instances, e.g. on a diagram of history */
+.diagram-badge--value {
+  background: var(--text);
+  color: var(--surface);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .diagram-badge--finished {
   background: var(--surface);
   border-color: var(--success);

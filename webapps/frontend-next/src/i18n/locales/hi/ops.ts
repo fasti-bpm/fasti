@@ -257,7 +257,7 @@ const messages: Catalog = {
   'ops.stats.rangeDays': 'पिछले {count} दिन',
   'ops.stats.rangeDays.one': 'पिछले {count} दिन',
   'ops.stats.sampled': 'नवीनतम {count} समाप्त गतिविधि इंस्टेंस पर आधारित।',
-  'ops.stats.tab': 'आँकड़े',
+  'ops.stats.tab': 'विश्लेषण',
   'ops.sync': 'तुरंत चलाएँ',
   'ops.value': 'मान',
   'ops.variables.add': 'वेरिएबल जोड़ें',

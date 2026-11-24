@@ -255,7 +255,7 @@ const messages = {
   'ops.stats.rangeDays': 'Last {count} days',
   'ops.stats.rangeDays.one': 'Last day',
   'ops.stats.sampled': 'Based on the latest {count} finished activity instances.',
-  'ops.stats.tab': 'Statistics',
+  'ops.stats.tab': 'Analytics',
   'ops.sync': 'Run at once',
   'ops.value': 'Value',
   'ops.variables.add': 'Add variable',

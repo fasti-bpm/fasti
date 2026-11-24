@@ -58,7 +58,7 @@ const INSTANCE_FILTERS = ['bk', 'inc', 'act', 'vars'] as const;
 import { ModifyDialog } from './ModifyDialog';
 import type { InstanceSelection } from '../api/operations';
 import { migrationPath } from './paths';
-import { StatisticsTab } from './StatisticsTab';
+import { AnalyticsTab } from './AnalyticsTab';
 import { OverflowRow } from '../app/OverflowMenu';
 
 const BpmnDiagram = lazy(() => import('../bpmn/BpmnDiagram'));
@@ -1142,7 +1142,7 @@ export function DefinitionPage() {
             <HistoricInstanceList definitionId={id} processKey={current.key} nodes={nodes} />
           </Tabs.Content>
           <Tabs.Content className="ctabs__content" value="statistics">
-            {xml.data && <StatisticsTab definitionId={id} processKey={current.key} xml={xml.data} names={names} />}
+            {xml.data && <AnalyticsTab definitionId={id} processKey={current.key} xml={xml.data} names={names} />}
           </Tabs.Content>
           <Tabs.Content className="ctabs__content" value="incidents">
             <DefinitionIncidentsTab definitionId={id} names={names} activities={activities} />

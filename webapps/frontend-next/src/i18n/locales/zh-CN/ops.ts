@@ -232,7 +232,7 @@ const messages: Catalog = {
   'ops.stats.rangeAll': '全部时间',
   'ops.stats.rangeDays': '最近 {count} 天',
   'ops.stats.sampled': '基于最近 {count} 个已结束的活动实例。',
-  'ops.stats.tab': '统计',
+  'ops.stats.tab': '分析',
   'ops.sync': '立即运行',
   'ops.value': '值',
   'ops.variables.add': '添加变量',

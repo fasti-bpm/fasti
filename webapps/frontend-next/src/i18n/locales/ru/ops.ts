@@ -307,7 +307,7 @@ const messages: Catalog = {
   'ops.stats.rangeDays.few': 'Последние {count} дня',
   'ops.stats.rangeDays.many': 'Последние {count} дней',
   'ops.stats.sampled': 'На основе последних завершённых экземпляров действий ({count}).',
-  'ops.stats.tab': 'Статистика',
+  'ops.stats.tab': 'Аналитика',
   'ops.sync': 'Выполнить сразу',
   'ops.value': 'Значение',
   'ops.variables.add': 'Добавить переменную',

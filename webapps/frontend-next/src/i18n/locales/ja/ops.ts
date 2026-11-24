@@ -232,7 +232,7 @@ const messages: Catalog = {
   'ops.stats.rangeAll': '全期間',
   'ops.stats.rangeDays': '過去 {count} 日間',
   'ops.stats.sampled': '最新の終了したアクティビティインスタンス {count} 件に基づきます。',
-  'ops.stats.tab': '統計',
+  'ops.stats.tab': '分析',
   'ops.sync': 'すぐに実行',
   'ops.value': '値',
   'ops.variables.add': '変数を追加',

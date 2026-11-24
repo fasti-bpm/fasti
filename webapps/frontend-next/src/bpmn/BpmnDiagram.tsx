@@ -39,6 +39,10 @@ export interface ActivityBadge {
   incidents: number;
   /** finished or canceled instances, e.g. from history */
   finished?: number;
+  /** a measured value shown as text, e.g. a duration of the heat map */
+  value?: string;
+  /** what the value is, read on hover and by screen readers */
+  valueTitle?: string;
 }
 
 /** A class put on an activity, e.g. a colour of the heat map. */
@@ -62,10 +66,10 @@ function fit(canvas: Canvas) {
 }
 const NOT_AN_ACTIVITY = /Process$|Collaboration$|Participant$|Lane$|SequenceFlow$|label$/;
 
-function badge(kind: 'instances' | 'incidents' | 'finished', value: number, title: string): HTMLElement {
+function badge(kind: 'instances' | 'incidents' | 'finished' | 'value', value: number | string, title: string): HTMLElement {
   const element = document.createElement('span');
   element.className = `diagram-badge diagram-badge--${kind}`;
-  element.textContent = value > 999 ? '999+' : String(value);
+  element.textContent = typeof value === 'string' ? value : value > 999 ? '999+' : String(value);
   element.title = title;
   return element;
 }
@@ -214,11 +218,14 @@ export default function BpmnDiagram({
     const registry = instance.get<ElementRegistry>('elementRegistry');
     for (const entry of badges) {
       const finished = entry.finished ?? 0;
-      if ((entry.instances <= 0 && entry.incidents <= 0 && finished <= 0) || !registry.get(entry.activityId)) {
+      if ((entry.instances <= 0 && entry.incidents <= 0 && finished <= 0 && !entry.value) || !registry.get(entry.activityId)) {
         continue;
       }
       const group = document.createElement('div');
       group.className = 'diagram-badges';
+      if (entry.value) {
+        group.append(badge('value', entry.value, entry.valueTitle ?? entry.value));
+      }
       if (entry.instances > 0) {
         group.append(
           badge('instances', entry.instances, t('diagram.badge.instances', { count: entry.instances })),

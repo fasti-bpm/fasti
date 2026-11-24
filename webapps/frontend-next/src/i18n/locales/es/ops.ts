@@ -257,7 +257,7 @@ const messages: Catalog = {
   'ops.stats.rangeDays': 'Últimos {count} días',
   'ops.stats.rangeDays.one': 'Último día',
   'ops.stats.sampled': 'Basado en las últimas {count} instancias de actividad finalizadas.',
-  'ops.stats.tab': 'Estadísticas',
+  'ops.stats.tab': 'Análisis',
   'ops.sync': 'Ejecutar de inmediato',
   'ops.value': 'Valor',
   'ops.variables.add': 'Añadir variable',

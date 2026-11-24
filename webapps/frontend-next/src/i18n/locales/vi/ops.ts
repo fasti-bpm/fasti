@@ -232,7 +232,7 @@ const messages: Catalog = {
   'ops.stats.rangeAll': 'Toàn bộ',
   'ops.stats.rangeDays': '{count} ngày gần nhất',
   'ops.stats.sampled': 'Dựa trên {count} lượt chạy hoạt động kết thúc gần nhất.',
-  'ops.stats.tab': 'Thống kê',
+  'ops.stats.tab': 'Phân tích',
   'ops.sync': 'Chạy ngay',
   'ops.value': 'Giá trị',
   'ops.variables.add': 'Thêm biến',

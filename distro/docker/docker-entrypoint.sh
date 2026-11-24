@@ -383,12 +383,26 @@ if [ -d /camunda/configuration/resources ]; then
   log "deployments from /camunda/configuration/resources"
 fi
 
-eval "set -- $ARGS $USER_ARGS"
+APP_JAR="$FASTI_HOME/internal/app/fasti-bpm-run-core.jar"
+if [ -f "$APP_JAR" ]; then
+  # the extracted application (see the Dockerfile): the directories of LOADER_PATH and their jars
+  # come first, as with loader.path, then the application jar, whose manifest lists its lib/
+  CLASS_PATH=""
+  old_ifs=$IFS
+  IFS=,
+  for dir in $LOADER_PATH; do
+    dir=${dir%/}
+    CLASS_PATH="$CLASS_PATH$dir:$dir/*:"
+  done
+  IFS=$old_ifs
+  LAUNCH="-cp $(quote "$CLASS_PATH$APP_JAR") org.camunda.bpm.run.CamundaBpmRun"
+else
+  LAUNCH="-Dloader.path=$(quote "$LOADER_PATH") -jar $(quote "$FASTI_HOME/internal/fasti-bpm-run-core.jar")"
+fi
+
+eval "set -- $LAUNCH --spring.config.location=$(quote "$CONFIG") $ARGS $USER_ARGS"
 # exec: the JVM becomes PID 1 and receives SIGTERM for a graceful shutdown
 # shellcheck disable=SC2086
 exec java $JVM_OPTS ${JAVA_OPTS:-} \
-  -Dloader.path="$LOADER_PATH" \
   -Dcamunda.deploymentDir="$DEPLOYMENT_DIR" \
-  -jar "$FASTI_HOME/internal/fasti-bpm-run-core.jar" \
-  --spring.config.location="$CONFIG" \
   "$@"

@@ -22,6 +22,8 @@ ARG MIN_JAVA_VERSION=21.0.13.1
 
 FROM ${JRE_IMAGE} AS unpack
 COPY fasti-bpm-run.tar.gz /tmp/
+# The application is extracted to plain jars (internal/app/fasti-bpm-run-core.jar and its lib/)
+# instead of the executable jar: loading classes from nested jars cost about 1.2 s of every start.
 RUN mkdir -p /fasti \
  && tar -xzf /tmp/fasti-bpm-run.tar.gz -C /fasti \
  && rm -f /fasti/start.sh /fasti/start.bat /fasti/shutdown.sh /fasti/shutdown.bat \
@@ -29,7 +31,10 @@ RUN mkdir -p /fasti \
           /fasti/configuration/keystore/keystore.p12 \
  && rm -rf /fasti/configuration/resources/* \
  && mv /fasti/configuration/default.yml /fasti/configuration/default.yml.example \
- && mkdir -p /fasti/configuration/drivers /fasti/data /fasti/javaagent
+ && mkdir -p /fasti/configuration/drivers /fasti/data /fasti/javaagent \
+ && java -Djarmode=tools -jar /fasti/internal/fasti-bpm-run-core.jar extract --destination /fasti/internal/app \
+ && rm /fasti/internal/fasti-bpm-run-core.jar \
+ && test -f /fasti/internal/app/fasti-bpm-run-core.jar
 COPY drivers/ /fasti/configuration/drivers/
 COPY fasti-docker.yml /fasti/configuration/docker.yml
 COPY fasti-docker-production.yml /fasti/configuration/docker-production.yml
@@ -58,11 +63,15 @@ ENV FASTI_HOME=/fasti \
 RUN apk upgrade --no-cache \
  && addgroup -S -g 1000 fasti \
  && adduser -S -D -H -u 1000 -G fasti -h /fasti -s /sbin/nologin fasti
-RUN rm -rf "$JAVA_HOME"
-COPY --from=jre /jre "$JAVA_HOME"
 COPY --from=unpack /fasti /fasti
+ARG MIN_JAVA_VERSION
 RUN chown fasti:fasti /fasti/data \
- && java -version
+ && java -version \
+ && v="$(java -XshowSettings:properties -version 2>&1 | sed -n 's/^ *java.runtime.version = //p')" \
+ && v="${v%%[+-]*}" \
+ && if ! printf '%s\n%s\n' "$MIN_JAVA_VERSION" "$v" | sort -V -C; then \
+      echo "Java $v of the base image is older than $MIN_JAVA_VERSION" >&2; exit 1; \
+    fi
 
 USER 1000:1000
 WORKDIR /fasti

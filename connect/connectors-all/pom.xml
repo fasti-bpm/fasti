@@ -8,7 +8,7 @@
   <parent>
     <groupId>dev.fasti.platform.connect</groupId>
     <artifactId>fasti-connect-root</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
   </parent>
 
   <artifactId>fasti-connect-connectors-all</artifactId>

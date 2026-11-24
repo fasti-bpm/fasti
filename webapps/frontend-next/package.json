@@ -1,7 +1,7 @@
 {
   "name": "fasti-webapp-next",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.2.1",
   "type": "module",
   "license": "Apache-2.0",
   "engines": {

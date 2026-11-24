@@ -60,7 +60,7 @@ Ghi cấu hình vào một file values, ví dụ `fasti-values.yaml`:
 
 ```yaml
 image:
-  tag: "1.2.0"
+  tag: "1.2.1"
   # digest: sha256:...            # nên ghim image theo digest
 database:
   url: jdbc:postgresql://postgres.db.svc.cluster.local:5432/fasti
@@ -127,7 +127,7 @@ resources:
   - ../fasti/distro/kubernetes/manifests
 images:
   - name: fastidev/fasti-bpm
-    newTag: "1.2.0"
+    newTag: "1.2.1"
 patches:
   - target: {kind: Deployment, name: fasti}
     patch: |

@@ -34,7 +34,7 @@ Camunda 7.23 और उससे पुराने संस्करणों 
    (`camunda.bpm.run.auth.enabled`), प्राधिकरण (`camunda.bpm.authorization.enabled`),
    प्लगइन, LDAP/SSO, JVM समय क्षेत्र, पासवर्ड हैशिंग (`passwordEncryptor`, `saltGenerator`),
    तालिका प्रीफ़िक्स/स्कीमा।
-4. **इमेज पुल करें** `fastidev/fasti-bpm:1.2.0` (या [distro/docker/README.md](../distro/docker/README.md)
+4. **इमेज पुल करें** `fastidev/fasti-bpm:1.2.1` (या [distro/docker/README.md](../distro/docker/README.md)
    में बताए अनुसार स्रोत से बनाएँ)।
 5. **उन्हीं `DB_*` वेरिएबल के साथ Fasti शुरू करें** (और वही `TZ` रखें)। Camunda Run के विपरीत,
    Fasti इमेज **डिफ़ॉल्ट रूप से REST प्रमाणीकरण अनिवार्य करती है और प्राधिकरण लागू करती है**: डेटाबेस

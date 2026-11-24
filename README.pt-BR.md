@@ -24,7 +24,7 @@ Container Registry (`ghcr.io/fasti-bpm/fasti-bpm`), para amd64 e arm64:
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.2.0
+  fastidev/fasti-bpm:1.2.1
 ```
 
 Abra <http://localhost:8080/fasti/> e entre. Sem `DB_URL`, a imagem usa um banco de dados H2

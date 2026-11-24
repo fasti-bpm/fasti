@@ -4,7 +4,7 @@
   <parent>
     <groupId>dev.fasti.platform.commons</groupId>
     <artifactId>fasti-commons-root</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
   </parent>
 
   <artifactId>fasti-commons-logging</artifactId>

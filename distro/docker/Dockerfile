@@ -34,7 +34,11 @@ RUN mkdir -p /fasti \
  && mkdir -p /fasti/configuration/drivers /fasti/data /fasti/javaagent \
  && java -Djarmode=tools -jar /fasti/internal/fasti-bpm-run-core.jar extract --destination /fasti/internal/app \
  && rm /fasti/internal/fasti-bpm-run-core.jar \
- && test -f /fasti/internal/app/fasti-bpm-run-core.jar
+ && test -f /fasti/internal/app/fasti-bpm-run-core.jar \
+ && dup="$(cd /fasti/internal && find . -name '*.jar' | sed -E 's#/([^/]*)-[0-9][^/]*\.jar$#/\1#' | sort | uniq -d)" \
+ && if [ -n "$dup" ]; then \
+      echo "More than one version of these jars (left over from an earlier build?): $dup" >&2; exit 1; \
+    fi
 COPY drivers/ /fasti/configuration/drivers/
 COPY fasti-docker.yml /fasti/configuration/docker.yml
 COPY fasti-docker-production.yml /fasti/configuration/docker-production.yml

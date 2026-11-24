@@ -2310,7 +2310,7 @@ a.trend:hover {
 
 .analytics__trend-target {
   position: absolute;
-  z-index: 1;
+  z-index: var(--z-sticky);
   inset-inline: 0;
   border-top: 2px dashed var(--danger);
   pointer-events: none;
@@ -2335,7 +2335,7 @@ a.trend:hover {
   display: inline-block;
   width: 10px;
   height: 10px;
-  border-radius: 2px;
+  border-radius: var(--r-xs);
 }
 
 .analytics__key--p50 {

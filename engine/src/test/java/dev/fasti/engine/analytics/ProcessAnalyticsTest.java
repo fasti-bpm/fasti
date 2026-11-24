@@ -103,6 +103,8 @@ public class ProcessAnalyticsTest {
   public static void closeEngine() {
     ClockUtil.reset();
     engine.close();
+    // a closed engine still holds its MyBatis configuration: let the rest of the fork reclaim it
+    engine = null;
   }
 
   @After

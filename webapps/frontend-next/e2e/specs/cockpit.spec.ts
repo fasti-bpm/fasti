@@ -214,10 +214,16 @@ test.describe('Cockpit', () => {
     await expect(table.getByRole('row').filter({ hasText: 'E2E migrate' })).toHaveCount(0);
 
     await open(app, `cockpit/processes/definition/${v1.id}`);
-    await main(app).getByRole('tab', { name: 'Statistics' }).click();
-    await expect(main(app).getByRole('tabpanel', { name: 'Statistics' })).toBeVisible();
+    await main(app).getByRole('tab', { name: 'Analytics' }).click();
+    const analytics = main(app).getByRole('tabpanel', { name: 'Analytics' });
+    await expect(analytics).toBeVisible();
+    await expect(analytics.getByText('Instances completed')).toBeVisible();
     // the heat map colours the activities by how often they ran
+    await analytics.getByRole('button', { name: 'Reached', exact: true }).click();
     await expect(main(app).locator('[data-element-id="review"][class*="heat-"]').first()).toBeAttached();
+    // the details of an activity, chosen without the mouse
+    await analytics.getByRole('combobox', { name: 'Activity' }).selectOption('review');
+    await expect(analytics.getByRole('region', { name: /^Details of / })).toBeVisible();
   });
 
   test('shows the decision history', async ({ app }) => {

@@ -105,8 +105,39 @@ run: a duration goes into its bucket through a nested `CASE` of constant numbers
 period through a `CASE` of bound dates, so no date, logarithm or percentile function is needed.
 Nothing is written and the schema is unchanged.
 
-The cost grows with the history of the process in the range: the activity statements read the
-runs of the process that finished in it, through the index on `(PROC_DEF_ID_, END_TIME_)` when
-versions are chosen. Shorter ranges and one version are cheaper. User task times read at most
-`maxTasks` tasks, the newest first. An application that replaced the default `mappings.xml`
-must add `dev/fasti/engine/analytics/ProcessAnalytics.xml`; without it the endpoints answer 501.
+The cost grows with the history of the process in the range: the statements read the runs of the
+process that finished in it, through the index on `(PROC_DEF_ID_, END_TIME_)` (the versions of a
+process are resolved to their ids). Shorter ranges and one version are cheaper. User task times read
+at most `maxTasks` tasks, the newest first, and the drill-down at most `maxResults` runs; both limit
+in SQL. An application that replaced the default `mappings.xml` must add
+`dev/fasti/engine/analytics/ProcessAnalytics.xml`; without it the endpoints answer 501.
+
+## Measured
+
+PostgreSQL 16 (4 CPUs, `work_mem` 16 MB), one process with 200,000 instances over a year: 2.45
+million activity instances, 832,000 user tasks, 1.65 million identity links, 3,543 instances
+running. Median of 11 calls in a row, as an administrator:
+
+| Call | 30 days | 365 days |
+|---|---|---|
+| `activities`, one version | 0.23 s | 1.45 s |
+| `activities`, all versions | 0.25 s | 2.7 s |
+| `instances` | 0.03–0.05 s | 0.08–0.13 s |
+| `trend` | 0.06 s | 0.11–0.19 s |
+| `user-tasks` (newest 50,000) | 0.36 s | 0.35–0.51 s |
+| slowest / oldest running runs of an activity | 0.04–0.07 s | 0.02–0.33 s |
+
+Compared with exact SQL over the same rows, every count matched, activity percentiles were within
+4.7 %, instance percentiles within 0.3 % and the trend within 3.7 %; user task times were exact.
+MariaDB 11.4 and SQL Server 2022 answered every call with the same results on a smaller history.
+Oracle and Db2 were not run.
+
+For long ranges on large histories:
+
+- **PostgreSQL:** grouping a year of a busy process spills to disk with the default `work_mem`
+  (4 MB); 32–64 MB for the engine's user makes it fit. The engine asks PostgreSQL to plan each
+  analytics call for its own values (`plan_cache_mode`), which halves the time of long ranges.
+- **MySQL/MariaDB:** a larger `tmp_table_size` and `max_heap_table_size` (for example 256 MB) keeps
+  the grouping in memory.
+- **SQL Server:** add `sendStringParametersAsUnicode=false` to the JDBC URL so that the id
+  parameters can use the indexes (this helps every query of the engine).

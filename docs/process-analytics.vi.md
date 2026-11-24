@@ -110,5 +110,35 @@ vị. Không ghi gì và không đổi schema.
 Chi phí tăng theo lượng lịch sử của quy trình trong khoảng thời gian: các câu lệnh về bước đọc các
 lượt của quy trình kết thúc trong khoảng đó, qua chỉ mục `(PROC_DEF_ID_, END_TIME_)` khi chọn phiên
 bản. Khoảng ngắn hơn và một phiên bản thì rẻ hơn. Thời gian user task đọc tối đa `maxTasks` task,
-mới nhất trước. Ứng dụng thay `mappings.xml` mặc định bằng bản riêng phải thêm
+mới nhất trước; phần truy vết đọc tối đa `maxResults` lượt; cả hai giới hạn ngay trong SQL. Ứng
+dụng thay `mappings.xml` mặc định bằng bản riêng phải thêm
 `dev/fasti/engine/analytics/ProcessAnalytics.xml`; thiếu nó các endpoint trả 501.
+
+## Số đo
+
+PostgreSQL 16 (4 CPU, `work_mem` 16 MB), một quy trình với 200.000 instance trong một năm: 2,45
+triệu lượt chạy bước, 832.000 user task, 1,65 triệu identity link, 3.543 instance đang chạy. Trung
+vị của 11 lần gọi liên tiếp, bằng tài khoản quản trị:
+
+| Lệnh gọi | 30 ngày | 365 ngày |
+|---|---|---|
+| `activities`, một phiên bản | 0,23 s | 1,45 s |
+| `activities`, mọi phiên bản | 0,25 s | 2,7 s |
+| `instances` | 0,03–0,05 s | 0,08–0,13 s |
+| `trend` | 0,06 s | 0,11–0,19 s |
+| `user-tasks` (50.000 task mới nhất) | 0,36 s | 0,35–0,51 s |
+| lượt chậm nhất / đang chờ lâu nhất của một bước | 0,04–0,07 s | 0,02–0,33 s |
+
+So với SQL chính xác trên cùng dữ liệu, mọi số đếm đều khớp, phân vị của bước lệch tối đa 4,7 %,
+phân vị instance 0,3 %, xu hướng 3,7 %; thời gian user task là chính xác. MariaDB 11.4 và SQL
+Server 2022 trả đúng mọi lệnh gọi trên một lịch sử nhỏ hơn. Chưa chạy trên Oracle và Db2.
+
+Với khoảng thời gian dài trên lịch sử lớn:
+
+- **PostgreSQL:** gom nhóm một năm của một quy trình bận rộn sẽ tràn ra đĩa với `work_mem` mặc định
+  (4 MB); đặt 32–64 MB cho user của engine là đủ. Engine yêu cầu PostgreSQL lập kế hoạch riêng cho
+  từng lần gọi phân tích (`plan_cache_mode`), giúp khoảng thời gian dài nhanh gấp đôi.
+- **MySQL/MariaDB:** tăng `tmp_table_size` và `max_heap_table_size` (ví dụ 256 MB) để việc gom nhóm
+  nằm trong bộ nhớ.
+- **SQL Server:** thêm `sendStringParametersAsUnicode=false` vào JDBC URL để các tham số id dùng
+  được chỉ mục (có ích cho mọi truy vấn của engine).

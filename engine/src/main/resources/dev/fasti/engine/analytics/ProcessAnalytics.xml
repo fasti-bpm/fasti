@@ -164,7 +164,8 @@
   </select>
 
   <!-- per activity: scopes that ran it more than once in the range, and the runs beyond the first.
-    Gateways are left out: a joining gateway writes one row per arriving branch. The iterations of
+    Gateways are left out (a joining gateway writes one history row per arriving branch), and so are
+    start and end events, which do not repeat in a scope. The iterations of
     a multi-instance activity share their parent, the body; the caller drops those activities. -->
   <select id="selectFastiAnalyticsRepeats" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="keyCountRow">
     select R.ACT_ID_ as KEY_, count(*) as COUNT_, sum(R.RUNS_ - 1) as EXTRA_
@@ -175,6 +176,7 @@
         and A.END_TIME_ &gt;= #{after} and A.END_TIME_ &lt; #{before}
         and A.ACT_TYPE_ not in ('exclusiveGateway', 'parallelGateway', 'inclusiveGateway',
           'eventBasedGateway', 'complexGateway', 'multiInstanceBody')
+        and A.ACT_TYPE_ not like 'start%' and A.ACT_TYPE_ not like '%StartEvent' and A.ACT_TYPE_ not like '%EndEvent'
       group by A.ACT_ID_, A.PARENT_ACT_INST_ID_
       having count(*) &gt; 1
     ) R

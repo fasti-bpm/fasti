@@ -2152,7 +2152,20 @@ a.trend:hover {
 
 .analytics__panel-body {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s-3);
+}
+
+@media (max-width: 640px) {
+  /* on a phone the measure goes on a line of its own, and the values stay in the tables:
+     the diagram is too small for them */
+  .analytics .toolbar > .toolbar__text {
+    flex-basis: 100%;
+  }
+
+  .analytics .diagram-badge--value {
+    display: none;
+  }
 }
 
 .analytics__facts {

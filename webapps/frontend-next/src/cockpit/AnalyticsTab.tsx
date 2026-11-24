@@ -222,8 +222,14 @@ export function AnalyticsTab({
 
   const now = activities.dataUpdatedAt || 0;
   const shown = useMemo(() => diagramActivities(activities.data ?? []), [activities.data]);
+  // durations colour the activities where work waits: a joining gateway waits for its branches
   const markers = useMemo<ActivityMarker[]>(
-    () => heatSteps(shown.map((activity) => ({ id: activity.activityId, value: measureValue(activity, measure, now) }))),
+    () =>
+      heatSteps(
+        shown
+          .filter((activity) => !DURATION_MEASURES.has(measure) || isBottleneckCandidate(activity.activityType))
+          .map((activity) => ({ id: activity.activityId, value: measureValue(activity, measure, now) })),
+      ),
     [shown, measure, now],
   );
   const badges = useMemo<ActivityBadge[]>(

@@ -257,6 +257,14 @@ chậm hơn lần đo trước, vì một lý do chưa xác định được.
 được; trang khối lượng công việc và dashboard không nên dựa vào các phép đếm như vậy trên bảng task rất
 lớn.
 
+**Kiểm tra phân quyền (1.2.1).** Hai chi phí của việc kiểm tra phân quyền nằm ở engine chứ không ở
+chỉ mục, và bản 1.2.1 bỏ chúng: mỗi lệnh đọc mã nhóm của mọi bản ghi phân quyền, và truy vấn con
+`TYPE_ < 2` khiến cơ sở dữ liệu không tra được các chỉ mục unique `(TYPE_, USER_ID_, …)` và
+`(TYPE_, GROUP_ID_, …)`. Với `TYPE_ IN (0, 1)` danh sách task quá hạn khi bật phân quyền mất 1,6 ms
+thay cho 77 ms trong cơ sở dữ liệu; các câu lệnh workload giữ điều kiện khoảng, xem
+[bản so sánh](benchmark-camunda-7.24.vi.md#fasti-121). Phép ghép từng task ứng viên với các quyền
+của người dùng nêu ở trên vẫn còn.
+
 <a id="lay-job"></a>**Lấy job.** Không có chỉ mục, mỗi lần lấy job khi không có job đến hạn đọc toàn
 bộ `ACT_RU_JOB`, trên mọi node, vài giây một lần; khi có nhiều timer tương lai, đây là tải cố định lớn
 nhất engine đặt lên cơ sở dữ liệu. Khi có nhiều job đến hạn, câu lệnh trên PostgreSQL vẫn đọc cả bảng

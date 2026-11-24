@@ -120,7 +120,9 @@ trợ cài đặt, chuyển đổi hoặc vận hành production, hay thống nh
 
 ## Lộ trình
 
-Đây là kế hoạch, không phải cam kết về ngày. Đã phát hành trong `1.2.0`, tập trung vào hiệu năng:
+Đây là kế hoạch, không phải cam kết về ngày. Đã phát hành trong `1.2.1`: kiểm tra phân quyền nhanh
+hơn, image nhỏ hơn, khởi động nhanh hơn và dùng ít bộ nhớ hơn
+([so sánh với Camunda 7.24](docs/benchmark-camunda-7.24.vi.md)). Đã phát hành trong `1.2.0`, tập trung vào hiệu năng:
 endpoint đếm khối lượng công việc, các chỉ mục cơ sở dữ liệu tùy chọn, cảnh báo hiệu năng khi khởi
 động, tinh chỉnh nhật ký kiểm toán và giao diện web nhanh hơn. Đã phát hành trong `1.1.0`: Helm
 chart và manifest Kubernetes, metrics cho Prometheus, tracing bằng OpenTelemetry, log có cấu trúc

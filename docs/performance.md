@@ -264,6 +264,14 @@ a reason that was not established. The engine joins every candidate task with th
 authorizations there, and none of the measured indexes fixed that; the workload page and the
 dashboard should not depend on such counts on very large task tables.
 
+**Authorization checks (1.2.1).** Two costs of the authorization check were in the engine, not in
+the indexes, and 1.2.1 removes them: every command read the group ids of all authorizations, and
+the subquery `TYPE_ < 2` kept the database from seeking the unique indexes on `(TYPE_, USER_ID_,
+…)` and `(TYPE_, GROUP_ID_, …)`. With `TYPE_ IN (0, 1)` the overdue task list with authorization
+takes 1.6 ms instead of 77 ms in the database; the workload statements keep the range, see the
+[comparison](benchmark-camunda-7.24.md#fasti-121). The join of every candidate task with the
+user's grants described above remains.
+
 <a id="job-acquisition"></a>**Job acquisition.** Without the index each idle acquisition (nothing
 due) reads all of `ACT_RU_JOB`, on every node every few seconds, which with many future timers is
 the largest constant load the engine puts on the database. With many due jobs the PostgreSQL

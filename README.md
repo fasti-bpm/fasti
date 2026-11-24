@@ -120,7 +120,9 @@ terms, write to <contact@fasti.dev>.
 
 ## Roadmap
 
-This is a plan, not a commitment to dates. Released in `1.2.0`, focused on performance: a workload
+This is a plan, not a commitment to dates. Released in `1.2.1`: faster authorization checks, a
+smaller image that starts faster and uses less memory
+([comparison with Camunda 7.24](docs/benchmark-camunda-7.24.md)). Released in `1.2.0`, focused on performance: a workload
 endpoint for task counts, optional database indexes, a startup performance advisor, audit trail
 tuning and a faster web UI. Released in `1.1.0`: a Helm chart and Kubernetes manifests, Prometheus
 metrics, OpenTelemetry tracing, structured JSON logs, a substitute during absence, four-eyes control

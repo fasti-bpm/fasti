@@ -1,11 +1,12 @@
 [English](benchmark-camunda-7.24.md) | Tiếng Việt
 
-# So sánh Fasti BPM 1.2.0 với Camunda 7.24.0
+# So sánh Fasti BPM với Camunda 7.24.0
 
-Đo ngày 23 và 24/11/2026. Fasti BPM 1.2.0 và Camunda Run 7.24.0 chạy trên cùng một máy, cùng cơ
-sở dữ liệu, cùng giới hạn CPU và bộ nhớ. Trang này ghi lại mọi khác biệt tìm thấy, theo cả hai
-chiều. Cách đo và các script chỉ mục được mô tả trong
-[Hiệu năng cơ sở dữ liệu](performance.vi.md).
+Đo ngày 23 và 24/11/2026. Fasti BPM 1.2.0, Fasti BPM 1.2.1 và Camunda Run 7.24.0 chạy trên cùng
+một máy, cùng cơ sở dữ liệu, cùng giới hạn CPU và bộ nhớ. Trang này ghi lại mọi khác biệt tìm
+thấy, theo cả hai chiều. Cách đo và các script chỉ mục được mô tả trong
+[Hiệu năng cơ sở dữ liệu](performance.vi.md). Bản 1.2.1 sửa các chi phí mà lần đo 1.2.0 phát
+hiện; số liệu của nó nằm ở mục [Fasti 1.2.1](#fasti-121), các mục sau là số đo của 1.2.0.
 
 ## Tóm tắt
 
@@ -14,10 +15,56 @@ chiều. Cách đo và các script chỉ mục được mô tả trong
 | Công việc của engine (job, truy vấn, kế hoạch SQL) | **Như nhau.** SQL và kế hoạch thực thi giống hệt nhau trên 1 triệu task; thông lượng job nằm trong độ dao động giữa các lần chạy. |
 | Bảng khối lượng công việc, 20 nhóm và 20 người dùng, 1 triệu task | **1 request thay cho 145, 1,53 s thay cho 3,45 s, đọc ít hơn 17 lần số trang dữ liệu.** |
 | Script chỉ mục tùy chọn (đi kèm Fasti) | **Lần quét job khi rảnh 162 ms → 0,1 ms; task quá hạn sắp theo hạn 61 ms → 0,3 ms trong cơ sở dữ liệu.** Đây là chỉ mục SQL thông thường nên cũng giúp Camunda 7.24 y như vậy. |
-| Khởi động | Fasti chậm hơn khoảng 1 s (8,2 s so với 7,3 s đến khi REST sẵn sàng). |
-| Bộ nhớ | Fasti dùng thêm khoảng 90 MB khi rảnh, với cùng thiết lập heap. |
-| Image container | Fasti 554 MB so với 338 MB (chưa nén). Trong đó 165 MB là một lớp Java runtime bị lặp, là lỗi sẽ sửa. |
-| REST trên cơ sở dữ liệu có 2,2 triệu bản ghi phân quyền | Với cấu hình mặc định, Fasti chậm hơn 4–13 lần, vì Fasti bật xác thực và kiểm tra phân quyền sẵn còn Camunda Run tắt cả hai. Cùng thiết lập bảo mật thì số liệu bằng nhau. |
+| Khởi động (1.2.1) | **Gần như nhau**: 6,45 s so với 6,35 s đến khi REST sẵn sàng (1.2.0: 7,66 s). |
+| Bộ nhớ (1.2.1) | **Fasti 362 MB, Camunda 393 MB** khi rảnh, theo cấu hình mặc định (1.2.0: 518 MB). |
+| Image container (1.2.1) | Fasti khoảng 390 MB so với 338 MB chưa nén (1.2.0: 554 MB, có một Java runtime bị lặp). |
+| REST khi bật phân quyền, 2,2 triệu bản ghi phân quyền (1.2.1) | **Fasti nhanh hơn Camunda 7.24 bật phân quyền ở mọi lệnh gọi đã đo**, ví dụ danh sách task quá hạn 14 ms so với 138 ms. Camunda Run mặc định tắt phân quyền, nên nhanh hơn nữa ở chỗ việc kiểm tra có nhiều việc (bảng task 145 request: 3,7 s khi tắt, 8,8 s với Fasti 1.2.1, 20,8 s với Camunda bật phân quyền). |
+
+## Fasti 1.2.1
+
+Đo ngày 24/11/2026 trong cùng một lượt với Fasti 1.2.0 và Camunda Run 7.24.0, trên môi trường mô
+tả bên dưới. Fasti 1.2.1 là bản build từ commit phát hành; lần đo khởi động và bộ nhớ dùng schema
+có sẵn nên thời gian ngắn hơn ở mục 1.2.0.
+
+**Khởi động, bộ nhớ và image.** Khởi động 5 lần, job 3 lần (mỗi lần 50.000 job), xen kẽ.
+
+| | Sẵn sàng (s) | `Started in` (s) | Bộ nhớ khi rảnh (MB) | Job mỗi giây | Image (MB) |
+|---|---|---|---|---|---|
+| Camunda 7.24 | 6,35 | 4,52 | 393 | 732 (693–733) | 338 |
+| Fasti 1.2.0 | 7,66 | 5,64 | 518 | – | 554 |
+| Fasti 1.2.1 | 6,45 | 4,83 | **362** | 756 (710–814) | khoảng 390 |
+
+**REST khi bật phân quyền**, trên cơ sở dữ liệu PostgreSQL lớn bên dưới (1.000.000 task,
+2.200.000 bản ghi phân quyền). Camunda Run 7.24.0 cũng chạy với xác thực và phân quyền bật (mặc
+định Camunda Run tắt). Trung vị của 50 lần gọi, mili giây, với tài khoản quản trị.
+
+| Lệnh gọi | Camunda mặc định (tắt) | Camunda bật phân quyền | Fasti 1.2.0 | Fasti 1.2.1 |
+|---|---|---|---|---|
+| Task quá hạn, 50 bản đầu | 12 | 138 | 156 | **14** |
+| Task của một người theo hạn | 7 | 60 | 72 | **10** |
+| Đếm task của một nhóm ứng viên | 33 | 120 | 120 | **38** |
+| Process instance lịch sử, 50 bản đầu | 7 | 71 | 74 | **8** |
+| Đếm toàn bộ task | 126 | 1.082 | 1.090 | 929 |
+| Bảng task, 145 request (s, trung vị 5 lần) | 3,7 | 20,8 | 21,0 | **8,8** |
+| `POST /task/workload` (s, trung vị 5 lần) | – | – | 2,54 | 2,15 |
+
+Những gì đã thay đổi:
+
+- Mỗi lệnh đều đọc mã nhóm của toàn bộ 2,2 triệu bản ghi phân quyền để bỏ các nhóm của người dùng
+  không có quyền nào; Camunda 7.24 cũng làm vậy. Bản 1.2.1 chỉ hỏi về các nhóm của chính người
+  dùng.
+- Truy vấn con phân quyền lọc `TYPE_ IN (0, 1)` thay cho `TYPE_ < 2`, nên PostgreSQL tra các chỉ
+  mục unique thay vì đọc cả bảng: danh sách task quá hạn 77 → 1,6 ms trong cơ sở dữ liệu. Các câu
+  lệnh workload giữ `TYPE_ < 2`, vì ở đó nhanh hơn 250 lần với người dùng có nhiều quyền.
+- Xác thực basic qua REST được ghi nhớ 30 s cùng nhóm và tenant của người dùng: 3 thay cho 6 câu
+  lệnh và 1 thay cho 4 transaction mỗi request. Trên cơ sở dữ liệu này nó chỉ tiết kiệm tối đa
+  2 ms mỗi lệnh gọi; khác biệt chính đến từ hai thay đổi trên.
+
+Một người dùng có 20.400 quyền (200 task, 3 nhóm) chậm ở cả hai sản phẩm: danh sách task quá hạn
+mất khoảng 3,2 s với Fasti 1.2.1 và 3,3 s với Camunda bật phân quyền; đếm toàn bộ task và bảng
+task không xong trong 60 s ở cả hai. Nguyên nhân là phép join phân quyền của engine (mỗi task so
+với mọi quyền của người dùng), còn cần cải thiện. Đếm process instance của người dùng này giảm từ
+174 ms xuống 24 ms.
 
 ## Đã so sánh những gì
 
@@ -158,13 +205,16 @@ của Fasti gửi 14 request khi mở và khoảng 4,5 request mỗi phút vì t
 
 ## Vấn đề đã biết và bước tiếp theo
 
-- Image amd64 chứa Java runtime hai lần: bản của image gốc và bản đã vá thay thế nó
-  (CVE-2026-114938). Bỏ bản thứ nhất sẽ giảm khoảng 165 MB.
-- Chi phí kiểm tra phân quyền trên bảng phân quyền rất lớn sẽ được đo so với Camunda 7.24 khi bật
-  phân quyền, và giảm ở những chỗ Fasti làm được.
+- Đã sửa trong 1.2.1: Java runtime bị lặp trong image, việc đọc mã nhóm của mọi bản ghi phân quyền
+  ở mỗi lệnh, khởi động chậm hơn và bộ nhớ khi rảnh cao hơn.
+- Người dùng có hàng chục nghìn quyền trên cơ sở dữ liệu một triệu task: đếm task không có bộ lọc
+  không xong trong thời gian hợp lý, ở Fasti cũng như Camunda 7.24. Giảm được phần này cần một
+  cách join phân quyền khác.
+- Khởi tạo process instance qua REST chậm hơn khi bật phân quyền (5.000 lần trong 18,6 s, so với
+  12,1 s với REST mở của Camunda Run); mỗi lần khởi tạo đều được kiểm tra.
 
 ## Chưa đo
 
-Camunda 7.24 khi bật phân quyền; MySQL, Oracle, SQL Server và DB2; nhiều hơn một node; các máy
-khác ngoài máy ở trên. Trên phần cứng khác số liệu sẽ khác; điều trang này muốn cho thấy là tỉ lệ
+MySQL, Oracle, SQL Server và DB2 khi bật phân quyền; nhiều hơn một node; thời gian dừng của bộ
+thu gom rác khi tải dồn dập với thiết lập bộ nhớ của 1.2.1; các máy khác ngoài máy ở trên. Trên phần cứng khác số liệu sẽ khác; điều trang này muốn cho thấy là tỉ lệ
 giữa các cấu hình.

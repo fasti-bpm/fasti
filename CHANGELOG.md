@@ -12,6 +12,43 @@ các mục dưới đây là khác biệt so với bản đó.
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-11-24
+
+Performance release: smaller image, faster start, less memory, and authorization checks that no
+longer read the whole authorization table. Measured on PostgreSQL 16 with 1,000,000 tasks against
+1.2.0 and Camunda Run 7.24.0; the numbers are in the [comparison](docs/benchmark-camunda-7.24.md).
+
+### Changed
+
+- Authorization: the check of every command read the group ids of all authorizations
+  (`SELECT DISTINCT GROUP_ID_` over the whole table, as in Camunda 7.24) to drop the user's
+  groups that have none. Fasti asks only for the user's own groups, through the index on
+  `GROUP_ID_`, in chunks of 500, and remembers the answer for the rest of the command. Same
+  result, revokes included.
+- Authorization: the authorization subquery selects `TYPE_ IN (0, 1)` instead of `TYPE_ < 2`
+  (the same rows), so the database seeks the unique indexes that start with `TYPE_` instead of
+  reading the table. With both changes, as an administrator over REST: the overdue task list
+  156 → 14 ms, the history list 74 → 8 ms, a task board of 145 requests 21.0 → 8.8 s; for a user
+  with 20,000 grants the process instance count 174 → 24 ms. The workload statements
+  (`/task/workload`) keep `TYPE_ < 2`: there the cheaper subquery let PostgreSQL pick a plan that
+  was 250 times slower for users with many grants.
+- REST (Run and image): a successful basic authentication is remembered for 30 s with the user's
+  groups and tenants, so repeated requests skip those reads (6 → 3 statements and 4 → 1
+  transactions per request). Only successes are kept, under a salted hash of user and password;
+  a change of users, groups, tenants or memberships through the REST API of the same node clears
+  it. `fasti.rest.auth-cache-ttl` (image `FASTI_REST_AUTH_CACHE_TTL`, `0` turns it off); other
+  changes take effect after at most that time. Servlet filter init-param
+  `basic-authentication-cache-ttl-millis` for other deployments (default off).
+- Image: 554 → about 390 MB (compressed 255 → about 210 MB). It uses the Java runtime of the
+  base image (`eclipse-temurin:21-jre-alpine`, 21.0.13.1 with the fix for CVE-2026-114938)
+  instead of a second copy; the build fails on an older base image.
+- Image: the application starts from extracted jars instead of the executable jar: `Started in`
+  5.6 → 4.8 s (Camunda Run 4.5 s). The build fails if the Run archive holds two versions of one
+  jar, which a build without `clean` can leave behind.
+- Image: unused heap is returned to the system (`-XX:G1PeriodicGCInterval=30000
+  -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=30`): idle resident memory 518 → 362 MB, job
+  throughput unchanged. `FASTI_RETURN_MEMORY=false` keeps the JVM defaults.
+
 ## [1.2.0] - 2026-11-22
 
 ### Added

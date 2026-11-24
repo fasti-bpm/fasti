@@ -1,11 +1,13 @@
 English | [Tiếng Việt](benchmark-camunda-7.24.vi.md)
 
-# Fasti BPM 1.2.0 compared with Camunda 7.24.0
+# Fasti BPM compared with Camunda 7.24.0
 
-Measured on 23 and 24 November 2026. Fasti BPM 1.2.0 and Camunda Run 7.24.0 ran on the same
-machine, against the same databases and with the same CPU and memory limits. This page reports
-every difference found, in both directions. The method and the index scripts are described in
-[Database performance](performance.md).
+Measured on 23 and 24 November 2026. Fasti BPM 1.2.0, Fasti BPM 1.2.1 and Camunda Run 7.24.0 ran
+on the same machine, against the same databases and with the same CPU and memory limits. This
+page reports every difference found, in both directions. The method and the index scripts are
+described in [Database performance](performance.md). 1.2.1 fixes the costs that the 1.2.0
+measurements found; its numbers are in [Fasti 1.2.1](#fasti-121), the later sections are the
+1.2.0 measurements.
 
 ## In short
 
@@ -14,10 +16,56 @@ every difference found, in both directions. The method and the index scripts are
 | Engine work (jobs, queries, SQL plans) | **The same.** Identical SQL and plans on 1 million tasks; job throughput within run-to-run noise. |
 | Workload board, 20 groups and 20 users, 1 million tasks | **1 request instead of 145, 1.53 s instead of 3.45 s, 17× fewer database pages read.** |
 | Optional index scripts (shipped with Fasti) | **Idle job polling 162 ms → 0.1 ms per poll; overdue tasks sorted by due date 61 ms → 0.3 ms in the database.** They are plain indexes, so they help Camunda 7.24 just as much. |
-| Startup | Fasti about 1 s slower (8.2 s vs 7.3 s to REST ready). |
-| Memory | Fasti about 90 MB more idle memory with the same heap setting. |
-| Container image | Fasti 554 MB vs 338 MB uncompressed. 165 MB of that is a duplicated Java runtime layer, a defect to be fixed. |
-| REST on a database with 2.2 million authorizations | As shipped, Fasti is 4–13× slower, because it turns authentication and authorization on by default and Camunda Run has both off. With the same security setting the numbers are equal. |
+| Startup (1.2.1) | **About the same**: 6.45 s vs 6.35 s to REST ready (1.2.0: 7.66 s). |
+| Memory (1.2.1) | **Fasti 362 MB vs Camunda 393 MB** idle, as shipped (1.2.0: 518 MB). |
+| Container image (1.2.1) | Fasti about 390 MB vs 338 MB uncompressed (1.2.0: 554 MB, with a duplicated Java runtime). |
+| REST with authorization on, 2.2 million authorizations (1.2.1) | **Fasti faster than Camunda 7.24 with authorization on in every call measured**, for example the overdue task list 14 ms vs 138 ms. Camunda Run ships with authorization off, which is faster still where the check has work to do (a task board of 145 requests: 3.7 s off, 8.8 s Fasti 1.2.1, 20.8 s Camunda with authorization). |
+
+## Fasti 1.2.1
+
+Measured on 24 November 2026 in one round with Fasti 1.2.0 and Camunda Run 7.24.0, on the
+environment described below. Fasti 1.2.1 is a build of the release commit; the startup and
+memory runs used an existing schema, so the times are shorter than in the 1.2.0 section.
+
+**Startup, memory and image.** Startup 5 runs, jobs 3 runs (50,000 jobs each), interleaved.
+
+| | Ready (s) | `Started in` (s) | Idle memory (MB) | Jobs per second | Image (MB) |
+|---|---|---|---|---|---|
+| Camunda 7.24 | 6.35 | 4.52 | 393 | 732 (693–733) | 338 |
+| Fasti 1.2.0 | 7.66 | 5.64 | 518 | – | 554 |
+| Fasti 1.2.1 | 6.45 | 4.83 | **362** | 756 (710–814) | about 390 |
+
+**REST with authorization**, on the large PostgreSQL database below (1,000,000 tasks, 2,200,000
+authorizations). Camunda Run 7.24.0 also ran with authentication and authorization on, which
+Camunda Run ships off. Median of 50 calls in milliseconds, as an administrator.
+
+| Call | Camunda, as shipped (off) | Camunda, authorization on | Fasti 1.2.0 | Fasti 1.2.1 |
+|---|---|---|---|---|
+| Overdue tasks, first 50 | 12 | 138 | 156 | **14** |
+| Tasks of one assignee by due date | 7 | 60 | 72 | **10** |
+| Task count of a candidate group | 33 | 120 | 120 | **38** |
+| Historic process instances, first 50 | 7 | 71 | 74 | **8** |
+| Task count, all | 126 | 1,082 | 1,090 | 929 |
+| Task board, 145 requests (s, median of 5) | 3.7 | 20.8 | 21.0 | **8.8** |
+| `POST /task/workload` (s, median of 5) | – | – | 2.54 | 2.15 |
+
+What changed:
+
+- Every command read the group ids of all 2.2 million authorizations to drop the user's groups
+  that have none; Camunda 7.24 does the same. 1.2.1 asks only for the user's own groups.
+- The authorization subquery selects `TYPE_ IN (0, 1)` instead of `TYPE_ < 2`, so PostgreSQL
+  seeks the unique indexes instead of reading the table: the overdue task list 77 → 1.6 ms in the
+  database. The workload statements keep `TYPE_ < 2`, which was 250 times faster there for a
+  user with many grants.
+- Basic authentication over REST is remembered for 30 s with the user's groups and tenants:
+  3 instead of 6 statements and 1 instead of 4 transactions per request. On this database that
+  saves at most 2 ms per call; the two changes above make the difference.
+
+A user with 20,400 grants (200 tasks, 3 groups) is slow in both products: the overdue list takes
+about 3.2 s in Fasti 1.2.1 and 3.3 s in Camunda with authorization on, and the count of all tasks
+and the task board do not finish within 60 s in either. That is the authorization join of the
+engine (every task against every grant of the user) and remains to be improved. The process
+instance count for this user went from 174 ms to 24 ms.
 
 ## What was compared
 
@@ -158,13 +206,17 @@ because it refreshes itself. See [Web interface performance](performance-web-ui.
 
 ## Known issues and next steps
 
-- The amd64 image carries the Java runtime twice: the base image's and the patched one that
-  replaces it (CVE-2026-114938). Removing the first saves about 165 MB.
-- The cost of authorization checks on very large authorization tables is to be measured against
-  Camunda 7.24 with authorization on, and reduced where Fasti can.
+- Fixed in 1.2.1: the duplicated Java runtime in the image, the read of all authorization group
+  ids per command, the slower startup and the higher idle memory.
+- Users with tens of thousands of grants on a database of a million tasks: task counts without a
+  filter do not finish in reasonable time, in Fasti and in Camunda 7.24 alike. Reducing this needs
+  a different authorization join.
+- Starting process instances over REST is slower with authorization on (5,000 starts in 18.6 s
+  vs 12.1 s with Camunda Run's open REST); every start is checked.
 
 ## Not measured
 
-Camunda 7.24 with authorization on, MySQL, Oracle, SQL Server and DB2, more than one node, and
-machines other than the one above. Numbers on other hardware will differ; the ratios between the
+MySQL, Oracle, SQL Server and DB2 with authorization on, more than one node, garbage collection
+pauses under bursty load with the memory settings of 1.2.1, and machines other than the one
+above. Numbers on other hardware will differ; the ratios between the
 configurations are what this page is about.

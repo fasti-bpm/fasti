@@ -24,6 +24,8 @@ FROM ${JRE_IMAGE} AS unpack
 COPY fasti-bpm-run.tar.gz /tmp/
 # The application is extracted to plain jars (internal/app/fasti-bpm-run-core.jar and its lib/)
 # instead of the executable jar: loading classes from nested jars cost about 1.2 s of every start.
+# The build fails if a module directory (internal/*, not the extracted app/) holds two versions of
+# one jar, which a build without clean can leave behind; the older classes could win.
 RUN mkdir -p /fasti \
  && tar -xzf /tmp/fasti-bpm-run.tar.gz -C /fasti \
  && rm -f /fasti/start.sh /fasti/start.bat /fasti/shutdown.sh /fasti/shutdown.bat \
@@ -35,7 +37,7 @@ RUN mkdir -p /fasti \
  && java -Djarmode=tools -jar /fasti/internal/fasti-bpm-run-core.jar extract --destination /fasti/internal/app \
  && rm /fasti/internal/fasti-bpm-run-core.jar \
  && test -f /fasti/internal/app/fasti-bpm-run-core.jar \
- && dup="$(cd /fasti/internal && find . -name '*.jar' | sed -E 's#/([^/]*)-[0-9][^/]*\.jar$#/\1#' | sort | uniq -d)" \
+ && dup="$(cd /fasti/internal && find . -path ./app -prune -o -name '*.jar' -print | sed -E 's#/([^/]*)-[0-9][^/]*\.jar$#/\1#' | sort | uniq -d)" \
  && if [ -n "$dup" ]; then \
       echo "More than one version of these jars (left over from an earlier build?): $dup" >&2; exit 1; \
     fi

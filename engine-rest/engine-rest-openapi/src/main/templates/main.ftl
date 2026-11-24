@@ -73,6 +73,7 @@
     {"name": "Metrics"},
     {"name": "Migration"},
     {"name": "Modification"},
+    {"name": "Process Analytics"},
     {"name": "Process Definition"},
     {"name": "Process Instance"},
     {"name": "Signal"},

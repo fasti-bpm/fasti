@@ -12,6 +12,24 @@ các mục dưới đây là khác biệt so với bản đó.
 
 ## [Unreleased]
 
+### Added
+
+- [Process analytics](docs/process-analytics.md), computed by the database over the history the
+  engine writes, with no separate store or import. The tab **Analytics** of a process (formerly
+  Statistics) shows a heatmap on the diagram by reached, median, P90, P99, total time, waiting now,
+  rework or incidents, with the value on every activity; the details of an activity (percentiles,
+  histogram, rework, incidents, the slowest finished runs and the runs waiting longest now, linked
+  to their instances); a bottleneck ranking by the time spent with the time beyond the median;
+  instance tiles with the share within a target duration; the median and P90 per day, week or
+  month; and waiting vs working time of user tasks per task and per assignee. REST:
+  `GET /analytics/process-definition/key/{key}/activities`, `.../activities/{activityId}/instances`,
+  `.../instances`, `.../trend` and `.../user-tasks`; Java: `dev.fasti.engine.analytics.ProcessAnalytics`.
+  Requires `READ_HISTORY` on the process definition key; the tenant check applies. Percentiles of
+  activities and instances come from a histogram the database computes (within about 12 %); counts,
+  totals, the share within a target and user task times are exact. Plain SQL for every supported
+  database; nothing is written. A server without the endpoints gets the former sample-based
+  statistics in the web interface.
+
 ## [1.2.1] - 2026-11-24
 
 Performance release: smaller image, faster start, less memory, and authorization checks that no

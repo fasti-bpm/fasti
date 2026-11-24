@@ -252,6 +252,38 @@ public class ProcessAnalyticsTest {
   }
 
   @Test
+  public void shouldReadReworkOnItsOwn() {
+    Map<String, ActivityAnalytics> without = byId(query().withoutRework().activities(), ActivityAnalytics::getActivityId);
+    assertThat(without.get("review").getRepeatedInstances()).isZero();
+    assertThat(without.get("review").getFinished()).isEqualTo(11);
+
+    Map<String, ActivityRework> rework = byId(query().rework(), ActivityRework::getActivityId);
+    assertThat(rework.get("review").getRepeatedInstances()).isEqualTo(2);
+    assertThat(rework.get("review").getRepeatedExecutions()).isEqualTo(2);
+    assertThat(rework).doesNotContainKeys("approve", "reviewed", "start", "end");
+  }
+
+  @Test
+  public void shouldAnswerTheSameQueryFromTheCache() {
+    List<ActivityAnalytics> first = query().activities();
+    assertThat(query().activities()).isSameAs(first);
+    // another range is another answer
+    assertThat(query().finishedAfter(new Date(T0.getTime() - 2 * HOUR)).activities()).isNotSameAs(first);
+  }
+
+  @Test
+  public void shouldReadAgainWithoutCache() {
+    java.time.Duration ttl = ProcessAnalytics.getCacheTimeToLive();
+    ProcessAnalytics.setCacheTimeToLive(java.time.Duration.ZERO);
+    try {
+      List<ActivityAnalytics> first = query().activities();
+      assertThat(query().activities()).isNotSameAs(first).hasSameSizeAs(first);
+    } finally {
+      ProcessAnalytics.setCacheTimeToLive(ttl);
+    }
+  }
+
+  @Test
   public void shouldNotFindAnUnknownProcess() {
     assertThatThrownBy(() -> ProcessAnalytics.query(engine).processDefinitionKey("nothing").activities())
         .isInstanceOf(org.camunda.bpm.engine.exception.NotFoundException.class);

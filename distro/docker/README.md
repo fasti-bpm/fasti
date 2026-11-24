@@ -125,6 +125,7 @@ images; entries marked **from 1.2.0** are not in the 1.1.x images.
 | `JMX_PROMETHEUS=true` | | Prometheus JMX exporter on port `JMX_PROMETHEUS_PORT` (9404), configuration `JMX_PROMETHEUS_CONF`, if the agent jar is in `/fasti/javaagent` |
 | `JAVA_OPTS` | | additional JVM options (space-separated, no quotes) |
 | `FASTI_MAX_RAM_PERCENTAGE` | 75 | percentage of container memory used for the heap |
+| `FASTI_ANALYTICS_CACHE_TTL` | `60s` | **From 1.3.0.** How long the answers of the process analytics are kept for the same view (`0` turns this off); what runs now may be that much older. Setting `fasti.analytics.cache-ttl` |
 | `FASTI_RETURN_MEMORY` | `true` | **From 1.2.1.** Return unused heap to the system (`-XX:G1PeriodicGCInterval=30000 -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=30`); `false` keeps the JVM defaults |
 | `FASTI_DB_SCHEMA_UPDATE` | `false` (`true` for the built-in H2 demo database) | `true` creates missing tables (new database); never upgrades a schema |
 | `FASTI_SCHEMA_VERSION_CHECK` | `enforce` | `warn`: a schema older than 7.24 only logs a warning instead of stopping |

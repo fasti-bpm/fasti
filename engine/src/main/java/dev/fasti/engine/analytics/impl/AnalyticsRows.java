@@ -33,6 +33,8 @@ public final class AnalyticsRows {
     Long minimum;
     Long maximum;
     Long withinTarget;
+    String type;
+    String name;
   }
 
   /** Counts of one activity. */

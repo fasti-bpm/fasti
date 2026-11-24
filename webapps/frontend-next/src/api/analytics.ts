@@ -121,8 +121,22 @@ export function isAnalyticsUnavailable(error: unknown): boolean {
   return isApiError(error, 'notFound') || (isApiError(error) && error.status === 501);
 }
 
-export function getActivityAnalytics(scope: AnalyticsScope, signal?: AbortSignal): Promise<ActivityAnalytics[]> {
-  return request<ActivityAnalytics[]>(`${analyticsApi(scope.processKey)}/activities`, { query: scopeQuery(scope), signal });
+/** The activities; with `rework: false` without rework, the costly part on a long history (see {@link getRework}). */
+export function getActivityAnalytics(scope: AnalyticsScope, signal?: AbortSignal, options: { rework?: boolean } = {}): Promise<ActivityAnalytics[]> {
+  return request<ActivityAnalytics[]>(`${analyticsApi(scope.processKey)}/activities`, {
+    query: { ...scopeQuery(scope), rework: options.rework === false ? false : undefined },
+    signal,
+  });
+}
+
+export interface ActivityRework {
+  activityId: string;
+  repeatedInstances: number;
+  repeatedExecutions: number;
+}
+
+export function getRework(scope: AnalyticsScope, signal?: AbortSignal): Promise<ActivityRework[]> {
+  return request<ActivityRework[]>(`${analyticsApi(scope.processKey)}/rework`, { query: scopeQuery(scope), signal });
 }
 
 export function getInstanceAnalytics(scope: AnalyticsScope, signal?: AbortSignal): Promise<InstanceAnalytics> {

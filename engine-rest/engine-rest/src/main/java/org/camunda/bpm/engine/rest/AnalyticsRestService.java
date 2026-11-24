@@ -27,6 +27,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
 import dev.fasti.engine.analytics.ActivityAnalytics;
+import dev.fasti.engine.analytics.ActivityRework;
 import dev.fasti.engine.analytics.InstanceAnalytics;
 import dev.fasti.engine.analytics.PeriodAnalytics;
 import dev.fasti.engine.analytics.SlowInstance;
@@ -42,10 +43,16 @@ public interface AnalyticsRestService {
 
   String PATH = "/analytics";
 
+  /** {@code rework=false} leaves rework out (read it with {@link #getRework}). */
   @GET
   @Path("/process-definition/key/{key}/activities")
   @Produces(MediaType.APPLICATION_JSON)
   List<ActivityAnalytics> getActivities(@PathParam("key") String key, @Context UriInfo uriInfo);
+
+  @GET
+  @Path("/process-definition/key/{key}/rework")
+  @Produces(MediaType.APPLICATION_JSON)
+  List<ActivityRework> getRework(@PathParam("key") String key, @Context UriInfo uriInfo);
 
   /** The slowest finished runs of an activity, or with {@code running=true} the oldest running ones. */
   @GET

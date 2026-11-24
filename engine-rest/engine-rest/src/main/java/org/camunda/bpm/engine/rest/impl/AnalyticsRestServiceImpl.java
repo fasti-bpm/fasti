@@ -28,6 +28,7 @@ import javax.ws.rs.core.UriInfo;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.fasti.engine.analytics.ActivityAnalytics;
+import dev.fasti.engine.analytics.ActivityRework;
 import dev.fasti.engine.analytics.AnalyticsNotAvailableException;
 import dev.fasti.engine.analytics.InstanceAnalytics;
 import dev.fasti.engine.analytics.PeriodAnalytics;
@@ -52,7 +53,20 @@ public class AnalyticsRestServiceImpl extends AbstractRestProcessEngineAware imp
   @Override
   public List<ActivityAnalytics> getActivities(String key, UriInfo uriInfo) {
     MultivaluedMap<String, String> parameters = uriInfo.getQueryParameters();
-    return run(() -> query(key, parameters).activities());
+    boolean rework = parameters.getFirst("rework") == null || flag(parameters, "rework");
+    return run(() -> {
+      ProcessAnalyticsQuery query = query(key, parameters);
+      if (!rework) {
+        query.withoutRework();
+      }
+      return query.activities();
+    });
+  }
+
+  @Override
+  public List<ActivityRework> getRework(String key, UriInfo uriInfo) {
+    MultivaluedMap<String, String> parameters = uriInfo.getQueryParameters();
+    return run(() -> query(key, parameters).rework());
   }
 
   @Override

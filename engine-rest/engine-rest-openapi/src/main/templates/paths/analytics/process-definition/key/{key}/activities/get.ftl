@@ -18,6 +18,13 @@
         required = true
         desc = "The key of the process definition." />
 
+    <@lib.parameter
+        name = "rework"
+        location = "query"
+        type = "boolean"
+        desc = "`false` leaves rework out (`repeatedInstances` and `repeatedExecutions` are 0), which makes the
+                call cheaper on a long history; read it with `GET .../rework`. `true` by default." />
+
     <#include "/lib/commons/analytics-params.ftl" >
     <@lib.parameters
         object = params

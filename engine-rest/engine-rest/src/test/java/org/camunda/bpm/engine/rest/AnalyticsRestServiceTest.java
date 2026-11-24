@@ -134,6 +134,19 @@ public class AnalyticsRestServiceTest extends AbstractRestServiceTest {
   }
 
   @Test
+  public void shouldAnswerActivitiesWithoutReworkAndReworkOnItsOwn() {
+    given().pathParam("key", "check").queryParam("finishedAfter", AFTER).queryParam("finishedBefore", BEFORE)
+        .queryParam("rework", false)
+        .then().expect().statusCode(Status.OK.getStatusCode())
+        .body("find { it.activityId == 'review' }.repeatedInstances", equalTo(0))
+        .when().get(ANALYTICS_URL + "/activities");
+    given().pathParam("key", "check").queryParam("finishedAfter", AFTER).queryParam("finishedBefore", BEFORE)
+        .then().expect().statusCode(Status.OK.getStatusCode())
+        .body("$", hasSize(0))
+        .when().get(ANALYTICS_URL + "/rework");
+  }
+
+  @Test
   public void shouldAnswerInstancesWithATarget() {
     given().pathParam("key", "check").queryParam("finishedAfter", AFTER).queryParam("finishedBefore", BEFORE)
         .queryParam("targetDuration", 2 * HOUR)

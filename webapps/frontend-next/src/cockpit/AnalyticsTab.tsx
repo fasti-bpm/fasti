@@ -10,6 +10,7 @@ import {
   getActivityAnalytics,
   getActivityRuns,
   getInstanceAnalytics,
+  getRework,
   getTrend,
   getUserTaskAnalytics,
   isAnalyticsUnavailable,
@@ -143,9 +144,13 @@ function shareOf(part: number | null | undefined, whole: number): number | null 
   return part / whole;
 }
 
-/** The scope of a query, its range ending now: computed when the query runs, not when the page rendered. */
+/**
+ * The scope of a query, its range ending at the next full minute: computed when the query runs,
+ * not when the page rendered. Within a minute every view asks the same, so the server answers
+ * repeated views from its short cache.
+ */
 function scopeNow(processKey: string, definitionIds: string[] | undefined, range: Range, target?: number | null): AnalyticsScope {
-  const now = Date.now() + 1000;
+  const now = Math.ceil((Date.now() + 1) / 60_000) * 60_000;
   return {
     processKey,
     definitionIds,
@@ -182,14 +187,24 @@ export function AnalyticsTab({
   const scopeKey = [processKey, allVersions ? 'all' : definitionId, range];
   const unit = Number(range) <= 31 ? 'day' : Number(range) <= 120 ? 'week' : 'month';
 
+  // the activities first, rework (the costly part of a long history) right after: the heat map
+  // does not wait for it
   const activities = useQuery({
     queryKey: [COCKPIT, 'analytics', 'activities', ...scopeKey],
-    queryFn: ({ signal }) => getActivityAnalytics(scopeNow(processKey, definitionIds, range), signal),
+    queryFn: ({ signal }) => getActivityAnalytics(scopeNow(processKey, definitionIds, range), signal, { rework: false }),
     refetchInterval,
     placeholderData: keepPreviousData,
     retry,
   });
   const unavailable = activities.isError && isAnalyticsUnavailable(activities.error);
+  const rework = useQuery({
+    queryKey: [COCKPIT, 'analytics', 'rework', ...scopeKey],
+    queryFn: ({ signal }) => getRework(scopeNow(processKey, definitionIds, range), signal),
+    enabled: activities.data !== undefined,
+    refetchInterval,
+    placeholderData: keepPreviousData,
+    retry,
+  });
   const instances = useQuery({
     queryKey: [COCKPIT, 'analytics', 'instances', ...scopeKey, target ?? ''],
     queryFn: ({ signal }) => getInstanceAnalytics(scopeNow(processKey, definitionIds, range, target), signal),
@@ -221,7 +236,15 @@ export function AnalyticsTab({
   });
 
   const now = activities.dataUpdatedAt || 0;
-  const shown = useMemo(() => diagramActivities(activities.data ?? []), [activities.data]);
+  const shown = useMemo(() => {
+    const repeats = new Map((rework.data ?? []).map((entry) => [entry.activityId, entry]));
+    return diagramActivities(activities.data ?? []).map((activity) => {
+      const repeated = repeats.get(activity.activityId);
+      return repeated
+        ? { ...activity, repeatedInstances: repeated.repeatedInstances, repeatedExecutions: repeated.repeatedExecutions }
+        : activity;
+    });
+  }, [activities.data, rework.data]);
   // durations colour the activities where work waits: a joining gateway waits for its branches
   const markers = useMemo<ActivityMarker[]>(
     () =>

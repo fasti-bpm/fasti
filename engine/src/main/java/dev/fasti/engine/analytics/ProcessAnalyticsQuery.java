@@ -28,6 +28,11 @@ import java.util.List;
  * like the historic activity statistics of the engine; only the history of tenants the user
  * belongs to is read when the tenant check is enabled.</p>
  *
+ * <p>Answers are kept for a short time ({@code AnalyticsCache}, 60 seconds by default, system
+ * property {@code fasti.analytics.cacheTtlSeconds}): the same query within that time, by the same
+ * or another user who passes the permission check, gets the same answer without reading the
+ * history again. Answers are shared and must not be changed.</p>
+ *
  * <p>The range selects what <em>finished</em> (activities, process instances, tasks): from
  * {@link #finishedAfter(Date)} (inclusive) to {@link #finishedBefore(Date)} (exclusive), by
  * default the last 30 days. What is running now is counted whatever the range.</p>
@@ -57,8 +62,17 @@ public interface ProcessAnalyticsQuery {
   /** A target duration in milliseconds: the duration statistics also count how many stayed within it. */
   ProcessAnalyticsQuery targetDuration(Long targetMillis);
 
+  /**
+   * Leaves rework out of {@link #activities()}: rework groups the runs by scope, the most costly
+   * part on a long history; {@link #rework()} reads it on its own, for example after the rest.
+   */
+  ProcessAnalyticsQuery withoutRework();
+
   /** One entry per activity that ran or runs. */
   List<ActivityAnalytics> activities();
+
+  /** Rework per activity, as {@link #activities()} includes it unless {@link #withoutRework()}. */
+  List<ActivityRework> rework();
 
   InstanceAnalytics instances();
 

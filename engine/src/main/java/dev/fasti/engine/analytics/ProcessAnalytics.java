@@ -26,6 +26,15 @@ public final class ProcessAnalytics {
   private ProcessAnalytics() {
   }
 
+  /** How long answers are kept for repeated queries; {@link java.time.Duration#ZERO} turns this off. */
+  public static void setCacheTimeToLive(java.time.Duration timeToLive) {
+    dev.fasti.engine.analytics.impl.AnalyticsCache.setTimeToLive(timeToLive);
+  }
+
+  public static java.time.Duration getCacheTimeToLive() {
+    return dev.fasti.engine.analytics.impl.AnalyticsCache.getTimeToLive();
+  }
+
   public static ProcessAnalyticsQuery query(ProcessEngine processEngine) {
     return new ProcessAnalyticsQueryImpl((ProcessEngineConfigurationImpl) processEngine.getProcessEngineConfiguration());
   }

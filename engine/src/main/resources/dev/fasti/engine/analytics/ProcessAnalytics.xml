@@ -33,6 +33,8 @@
     <result property="minimum" column="MIN_" jdbcType="BIGINT" />
     <result property="maximum" column="MAX_" jdbcType="BIGINT" />
     <result property="withinTarget" column="WITHIN_" jdbcType="BIGINT" />
+    <result property="type" column="TYPE_" jdbcType="VARCHAR" />
+    <result property="name" column="NAME_" jdbcType="VARCHAR" />
   </resultMap>
 
   <resultMap id="activityCountRow" type="dev.fasti.engine.analytics.impl.AnalyticsRows$ActivityCountRow">
@@ -114,32 +116,20 @@
     </choose>
   </sql>
 
-  <!-- durations of the runs finished in the range, canceled ones not included, per activity and bucket -->
+  <!-- the runs finished in the range, in one scan: per activity, type and bucket of the duration;
+    canceled runs go to bucket -1, finished runs without a duration to bucket -2 -->
   <select id="selectFastiAnalyticsActivityBuckets" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="bucketRow">
-    select T.ACT_ID_ as KEY_, T.BUCKET_, count(*) as COUNT_, sum(T.DURATION_) as TOTAL_,
-      min(T.DURATION_) as MIN_, max(T.DURATION_) as MAX_
+    select T.ACT_ID_ as KEY_, T.ACT_TYPE_ as TYPE_, max(T.ACT_NAME_) as NAME_, T.BUCKET_, count(*) as COUNT_,
+      sum(T.DURATION_) as TOTAL_, min(T.DURATION_) as MIN_, max(T.DURATION_) as MAX_
       <if test="target != null">, sum(case when T.DURATION_ &lt;= #{target} then 1 else 0 end) as WITHIN_</if>
     from (
-      select A.ACT_ID_, A.DURATION_, ${activityBucketSql} as BUCKET_
+      select A.ACT_ID_, A.ACT_TYPE_, A.ACT_NAME_, A.DURATION_,
+        case when A.ACT_INST_STATE_ = 2 then -1 when A.DURATION_ is null then -2 else ${activityBucketSql} end as BUCKET_
       from ${prefix}ACT_HI_ACTINST A
       where <include refid="scope"><property name="alias" value="A"/></include>
         and A.END_TIME_ &gt;= #{after} and A.END_TIME_ &lt; #{before}
-        and A.DURATION_ is not null
-        and (A.ACT_INST_STATE_ is null or A.ACT_INST_STATE_ &lt;&gt; 2)
     ) T
-    group by T.ACT_ID_, T.BUCKET_
-  </select>
-
-  <!-- per activity: finished and canceled in the range -->
-  <select id="selectFastiAnalyticsActivityCounts" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="activityCountRow">
-    select A.ACT_ID_, A.ACT_TYPE_, max(A.ACT_NAME_) as ACT_NAME_,
-      sum(case when A.ACT_INST_STATE_ is null or A.ACT_INST_STATE_ &lt;&gt; 2 then 1 else 0 end) as FINISHED_,
-      sum(case when A.ACT_INST_STATE_ = 2 then 1 else 0 end) as CANCELED_,
-      0 as RUNNING_
-    from ${prefix}ACT_HI_ACTINST A
-    where <include refid="scope"><property name="alias" value="A"/></include>
-      and A.END_TIME_ &gt;= #{after} and A.END_TIME_ &lt; #{before}
-    group by A.ACT_ID_, A.ACT_TYPE_
+    group by T.ACT_ID_, T.ACT_TYPE_, T.BUCKET_
   </select>
 
   <!-- per activity: running now and the oldest of those (a statement of its own, so that both

@@ -21,6 +21,7 @@ import static org.camunda.bpm.engine.authorization.Resources.PROCESS_DEFINITION;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -31,9 +32,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import dev.fasti.engine.analytics.ActivityAnalytics;
+import dev.fasti.engine.analytics.ActivityRework;
 import dev.fasti.engine.analytics.AnalyticsNotAvailableException;
 import dev.fasti.engine.analytics.DurationStatistics;
 import dev.fasti.engine.analytics.InstanceAnalytics;
@@ -56,13 +59,13 @@ import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.identity.Authentication;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.persistence.entity.ProcessDefinitionEntity;
+import org.camunda.bpm.engine.impl.pvm.PvmActivity;
 import org.camunda.bpm.engine.impl.util.ClockUtil;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
 
 public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
 
   static final String ACTIVITY_BUCKETS = "selectFastiAnalyticsActivityBuckets";
-  static final String ACTIVITY_COUNTS = "selectFastiAnalyticsActivityCounts";
   static final String ACTIVITY_RUNNING = "selectFastiAnalyticsActivityRunning";
   static final String RUNNING_SINCE = "selectFastiAnalyticsRunningSince";
   static final String REPEATS = "selectFastiAnalyticsRepeats";
@@ -77,7 +80,7 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
   static final String OLDEST_RUNNING = "selectFastiAnalyticsOldestRunning";
   static final String USER_TASKS = "selectFastiAnalyticsUserTasks";
 
-  static final String[] STATEMENTS = { ACTIVITY_BUCKETS, ACTIVITY_COUNTS, ACTIVITY_RUNNING, RUNNING_SINCE, REPEATS,
+  static final String[] STATEMENTS = { ACTIVITY_BUCKETS, ACTIVITY_RUNNING, RUNNING_SINCE, REPEATS,
       INCIDENTS, INSTANCE_BUCKETS, INSTANCE_COUNTS, INSTANCE_RUNNING, KEY_HISTORY, TREND_BUCKETS, TREND_STARTED,
       SLOWEST, OLDEST_RUNNING, USER_TASKS };
 
@@ -92,6 +95,8 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
    */
   static final int MAX_RESOLVED_DEFINITIONS = 500;
   static final String MULTI_INSTANCE_SUFFIX = "#multiInstanceBody";
+  /** The bucket of canceled runs in the activity scan. */
+  static final int CANCELED_BUCKET = -1;
 
   protected final ProcessEngineConfigurationImpl configuration;
   protected String processDefinitionKey;
@@ -100,6 +105,7 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
   protected Date finishedAfter;
   protected Date finishedBefore;
   protected Long targetDuration;
+  protected boolean withRework = true;
 
   public ProcessAnalyticsQueryImpl(ProcessEngineConfigurationImpl configuration) {
     this.configuration = configuration;
@@ -142,6 +148,12 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
   }
 
   @Override
+  public ProcessAnalyticsQuery withoutRework() {
+    this.withRework = false;
+    return this;
+  }
+
+  @Override
   public ProcessAnalyticsQuery targetDuration(Long targetMillis) {
     if (targetMillis != null && targetMillis < 0) {
       throw new BadUserRequestException("targetDuration is negative");
@@ -171,6 +183,25 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
   }
 
   // --- commands -------------------------------------------------------------------------------
+
+  /**
+   * Runs a read with the checks of {@link #prepare(CommandContext)} on every call, then answers from
+   * the {@link AnalyticsCache} when the same was read shortly before.
+   */
+  protected <T> T executeCached(String kind, Object extra, BiFunction<CommandContext, AnalyticsParameter, T> work) {
+    return execute(commandContext -> {
+      AnalyticsParameter parameter = prepare(commandContext);
+      return AnalyticsCache.get(cacheKey(kind, parameter, extra), () -> work.apply(commandContext, parameter));
+    });
+  }
+
+  protected String cacheKey(String kind, AnalyticsParameter parameter, Object extra) {
+    return String.join("|", kind, String.valueOf(configuration.getProcessEngineName()), parameter.processDefinitionKey,
+        String.valueOf(parameter.definitionIds), String.valueOf(parameter.tenantIds),
+        String.valueOf(parameter.tenantCheck), String.valueOf(parameter.authenticatedTenantIds),
+        String.valueOf(parameter.after.getTime()), String.valueOf(parameter.before.getTime()),
+        String.valueOf(parameter.target), String.valueOf(extra));
+  }
 
   protected <T> T execute(Function<CommandContext, T> work) {
     if (processDefinitionKey == null) {
@@ -309,45 +340,44 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
 
   @Override
   public List<ActivityAnalytics> activities() {
-    return execute(this::activities);
+    return executeCached("activities", withRework, this::activities);
   }
 
-  protected List<ActivityAnalytics> activities(CommandContext commandContext) {
-    AnalyticsParameter parameter = prepare(commandContext);
+  protected List<ActivityAnalytics> activities(CommandContext commandContext, AnalyticsParameter parameter) {
     Date now = ClockUtil.getCurrentTime();
-
     Map<String, ActivityAnalytics> activities = new TreeMap<>();
-    // activities with a multi-instance body: their iterations share a parent, which is no rework
-    Set<String> multiInstance = new HashSet<>();
-    List<ActivityCountRow> counts = new ArrayList<>(this.<ActivityCountRow>select(commandContext, ACTIVITY_COUNTS, parameter));
-    counts.addAll(this.<ActivityCountRow>select(commandContext, ACTIVITY_RUNNING, parameter));
-    for (ActivityCountRow row : counts) {
+
+    // one scan of the range: counts, canceled runs and the histogram of the durations
+    Map<String, Histogram> histograms = new HashMap<>();
+    for (BucketRow row : this.<BucketRow>select(commandContext, ACTIVITY_BUCKETS, parameter)) {
+      if (row.key == null) {
+        continue;
+      }
+      ActivityAnalytics activity = activities.computeIfAbsent(row.key, ProcessAnalyticsQueryImpl::newActivity);
+      describe(activity, row.type, row.name);
+      if (row.bucket == CANCELED_BUCKET) {
+        activity.setCanceled(activity.getCanceled() + row.count);
+      } else {
+        activity.setFinished(activity.getFinished() + row.count);
+        histograms.computeIfAbsent(row.key, ignored -> new Histogram())
+            .add(row.bucket, row.count, row.total, row.minimum, row.maximum, row.withinTarget);
+      }
+    }
+    for (ActivityCountRow row : this.<ActivityCountRow>select(commandContext, ACTIVITY_RUNNING, parameter)) {
       if (row.activityId == null) {
         continue;
       }
-      ActivityAnalytics activity = activities.computeIfAbsent(row.activityId, id -> newActivity(id));
-      if (activity.getActivityType() == null) {
-        activity.setActivityType(row.activityType);
-      }
-      if (row.activityName != null) {
-        activity.setActivityName(row.activityName);
-      }
-      activity.setFinished(activity.getFinished() + row.finished);
-      activity.setCanceled(activity.getCanceled() + row.canceled);
+      ActivityAnalytics activity = activities.computeIfAbsent(row.activityId, ProcessAnalyticsQueryImpl::newActivity);
+      describe(activity, row.activityType, row.activityName);
       activity.setRunning(activity.getRunning() + row.running);
       if (row.oldestRunning != null && (activity.getOldestRunningStart() == null
           || row.oldestRunning.before(activity.getOldestRunningStart()))) {
         activity.setOldestRunningStart(row.oldestRunning);
       }
-      if (row.activityId.endsWith(MULTI_INSTANCE_SUFFIX)) {
-        multiInstance.add(row.activityId.substring(0, row.activityId.length() - MULTI_INSTANCE_SUFFIX.length()));
-      }
     }
-
-    Map<String, Histogram> histograms = histograms(select(commandContext, ACTIVITY_BUCKETS, parameter));
     for (ActivityAnalytics activity : activities.values()) {
       Histogram histogram = histograms.get(activity.getActivityId());
-      if (histogram == null) {
+      if (histogram == null || histogram.getCount() == 0) {
         activity.setDurations(DurationStatistics.empty(parameter.target));
       } else {
         DurationStatistics durations = histogram.toStatistics(parameter.target, true);
@@ -376,11 +406,13 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
     }
     parameter.activitySince = new ArrayList<>();
 
-    for (KeyCountRow row : this.<KeyCountRow>select(commandContext, REPEATS, parameter)) {
-      ActivityAnalytics activity = activities.get(row.key);
-      if (activity != null && !multiInstance.contains(row.key)) {
-        activity.setRepeatedInstances(row.count);
-        activity.setRepeatedExecutions(row.extra);
+    if (withRework) {
+      for (ActivityRework rework : rework(commandContext, parameter)) {
+        ActivityAnalytics activity = activities.get(rework.getActivityId());
+        if (activity != null) {
+          activity.setRepeatedInstances(rework.getRepeatedInstances());
+          activity.setRepeatedExecutions(rework.getRepeatedExecutions());
+        }
       }
     }
 
@@ -396,7 +428,66 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
       activity.setOpenIncidents(row.count);
       activity.setIncidents(row.extra);
     }
-    return new ArrayList<>(activities.values());
+    return Collections.unmodifiableList(new ArrayList<>(activities.values()));
+  }
+
+  protected static void describe(ActivityAnalytics activity, String type, String name) {
+    if (activity.getActivityType() == null) {
+      activity.setActivityType(type);
+    }
+    if (name != null) {
+      activity.setActivityName(name);
+    }
+  }
+
+  @Override
+  public List<ActivityRework> rework() {
+    return executeCached("rework", null, this::rework);
+  }
+
+  /**
+   * Scopes that ran an activity more than once in the range. The iterations of a multi-instance
+   * activity share their parent, the body: those activities are taken from the deployed models of
+   * the versions in scope and left out.
+   */
+  protected List<ActivityRework> rework(CommandContext commandContext, AnalyticsParameter parameter) {
+    Set<String> multiInstance = multiInstanceActivities(commandContext, parameter);
+    List<ActivityRework> rework = new ArrayList<>();
+    for (KeyCountRow row : this.<KeyCountRow>select(commandContext, REPEATS, parameter)) {
+      if (row.key != null && !multiInstance.contains(row.key)) {
+        rework.add(new ActivityRework(row.key, row.count, row.extra));
+      }
+    }
+    rework.sort(Comparator.comparing(ActivityRework::getActivityId));
+    return Collections.unmodifiableList(rework);
+  }
+
+  protected Set<String> multiInstanceActivities(CommandContext commandContext, AnalyticsParameter parameter) {
+    Set<String> ids = new HashSet<>();
+    List<String> versions = parameter.definitionIds.isEmpty() ? definitionIdsOfKey(commandContext) : parameter.definitionIds;
+    for (String id : versions.subList(0, Math.min(versions.size(), MAX_RESOLVED_DEFINITIONS))) {
+      ProcessDefinitionEntity definition;
+      try {
+        definition = configuration.getDeploymentCache().findDeployedProcessDefinitionById(id);
+      } catch (RuntimeException e) {
+        // a version whose model cannot be read: its multi-instance activities stay unknown
+        continue;
+      }
+      if (definition != null) {
+        collectMultiInstance(definition.getActivities(), ids);
+      }
+    }
+    return ids;
+  }
+
+  protected static void collectMultiInstance(List<? extends PvmActivity> activities, Set<String> ids) {
+    for (PvmActivity activity : activities) {
+      String id = activity.getId();
+      if (id != null && id.endsWith(MULTI_INSTANCE_SUFFIX)) {
+        ids.add(id.substring(0, id.length() - MULTI_INSTANCE_SUFFIX.length()));
+      }
+      collectMultiInstance(activity.getActivities(), ids);
+    }
   }
 
   protected static ActivityAnalytics newActivity(String activityId) {
@@ -409,8 +500,7 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
 
   @Override
   public InstanceAnalytics instances() {
-    return execute(commandContext -> {
-      AnalyticsParameter parameter = prepare(commandContext);
+    return executeCached("instances", null, (commandContext, parameter) -> {
       InstanceCountRow count = new InstanceCountRow();
       List<InstanceCountRow> counts = new ArrayList<>(this.<InstanceCountRow>select(commandContext, INSTANCE_COUNTS, parameter));
       counts.addAll(this.<InstanceCountRow>select(commandContext, INSTANCE_RUNNING, parameter));
@@ -443,8 +533,7 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
       }
     }
     List<Date> bounds = new ArrayList<>(boundaries);
-    return execute(commandContext -> {
-      AnalyticsParameter parameter = prepare(commandContext);
+    return executeCached("trend", bounds, (commandContext, parameter) -> {
       int periods = bounds.size() - 1;
       parameter.periodStart = bounds.get(0);
       parameter.periodEnd = bounds.get(periods);
@@ -497,8 +586,7 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
     if (maxResults < 1 || maxResults > MAX_RESULTS) {
       throw new BadUserRequestException("maxResults must be between 1 and " + MAX_RESULTS);
     }
-    return execute(commandContext -> {
-      AnalyticsParameter parameter = prepare(commandContext);
+    return executeCached("runs", statement + "|" + activityId + "|" + maxResults, (commandContext, parameter) -> {
       parameter.activityId = activityId;
       List<SlowInstance> runs = select(commandContext, statement, parameter, maxResults);
       long now = ClockUtil.getCurrentTime().getTime();
@@ -518,8 +606,7 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
     if (maxTasks < 1 || maxTasks > MAX_USER_TASKS) {
       throw new BadUserRequestException("maxTasks must be between 1 and " + MAX_USER_TASKS);
     }
-    return execute(commandContext -> {
-      AnalyticsParameter parameter = prepare(commandContext);
+    return executeCached("userTasks", maxTasks, (commandContext, parameter) -> {
       List<UserTaskRow> rows = select(commandContext, USER_TASKS, parameter, maxTasks + 1);
       boolean sampled = rows.size() > maxTasks;
       if (sampled) {

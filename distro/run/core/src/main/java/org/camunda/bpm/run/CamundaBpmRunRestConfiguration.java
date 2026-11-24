@@ -55,6 +55,7 @@ public class CamundaBpmRunRestConfiguration {
   /** Fasti: how long a successful basic authentication of the REST API is cached. */
   protected static final String AUTH_CACHE_TTL_PROPERTY = "fasti.rest.auth-cache-ttl";
   protected static final Duration DEFAULT_AUTH_CACHE_TTL = Duration.ofSeconds(30);
+  protected static final String ANALYTICS_CACHE_TTL_PROPERTY = "fasti.analytics.cache-ttl";
 
   protected static final String BEARER_AUTHENTICATION_PROVIDER =
       "org.camunda.bpm.spring.boot.starter.security.oauth2.impl.BearerTokenAuthenticationProvider";
@@ -96,6 +97,13 @@ public class CamundaBpmRunRestConfiguration {
       registration.addInitParameter("authentication-provider", provider);
     }
     // Fasti: successful basic authentications are cached briefly (0 turns it off)
+    Duration analyticsCache = environment.getProperty(ANALYTICS_CACHE_TTL_PROPERTY, Duration.class);
+    if (analyticsCache != null) {
+      if (analyticsCache.isNegative()) {
+        throw new IllegalArgumentException(ANALYTICS_CACHE_TTL_PROPERTY + " must not be negative: " + analyticsCache);
+      }
+      dev.fasti.engine.analytics.ProcessAnalytics.setCacheTimeToLive(analyticsCache);
+    }
     Duration cacheTimeToLive = environment.getProperty(AUTH_CACHE_TTL_PROPERTY, Duration.class, DEFAULT_AUTH_CACHE_TTL);
     if (cacheTimeToLive.isNegative()) {
       throw new IllegalArgumentException(AUTH_CACHE_TTL_PROPERTY + " must not be negative: " + cacheTimeToLive);

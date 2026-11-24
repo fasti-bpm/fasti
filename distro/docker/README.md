@@ -125,6 +125,7 @@ images; entries marked **from 1.2.0** are not in the 1.1.x images.
 | `JMX_PROMETHEUS=true` | | Prometheus JMX exporter on port `JMX_PROMETHEUS_PORT` (9404), configuration `JMX_PROMETHEUS_CONF`, if the agent jar is in `/fasti/javaagent` |
 | `JAVA_OPTS` | | additional JVM options (space-separated, no quotes) |
 | `FASTI_MAX_RAM_PERCENTAGE` | 75 | percentage of container memory used for the heap |
+| `FASTI_RETURN_MEMORY` | `true` | **From 1.2.1.** Return unused heap to the system (`-XX:G1PeriodicGCInterval=30000 -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=30`); `false` keeps the JVM defaults |
 | `FASTI_DB_SCHEMA_UPDATE` | `false` (`true` for the built-in H2 demo database) | `true` creates missing tables (new database); never upgrades a schema |
 | `FASTI_SCHEMA_VERSION_CHECK` | `enforce` | `warn`: a schema older than 7.24 only logs a warning instead of stopping |
 | `FASTI_DB_SCHEMA`, `FASTI_DB_TABLE_PREFIX` | | `camunda.bpm.database.schema-name` / `table-prefix` |

@@ -131,6 +131,7 @@ image 1.1.x.
 | `JMX_PROMETHEUS=true` | | Prometheus JMX exporter cổng `JMX_PROMETHEUS_PORT` (9404), cấu hình `JMX_PROMETHEUS_CONF`, nếu có jar trong `/fasti/javaagent` |
 | `JAVA_OPTS` | | thêm tùy chọn JVM (tách bằng khoảng trắng, không có dấu nháy) |
 | `FASTI_MAX_RAM_PERCENTAGE` | 75 | phần trăm RAM của container cho heap |
+| `FASTI_RETURN_MEMORY` | `true` | **Có từ 1.2.1.** Trả phần heap không dùng về hệ thống (`-XX:G1PeriodicGCInterval=30000 -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=30`); `false` giữ mặc định của JVM |
 | `FASTI_DB_SCHEMA_UPDATE` | `false` (`true` với cơ sở dữ liệu H2 demo có sẵn) | `true` tạo bảng còn thiếu (cơ sở dữ liệu mới); không bao giờ nâng cấp schema |
 | `FASTI_SCHEMA_VERSION_CHECK` | `enforce` | `warn`: schema cũ hơn 7.24 chỉ cảnh báo thay vì dừng |
 | `FASTI_DB_SCHEMA`, `FASTI_DB_TABLE_PREFIX` | | `camunda.bpm.database.schema-name` / `table-prefix` |

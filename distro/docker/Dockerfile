@@ -15,26 +15,10 @@
 ARG JRE_IMAGE=eclipse-temurin:21-jre-alpine
 
 # CVE-2026-114938 ("Java4Shell"): the x86-64 Base64 intrinsic of HotSpot writes out of bounds on
-# CPUs with AVX-512 VBMI. The fix is Temurin 21.0.13.1. Until the official eclipse-temurin image
-# carries it, the amd64 image replaces the JRE of the base image with the fixed Adoptium build,
-# verified by its SHA-256 checksum. arm64 is not affected and keeps the JRE of the base image.
-# Set FIXED_JRE_URL to an empty value to keep the base image JRE on amd64 as well.
-ARG FIXED_JRE_URL=https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13.1%2B2/OpenJDK21U-jre_x64_alpine-linux_hotspot_21.0.13.1_2.tar.gz
-ARG FIXED_JRE_SHA256=72835f41a468ae949fc058f8ec6a73d303ca3e5ea165621e08aacb36bb537bba
-
-FROM ${JRE_IMAGE} AS jre
-ARG TARGETARCH
-ARG FIXED_JRE_URL
-ARG FIXED_JRE_SHA256
-RUN mkdir -p /jre \
- && if [ "${TARGETARCH:-amd64}" = "amd64" ] && [ -n "$FIXED_JRE_URL" ]; then \
-      wget -q -O /tmp/jre.tar.gz "$FIXED_JRE_URL" \
-      && echo "$FIXED_JRE_SHA256  /tmp/jre.tar.gz" | sha256sum -c - \
-      && tar -xzf /tmp/jre.tar.gz -C /jre --strip-components=1 \
-      && rm -f /tmp/jre.tar.gz; \
-    else \
-      cp -a "$JAVA_HOME"/. /jre/; \
-    fi
+# CPUs with AVX-512 VBMI; fixed in Temurin 21.0.13.1. The official eclipse-temurin image carries
+# that version, so its JRE is used as it is (1.2.0 replaced it with a second copy, 165 MB). The
+# build fails if the base image has an older JRE.
+ARG MIN_JAVA_VERSION=21.0.13.1
 
 FROM ${JRE_IMAGE} AS unpack
 COPY fasti-bpm-run.tar.gz /tmp/

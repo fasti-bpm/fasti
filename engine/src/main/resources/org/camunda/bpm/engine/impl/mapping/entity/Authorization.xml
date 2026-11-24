@@ -858,6 +858,9 @@
     <!-- The suffix above is added to handle mssql differently (with UNION instead of OR for groups) -->
   </sql>
 
+  <!-- Fasti: TYPE_ IN (0, 1) (global and grant) instead of TYPE_ < 2, the same rows. Equality on
+       the first column lets the database seek the unique indexes (TYPE_, USER_ID_, ...) and
+       (TYPE_, GROUP_ID_, ...) for the user and the groups; with the range it read the whole table. -->
   <sql id="authCheckJoinWithoutOnClauseWithBinding">
     <choose>
       <when test="useLeftJoin != null &amp;&amp; useLeftJoin == true">left join</when>
@@ -866,7 +869,7 @@
     (
     SELECT A.*
     FROM ${prefix}ACT_RU_AUTHORIZATION A
-    WHERE A.TYPE_ &lt; 2     
+    WHERE A.TYPE_ IN (0, 1)     
     AND ( A.USER_ID_ in ( #{authCheck.authUserId, jdbcType=VARCHAR}, '*')           
     <if test="authGroupIds != null &amp;&amp; authGroupIds.size > 0">
       OR A.GROUP_ID_ IN <foreach item="item" index="index" collection="authGroupIds" open="(" separator="," close=")">#{item}</foreach>
@@ -884,14 +887,14 @@
     (
     SELECT A.*
     FROM ${prefix}ACT_RU_AUTHORIZATION A
-    WHERE A.TYPE_ &lt; 2
+    WHERE A.TYPE_ IN (0, 1)
     AND A.USER_ID_ in ( #{authCheck.authUserId, jdbcType=VARCHAR}, '*')
     <include refid="org.camunda.bpm.engine.impl.persistence.entity.AuthorizationEntity.atomicChecksOnResourceTypeAndPerms"></include>
     <if test="authGroupIds != null &amp;&amp; authGroupIds.size > 0">
       UNION (
       SELECT A.*
       FROM ${prefix}ACT_RU_AUTHORIZATION A
-      WHERE A.TYPE_ &lt; 2
+      WHERE A.TYPE_ IN (0, 1)
       AND A.GROUP_ID_ IN <foreach item="item" index="index" collection="authGroupIds" open="(" separator="," close=")">#{item}</foreach>
       <include refid="org.camunda.bpm.engine.impl.persistence.entity.AuthorizationEntity.atomicChecksOnResourceTypeAndPerms"></include>
       )

@@ -150,6 +150,7 @@ public class ProcessAnalyticsTest {
     assertThat(activities.get("review").getRepeatedInstances()).isEqualTo(2);
     assertThat(activities.get("review").getRepeatedExecutions()).isEqualTo(2);
     assertThat(activities.get("approve").getRepeatedInstances()).isZero();
+    assertThat(activities.get("reviewed").getRepeatedInstances()).isZero();
   }
 
   @Test

@@ -24,10 +24,12 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
 
@@ -89,6 +91,7 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
    * indexes on {@code (PROC_DEF_ID_, END_TIME_)}; with more versions than this the key is used.
    */
   static final int MAX_RESOLVED_DEFINITIONS = 500;
+  static final String MULTI_INSTANCE_SUFFIX = "#multiInstanceBody";
 
   protected final ProcessEngineConfigurationImpl configuration;
   protected String processDefinitionKey;
@@ -173,7 +176,28 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
     if (processDefinitionKey == null) {
       throw new BadUserRequestException("processDefinitionKey is required");
     }
-    return configuration.getCommandExecutorTxRequired().execute(work::apply);
+    return configuration.getCommandExecutorTxRequired().execute(commandContext -> {
+      customPlans(commandContext);
+      return work.apply(commandContext);
+    });
+  }
+
+  /**
+   * On PostgreSQL, plans for the values of this call: after five executions of a prepared
+   * statement PostgreSQL may switch to a generic plan whose row estimate for the date range is a
+   * constant, which made the aggregates of a long range twice as slow. Only for this transaction;
+   * the planning time is small next to reading the history.
+   */
+  protected void customPlans(CommandContext commandContext) {
+    if (!"postgres".equals(configuration.getDatabaseType())) {
+      return;
+    }
+    try (java.sql.Statement statement = commandContext.getDbSqlSession().getSqlSession().getConnection()
+        .createStatement()) {
+      statement.execute("set local plan_cache_mode = force_custom_plan");
+    } catch (java.sql.SQLException e) {
+      // older servers without the setting: the default plans
+    }
   }
 
   /** The checks every statement needs, and the parameter with the scope they share. */
@@ -293,6 +317,8 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
     Date now = ClockUtil.getCurrentTime();
 
     Map<String, ActivityAnalytics> activities = new TreeMap<>();
+    // activities with a multi-instance body: their iterations share a parent, which is no rework
+    Set<String> multiInstance = new HashSet<>();
     List<ActivityCountRow> counts = new ArrayList<>(this.<ActivityCountRow>select(commandContext, ACTIVITY_COUNTS, parameter));
     counts.addAll(this.<ActivityCountRow>select(commandContext, ACTIVITY_RUNNING, parameter));
     for (ActivityCountRow row : counts) {
@@ -312,6 +338,9 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
       if (row.oldestRunning != null && (activity.getOldestRunningStart() == null
           || row.oldestRunning.before(activity.getOldestRunningStart()))) {
         activity.setOldestRunningStart(row.oldestRunning);
+      }
+      if (row.activityId.endsWith(MULTI_INSTANCE_SUFFIX)) {
+        multiInstance.add(row.activityId.substring(0, row.activityId.length() - MULTI_INSTANCE_SUFFIX.length()));
       }
     }
 
@@ -349,7 +378,7 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
 
     for (KeyCountRow row : this.<KeyCountRow>select(commandContext, REPEATS, parameter)) {
       ActivityAnalytics activity = activities.get(row.key);
-      if (activity != null) {
+      if (activity != null && !multiInstance.contains(row.key)) {
         activity.setRepeatedInstances(row.count);
         activity.setRepeatedExecutions(row.extra);
       }

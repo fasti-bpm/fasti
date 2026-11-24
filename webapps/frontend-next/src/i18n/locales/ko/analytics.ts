@@ -66,7 +66,7 @@ const messages = {
   'an.bottleneck.runs': '실행 수',
   'an.bottleneck.above': '중앙값 초과',
   'an.bottleneck.now': '현재 실행 중',
-  'an.bottleneck.rework': '재작업',
+  'an.bottleneck.rework': '추가 실행',
   'an.trend.title': '시간에 따른 소요 시간',
   'an.trend.byDay': '일별로 완료된 프로세스 인스턴스: 소요 시간의 중앙값과 P90.',
   'an.trend.byWeek': '주별로 완료된 프로세스 인스턴스: 소요 시간의 중앙값과 P90.',

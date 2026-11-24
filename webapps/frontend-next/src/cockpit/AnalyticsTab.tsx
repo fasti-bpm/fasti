@@ -230,7 +230,8 @@ export function AnalyticsTab({
     () =>
       shown.map((activity) => {
         const value = measureValue(activity, measure, now);
-        const text = value <= 0 ? undefined : DURATION_MEASURES.has(measure) ? formatDuration(value, locale) : formatNumber(value, locale);
+        const shownValue = value > 0 && (isBottleneckCandidate(activity.activityType) || measure === 'incidents');
+        const text = !shownValue ? undefined : DURATION_MEASURES.has(measure) ? formatDuration(value, locale) : formatNumber(value, locale);
         return {
           activityId: activity.activityId,
           instances: activity.running,
@@ -463,17 +464,19 @@ function Histogram({ statistics, label }: { statistics: DurationStatistics; labe
         <span>{label}</span>
         <span className="analytics__key analytics__key--slow" /> {t('an.histogram.slow')}
       </figcaption>
-      <table className="sr-only">
-        <caption>{label}</caption>
-        <tbody>
-          {statistics.buckets.map((bucket) => (
-            <tr key={bucket.lower}>
-              <th scope="row">{range(bucket)}</th>
-              <td>{formatNumber(bucket.count, locale)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="sr-only">
+        <table>
+          <caption>{label}</caption>
+          <tbody>
+            {statistics.buckets.map((bucket) => (
+              <tr key={bucket.lower}>
+                <th scope="row">{range(bucket)}</th>
+                <td>{formatNumber(bucket.count, locale)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }
@@ -518,7 +521,7 @@ function ActivityPanel({
   const heading = useRef<HTMLHeadingElement>(null);
   // opened from the table below or the picker: bring it into view and to the keyboard
   useEffect(() => {
-    heading.current?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+    heading.current?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
     heading.current?.focus({ preventScroll: true });
   }, [activity.activityId]);
   const slowest = useQuery({
@@ -648,7 +651,16 @@ function Bottlenecks({
     { id: 'runs', header: t('an.bottleneck.runs'), align: 'end', secondary: true, cell: (row) => formatNumber(row.finished, locale) },
     { id: 'p50', header: 'P50', align: 'end', cell: (row) => formatDuration(row.durations.p50, locale) },
     { id: 'p90', header: 'P90', align: 'end', cell: (row) => formatDuration(row.durations.p90, locale) },
-    { id: 'above', header: t('an.bottleneck.above'), align: 'end', secondary: true, cell: (row) => formatDuration(row.timeAboveMedian, locale) },
+    {
+      id: 'above',
+      header: t('an.bottleneck.above'),
+      align: 'end',
+      secondary: true,
+      cell: (row) => {
+        const share = shareOf(row.timeAboveMedian, row.durations.total);
+        return share === null ? '—' : <span title={formatDuration(row.timeAboveMedian, locale)}>{percent.format(share)}</span>;
+      },
+    },
     {
       id: 'now',
       header: t('an.bottleneck.now'),
@@ -737,17 +749,19 @@ function TrendChart({
               </span>
             )}
           </p>
-          <table className="sr-only">
-            <caption>{t('an.trend.title')}</caption>
-            <tbody>
-              {trend.map((period) => (
-                <tr key={period.start}>
-                  <th scope="row">{label(period)}</th>
-                  <td>{describe(period)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="sr-only">
+            <table>
+              <caption>{t('an.trend.title')}</caption>
+              <tbody>
+                {trend.map((period) => (
+                  <tr key={period.start}>
+                    <th scope="row">{label(period)}</th>
+                    <td>{describe(period)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
     </section>

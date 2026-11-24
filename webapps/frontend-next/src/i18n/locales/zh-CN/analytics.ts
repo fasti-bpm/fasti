@@ -66,7 +66,7 @@ const messages = {
   'an.bottleneck.runs': '运行次数',
   'an.bottleneck.above': '超出中位数',
   'an.bottleneck.now': '正在运行',
-  'an.bottleneck.rework': '返工',
+  'an.bottleneck.rework': '额外运行',
   'an.trend.title': '时长趋势',
   'an.trend.byDay': '每天完成的流程实例:时长的中位数和 P90。',
   'an.trend.byWeek': '每周完成的流程实例:时长的中位数和 P90。',

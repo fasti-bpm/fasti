@@ -73,7 +73,7 @@ const messages = {
   'an.bottleneck.runs': 'रन',
   'an.bottleneck.above': 'माध्यिका से अधिक',
   'an.bottleneck.now': 'अभी चल रहे',
-  'an.bottleneck.rework': 'दोबारा काम',
+  'an.bottleneck.rework': 'अतिरिक्त रन',
   'an.trend.title': 'समय के साथ अवधि',
   'an.trend.byDay': 'प्रति दिन पूरे हुए प्रक्रिया इंस्टेंस: उनकी अवधि की माध्यिका और P90।',
   'an.trend.byWeek': 'प्रति सप्ताह पूरे हुए प्रक्रिया इंस्टेंस: उनकी अवधि की माध्यिका और P90।',

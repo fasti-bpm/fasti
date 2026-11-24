@@ -66,7 +66,7 @@ const messages = {
   'an.bottleneck.runs': 'Eksekusi',
   'an.bottleneck.above': 'Di atas median',
   'an.bottleneck.now': 'Berjalan sekarang',
-  'an.bottleneck.rework': 'Pengerjaan ulang',
+  'an.bottleneck.rework': 'Eksekusi tambahan',
   'an.trend.title': 'Durasi dari waktu ke waktu',
   'an.trend.byDay': 'Instance proses selesai per hari: median dan P90 durasinya.',
   'an.trend.byWeek': 'Instance proses selesai per minggu: median dan P90 durasinya.',

@@ -66,7 +66,7 @@ const messages = {
   'an.bottleneck.runs': '実行数',
   'an.bottleneck.above': '中央値超過',
   'an.bottleneck.now': '実行中',
-  'an.bottleneck.rework': '手戻り',
+  'an.bottleneck.rework': '追加実行',
   'an.trend.title': '所要時間の推移',
   'an.trend.byDay': '日ごとに完了したプロセスインスタンス: 所要時間の中央値と P90。',
   'an.trend.byWeek': '週ごとに完了したプロセスインスタンス: 所要時間の中央値と P90。',

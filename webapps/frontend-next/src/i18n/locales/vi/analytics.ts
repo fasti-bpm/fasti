@@ -66,7 +66,7 @@ const messages = {
   'an.bottleneck.runs': 'Số lượt',
   'an.bottleneck.above': 'Vượt trung vị',
   'an.bottleneck.now': 'Đang chạy',
-  'an.bottleneck.rework': 'Làm lại',
+  'an.bottleneck.rework': 'Lượt chạy thêm',
   'an.trend.title': 'Thời lượng theo thời gian',
   'an.trend.byDay': 'Instance hoàn thành mỗi ngày: trung vị và P90 thời lượng.',
   'an.trend.byWeek': 'Instance hoàn thành mỗi tuần: trung vị và P90 thời lượng.',

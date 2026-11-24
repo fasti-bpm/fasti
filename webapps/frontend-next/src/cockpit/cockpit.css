@@ -2086,6 +2086,29 @@ a.trend:hover {
 
 /* --- process analytics ------------------------------------------------------------------------ */
 
+.analytics > * {
+  min-width: 0;
+}
+
+.analytics .stats__diagram .diagram,
+.analytics .stats__diagram .diagram__canvas {
+  height: clamp(360px, 58vh, 680px);
+  min-height: 360px;
+}
+
+.analytics .toolbar {
+  row-gap: var(--s-2);
+}
+
+.analytics__runs > div {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.analytics__facts > span {
+  white-space: normal;
+}
+
 .analytics__controls {
   display: flex;
   flex-wrap: wrap;
@@ -2274,6 +2297,7 @@ a.trend:hover {
 
 .analytics__trend-target {
   position: absolute;
+  z-index: 1;
   inset-inline: 0;
   border-top: 2px dashed var(--danger);
   pointer-events: none;

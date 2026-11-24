@@ -66,7 +66,7 @@ const messages = {
   'an.bottleneck.runs': 'จำนวนครั้ง',
   'an.bottleneck.above': 'เกินมัธยฐาน',
   'an.bottleneck.now': 'กำลังทำงาน',
-  'an.bottleneck.rework': 'ทำซ้ำ',
+  'an.bottleneck.rework': 'การทำงานเพิ่ม',
   'an.trend.title': 'ระยะเวลาตามช่วงเวลา',
   'an.trend.byDay': 'อินสแตนซ์กระบวนการที่เสร็จต่อวัน: มัธยฐานและ P90 ของระยะเวลา',
   'an.trend.byWeek': 'อินสแตนซ์กระบวนการที่เสร็จต่อสัปดาห์: มัธยฐานและ P90 ของระยะเวลา',

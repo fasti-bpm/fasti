@@ -66,7 +66,7 @@ const messages = {
   'an.bottleneck.runs': 'Выполнения',
   'an.bottleneck.above': 'Сверх медианы',
   'an.bottleneck.now': 'Выполняются сейчас',
-  'an.bottleneck.rework': 'Переделки',
+  'an.bottleneck.rework': 'Лишние выполнения',
   'an.trend.title': 'Длительность во времени',
   'an.trend.byDay': 'Экземпляры процесса, завершённые за день: медиана и P90 длительности.',
   'an.trend.byWeek': 'Экземпляры процесса, завершённые за неделю: медиана и P90 длительности.',

@@ -73,7 +73,7 @@ const messages = {
   'an.bottleneck.runs': 'Durchläufe',
   'an.bottleneck.above': 'Über Median',
   'an.bottleneck.now': 'Laufen jetzt',
-  'an.bottleneck.rework': 'Nacharbeit',
+  'an.bottleneck.rework': 'Zusätzliche Durchläufe',
   'an.trend.title': 'Dauer im Zeitverlauf',
   'an.trend.byDay': 'Pro Tag abgeschlossene Prozessinstanzen: Median und P90 ihrer Dauer.',
   'an.trend.byWeek': 'Pro Woche abgeschlossene Prozessinstanzen: Median und P90 ihrer Dauer.',

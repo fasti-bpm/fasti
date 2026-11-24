@@ -73,7 +73,7 @@ const messages = {
   'an.bottleneck.runs': 'Runs',
   'an.bottleneck.above': 'Beyond median',
   'an.bottleneck.now': 'Running now',
-  'an.bottleneck.rework': 'Rework',
+  'an.bottleneck.rework': 'Extra runs',
   'an.trend.title': 'Duration over time',
   'an.trend.byDay': 'Process instances completed per day: median and P90 of their duration.',
   'an.trend.byWeek': 'Process instances completed per week: median and P90 of their duration.',

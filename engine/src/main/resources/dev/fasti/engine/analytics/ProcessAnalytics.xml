@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+    SPDX-License-Identifier: Apache-2.0
+    Copyright Fasti BPM contributors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- Fasti: process analytics over the history tables. Plain SQL that every supported database
+  runs: durations are put into buckets with a CASE of constant numbers (DurationBuckets), periods
+  with a CASE of bound period ends, so no date, logarithm or percentile function is used. The
+  statements read ACT_HI_* tables only. -->
+<mapper namespace="dev.fasti.engine.analytics.impl.AnalyticsParameter">
+
+  <resultMap id="bucketRow" type="dev.fasti.engine.analytics.impl.AnalyticsRows$BucketRow">
+    <result property="key" column="KEY_" jdbcType="VARCHAR" />
+    <result property="bucket" column="BUCKET_" jdbcType="INTEGER" />
+    <result property="count" column="COUNT_" jdbcType="BIGINT" />
+    <result property="total" column="TOTAL_" jdbcType="BIGINT" />
+    <result property="minimum" column="MIN_" jdbcType="BIGINT" />
+    <result property="maximum" column="MAX_" jdbcType="BIGINT" />
+    <result property="withinTarget" column="WITHIN_" jdbcType="BIGINT" />
+  </resultMap>
+
+  <resultMap id="activityCountRow" type="dev.fasti.engine.analytics.impl.AnalyticsRows$ActivityCountRow">
+    <result property="activityId" column="ACT_ID_" jdbcType="VARCHAR" />
+    <result property="activityType" column="ACT_TYPE_" jdbcType="VARCHAR" />
+    <result property="activityName" column="ACT_NAME_" jdbcType="VARCHAR" />
+    <result property="finished" column="FINISHED_" jdbcType="BIGINT" />
+    <result property="canceled" column="CANCELED_" jdbcType="BIGINT" />
+    <result property="running" column="RUNNING_" jdbcType="BIGINT" />
+    <result property="oldestRunning" column="OLDEST_" jdbcType="TIMESTAMP" />
+  </resultMap>
+
+  <resultMap id="keyCountRow" type="dev.fasti.engine.analytics.impl.AnalyticsRows$KeyCountRow">
+    <result property="key" column="KEY_" jdbcType="VARCHAR" />
+    <result property="count" column="COUNT_" jdbcType="BIGINT" />
+    <result property="extra" column="EXTRA_" jdbcType="BIGINT" />
+  </resultMap>
+
+  <resultMap id="instanceCountRow" type="dev.fasti.engine.analytics.impl.AnalyticsRows$InstanceCountRow">
+    <result property="completed" column="COMPLETED_" jdbcType="BIGINT" />
+    <result property="terminated" column="TERMINATED_" jdbcType="BIGINT" />
+    <result property="running" column="RUNNING_" jdbcType="BIGINT" />
+  </resultMap>
+
+  <resultMap id="slowInstance" type="dev.fasti.engine.analytics.SlowInstance">
+    <result property="activityInstanceId" column="ACT_INST_ID_" jdbcType="VARCHAR" />
+    <result property="processInstanceId" column="PROC_INST_ID_" jdbcType="VARCHAR" />
+    <result property="processDefinitionId" column="PROC_DEF_ID_" jdbcType="VARCHAR" />
+    <result property="businessKey" column="BUSINESS_KEY_" jdbcType="VARCHAR" />
+    <result property="startTime" column="START_TIME_" jdbcType="TIMESTAMP" />
+    <result property="endTime" column="END_TIME_" jdbcType="TIMESTAMP" />
+    <result property="duration" column="DURATION_" jdbcType="BIGINT" />
+  </resultMap>
+
+  <resultMap id="userTaskRow" type="dev.fasti.engine.analytics.impl.AnalyticsRows$UserTaskRow">
+    <result property="taskDefinitionKey" column="TASK_DEF_KEY_" jdbcType="VARCHAR" />
+    <result property="name" column="NAME_" jdbcType="VARCHAR" />
+    <result property="assignee" column="ASSIGNEE_" jdbcType="VARCHAR" />
+    <result property="startTime" column="START_TIME_" jdbcType="TIMESTAMP" />
+    <result property="endTime" column="END_TIME_" jdbcType="TIMESTAMP" />
+    <result property="firstAssignment" column="FIRST_ASSIGN_" jdbcType="TIMESTAMP" />
+  </resultMap>
+
+  <!-- the process (or the chosen versions of it) and the tenants the user may read -->
+  <sql id="scope">
+    <choose>
+      <when test="definitionIds != null and definitionIds.size > 0">
+        ${alias}.PROC_DEF_ID_ in <foreach item="id" collection="definitionIds" open="(" separator="," close=")">#{id}</foreach>
+      </when>
+      <otherwise>
+        ${alias}.PROC_DEF_KEY_ = #{processDefinitionKey}
+      </otherwise>
+    </choose>
+    <if test="tenantIds != null and tenantIds.size > 0">
+      and ${alias}.TENANT_ID_ in <foreach item="tenantId" collection="tenantIds" open="(" separator="," close=")">#{tenantId}</foreach>
+    </if>
+    <if test="tenantCheck">
+      and (${alias}.TENANT_ID_ is null
+      <if test="authenticatedTenantIds != null and authenticatedTenantIds.size > 0">
+        or ${alias}.TENANT_ID_ in <foreach item="tenantId" collection="authenticatedTenantIds" open="(" separator="," close=")">#{tenantId}</foreach>
+      </if>
+      )
+    </if>
+  </sql>
+
+  <!-- durations of the runs finished in the range, canceled ones not included, per activity and bucket -->
+  <select id="selectFastiAnalyticsActivityBuckets" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="bucketRow">
+    select T.ACT_ID_ as KEY_, T.BUCKET_, count(*) as COUNT_, sum(T.DURATION_) as TOTAL_,
+      min(T.DURATION_) as MIN_, max(T.DURATION_) as MAX_
+      <if test="target != null">, sum(case when T.DURATION_ &lt;= #{target} then 1 else 0 end) as WITHIN_</if>
+    from (
+      select A.ACT_ID_, A.DURATION_, ${activityBucketSql} as BUCKET_
+      from ${prefix}ACT_HI_ACTINST A
+      where <include refid="scope"><property name="alias" value="A"/></include>
+        and A.END_TIME_ &gt;= #{after} and A.END_TIME_ &lt; #{before}
+        and A.DURATION_ is not null
+        and (A.ACT_INST_STATE_ is null or A.ACT_INST_STATE_ &lt;&gt; 2)
+    ) T
+    group by T.ACT_ID_, T.BUCKET_
+  </select>
+
+  <!-- per activity: finished and canceled in the range, running now and the oldest of those -->
+  <select id="selectFastiAnalyticsActivityCounts" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="activityCountRow">
+    select A.ACT_ID_, A.ACT_TYPE_, max(A.ACT_NAME_) as ACT_NAME_,
+      sum(case when A.END_TIME_ is not null and (A.ACT_INST_STATE_ is null or A.ACT_INST_STATE_ &lt;&gt; 2) then 1 else 0 end) as FINISHED_,
+      sum(case when A.END_TIME_ is not null and A.ACT_INST_STATE_ = 2 then 1 else 0 end) as CANCELED_,
+      sum(case when A.END_TIME_ is null then 1 else 0 end) as RUNNING_,
+      min(case when A.END_TIME_ is null then A.START_TIME_ end) as OLDEST_
+    from ${prefix}ACT_HI_ACTINST A
+    where <include refid="scope"><property name="alias" value="A"/></include>
+      and ((A.END_TIME_ &gt;= #{after} and A.END_TIME_ &lt; #{before}) or A.END_TIME_ is null)
+    group by A.ACT_ID_, A.ACT_TYPE_
+  </select>
+
+  <!-- per activity: runs started before the given time and still running -->
+  <select id="selectFastiAnalyticsRunningSince" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="keyCountRow">
+    select A.ACT_ID_ as KEY_, count(*) as COUNT_, 0 as EXTRA_
+    from ${prefix}ACT_HI_ACTINST A
+    where <include refid="scope"><property name="alias" value="A"/></include>
+      and A.END_TIME_ is null
+      and (<foreach item="entry" collection="activitySince" separator=" or ">(A.ACT_ID_ = #{entry.activityId} and A.START_TIME_ &lt; #{entry.since})</foreach>)
+    group by A.ACT_ID_
+  </select>
+
+  <!-- per activity: scopes that ran it more than once in the range, and the runs beyond the first -->
+  <select id="selectFastiAnalyticsRepeats" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="keyCountRow">
+    select R.ACT_ID_ as KEY_, count(*) as COUNT_, sum(R.RUNS_ - 1) as EXTRA_
+    from (
+      select A.ACT_ID_, A.PARENT_ACT_INST_ID_, count(*) as RUNS_
+      from ${prefix}ACT_HI_ACTINST A
+      where <include refid="scope"><property name="alias" value="A"/></include>
+        and A.END_TIME_ &gt;= #{after} and A.END_TIME_ &lt; #{before}
+      group by A.ACT_ID_, A.PARENT_ACT_INST_ID_
+      having count(*) &gt; 1
+    ) R
+    group by R.ACT_ID_
+  </select>
+
+  <!-- per activity: incidents open now, and incidents created in the range -->
+  <select id="selectFastiAnalyticsIncidents" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="keyCountRow">
+    select I.ACTIVITY_ID_ as KEY_,
+      sum(case when I.INCIDENT_STATE_ = 0 then 1 else 0 end) as COUNT_,
+      sum(case when I.CREATE_TIME_ &gt;= #{after} and I.CREATE_TIME_ &lt; #{before} then 1 else 0 end) as EXTRA_
+    from ${prefix}ACT_HI_INCIDENT I
+    where <include refid="scope"><property name="alias" value="I"/></include>
+      and (I.INCIDENT_STATE_ = 0 or (I.CREATE_TIME_ &gt;= #{after} and I.CREATE_TIME_ &lt; #{before}))
+    group by I.ACTIVITY_ID_
+  </select>
+
+  <!-- durations of the process instances completed in the range, per bucket -->
+  <select id="selectFastiAnalyticsInstanceBuckets" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="bucketRow">
+    select '' as KEY_, T.BUCKET_, count(*) as COUNT_, sum(T.DURATION_) as TOTAL_,
+      min(T.DURATION_) as MIN_, max(T.DURATION_) as MAX_
+      <if test="target != null">, sum(case when T.DURATION_ &lt;= #{target} then 1 else 0 end) as WITHIN_</if>
+    from (
+      select P.DURATION_, ${instanceBucketSql} as BUCKET_
+      from ${prefix}ACT_HI_PROCINST P
+      where <include refid="scope"><property name="alias" value="P"/></include>
+        and P.END_TIME_ &gt;= #{after} and P.END_TIME_ &lt; #{before}
+        and P.DURATION_ is not null
+        and (P.STATE_ is null or P.STATE_ = 'COMPLETED')
+    ) T
+    group by T.BUCKET_
+  </select>
+
+  <select id="selectFastiAnalyticsInstanceCounts" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="instanceCountRow">
+    select
+      sum(case when P.END_TIME_ is not null and (P.STATE_ is null or P.STATE_ = 'COMPLETED') then 1 else 0 end) as COMPLETED_,
+      sum(case when P.END_TIME_ is not null and P.STATE_ in ('INTERNALLY_TERMINATED', 'EXTERNALLY_TERMINATED') then 1 else 0 end) as TERMINATED_,
+      sum(case when P.END_TIME_ is null then 1 else 0 end) as RUNNING_
+    from ${prefix}ACT_HI_PROCINST P
+    where <include refid="scope"><property name="alias" value="P"/></include>
+      and ((P.END_TIME_ &gt;= #{after} and P.END_TIME_ &lt; #{before}) or P.END_TIME_ is null)
+  </select>
+
+  <!-- durations of the process instances completed per period and bucket -->
+  <select id="selectFastiAnalyticsTrendBuckets" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="bucketRow">
+    select T.PERIOD_ as KEY_, T.BUCKET_, count(*) as COUNT_, sum(T.DURATION_) as TOTAL_,
+      min(T.DURATION_) as MIN_, max(T.DURATION_) as MAX_
+      <if test="target != null">, sum(case when T.DURATION_ &lt;= #{target} then 1 else 0 end) as WITHIN_</if>
+    from (
+      select P.DURATION_, ${instanceBucketSql} as BUCKET_, ${periodOfEndSql} as PERIOD_
+      from ${prefix}ACT_HI_PROCINST P
+      where <include refid="scope"><property name="alias" value="P"/></include>
+        and P.END_TIME_ &gt;= #{periodStart} and P.END_TIME_ &lt; #{periodEnd}
+        and P.DURATION_ is not null
+        and (P.STATE_ is null or P.STATE_ = 'COMPLETED')
+    ) T
+    group by T.PERIOD_, T.BUCKET_
+  </select>
+
+  <!-- process instances started per period -->
+  <select id="selectFastiAnalyticsTrendStarted" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="keyCountRow">
+    select T.PERIOD_ as KEY_, count(*) as COUNT_, 0 as EXTRA_
+    from (
+      select ${periodOfStartSql} as PERIOD_
+      from ${prefix}ACT_HI_PROCINST P
+      where <include refid="scope"><property name="alias" value="P"/></include>
+        and P.START_TIME_ &gt;= #{periodStart} and P.START_TIME_ &lt; #{periodEnd}
+    ) T
+    group by T.PERIOD_
+  </select>
+
+  <!-- the runs of one activity finished in the range, longest first -->
+  <select id="selectFastiAnalyticsSlowest" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="slowInstance">
+    select A.ID_ as ACT_INST_ID_, A.PROC_INST_ID_, A.PROC_DEF_ID_, P.BUSINESS_KEY_, A.START_TIME_, A.END_TIME_, A.DURATION_
+    from ${prefix}ACT_HI_ACTINST A
+    left join ${prefix}ACT_HI_PROCINST P on P.ID_ = A.PROC_INST_ID_
+    where <include refid="scope"><property name="alias" value="A"/></include>
+      and A.ACT_ID_ = #{activityId}
+      and A.END_TIME_ &gt;= #{after} and A.END_TIME_ &lt; #{before}
+      and A.DURATION_ is not null
+      and (A.ACT_INST_STATE_ is null or A.ACT_INST_STATE_ &lt;&gt; 2)
+    order by A.DURATION_ desc, A.ID_
+  </select>
+
+  <!-- the runs of one activity running now, oldest first -->
+  <select id="selectFastiAnalyticsOldestRunning" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="slowInstance">
+    select A.ID_ as ACT_INST_ID_, A.PROC_INST_ID_, A.PROC_DEF_ID_, P.BUSINESS_KEY_, A.START_TIME_, A.END_TIME_, A.DURATION_
+    from ${prefix}ACT_HI_ACTINST A
+    left join ${prefix}ACT_HI_PROCINST P on P.ID_ = A.PROC_INST_ID_
+    where <include refid="scope"><property name="alias" value="A"/></include>
+      and A.ACT_ID_ = #{activityId}
+      and A.END_TIME_ is null
+    order by A.START_TIME_ asc, A.ID_
+  </select>
+
+  <!-- the user tasks completed in the range, newest first, with their first assignment -->
+  <select id="selectFastiAnalyticsUserTasks" parameterType="dev.fasti.engine.analytics.impl.AnalyticsParameter" resultMap="userTaskRow">
+    select T.TASK_DEF_KEY_, T.NAME_, T.ASSIGNEE_, T.START_TIME_, T.END_TIME_,
+      (select min(L.TIMESTAMP_) from ${prefix}ACT_HI_IDENTITYLINK L
+        where L.TASK_ID_ = T.ID_ and L.TYPE_ = 'assignee' and L.OPERATION_TYPE_ = 'add') as FIRST_ASSIGN_
+    from ${prefix}ACT_HI_TASKINST T
+    where <include refid="scope"><property name="alias" value="T"/></include>
+      and T.END_TIME_ &gt;= #{after} and T.END_TIME_ &lt; #{before}
+      and T.DELETE_REASON_ = 'completed'
+    order by T.END_TIME_ desc, T.ID_
+  </select>
+
+</mapper>

@@ -6,6 +6,20 @@ Fasti BPM is an independent, open-source engine built on Camunda 7 Community Edi
 runs on your existing Camunda 7 database, with current libraries, security fixes and a new web
 interface. Website: <https://fasti.dev>
 
+<p align="center">
+  <a href="https://fasti.dev"><img src="https://assets.fasti.dev/img/og-cover-2.png" alt="Fasti BPM: the task list of the new web interface" width="820"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/fasti-bpm/fasti/releases/latest"><img src="https://img.shields.io/github/v/release/fasti-bpm/fasti?label=release" alt="Latest release"></a>
+  <a href="https://hub.docker.com/r/fastidev/fasti-bpm"><img src="https://img.shields.io/docker/pulls/fastidev/fasti-bpm" alt="Docker pulls"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="License: Apache-2.0"></a>
+</p>
+
+| **≈10× faster** | **BPMN · DMN · forms** | **Secure** | **13** |
+|:---:|:---:|:---:|:---:|
+| task lists with authorization on ([numbers](docs/benchmark-camunda-7.24.md)) | modeler in the browser | by default, fixes over 7.24.0 | languages, phone and desktop |
+
 > **Not affiliated with Camunda Services GmbH; Camunda is a trademark of Camunda Services GmbH.**
 > Fasti BPM is an independent open-source project (Apache-2.0). It is not part of, sponsored by
 > or endorsed by Camunda Services GmbH. The name "Camunda" is used only to describe where the
@@ -75,15 +89,13 @@ Measured on PostgreSQL 16 with 1,000,000 tasks and 2,200,000 authorizations, RES
 administrator, against Camunda Run 7.24.0 on the same machine
 ([comparison](docs/benchmark-camunda-7.24.md)):
 
-| | Camunda 7.24, authorization on | Fasti 1.2.0 | Fasti 1.2.1 |
-|---|---|---|---|
-| Overdue task list | 138 ms | 156 ms | **14 ms** |
-| Task board, 145 requests | 20.8 s | 21.0 s | **8.8 s** |
-| Image, uncompressed | 338 MB¹ | 554 MB | **390 MB** |
-| `Started in` | 4.5 s¹ | 5.6 s | **4.8 s** |
-| Idle memory | 393 MB¹ | 518 MB | **362 MB** |
+| | Camunda 7.24 | Fasti 1.2.1 |
+|---|---|---|
+| Overdue task list, authorization on | 138 ms | **14 ms** |
+| Task board of 145 requests, authorization on | 20.8 s | **8.8 s** |
+| Idle memory, as shipped | 393 MB | **362 MB** |
 
-¹ Camunda Run as shipped (authorization off).
+The image is 390 MB, starts in 4.8 s and gives unused memory back to the system.
 
 - **Optional index scripts** for six databases: an idle job poll 162 ms → 0.1 ms, overdue tasks
   sorted by due date 61 ms → 0.3 ms ([database performance](docs/performance.md)).

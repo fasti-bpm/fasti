@@ -6,6 +6,20 @@ Fasti BPM là một engine mã nguồn mở, độc lập, xây dựng trên Cam
 Nó chạy trên chính cơ sở dữ liệu Camunda 7 bạn đang có, với thư viện được cập nhật, các bản vá
 bảo mật và giao diện web mới. Website: <https://fasti.dev>
 
+<p align="center">
+  <a href="https://fasti.dev"><img src="https://assets.fasti.dev/img/og-cover-2.png" alt="Fasti BPM: danh sách task của giao diện web mới" width="820"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/fasti-bpm/fasti/releases/latest"><img src="https://img.shields.io/github/v/release/fasti-bpm/fasti?label=release" alt="Bản phát hành mới nhất"></a>
+  <a href="https://hub.docker.com/r/fastidev/fasti-bpm"><img src="https://img.shields.io/docker/pulls/fastidev/fasti-bpm" alt="Lượt tải Docker"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="Giấy phép: Apache-2.0"></a>
+</p>
+
+| **Nhanh hơn ≈10 lần** | **BPMN · DMN · biểu mẫu** | **An toàn** | **13** |
+|:---:|:---:|:---:|:---:|
+| danh sách task khi bật phân quyền ([số liệu](docs/benchmark-camunda-7.24.vi.md)) | modeler ngay trên trình duyệt | ngay từ mặc định, có bản vá so với 7.24.0 | ngôn ngữ, trên điện thoại và máy tính |
+
 > **Không liên kết với Camunda Services GmbH; Camunda là nhãn hiệu của Camunda Services GmbH.**
 > Fasti BPM là dự án độc lập mã nguồn mở (Apache-2.0), không thuộc, không được bảo trợ hay chứng
 > thực bởi Camunda Services GmbH. Tên "Camunda" chỉ được dùng để mô tả nguồn gốc mã nguồn và
@@ -75,15 +89,13 @@ Fasti và node 7.24 có thể dùng chung một cơ sở dữ liệu, và bạn 
 quản trị, so với Camunda Run 7.24.0 trên cùng máy
 ([bản so sánh](docs/benchmark-camunda-7.24.vi.md)):
 
-| | Camunda 7.24 bật phân quyền | Fasti 1.2.0 | Fasti 1.2.1 |
-|---|---|---|---|
-| Danh sách task quá hạn | 138 ms | 156 ms | **14 ms** |
-| Bảng task, 145 request | 20,8 s | 21,0 s | **8,8 s** |
-| Image, chưa nén | 338 MB¹ | 554 MB | **390 MB** |
-| `Started in` | 4,5 s¹ | 5,6 s | **4,8 s** |
-| Bộ nhớ khi rảnh | 393 MB¹ | 518 MB | **362 MB** |
+| | Camunda 7.24 | Fasti 1.2.1 |
+|---|---|---|
+| Danh sách task quá hạn, bật phân quyền | 138 ms | **14 ms** |
+| Bảng task 145 request, bật phân quyền | 20,8 s | **8,8 s** |
+| Bộ nhớ khi rảnh, cấu hình mặc định | 393 MB | **362 MB** |
 
-¹ Camunda Run theo cấu hình mặc định (tắt phân quyền).
+Image nặng 390 MB, khởi động trong 4,8 s và trả phần bộ nhớ không dùng về hệ thống.
 
 - **Script chỉ mục tùy chọn** cho sáu loại cơ sở dữ liệu: một lần quét job khi rảnh 162 ms → 0,1 ms,
   task quá hạn sắp theo hạn 61 ms → 0,3 ms ([hiệu năng cơ sở dữ liệu](docs/performance.vi.md)).

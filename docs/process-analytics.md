@@ -89,10 +89,10 @@ time read it once. Only calls with `finishedBefore` are kept: without it the ran
 current millisecond. The web interface ends the range at the next full minute (5, 15 and 60
 minutes for 30, 90 and 365 days), so everyone looking at a range shares one read.
 
-**The engine comes first.** At most two scans of the activities (activities, rework) and two
-other analytics reads run at the same time on a node (`fasti.analytics.max-concurrent`, image
-`FASTI_ANALYTICS_MAX_CONCURRENT`, `0` for no limit); the quick parts of a view do not wait behind
-the scans. The others wait for their turn, in order, without holding a database connection, so the job executor,
+**The engine comes first.** At most two scans of the range (activities, rework, user tasks) run
+at the same time on a node (`fasti.analytics.max-concurrent`, image
+`FASTI_ANALYTICS_MAX_CONCURRENT`, `0` for no limit), plus one quick read (instances, trend, runs),
+so the quick parts of a view do not wait behind its scans. The others wait for their turn, in order, without holding a database connection, so the job executor,
 task lists and the health check keep theirs. A call that gets no turn within 60 seconds
 (`fasti.analytics.max-wait`, image `FASTI_ANALYTICS_MAX_WAIT`) answers 503. Java:
 `ProcessAnalytics.setMaxConcurrent(int)` and `setMaxWait(Duration)`.
@@ -145,14 +145,14 @@ running. Median of 11 calls in a row without the answer cache, as an administrat
 | `user-tasks` (newest 50,000) | 0.36 s | 0.35–0.51 s |
 | slowest / oldest running runs of an activity | 0.04–0.07 s | 0.02–0.33 s |
 
-In the web interface the heat map of a year of all versions is on screen 1.0–1.6 s after the click
-on the tab, rework 1.7–2.4 s; a view opened again answers from the cache in about 0.1 s.
+In the web interface the heat map of a year of all versions is on screen 1.0–1.7 s after the click
+on the tab; a view opened again answers from the cache in about 0.1 s.
 
 **Under load**, with the default settings: 25 people opening the analytics again and again (one to
-three seconds apart, ranges from 7 to 365 days) got their views in 44 ms median and 122 ms at the
+three seconds apart, ranges from 7 to 365 days) got their views in 46 ms median and 134 ms at the
 95th percentile, with PostgreSQL at 41 % of its CPUs, no error and the health check below 0.2 s.
-While 10 of them did so, the engine ran 706–781 jobs per second (1,080 alone) and the task list
-answered in about 40 ms.
+While 10 of them did so, the engine kept about two thirds of its job throughput (28–35 % fewer
+jobs per second than alone) and the task list answered in about 40 ms.
 
 Compared with exact SQL over the same rows, every count matched, activity percentiles were within
 4.7 %, instance percentiles within 0.3 % and the trend within 3.7 %; user task times were exact.

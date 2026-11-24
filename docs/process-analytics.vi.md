@@ -91,10 +91,10 @@ gọi, còn số liệu đang chạy có thể cũ tối đa chừng ấy. Các 
 mili giây hiện tại. Giao diện web cho khoảng thời gian kết thúc ở phút tròn kế tiếp (5, 15 và 60
 phút với 30, 90 và 365 ngày), nên mọi người xem cùng một khoảng dùng chung một lần đọc.
 
-**Engine được ưu tiên.** Mỗi node chạy cùng lúc tối đa hai lượt quét hoạt động (activities,
-rework) và hai lượt đọc phân tích khác (`fasti.analytics.max-concurrent`, trên image là
-`FASTI_ANALYTICS_MAX_CONCURRENT`, `0` để không giới hạn); các phần nhanh của một màn hình không phải
-chờ sau các lượt quét. Các lượt khác chờ đến lượt theo thứ tự mà không giữ kết nối CSDL, nên job executor, danh sách
+**Engine được ưu tiên.** Mỗi node chạy cùng lúc tối đa hai lượt quét khoảng thời gian (activities,
+rework, user task) (`fasti.analytics.max-concurrent`, trên image là
+`FASTI_ANALYTICS_MAX_CONCURRENT`, `0` để không giới hạn), cộng một lượt đọc nhanh (instances, trend,
+truy vết), nên các phần nhanh của một màn hình không phải chờ sau các lượt quét. Các lượt khác chờ đến lượt theo thứ tự mà không giữ kết nối CSDL, nên job executor, danh sách
 task và health check vẫn có kết nối của chúng. Lần gọi không đến lượt trong 60 giây
 (`fasti.analytics.max-wait`, trên image là `FASTI_ANALYTICS_MAX_WAIT`) nhận 503. Java:
 `ProcessAnalytics.setMaxConcurrent(int)` và `setMaxWait(Duration)`.
@@ -147,13 +147,13 @@ vị của 11 lần gọi liên tiếp khi không dùng cache kết quả, bằn
 | `user-tasks` (50.000 task mới nhất) | 0,36 s | 0,35–0,51 s |
 | lượt chậm nhất / đang chờ lâu nhất của một bước | 0,04–0,07 s | 0,02–0,33 s |
 
-Trên giao diện web, bản đồ nhiệt của một năm, mọi phiên bản, hiện sau 1,0–1,6 s kể từ lúc bấm tab,
-phần làm lại sau 1,7–2,4 s; mở lại cùng góc nhìn thì cache trả lời trong khoảng 0,1 s.
+Trên giao diện web, bản đồ nhiệt của một năm, mọi phiên bản, hiện sau 1,0–1,7 s kể từ lúc bấm tab; mở lại cùng góc nhìn thì cache trả lời trong khoảng 0,1 s.
 
 **Khi tải cao**, với thiết lập mặc định: 25 người liên tục mở phân tích (cách nhau một đến ba giây,
-khoảng thời gian từ 7 đến 365 ngày) nhận kết quả trong 44 ms (trung vị) và 122 ms (phân vị 95),
+khoảng thời gian từ 7 đến 365 ngày) nhận kết quả trong 46 ms (trung vị) và 134 ms (phân vị 95),
 PostgreSQL dùng 41 % CPU, không có lỗi, health check dưới 0,2 s. Trong lúc 10 người làm vậy, engine
-vẫn chạy 706–781 job mỗi giây (1.080 khi chạy một mình) và danh sách task trả lời trong khoảng 40 ms.
+vẫn giữ khoảng hai phần ba thông lượng job (ít hơn 28–35 % job mỗi giây so với khi chạy một mình) và
+danh sách task trả lời trong khoảng 40 ms.
 
 So với SQL chính xác trên cùng dữ liệu, mọi số đếm đều khớp, phân vị của bước lệch tối đa 4,7 %,
 phân vị instance 0,3 %, xu hướng 3,7 %; thời gian user task là chính xác. MariaDB 11.4 và SQL

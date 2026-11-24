@@ -235,7 +235,8 @@ export function AnalyticsTab({
   const userTasks = useQuery({
     queryKey: [COCKPIT, 'analytics', 'user-tasks', ...scopeKey],
     queryFn: ({ signal }) => getUserTaskAnalytics(scopeNow(processKey, definitionIds, range), signal),
-    enabled: !unavailable,
+    // a scan too, and at the end of the page: after the heat map, so that it does not take its turn
+    enabled: !unavailable && activities.data !== undefined,
     refetchInterval,
     placeholderData: keepPreviousData,
     retry,

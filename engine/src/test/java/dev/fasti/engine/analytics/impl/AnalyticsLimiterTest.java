@@ -104,6 +104,20 @@ public class AnalyticsLimiterTest {
 
     assertThat(AnalyticsLimiter.run(false, () -> "quick")).isEqualTo("quick");
     assertThatThrownBy(() -> AnalyticsLimiter.run(true, () -> "second scan")).isInstanceOf(AnalyticsBusyException.class);
+    // the quick reads have one turn of their own
+    AnalyticsLimiter.setMaxConcurrent(3);
+    CountDownLatch quickStarted = new CountDownLatch(1);
+    CountDownLatch quickRelease = new CountDownLatch(1);
+    Future<String> quick = threads.submit(() -> AnalyticsLimiter.run(false, () -> {
+      quickStarted.countDown();
+      await(quickRelease);
+      return "quick";
+    }));
+    assertThat(quickStarted.await(10, TimeUnit.SECONDS)).isTrue();
+    assertThatThrownBy(() -> AnalyticsLimiter.run(false, () -> "second quick")).isInstanceOf(AnalyticsBusyException.class);
+    assertThat(AnalyticsLimiter.run(true, () -> "scan beside")).isEqualTo("scan beside");
+    quickRelease.countDown();
+    assertThat(quick.get(10, TimeUnit.SECONDS)).isEqualTo("quick");
 
     release.countDown();
     assertThat(scan.get(10, TimeUnit.SECONDS)).isEqualTo("scan");

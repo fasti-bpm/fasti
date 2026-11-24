@@ -30,9 +30,9 @@ import dev.fasti.engine.analytics.AnalyticsBusyException;
  * its jobs and tasks. Reads above the limit wait for their turn, in order, without holding a
  * connection, and give up after the longest wait.
  *
- * <p>The scans of the activities in the range (activities, rework) and the other reads (instances,
- * trend, runs, user tasks: smaller, or limited in SQL) take turns in two lines with the same
- * limit each, so the quick parts of a view do not wait behind the scans of the same view.</p>
+ * <p>The scans of the range (activities, rework, user tasks) take turns up to the limit; the quick
+ * reads (instances, trend, runs: small, or limited in SQL) have one turn of their own, so the
+ * quick parts of a view do not wait behind the scans of the same view.</p>
  */
 public final class AnalyticsLimiter {
 
@@ -45,7 +45,7 @@ public final class AnalyticsLimiter {
 
   private static volatile int maxConcurrent = initial(MAX_CONCURRENT_PROPERTY, DEFAULT_MAX_CONCURRENT);
   private static volatile Semaphore scans = semaphore(maxConcurrent);
-  private static volatile Semaphore others = semaphore(maxConcurrent);
+  private static volatile Semaphore others = semaphore(maxConcurrent > 0 ? 1 : 0);
   private static volatile Duration maxWait = Duration.ofSeconds(
       Math.max(0, initial(MAX_WAIT_PROPERTY, (int) DEFAULT_MAX_WAIT.getSeconds())));
 
@@ -80,7 +80,7 @@ public final class AnalyticsLimiter {
     }
     maxConcurrent = value;
     scans = semaphore(value);
-    others = semaphore(value);
+    others = semaphore(value > 0 ? 1 : 0);
   }
 
   public static Duration getMaxWait() {
@@ -94,7 +94,7 @@ public final class AnalyticsLimiter {
 
   static final Duration MAX = Duration.ofDays(1);
 
-  /** Runs the read when its turn comes; {@code scan}: a scan of the activities in the range. */
+  /** Runs the read when its turn comes; {@code scan}: a scan of the range, else a quick read. */
   static <T> T run(boolean scan, Supplier<T> read) {
     Semaphore semaphore = scan ? scans : others;
     if (semaphore == null) {
@@ -109,9 +109,8 @@ public final class AnalyticsLimiter {
       throw new AnalyticsBusyException("Interrupted while waiting for a turn to read the analytics");
     }
     if (!acquired) {
-      throw new AnalyticsBusyException("The analytics of this node are busy: " + semaphore.getQueueLength()
-          + " reads wait after " + maxConcurrent + " running; no turn within " + wait.getSeconds()
-          + " s. Ask again later.");
+      throw new AnalyticsBusyException("The analytics of this node are busy: no turn within " + wait.getSeconds()
+          + " s (" + (scan ? maxConcurrent + " scans" : "1 quick read") + " at a time). Ask again later.");
     }
     try {
       return read.get();

@@ -202,7 +202,7 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
       }, true);
     }
     AnalyticsParameter parameter = execute(this::prepare, false);
-    boolean scan = "activities".equals(kind) || "rework".equals(kind);
+    boolean scan = "activities".equals(kind) || "rework".equals(kind) || "userTasks".equals(kind);
     return AnalyticsCache.get(cacheKey(kind, parameter, extra), () -> AnalyticsLimiter
         .run(scan, () -> execute(commandContext -> work.apply(commandContext, parameter), true)));
   }

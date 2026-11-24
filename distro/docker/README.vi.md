@@ -132,7 +132,7 @@ image 1.1.x.
 | `JAVA_OPTS` | | thêm tùy chọn JVM (tách bằng khoảng trắng, không có dấu nháy) |
 | `FASTI_MAX_RAM_PERCENTAGE` | 75 | phần trăm RAM của container cho heap |
 | `FASTI_ANALYTICS_CACHE_TTL` | `60s` | **Có từ 1.3.0.** Thời gian giữ kết quả phân tích quy trình cho cùng một góc nhìn (`0` để tắt; số không có đơn vị tính là giây); số liệu đang chạy có thể cũ tối đa chừng ấy. Thiết lập `fasti.analytics.cache-ttl` |
-| `FASTI_ANALYTICS_MAX_CONCURRENT` | `2` | **Có từ 1.3.0.** Số lượt phân tích quy trình được đọc lịch sử cùng lúc trên node này, riêng cho lượt quét hoạt động và cho các lượt đọc khác; các lượt khác chờ đến lượt mà không giữ kết nối CSDL, nên job và danh sách task vẫn có kết nối của chúng. `0`: không giới hạn. Thiết lập `fasti.analytics.max-concurrent` |
+| `FASTI_ANALYTICS_MAX_CONCURRENT` | `2` | **Có từ 1.3.0.** Số lượt quét của phân tích quy trình (activities, rework, user task) được đọc lịch sử cùng lúc trên node này, cộng một lượt đọc nhanh (instances, trend, truy vết); các lượt khác chờ đến lượt mà không giữ kết nối CSDL, nên job và danh sách task vẫn có kết nối của chúng. `0`: không giới hạn. Thiết lập `fasti.analytics.max-concurrent` |
 | `FASTI_ANALYTICS_MAX_WAIT` | `60s` | **Có từ 1.3.0.** Thời gian chờ lượt lâu nhất; quá thời gian này REST API trả `503` (số không có đơn vị tính là giây). Thiết lập `fasti.analytics.max-wait` |
 | `FASTI_RETURN_MEMORY` | `true` | **Có từ 1.2.1.** Trả phần heap không dùng về hệ thống (`-XX:G1PeriodicGCInterval=30000 -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=30`); `false` giữ mặc định của JVM |
 | `FASTI_DB_SCHEMA_UPDATE` | `false` (`true` với cơ sở dữ liệu H2 demo có sẵn) | `true` tạo bảng còn thiếu (cơ sở dữ liệu mới); không bao giờ nâng cấp schema |

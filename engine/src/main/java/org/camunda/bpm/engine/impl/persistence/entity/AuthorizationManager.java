@@ -128,6 +128,16 @@ public class AuthorizationManager extends AbstractManager {
    */
   protected Set<String> availableAuthorizedGroupIds = null;
 
+  /**
+   * Fasti: per group id, whether authorizations exist for it, as read in this command by
+   * {@link #filterAuthenticatedGroupIds(List)}. Only the groups of the authenticated user are
+   * read, so the size of the authorization table does not matter.
+   */
+  protected Map<String, Boolean> groupsWithAuthorizations = new HashMap<>();
+
+  /** Fasti: group ids per statement, below the IN list limit of every supported database. */
+  protected static final int GROUP_ID_CHUNK_SIZE = 500;
+
   protected Boolean isRevokeAuthCheckUsed = null;
 
   public PermissionCheckBuilder newPermissionCheckBuilder() {
@@ -1126,11 +1136,55 @@ public class AuthorizationManager extends AbstractManager {
     if(authenticatedGroupIds == null || authenticatedGroupIds.isEmpty()) {
       return EMPTY_LIST;
     }
-    else {
-      Set<String> groupIntersection = new HashSet<>(getAllGroups());
+    else if (availableAuthorizedGroupIds != null) {
+      // all group ids were already read in this command
+      Set<String> groupIntersection = new HashSet<>(availableAuthorizedGroupIds);
       groupIntersection.retainAll(authenticatedGroupIds);
       return new ArrayList<>(groupIntersection);
     }
+    else {
+      Set<String> groupIntersection = new HashSet<>();
+      List<String> unknownGroupIds = new ArrayList<>();
+      for (String groupId : new HashSet<>(authenticatedGroupIds)) {
+        if (groupId == null) {
+          continue;
+        }
+        Boolean hasAuthorizations = groupsWithAuthorizations.get(groupId);
+        if (hasAuthorizations == null) {
+          unknownGroupIds.add(groupId);
+        }
+        else if (hasAuthorizations) {
+          groupIntersection.add(groupId);
+        }
+      }
+      if (!unknownGroupIds.isEmpty()) {
+        Set<String> found = selectAuthorizedGroupIdsIn(unknownGroupIds);
+        for (String groupId : unknownGroupIds) {
+          boolean hasAuthorizations = found.contains(groupId);
+          groupsWithAuthorizations.put(groupId, hasAuthorizations);
+          if (hasAuthorizations) {
+            groupIntersection.add(groupId);
+          }
+        }
+      }
+      return new ArrayList<>(groupIntersection);
+    }
+  }
+
+  /**
+   * Fasti: reads which of the given groups have authorizations, through the index on
+   * <code>GROUP_ID_</code>, instead of reading the group ids of all authorizations
+   * ({@link #getAllGroups()}), which scans the whole table on every command.
+   */
+  @SuppressWarnings("unchecked")
+  protected Set<String> selectAuthorizedGroupIdsIn(List<String> groupIds) {
+    Set<String> found = new HashSet<>();
+    for (int from = 0; from < groupIds.size(); from += GROUP_ID_CHUNK_SIZE) {
+      List<String> chunk = groupIds.subList(from, Math.min(from + GROUP_ID_CHUNK_SIZE, groupIds.size()));
+      List<String> rows = getDbEntityManager().selectList("selectAuthorizedGroupIdsIn", new ArrayList<>(chunk));
+      rows.stream().filter(Objects::nonNull).forEach(found::add);
+    }
+    return found;
   }
 
   protected Set<String> getAllGroups() {

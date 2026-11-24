@@ -356,6 +356,16 @@
     SELECT distinct(A.GROUP_ID_) FROM ${prefix}ACT_RU_AUTHORIZATION A
   </select>
 
+  <!-- Fasti: the groups of the given list that have at least one authorization. Uses the index on
+       GROUP_ID_ instead of reading the whole table like selectAuthorizedGroupIds. -->
+  <select id="selectAuthorizedGroupIdsIn" resultType="string">
+    SELECT distinct(A.GROUP_ID_) FROM ${prefix}ACT_RU_AUTHORIZATION A
+    WHERE A.GROUP_ID_ IN
+    <foreach item="groupId" collection="parameter" open="(" separator="," close=")">
+      #{groupId}
+    </foreach>
+  </select>
+
   <select id="selectAuthorization" resultMap="authorizationResultMap">
     select * FROM ${prefix}ACT_RU_AUTHORIZATION WHERE ID_ = #{id}
   </select>

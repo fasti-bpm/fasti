@@ -90,6 +90,11 @@ const messages = {
   'an.tasks.waitP90': 'เวลารอ P90',
   'an.tasks.workP50': 'เวลาทำงาน มัธยฐาน',
   'an.tasks.workP90': 'เวลาทำงาน P90',
+  'an.tasks.unknown': 'ไม่มีบันทึกการมอบหมาย',
+  'an.histogram.slow': 'สีแดง: ช้ากว่า P90',
+  'an.pick': 'กิจกรรม',
+  'an.pick.none': 'เลือกกิจกรรม…',
+  'an.target.invalid': 'ไม่ใช่ระยะเวลา: ใช้ เช่น 90m 4h หรือ 2d',
 };
 
 export default messages;

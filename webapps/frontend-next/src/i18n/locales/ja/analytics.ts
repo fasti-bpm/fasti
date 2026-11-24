@@ -90,6 +90,11 @@ const messages = {
   'an.tasks.waitP90': '待ち時間の P90',
   'an.tasks.workP50': '作業時間の中央値',
   'an.tasks.workP90': '作業時間の P90',
+  'an.tasks.unknown': '割り当ての記録なし',
+  'an.histogram.slow': '赤: P90 より遅い',
+  'an.pick': 'アクティビティ',
+  'an.pick.none': 'アクティビティを選択…',
+  'an.target.invalid': '時間として認識できません。例: 90m、4h、2d。',
 };
 
 export default messages;

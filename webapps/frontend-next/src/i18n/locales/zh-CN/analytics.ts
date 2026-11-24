@@ -90,6 +90,11 @@ const messages = {
   'an.tasks.waitP90': '等待 P90',
   'an.tasks.workP50': '处理中位数',
   'an.tasks.workP90': '处理 P90',
+  'an.tasks.unknown': '没有分配记录',
+  'an.histogram.slow': '红色:慢于 P90',
+  'an.pick': '活动',
+  'an.pick.none': '选择活动…',
+  'an.target.invalid': '不是时长:请使用如 90m、4h 或 2d。',
 };
 
 export default messages;

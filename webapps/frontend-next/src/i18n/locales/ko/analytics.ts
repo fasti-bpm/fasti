@@ -90,6 +90,11 @@ const messages = {
   'an.tasks.waitP90': '대기 P90',
   'an.tasks.workP50': '처리 중앙값',
   'an.tasks.workP90': '처리 P90',
+  'an.tasks.unknown': '배정 기록 없음',
+  'an.histogram.slow': '빨강: P90보다 느림',
+  'an.pick': '활동',
+  'an.pick.none': '활동 선택…',
+  'an.target.invalid': '시간 형식이 아닙니다. 예: 90m, 4h, 2d.',
 };
 
 export default messages;

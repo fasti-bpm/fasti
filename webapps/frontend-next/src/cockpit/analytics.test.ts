@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { periodBoundaries, type ActivityAnalytics, type DurationStatistics } from '../api/analytics';
-import { diagramActivities, measureValue, parseTarget } from './AnalyticsTab';
+import { diagramActivities, histogramBars, isBottleneckCandidate, measureValue, parseTarget } from './AnalyticsTab';
 
 const durations = (values: Partial<DurationStatistics>): DurationStatistics => ({
   count: 0,
@@ -71,7 +71,28 @@ describe('process analytics helpers', () => {
     expect(measureValue(entry, 'total', now)).toBe(1000);
     expect(measureValue(entry, 'waiting', now)).toBe(2 * 3_600_000);
     expect(measureValue(entry, 'rework', now)).toBe(3);
-    expect(measureValue(entry, 'incidents', now)).toBe(5);
+    expect(measureValue(entry, 'incidents', now)).toBe(4);
+    // engine dates carry an offset without colon
+    expect(measureValue(activity({ oldestRunningStart: '2026-11-24T17:00:00.000+0700' }), 'waiting', now)).toBe(2 * 3_600_000);
+  });
+
+  it('ranks where work waits, not containers, routing or start and end events', () => {
+    for (const type of ['userTask', 'serviceTask', 'callActivity', 'intermediateTimer', 'receiveTask', 'eventBasedGateway', 'boundaryTimer']) {
+      expect(isBottleneckCandidate(type)).toBe(true);
+    }
+    for (const type of ['subProcess', 'transaction', 'multiInstanceBody', 'startEvent', 'noneEndEvent', 'errorEndEvent', 'exclusiveGateway', 'parallelGateway', 'intermediateSignalThrow']) {
+      expect(isBottleneckCandidate(type)).toBe(false);
+    }
+  });
+
+  it('keeps the histogram logarithmic by filling the empty buckets', () => {
+    const bars = histogramBars([
+      { lower: 1000, upper: 1122, count: 3 },
+      { lower: 10_000, upper: 11_220, count: 1 },
+    ]);
+    expect(bars[0]?.count).toBe(3);
+    expect(bars[bars.length - 1]?.count).toBe(1);
+    expect(bars.filter((bar) => bar === null).length).toBe(19);
   });
 
   it('leaves the multi-instance bodies out of the diagram', () => {

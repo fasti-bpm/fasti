@@ -2205,7 +2205,7 @@ a.trend:hover {
 
 .analytics__runs {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: var(--s-3);
 }
 
@@ -2264,7 +2264,7 @@ a.trend:hover {
 }
 
 .analytics__trend-p90 {
-  background: color-mix(in srgb, var(--accent) 30%, var(--surface));
+  background: color-mix(in srgb, var(--accent) 50%, var(--surface));
 }
 
 .analytics__trend-p50 {
@@ -2306,7 +2306,42 @@ a.trend:hover {
 }
 
 .analytics__key--p90 {
-  background: color-mix(in srgb, var(--accent) 30%, var(--surface));
+  background: color-mix(in srgb, var(--accent) 50%, var(--surface));
+}
+
+.analytics__key--slow {
+  background: var(--danger);
+}
+
+.analytics__bar--empty {
+  height: 0;
+  background: transparent;
+}
+
+.analytics__figure {
+  display: grid;
+  gap: var(--s-1);
+  margin: 0;
+}
+
+.analytics__figure .analytics__trend-legend {
+  padding: 0;
+}
+
+.analytics__pick {
+  padding: var(--s-2) var(--s-4);
+}
+
+.analytics__pick select {
+  max-width: 100%;
+}
+
+.analytics__trend-scale {
+  font-variant-numeric: tabular-nums;
+}
+
+.analytics .field__hint.is-danger {
+  color: var(--danger);
 }
 
 .analytics__key--target {

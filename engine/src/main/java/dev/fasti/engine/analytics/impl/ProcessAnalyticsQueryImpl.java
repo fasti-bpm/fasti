@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import dev.fasti.engine.analytics.ActivityAnalytics;
 import dev.fasti.engine.analytics.ActivityRework;
@@ -186,13 +187,24 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
 
   /**
    * Runs a read with the checks of {@link #prepare(CommandContext)} on every call, then answers from
-   * the {@link AnalyticsCache} when the same was read shortly before.
+   * the {@link AnalyticsCache} when the same was read shortly before. The checks run in a short
+   * transaction of their own; the read waits for its turn ({@link AnalyticsLimiter}) without
+   * holding a database connection, and then reads in a transaction of its own.
    */
   protected <T> T executeCached(String kind, Object extra, BiFunction<CommandContext, AnalyticsParameter, T> work) {
-    return execute(commandContext -> {
-      AnalyticsParameter parameter = prepare(commandContext);
-      return AnalyticsCache.get(cacheKey(kind, parameter, extra), () -> work.apply(commandContext, parameter));
-    });
+    if (org.camunda.bpm.engine.impl.context.Context.getCommandContext() != null) {
+      // called inside a transaction of the engine (a delegate, a listener): it holds a connection
+      // already, so it reads in that transaction without waiting for a turn or for other callers
+      return execute(commandContext -> {
+        AnalyticsParameter parameter = prepare(commandContext);
+        return AnalyticsCache.getWithoutWaiting(cacheKey(kind, parameter, extra),
+            () -> work.apply(commandContext, parameter));
+      }, true);
+    }
+    AnalyticsParameter parameter = execute(this::prepare, false);
+    boolean scan = "activities".equals(kind) || "rework".equals(kind);
+    return AnalyticsCache.get(cacheKey(kind, parameter, extra), () -> AnalyticsLimiter
+        .run(scan, () -> execute(commandContext -> work.apply(commandContext, parameter), true)));
   }
 
   protected String cacheKey(String kind, AnalyticsParameter parameter, Object extra) {
@@ -203,12 +215,14 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
         String.valueOf(parameter.target), String.valueOf(extra));
   }
 
-  protected <T> T execute(Function<CommandContext, T> work) {
+  protected <T> T execute(Function<CommandContext, T> work, boolean reads) {
     if (processDefinitionKey == null) {
       throw new BadUserRequestException("processDefinitionKey is required");
     }
     return configuration.getCommandExecutorTxRequired().execute(commandContext -> {
-      customPlans(commandContext);
+      if (reads) {
+        customPlans(commandContext);
+      }
       return work.apply(commandContext);
     });
   }
@@ -223,11 +237,62 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
     if (!"postgres".equals(configuration.getDatabaseType())) {
       return;
     }
-    try (java.sql.Statement statement = commandContext.getDbSqlSession().getSqlSession().getConnection()
-        .createStatement()) {
-      statement.execute("set local plan_cache_mode = force_custom_plan");
+    setLocal(commandContext.getDbSqlSession().getSqlSession().getConnection(),
+        "set local plan_cache_mode = force_custom_plan");
+  }
+
+  /**
+   * Runs a {@code set local} behind a savepoint: a server that refuses it keeps its default and
+   * the transaction stays usable. False when refused.
+   */
+  protected static boolean setLocal(java.sql.Connection connection, String sql) {
+    java.sql.Savepoint savepoint = null;
+    try {
+      savepoint = connection.setSavepoint();
+      try (java.sql.Statement statement = connection.createStatement()) {
+        statement.execute(sql);
+      }
+      connection.releaseSavepoint(savepoint);
+      return true;
     } catch (java.sql.SQLException e) {
-      // older servers without the setting: the default plans
+      if (savepoint != null) {
+        try {
+          connection.rollback(savepoint);
+        } catch (java.sql.SQLException ignored) {
+          // nothing more to undo
+        }
+      }
+      return false;
+    }
+  }
+
+  /**
+   * On PostgreSQL, groups with a hash table: the planner estimates the groups of an activity and
+   * a duration bucket hundreds of times too many, and sorts the whole range on disk instead of
+   * hashing the few hundred groups there are, which takes twice as long. Only for this read.
+   */
+  protected <T> T hashAggregate(CommandContext commandContext, Supplier<T> read) {
+    if (!"postgres".equals(configuration.getDatabaseType())) {
+      return read.get();
+    }
+    java.sql.Connection connection = commandContext.getDbSqlSession().getSqlSession().getConnection();
+    // the setting is on unless the server or the user turned it off: then it stays as it is
+    boolean changed = sortEnabled(connection) && setLocal(connection, "set local enable_sort = off");
+    try {
+      return read.get();
+    } finally {
+      if (changed) {
+        setLocal(connection, "set local enable_sort = on");
+      }
+    }
+  }
+
+  protected static boolean sortEnabled(java.sql.Connection connection) {
+    try (java.sql.Statement statement = connection.createStatement();
+        java.sql.ResultSet setting = statement.executeQuery("show enable_sort")) {
+      return setting.next() && "on".equals(setting.getString(1));
+    } catch (java.sql.SQLException e) {
+      return false;
     }
   }
 
@@ -349,7 +414,8 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
 
     // one scan of the range: counts, canceled runs and the histogram of the durations
     Map<String, Histogram> histograms = new HashMap<>();
-    for (BucketRow row : this.<BucketRow>select(commandContext, ACTIVITY_BUCKETS, parameter)) {
+    List<BucketRow> buckets = hashAggregate(commandContext, () -> select(commandContext, ACTIVITY_BUCKETS, parameter));
+    for (BucketRow row : buckets) {
       if (row.key == null) {
         continue;
       }
@@ -407,6 +473,10 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
     parameter.activitySince = new ArrayList<>();
 
     if (withRework) {
+      for (ActivityAnalytics activity : activities.values()) {
+        activity.setRepeatedInstances(0L);
+        activity.setRepeatedExecutions(0L);
+      }
       for (ActivityRework rework : rework(commandContext, parameter)) {
         ActivityAnalytics activity = activities.get(rework.getActivityId());
         if (activity != null) {
@@ -423,6 +493,10 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
       ActivityAnalytics activity = activities.computeIfAbsent(row.key, id -> {
         ActivityAnalytics created = newActivity(id);
         created.setDurations(DurationStatistics.empty(parameter.target));
+        if (withRework) {
+          created.setRepeatedInstances(0L);
+          created.setRepeatedExecutions(0L);
+        }
         return created;
       });
       activity.setOpenIncidents(row.count);

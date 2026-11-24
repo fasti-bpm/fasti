@@ -125,7 +125,9 @@ images; entries marked **from 1.2.0** are not in the 1.1.x images.
 | `JMX_PROMETHEUS=true` | | Prometheus JMX exporter on port `JMX_PROMETHEUS_PORT` (9404), configuration `JMX_PROMETHEUS_CONF`, if the agent jar is in `/fasti/javaagent` |
 | `JAVA_OPTS` | | additional JVM options (space-separated, no quotes) |
 | `FASTI_MAX_RAM_PERCENTAGE` | 75 | percentage of container memory used for the heap |
-| `FASTI_ANALYTICS_CACHE_TTL` | `60s` | **From 1.3.0.** How long the answers of the process analytics are kept for the same view (`0` turns this off); what runs now may be that much older. Setting `fasti.analytics.cache-ttl` |
+| `FASTI_ANALYTICS_CACHE_TTL` | `60s` | **From 1.3.0.** How long the answers of the process analytics are kept for the same view (`0` turns this off; a number without unit is seconds); what runs now may be that much older. Setting `fasti.analytics.cache-ttl` |
+| `FASTI_ANALYTICS_MAX_CONCURRENT` | `2` | **From 1.3.0.** How many process analytics read the history at the same time on this node, for the scans of the activities and for the other reads each; the others wait for their turn without holding a database connection, so jobs and task lists keep theirs. `0`: no limit. Setting `fasti.analytics.max-concurrent` |
+| `FASTI_ANALYTICS_MAX_WAIT` | `60s` | **From 1.3.0.** The longest wait for that turn; then the REST API answers `503` (a number without unit is seconds). Setting `fasti.analytics.max-wait` |
 | `FASTI_RETURN_MEMORY` | `true` | **From 1.2.1.** Return unused heap to the system (`-XX:G1PeriodicGCInterval=30000 -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=30`); `false` keeps the JVM defaults |
 | `FASTI_DB_SCHEMA_UPDATE` | `false` (`true` for the built-in H2 demo database) | `true` creates missing tables (new database); never upgrades a schema |
 | `FASTI_SCHEMA_VERSION_CHECK` | `enforce` | `warn`: a schema older than 7.24 only logs a warning instead of stopping |
@@ -135,7 +137,7 @@ images; entries marked **from 1.2.0** are not in the 1.1.x images.
 | `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | `false` | runs only jobs of deployments registered on this node |
 | `FASTI_INSECURE_DEMO` | `false` | `true`: **turns off** REST authentication and authorization, for demos only (see Secure by default) |
 | `FASTI_REST_AUTH` | `true` | always on; `false` is refused (use `FASTI_INSECURE_DEMO`) |
-| `FASTI_REST_AUTH_CACHE_TTL` | `30s` | **From 1.2.1.** How long a successful basic authentication of the REST API is remembered, with the user's groups and tenants, so that repeated requests do not read them again (`0` turns it off). A deleted or locked user and changed memberships take effect after this time at the latest; changes made through the REST API of the same node clear it at once. Setting `fasti.rest.auth-cache-ttl` |
+| `FASTI_REST_AUTH_CACHE_TTL` | `30s` | **From 1.2.1.** Give a unit (`30s`; a bare number is milliseconds). How long a successful basic authentication of the REST API is remembered, with the user's groups and tenants, so that repeated requests do not read them again (`0` turns it off). A deleted or locked user and changed memberships take effect after this time at the latest; changes made through the REST API of the same node clear it at once. Setting `fasti.rest.auth-cache-ttl` |
 | `FASTI_INITIAL_SETUP` | `false` | `true`: enables the page that creates the first administrator when there is none |
 | `FASTI_CORS_ALLOWED_ORIGINS` | (off) | enables CORS for REST; `*` matches the former Run default |
 | `FASTI_ADMIN_USER`, `FASTI_ADMIN_PASSWORD` (+`_FILE`) | | creates the administrator if missing; pass the password in an environment variable, not on the command line |

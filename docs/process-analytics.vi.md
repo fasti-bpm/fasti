@@ -84,10 +84,20 @@ các tham số `processDefinitionIdIn`, `tenantIdIn`, `finishedAfter`, `finished
 Chi tiết và ví dụ: tài liệu OpenAPI của REST API (tag *Process Analytics*).
 
 Kết quả được giữ 60 giây cho cùng một truy vấn (`fasti.analytics.cache-ttl`, trên image là
-`FASTI_ANALYTICS_CACHE_TTL`, `0` để tắt), nên mở lại một góc nhìn hoặc đồng nghiệp mở cùng góc nhìn
-sẽ không phải đọc lại lịch sử; quyền vẫn được kiểm tra ở mỗi lần gọi, còn số liệu đang chạy có thể
-cũ tối đa chừng ấy. Giao diện web hỏi khoảng thời gian tới phút tròn kế tiếp và đọc phần làm lại sau
-bản đồ nhiệt.
+`FASTI_ANALYTICS_CACHE_TTL`, `0` để tắt, số không có đơn vị tính là giây), nên mở lại một góc nhìn
+hoặc đồng nghiệp mở cùng góc nhìn sẽ không phải đọc lại lịch sử; quyền vẫn được kiểm tra ở mỗi lần
+gọi, còn số liệu đang chạy có thể cũ tối đa chừng ấy. Các lần gọi hỏi cùng một thứ vào cùng lúc chỉ
+đọc một lần. Chỉ lần gọi có `finishedBefore` mới được giữ: thiếu nó, khoảng thời gian kết thúc ở
+mili giây hiện tại. Giao diện web cho khoảng thời gian kết thúc ở phút tròn kế tiếp (5, 15 và 60
+phút với 30, 90 và 365 ngày), nên mọi người xem cùng một khoảng dùng chung một lần đọc.
+
+**Engine được ưu tiên.** Mỗi node chạy cùng lúc tối đa hai lượt quét hoạt động (activities,
+rework) và hai lượt đọc phân tích khác (`fasti.analytics.max-concurrent`, trên image là
+`FASTI_ANALYTICS_MAX_CONCURRENT`, `0` để không giới hạn); các phần nhanh của một màn hình không phải
+chờ sau các lượt quét. Các lượt khác chờ đến lượt theo thứ tự mà không giữ kết nối CSDL, nên job executor, danh sách
+task và health check vẫn có kết nối của chúng. Lần gọi không đến lượt trong 60 giây
+(`fasti.analytics.max-wait`, trên image là `FASTI_ANALYTICS_MAX_WAIT`) nhận 503. Java:
+`ProcessAnalytics.setMaxConcurrent(int)` và `setMaxWait(Duration)`.
 
 ## Java
 
@@ -125,16 +135,25 @@ dụng thay `mappings.xml` mặc định bằng bản riêng phải thêm
 
 PostgreSQL 16 (4 CPU, `work_mem` 16 MB), một quy trình với 200.000 instance trong một năm: 2,45
 triệu lượt chạy bước, 832.000 user task, 1,65 triệu identity link, 3.543 instance đang chạy. Trung
-vị của 11 lần gọi liên tiếp, bằng tài khoản quản trị:
+vị của 11 lần gọi liên tiếp khi không dùng cache kết quả, bằng tài khoản quản trị:
 
 | Lệnh gọi | 30 ngày | 365 ngày |
 |---|---|---|
-| `activities`, một phiên bản | 0,23 s | 1,45 s |
-| `activities`, mọi phiên bản | 0,25 s | 2,7 s |
+| `activities?rework=false` (bản đồ nhiệt), một phiên bản | 0,12 s | 0,53 s |
+| `activities?rework=false`, mọi phiên bản | 0,13 s | 0,64 s |
+| `rework`, một phiên bản / mọi phiên bản | 0,11 / 0,13 s | 0,58 / 1,35 s |
 | `instances` | 0,03–0,05 s | 0,08–0,13 s |
 | `trend` | 0,06 s | 0,11–0,19 s |
 | `user-tasks` (50.000 task mới nhất) | 0,36 s | 0,35–0,51 s |
 | lượt chậm nhất / đang chờ lâu nhất của một bước | 0,04–0,07 s | 0,02–0,33 s |
+
+Trên giao diện web, bản đồ nhiệt của một năm, mọi phiên bản, hiện sau 1,0–1,6 s kể từ lúc bấm tab,
+phần làm lại sau 1,7–2,4 s; mở lại cùng góc nhìn thì cache trả lời trong khoảng 0,1 s.
+
+**Khi tải cao**, với thiết lập mặc định: 25 người liên tục mở phân tích (cách nhau một đến ba giây,
+khoảng thời gian từ 7 đến 365 ngày) nhận kết quả trong 44 ms (trung vị) và 122 ms (phân vị 95),
+PostgreSQL dùng 41 % CPU, không có lỗi, health check dưới 0,2 s. Trong lúc 10 người làm vậy, engine
+vẫn chạy 706–781 job mỗi giây (1.080 khi chạy một mình) và danh sách task trả lời trong khoảng 40 ms.
 
 So với SQL chính xác trên cùng dữ liệu, mọi số đếm đều khớp, phân vị của bước lệch tối đa 4,7 %,
 phân vị instance 0,3 %, xu hướng 3,7 %; thời gian user task là chính xác. MariaDB 11.4 và SQL
@@ -144,7 +163,9 @@ Với khoảng thời gian dài trên lịch sử lớn:
 
 - **PostgreSQL:** gom nhóm một năm của một quy trình bận rộn sẽ tràn ra đĩa với `work_mem` mặc định
   (4 MB); đặt 32–64 MB cho user của engine là đủ. Engine yêu cầu PostgreSQL lập kế hoạch riêng cho
-  từng lần gọi phân tích (`plan_cache_mode`), giúp khoảng thời gian dài nhanh gấp đôi.
+  từng lần gọi phân tích (`plan_cache_mode`), giúp khoảng thời gian dài nhanh gấp đôi, và gom nhóm
+  thời lượng hoạt động bằng bảng băm (tắt `enable_sort` chỉ cho câu lệnh đó): bộ lập kế hoạch
+  tưởng số nhóm nhiều gấp hàng trăm lần thực tế nên sẽ sắp xếp cả khoảng trên đĩa, chậm gấp đôi.
 - **MySQL/MariaDB:** tăng `tmp_table_size` và `max_heap_table_size` (ví dụ 256 MB) để việc gom nhóm
   nằm trong bộ nhớ.
 - **SQL Server:** thêm `sendStringParametersAsUnicode=false` vào JDBC URL để các tham số id dùng

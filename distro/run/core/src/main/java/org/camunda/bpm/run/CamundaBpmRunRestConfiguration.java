@@ -16,6 +16,7 @@
  */
 package org.camunda.bpm.run;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.Filter;
 import org.apache.catalina.filters.CorsFilter;
 import org.camunda.bpm.engine.rest.security.auth.ProcessEngineAuthenticationFilter;
@@ -56,6 +57,8 @@ public class CamundaBpmRunRestConfiguration {
   protected static final String AUTH_CACHE_TTL_PROPERTY = "fasti.rest.auth-cache-ttl";
   protected static final Duration DEFAULT_AUTH_CACHE_TTL = Duration.ofSeconds(30);
   protected static final String ANALYTICS_CACHE_TTL_PROPERTY = "fasti.analytics.cache-ttl";
+  protected static final String ANALYTICS_MAX_CONCURRENT_PROPERTY = "fasti.analytics.max-concurrent";
+  protected static final String ANALYTICS_MAX_WAIT_PROPERTY = "fasti.analytics.max-wait";
 
   protected static final String BEARER_AUTHENTICATION_PROVIDER =
       "org.camunda.bpm.spring.boot.starter.security.oauth2.impl.BearerTokenAuthenticationProvider";
@@ -97,13 +100,6 @@ public class CamundaBpmRunRestConfiguration {
       registration.addInitParameter("authentication-provider", provider);
     }
     // Fasti: successful basic authentications are cached briefly (0 turns it off)
-    Duration analyticsCache = environment.getProperty(ANALYTICS_CACHE_TTL_PROPERTY, Duration.class);
-    if (analyticsCache != null) {
-      if (analyticsCache.isNegative()) {
-        throw new IllegalArgumentException(ANALYTICS_CACHE_TTL_PROPERTY + " must not be negative: " + analyticsCache);
-      }
-      dev.fasti.engine.analytics.ProcessAnalytics.setCacheTimeToLive(analyticsCache);
-    }
     Duration cacheTimeToLive = environment.getProperty(AUTH_CACHE_TTL_PROPERTY, Duration.class, DEFAULT_AUTH_CACHE_TTL);
     if (cacheTimeToLive.isNegative()) {
       throw new IllegalArgumentException(AUTH_CACHE_TTL_PROPERTY + " must not be negative: " + cacheTimeToLive);
@@ -111,6 +107,42 @@ public class CamundaBpmRunRestConfiguration {
     registration.addInitParameter(ProcessEngineAuthenticationFilter.BASIC_AUTHENTICATION_CACHE_TTL_PARAM,
         String.valueOf(cacheTimeToLive.toMillis()));
     return registration;
+  }
+
+  /** Fasti: the answer cache and the turns of the process analytics, with or without REST authentication. */
+  @PostConstruct
+  public void analyticsSettings() {
+    Duration analyticsCache = seconds(ANALYTICS_CACHE_TTL_PROPERTY);
+    if (analyticsCache != null) {
+      dev.fasti.engine.analytics.ProcessAnalytics.setCacheTimeToLive(analyticsCache);
+    }
+    Integer analyticsConcurrent = environment.getProperty(ANALYTICS_MAX_CONCURRENT_PROPERTY, Integer.class);
+    if (analyticsConcurrent != null) {
+      dev.fasti.engine.analytics.ProcessAnalytics.setMaxConcurrent(analyticsConcurrent);
+    }
+    Duration analyticsWait = seconds(ANALYTICS_MAX_WAIT_PROPERTY);
+    if (analyticsWait != null) {
+      dev.fasti.engine.analytics.ProcessAnalytics.setMaxWait(analyticsWait);
+    }
+  }
+
+  /** A duration setting where a bare number means seconds ({@code 60} is {@code 60s}); null when not set. */
+  protected Duration seconds(String property) {
+    String value = environment.getProperty(property);
+    if (value == null || value.trim().isEmpty()) {
+      return null;
+    }
+    String trimmed = value.trim();
+    if (trimmed.matches("\\d{10,}")) {
+      throw new IllegalArgumentException(property + " is too long: " + value);
+    }
+    Duration duration = trimmed.matches("\\d+")
+        ? Duration.ofSeconds(Long.parseLong(trimmed))
+        : environment.getProperty(property, Duration.class);
+    if (duration.isNegative()) {
+      throw new IllegalArgumentException(property + " must not be negative: " + value);
+    }
+    return duration;
   }
 
   @Bean

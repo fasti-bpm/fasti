@@ -47,8 +47,9 @@ export interface ActivityAnalytics {
   running: number;
   runningOverP90: number;
   oldestRunningStart: string | null;
-  repeatedInstances: number;
-  repeatedExecutions: number;
+  /** null when the call left rework out */
+  repeatedInstances: number | null;
+  repeatedExecutions: number | null;
   openIncidents: number;
   incidents: number;
   timeAboveMedian: number | null;

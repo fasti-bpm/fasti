@@ -104,7 +104,7 @@ export function measureValue(activity: ActivityAnalytics, measure: Measure, now:
       return since ? Math.max(0, now - since.getTime()) : 0;
     }
     case 'rework':
-      return activity.repeatedExecutions;
+      return activity.repeatedExecutions ?? 0;
     case 'incidents':
       // created in the range; the badge shows those open now
       return activity.incidents;
@@ -144,13 +144,19 @@ function shareOf(part: number | null | undefined, whole: number): number | null 
   return part / whole;
 }
 
+/** Minutes the end of a range is rounded up to: a longer range looks the same a little later. */
+const ROUNDING: Record<Range, number> = { '7': 1, '30': 5, '90': 15, '365': 60 };
+
 /**
- * The scope of a query, its range ending at the next full minute: computed when the query runs,
- * not when the page rendered. Within a minute every view asks the same, so the server answers
- * repeated views from its short cache.
+ * The scope of a query, its range ending at the next full minute (5, 15 or 60 minutes for the
+ * longer ranges): computed when the query runs, not when the page rendered. Every view of the same
+ * range within that time asks the same, so the server answers repeated views from its short
+ * cache and reads a year of history once for everybody instead of again every minute. All that
+ * finished until now is in the range; only its start moves by those minutes.
  */
 function scopeNow(processKey: string, definitionIds: string[] | undefined, range: Range, target?: number | null): AnalyticsScope {
-  const now = Math.ceil((Date.now() + 1) / 60_000) * 60_000;
+  const step = ROUNDING[range] * 60_000;
+  const now = Math.ceil((Date.now() + 1) / step) * step;
   return {
     processKey,
     definitionIds,
@@ -187,8 +193,8 @@ export function AnalyticsTab({
   const scopeKey = [processKey, allVersions ? 'all' : definitionId, range];
   const unit = Number(range) <= 31 ? 'day' : Number(range) <= 120 ? 'week' : 'month';
 
-  // the activities first, rework (the costly part of a long history) right after: the heat map
-  // does not wait for it
+  // the activities and rework (the costly part of a long history) side by side: the heat map does
+  // not wait for rework
   const activities = useQuery({
     queryKey: [COCKPIT, 'analytics', 'activities', ...scopeKey],
     queryFn: ({ signal }) => getActivityAnalytics(scopeNow(processKey, definitionIds, range), signal, { rework: false }),
@@ -200,7 +206,7 @@ export function AnalyticsTab({
   const rework = useQuery({
     queryKey: [COCKPIT, 'analytics', 'rework', ...scopeKey],
     queryFn: ({ signal }) => getRework(scopeNow(processKey, definitionIds, range), signal),
-    enabled: activities.data !== undefined,
+    enabled: !unavailable,
     refetchInterval,
     placeholderData: keepPreviousData,
     retry,
@@ -238,13 +244,16 @@ export function AnalyticsTab({
   const now = activities.dataUpdatedAt || 0;
   const shown = useMemo(() => {
     const repeats = new Map((rework.data ?? []).map((entry) => [entry.activityId, entry]));
+    // the rework of the range shown, not the one kept from the previous range while loading
+    const reworkRead = rework.data !== undefined && !rework.isPlaceholderData;
     return diagramActivities(activities.data ?? []).map((activity) => {
       const repeated = repeats.get(activity.activityId);
-      return repeated
-        ? { ...activity, repeatedInstances: repeated.repeatedInstances, repeatedExecutions: repeated.repeatedExecutions }
+      // until rework is read, the activities carry none (null)
+      return reworkRead
+        ? { ...activity, repeatedInstances: repeated?.repeatedInstances ?? 0, repeatedExecutions: repeated?.repeatedExecutions ?? 0 }
         : activity;
     });
-  }, [activities.data, rework.data]);
+  }, [activities.data, rework.data, rework.isPlaceholderData]);
   // durations colour the activities where work waits: a joining gateway waits for its branches
   const markers = useMemo<ActivityMarker[]>(
     () =>
@@ -600,9 +609,9 @@ function ActivityPanel({
           {activity.canceled > 0 && <span>{t('an.fact.canceled', { count: activity.canceled })}</span>}
           <span>{t('an.fact.running', { count: activity.running })}</span>
           {activity.runningOverP90 > 0 && <span className="is-danger">{t('an.fact.overP90', { count: activity.runningOverP90 })}</span>}
-          {activity.repeatedInstances > 0 && (
+          {(activity.repeatedInstances ?? 0) > 0 && (
             <span className="is-warning">
-              <RotateCcw size={12} aria-hidden /> {t('an.fact.rework', { count: activity.repeatedInstances, extra: activity.repeatedExecutions })}
+              <RotateCcw size={12} aria-hidden /> {t('an.fact.rework', { count: activity.repeatedInstances ?? 0, extra: activity.repeatedExecutions ?? 0 })}
             </span>
           )}
           {activity.openIncidents + activity.incidents > 0 && (
@@ -708,7 +717,7 @@ function Bottlenecks({
           '—'
         ),
     },
-    { id: 'rework', header: t('an.bottleneck.rework'), align: 'end', secondary: true, cell: (row) => (row.repeatedExecutions > 0 ? formatNumber(row.repeatedExecutions, locale) : '—') },
+    { id: 'rework', header: t('an.bottleneck.rework'), align: 'end', secondary: true, cell: (row) => (row.repeatedExecutions ? formatNumber(row.repeatedExecutions, locale) : '—') },
   ];
   return (
     <section className="analytics__section">

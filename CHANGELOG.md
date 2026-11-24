@@ -25,7 +25,12 @@ các mục dưới đây là khác biệt so với bản đó.
   `GET /analytics/process-definition/key/{key}/activities`, `.../rework`,
   `.../activities/{activityId}/instances`, `.../instances`, `.../trend` and `.../user-tasks`; Java:
   `dev.fasti.engine.analytics.ProcessAnalytics`. Answers are kept 60 s for the same query
-  (`fasti.analytics.cache-ttl`, image `FASTI_ANALYTICS_CACHE_TTL`).
+  (`fasti.analytics.cache-ttl`, image `FASTI_ANALYTICS_CACHE_TTL`), and the same query asked at the
+  same time is read once. At most two scans of the activities and two other analytics reads run
+  at the same time on a node
+  (`fasti.analytics.max-concurrent`, image `FASTI_ANALYTICS_MAX_CONCURRENT`); the others wait
+  without holding a database connection, so jobs and task lists keep theirs, and answer 503 after
+  `fasti.analytics.max-wait` (60 s).
   Requires `READ_HISTORY` on the process definition key; the tenant check applies. Percentiles of
   activities and instances come from a histogram the database computes (within about 12 %); counts,
   totals, the share within a target and user task times are exact. Plain SQL for every supported

@@ -131,7 +131,9 @@ image 1.1.x.
 | `JMX_PROMETHEUS=true` | | Prometheus JMX exporter cổng `JMX_PROMETHEUS_PORT` (9404), cấu hình `JMX_PROMETHEUS_CONF`, nếu có jar trong `/fasti/javaagent` |
 | `JAVA_OPTS` | | thêm tùy chọn JVM (tách bằng khoảng trắng, không có dấu nháy) |
 | `FASTI_MAX_RAM_PERCENTAGE` | 75 | phần trăm RAM của container cho heap |
-| `FASTI_ANALYTICS_CACHE_TTL` | `60s` | **Có từ 1.3.0.** Thời gian giữ kết quả phân tích quy trình cho cùng một góc nhìn (`0` để tắt); số liệu đang chạy có thể cũ tối đa chừng ấy. Thiết lập `fasti.analytics.cache-ttl` |
+| `FASTI_ANALYTICS_CACHE_TTL` | `60s` | **Có từ 1.3.0.** Thời gian giữ kết quả phân tích quy trình cho cùng một góc nhìn (`0` để tắt; số không có đơn vị tính là giây); số liệu đang chạy có thể cũ tối đa chừng ấy. Thiết lập `fasti.analytics.cache-ttl` |
+| `FASTI_ANALYTICS_MAX_CONCURRENT` | `2` | **Có từ 1.3.0.** Số lượt phân tích quy trình được đọc lịch sử cùng lúc trên node này, riêng cho lượt quét hoạt động và cho các lượt đọc khác; các lượt khác chờ đến lượt mà không giữ kết nối CSDL, nên job và danh sách task vẫn có kết nối của chúng. `0`: không giới hạn. Thiết lập `fasti.analytics.max-concurrent` |
+| `FASTI_ANALYTICS_MAX_WAIT` | `60s` | **Có từ 1.3.0.** Thời gian chờ lượt lâu nhất; quá thời gian này REST API trả `503` (số không có đơn vị tính là giây). Thiết lập `fasti.analytics.max-wait` |
 | `FASTI_RETURN_MEMORY` | `true` | **Có từ 1.2.1.** Trả phần heap không dùng về hệ thống (`-XX:G1PeriodicGCInterval=30000 -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=30`); `false` giữ mặc định của JVM |
 | `FASTI_DB_SCHEMA_UPDATE` | `false` (`true` với cơ sở dữ liệu H2 demo có sẵn) | `true` tạo bảng còn thiếu (cơ sở dữ liệu mới); không bao giờ nâng cấp schema |
 | `FASTI_SCHEMA_VERSION_CHECK` | `enforce` | `warn`: schema cũ hơn 7.24 chỉ cảnh báo thay vì dừng |
@@ -141,7 +143,7 @@ image 1.1.x.
 | `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | `false` | chỉ chạy job của deployment đã đăng ký trên node này |
 | `FASTI_INSECURE_DEMO` | `false` | `true`: **tắt** xác thực REST và phân quyền, chỉ để demo (xem Bảo mật mặc định) |
 | `FASTI_REST_AUTH` | `true` | luôn bật; giá trị `false` bị từ chối (dùng `FASTI_INSECURE_DEMO`) |
-| `FASTI_REST_AUTH_CACHE_TTL` | `30s` | **Có từ 1.2.1.** Thời gian ghi nhớ một lần xác thực basic thành công của REST API, cùng nhóm và tenant của người dùng, để các request lặp lại không phải đọc lại (`0` để tắt). Người dùng bị xoá hoặc bị khoá và thay đổi thành viên nhóm có hiệu lực chậm nhất sau khoảng này; thay đổi qua REST API của cùng node xoá cache ngay. Thiết lập `fasti.rest.auth-cache-ttl` |
+| `FASTI_REST_AUTH_CACHE_TTL` | `30s` | **Có từ 1.2.1.** Cần ghi đơn vị (`30s`; số trần tính là mili giây). Thời gian ghi nhớ một lần xác thực basic thành công của REST API, cùng nhóm và tenant của người dùng, để các request lặp lại không phải đọc lại (`0` để tắt). Người dùng bị xoá hoặc bị khoá và thay đổi thành viên nhóm có hiệu lực chậm nhất sau khoảng này; thay đổi qua REST API của cùng node xoá cache ngay. Thiết lập `fasti.rest.auth-cache-ttl` |
 | `FASTI_INITIAL_SETUP` | `false` | `true`: bật trang tạo admin đầu tiên khi chưa có admin |
 | `FASTI_CORS_ALLOWED_ORIGINS` | (tắt) | bật CORS cho REST; `*` như Run trước đây |
 | `FASTI_ADMIN_USER`, `FASTI_ADMIN_PASSWORD` (+`_FILE`) | | tạo admin nếu chưa có; mật khẩu truyền qua biến môi trường, không qua dòng lệnh |

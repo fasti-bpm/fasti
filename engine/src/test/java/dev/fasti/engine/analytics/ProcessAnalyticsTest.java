@@ -252,9 +252,33 @@ public class ProcessAnalyticsTest {
   }
 
   @Test
+  public void shouldReadInsideATransactionOfTheEngineWithoutWaitingForATurn() {
+    int maxConcurrent = ProcessAnalytics.getMaxConcurrent();
+    java.time.Duration maxWait = ProcessAnalytics.getMaxWait();
+    java.time.Duration ttl = ProcessAnalytics.getCacheTimeToLive();
+    ProcessEngineConfigurationImpl configuration = (ProcessEngineConfigurationImpl) engine.getProcessEngineConfiguration();
+    try {
+      ProcessAnalytics.setCacheTimeToLive(java.time.Duration.ZERO);
+      ProcessAnalytics.setMaxConcurrent(1);
+      ProcessAnalytics.setMaxWait(java.time.Duration.ZERO);
+      // a delegate or listener that asks: it reads in the transaction it runs in
+      List<ActivityAnalytics> nested = configuration.getCommandExecutorTxRequired()
+          .execute(commandContext -> query().withoutRework().activities());
+      assertThat(byId(nested, ActivityAnalytics::getActivityId).get("review").getFinished()).isEqualTo(11);
+      // and the turn it did not take is free
+      assertThat(query().withoutRework().activities()).hasSameSizeAs(nested);
+    } finally {
+      ProcessAnalytics.setMaxConcurrent(maxConcurrent);
+      ProcessAnalytics.setMaxWait(maxWait);
+      ProcessAnalytics.setCacheTimeToLive(ttl);
+    }
+  }
+
+  @Test
   public void shouldReadReworkOnItsOwn() {
     Map<String, ActivityAnalytics> without = byId(query().withoutRework().activities(), ActivityAnalytics::getActivityId);
-    assertThat(without.get("review").getRepeatedInstances()).isZero();
+    assertThat(without.get("review").getRepeatedInstances()).isNull();
+    assertThat(without.get("review").getRepeatedExecutions()).isNull();
     assertThat(without.get("review").getFinished()).isEqualTo(11);
 
     Map<String, ActivityRework> rework = byId(query().rework(), ActivityRework::getActivityId);

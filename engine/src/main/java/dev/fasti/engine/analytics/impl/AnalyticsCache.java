@@ -18,7 +18,12 @@ package dev.fasti.engine.analytics.impl;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 /**
@@ -28,6 +33,9 @@ import java.util.function.Supplier;
  * <p>The key holds everything the answer depends on, including the tenants the user may read; the
  * permission is checked on every call before the cache is asked. An answer is shared between the
  * callers that ask the same, so it must not be changed.</p>
+ *
+ * <p>Callers that ask the same while it is being read wait for that read instead of reading it
+ * too, also with the cache turned off.</p>
  */
 public final class AnalyticsCache {
 
@@ -38,6 +46,7 @@ public final class AnalyticsCache {
 
   private static volatile Duration timeToLive = initialTimeToLive();
   private static final Map<String, Entry> ENTRIES = new ConcurrentHashMap<>();
+  private static final Map<String, CompletableFuture<Object>> READING = new ConcurrentHashMap<>();
 
   private AnalyticsCache() {
   }
@@ -71,7 +80,8 @@ public final class AnalyticsCache {
 
   /** Sets the time to live of answers given from now on; zero or negative turns the cache off and empties it. */
   public static void setTimeToLive(Duration ttl) {
-    timeToLive = ttl == null || ttl.isNegative() ? Duration.ZERO : ttl;
+    timeToLive = ttl == null || ttl.isNegative() ? Duration.ZERO
+        : ttl.compareTo(AnalyticsLimiter.MAX) > 0 ? AnalyticsLimiter.MAX : ttl;
     if (timeToLive.isZero()) {
       ENTRIES.clear();
     }
@@ -83,16 +93,86 @@ public final class AnalyticsCache {
 
   @SuppressWarnings("unchecked")
   static <T> T get(String key, Supplier<T> compute) {
-    Duration ttl = timeToLive;
-    if (ttl.isZero()) {
-      return compute.get();
+    T cached = cached(key);
+    if (cached != null) {
+      return cached;
     }
-    long now = System.nanoTime();
-    Entry entry = ENTRIES.get(key);
-    if (entry != null && entry.expires - now > 0) {
-      return (T) entry.value;
+    CompletableFuture<Object> mine = new CompletableFuture<>();
+    CompletableFuture<Object> reading = READING.putIfAbsent(key, mine);
+    if (reading != null) {
+      return (T) await(reading);
+    }
+    try {
+      // a read that ended between the look into the cache and taking the key
+      T value = cached(key);
+      if (value == null) {
+        value = compute.get();
+        put(key, value);
+      }
+      mine.complete(value);
+      return value;
+    } catch (RuntimeException | Error e) {
+      mine.completeExceptionally(e);
+      throw e;
+    } finally {
+      READING.remove(key, mine);
+    }
+  }
+
+  /**
+   * From the cache, or read now without waiting for the same read of another caller: for a caller
+   * inside a transaction of the engine, which would hold its connection while it waits.
+   */
+  static <T> T getWithoutWaiting(String key, Supplier<T> compute) {
+    T cached = cached(key);
+    if (cached != null) {
+      return cached;
     }
     T value = compute.get();
+    put(key, value);
+    return value;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T> T cached(String key) {
+    if (timeToLive.isZero()) {
+      return null;
+    }
+    Entry entry = ENTRIES.get(key);
+    return entry != null && entry.expires - System.nanoTime() > 0 ? (T) entry.value : null;
+  }
+
+  /** The longest wait for the same read: its turn, plus as long as a read may take. */
+  static final Duration READ_TIME = Duration.ofMinutes(5);
+
+  private static Object await(CompletableFuture<Object> reading) {
+    Duration wait = AnalyticsLimiter.getMaxWait().plus(READ_TIME);
+    try {
+      return reading.get(wait.toMillis(), TimeUnit.MILLISECONDS);
+    } catch (TimeoutException e) {
+      throw new dev.fasti.engine.analytics.AnalyticsBusyException(
+          "The same analytics are being read for longer than " + wait.getSeconds() + " s. Ask again later.");
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new dev.fasti.engine.analytics.AnalyticsBusyException("Interrupted while waiting for the same analytics");
+    } catch (ExecutionException | CompletionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof RuntimeException) {
+        throw (RuntimeException) cause;
+      }
+      if (cause instanceof Error) {
+        throw (Error) cause;
+      }
+      throw new IllegalStateException(cause);
+    }
+  }
+
+  private static void put(String key, Object value) {
+    Duration ttl = timeToLive;
+    if (ttl.isZero() || value == null) {
+      return;
+    }
+    long now = System.nanoTime();
     if (ENTRIES.size() >= MAX_ENTRIES) {
       ENTRIES.values().removeIf(old -> old.expires - now <= 0);
       if (ENTRIES.size() >= MAX_ENTRIES) {
@@ -100,6 +180,5 @@ public final class AnalyticsCache {
       }
     }
     ENTRIES.put(key, new Entry(now + ttl.toNanos(), value));
-    return value;
   }
 }

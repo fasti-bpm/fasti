@@ -54,15 +54,14 @@
         name = "repeatedInstances"
         type = "integer"
         format = "int64"
-        nullable = false
-        desc = "Scopes (process or subprocess instances) that ran the activity more than once in the range." />
+        desc = "Scopes (process or subprocess instances) that ran the activity more than once in the range;
+                `null` when the call left rework out (`rework=false`)." />
 
     <@lib.property
         name = "repeatedExecutions"
         type = "integer"
         format = "int64"
-        nullable = false
-        desc = "The runs beyond the first in those scopes." />
+        desc = "The runs beyond the first in those scopes; `null` when the call left rework out." />
 
     <@lib.property
         name = "openIncidents"

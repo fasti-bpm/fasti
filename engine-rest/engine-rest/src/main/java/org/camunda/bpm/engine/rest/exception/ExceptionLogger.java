@@ -43,6 +43,11 @@ public class ExceptionLogger extends BaseLogger {
       logDebug(String.valueOf(statusCode), getExceptionStacktrace(throwable));
       return;
     }
+    // Fasti: analytics that found no turn: expected under load, one line without the stack
+    if (throwable.getCause() instanceof dev.fasti.engine.analytics.AnalyticsBusyException) {
+      logWarn(String.valueOf(statusCode), throwable.getMessage());
+      return;
+    }
 
     logInternalServerAndOtherStatusCodes(throwable, statusCode);
   }

@@ -29,8 +29,8 @@ public class ActivityAnalytics {
   protected long running;
   protected long runningOverP90;
   protected Date oldestRunningStart;
-  protected long repeatedInstances;
-  protected long repeatedExecutions;
+  protected Long repeatedInstances;
+  protected Long repeatedExecutions;
   protected long openIncidents;
   protected long incidents;
   protected Long timeAboveMedian;
@@ -104,21 +104,24 @@ public class ActivityAnalytics {
     this.oldestRunningStart = oldestRunningStart;
   }
 
-  /** Scopes (process or subprocess instances) that ran the activity more than once in the range: rework or loops. */
-  public long getRepeatedInstances() {
+  /**
+   * Scopes (process or subprocess instances) that ran the activity more than once in the range:
+   * rework or loops; {@code null} when the query left rework out.
+   */
+  public Long getRepeatedInstances() {
     return repeatedInstances;
   }
 
-  public void setRepeatedInstances(long repeatedInstances) {
+  public void setRepeatedInstances(Long repeatedInstances) {
     this.repeatedInstances = repeatedInstances;
   }
 
-  /** The runs beyond the first in those scopes. */
-  public long getRepeatedExecutions() {
+  /** The runs beyond the first in those scopes; {@code null} when the query left rework out. */
+  public Long getRepeatedExecutions() {
     return repeatedExecutions;
   }
 
-  public void setRepeatedExecutions(long repeatedExecutions) {
+  public void setRepeatedExecutions(Long repeatedExecutions) {
     this.repeatedExecutions = repeatedExecutions;
   }
 

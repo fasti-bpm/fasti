@@ -35,6 +35,27 @@ public final class ProcessAnalytics {
     return dev.fasti.engine.analytics.impl.AnalyticsCache.getTimeToLive();
   }
 
+  /**
+   * How many analytics reads of the history run at the same time on this node (2 by default);
+   * the others wait for their turn without a database connection. 0 or less: no limit.
+   */
+  public static void setMaxConcurrent(int maxConcurrent) {
+    dev.fasti.engine.analytics.impl.AnalyticsLimiter.setMaxConcurrent(maxConcurrent);
+  }
+
+  public static int getMaxConcurrent() {
+    return dev.fasti.engine.analytics.impl.AnalyticsLimiter.getMaxConcurrent();
+  }
+
+  /** The longest wait for a turn (60 s by default); then the query fails with {@link AnalyticsBusyException}. */
+  public static void setMaxWait(java.time.Duration maxWait) {
+    dev.fasti.engine.analytics.impl.AnalyticsLimiter.setMaxWait(maxWait);
+  }
+
+  public static java.time.Duration getMaxWait() {
+    return dev.fasti.engine.analytics.impl.AnalyticsLimiter.getMaxWait();
+  }
+
   public static ProcessAnalyticsQuery query(ProcessEngine processEngine) {
     return new ProcessAnalyticsQueryImpl((ProcessEngineConfigurationImpl) processEngine.getProcessEngineConfiguration());
   }

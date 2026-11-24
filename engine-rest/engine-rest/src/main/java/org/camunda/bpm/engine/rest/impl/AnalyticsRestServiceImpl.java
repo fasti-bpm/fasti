@@ -29,6 +29,7 @@ import javax.ws.rs.core.UriInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.fasti.engine.analytics.ActivityAnalytics;
 import dev.fasti.engine.analytics.ActivityRework;
+import dev.fasti.engine.analytics.AnalyticsBusyException;
 import dev.fasti.engine.analytics.AnalyticsNotAvailableException;
 import dev.fasti.engine.analytics.InstanceAnalytics;
 import dev.fasti.engine.analytics.PeriodAnalytics;
@@ -110,6 +111,9 @@ public class AnalyticsRestServiceImpl extends AbstractRestProcessEngineAware imp
       throw new RestException(Status.NOT_IMPLEMENTED, e, e.getMessage());
     } catch (NotFoundException e) {
       throw new InvalidRequestException(Status.NOT_FOUND, e, e.getMessage());
+    } catch (AnalyticsBusyException e) {
+      // the node reads as many analytics as it allows: ask again later
+      throw new RestException(Status.SERVICE_UNAVAILABLE, e, e.getMessage());
     }
   }
 

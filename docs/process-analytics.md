@@ -82,10 +82,20 @@ parameters `processDefinitionIdIn`, `tenantIdIn`, `finishedAfter`, `finishedBefo
 Details and examples: the OpenAPI document of the REST API (tag *Process Analytics*).
 
 Answers are kept for 60 seconds for the same query (`fasti.analytics.cache-ttl`, image
-`FASTI_ANALYTICS_CACHE_TTL`, `0` turns this off), so a view opened again or by a colleague is
-answered without reading the history; the permission is checked on every call, and what runs now
-may be up to that much older. The web interface asks for the range up to the next full minute and
-reads rework after the heat map.
+`FASTI_ANALYTICS_CACHE_TTL`, `0` turns this off, a number without unit is seconds), so a view
+opened again or by a colleague is answered without reading the history; the permission is checked
+on every call, and what runs now may be up to that much older. Calls that ask the same at the same
+time read it once. Only calls with `finishedBefore` are kept: without it the range ends at the
+current millisecond. The web interface ends the range at the next full minute (5, 15 and 60
+minutes for 30, 90 and 365 days), so everyone looking at a range shares one read.
+
+**The engine comes first.** At most two scans of the activities (activities, rework) and two
+other analytics reads run at the same time on a node (`fasti.analytics.max-concurrent`, image
+`FASTI_ANALYTICS_MAX_CONCURRENT`, `0` for no limit); the quick parts of a view do not wait behind
+the scans. The others wait for their turn, in order, without holding a database connection, so the job executor,
+task lists and the health check keep theirs. A call that gets no turn within 60 seconds
+(`fasti.analytics.max-wait`, image `FASTI_ANALYTICS_MAX_WAIT`) answers 503. Java:
+`ProcessAnalytics.setMaxConcurrent(int)` and `setMaxWait(Duration)`.
 
 ## Java
 
@@ -123,16 +133,26 @@ in SQL. An application that replaced the default `mappings.xml` must add
 
 PostgreSQL 16 (4 CPUs, `work_mem` 16 MB), one process with 200,000 instances over a year: 2.45
 million activity instances, 832,000 user tasks, 1.65 million identity links, 3,543 instances
-running. Median of 11 calls in a row, as an administrator:
+running. Median of 11 calls in a row without the answer cache, as an administrator:
 
 | Call | 30 days | 365 days |
 |---|---|---|
-| `activities`, one version | 0.23 s | 1.45 s |
-| `activities`, all versions | 0.25 s | 2.7 s |
+| `activities?rework=false` (the heat map), one version | 0.12 s | 0.53 s |
+| `activities?rework=false`, all versions | 0.13 s | 0.64 s |
+| `rework`, one version / all versions | 0.11 / 0.13 s | 0.58 / 1.35 s |
 | `instances` | 0.03–0.05 s | 0.08–0.13 s |
 | `trend` | 0.06 s | 0.11–0.19 s |
 | `user-tasks` (newest 50,000) | 0.36 s | 0.35–0.51 s |
 | slowest / oldest running runs of an activity | 0.04–0.07 s | 0.02–0.33 s |
+
+In the web interface the heat map of a year of all versions is on screen 1.0–1.6 s after the click
+on the tab, rework 1.7–2.4 s; a view opened again answers from the cache in about 0.1 s.
+
+**Under load**, with the default settings: 25 people opening the analytics again and again (one to
+three seconds apart, ranges from 7 to 365 days) got their views in 44 ms median and 122 ms at the
+95th percentile, with PostgreSQL at 41 % of its CPUs, no error and the health check below 0.2 s.
+While 10 of them did so, the engine ran 706–781 jobs per second (1,080 alone) and the task list
+answered in about 40 ms.
 
 Compared with exact SQL over the same rows, every count matched, activity percentiles were within
 4.7 %, instance percentiles within 0.3 % and the trend within 3.7 %; user task times were exact.
@@ -143,7 +163,10 @@ For long ranges on large histories:
 
 - **PostgreSQL:** grouping a year of a busy process spills to disk with the default `work_mem`
   (4 MB); 32–64 MB for the engine's user makes it fit. The engine asks PostgreSQL to plan each
-  analytics call for its own values (`plan_cache_mode`), which halves the time of long ranges.
+  analytics call for its own values (`plan_cache_mode`), which halves the time of long ranges,
+  and to group the activity durations with a hash table (`enable_sort` off for that statement
+  only): the planner expects hundreds of times more groups than there are and would sort the
+  range on disk, which takes twice as long.
 - **MySQL/MariaDB:** a larger `tmp_table_size` and `max_heap_table_size` (for example 256 MB) keeps
   the grouping in memory.
 - **SQL Server:** add `sendStringParametersAsUnicode=false` to the JDBC URL so that the id

@@ -256,6 +256,8 @@ fi
 [ -n "${FASTI_LEGACY_PATH_REDIRECT:-}" ] && add_arg "--fasti.webapp.legacy-path-redirect=$FASTI_LEGACY_PATH_REDIRECT"
 [ -n "${FASTI_REST_AUTH_CACHE_TTL:-}" ] && add_arg "--fasti.rest.auth-cache-ttl=$FASTI_REST_AUTH_CACHE_TTL"
 [ -n "${FASTI_ANALYTICS_CACHE_TTL:-}" ] && add_arg "--fasti.analytics.cache-ttl=$FASTI_ANALYTICS_CACHE_TTL"
+[ -n "${FASTI_ANALYTICS_MAX_CONCURRENT:-}" ] && add_arg "--fasti.analytics.max-concurrent=$FASTI_ANALYTICS_MAX_CONCURRENT"
+[ -n "${FASTI_ANALYTICS_MAX_WAIT:-}" ] && add_arg "--fasti.analytics.max-wait=$FASTI_ANALYTICS_MAX_WAIT"
 # the classic web applications (AngularJS 1.8.2, end of life) are off in the image (docker.yml);
 # the application logs a deprecation warning when they are turned back on
 if [ -n "${FASTI_CLASSIC_WEBAPPS:-}" ]; then

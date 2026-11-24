@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -138,7 +139,7 @@ public class AnalyticsRestServiceTest extends AbstractRestServiceTest {
     given().pathParam("key", "check").queryParam("finishedAfter", AFTER).queryParam("finishedBefore", BEFORE)
         .queryParam("rework", false)
         .then().expect().statusCode(Status.OK.getStatusCode())
-        .body("find { it.activityId == 'review' }.repeatedInstances", equalTo(0))
+        .body("find { it.activityId == 'review' }.repeatedInstances", nullValue())
         .when().get(ANALYTICS_URL + "/activities");
     given().pathParam("key", "check").queryParam("finishedAfter", AFTER).queryParam("finishedBefore", BEFORE)
         .then().expect().statusCode(Status.OK.getStatusCode())

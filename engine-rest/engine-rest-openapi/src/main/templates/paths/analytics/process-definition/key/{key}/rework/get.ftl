@@ -52,6 +52,12 @@
         desc = "No process with this key exists and no history of one." />
 
     <@lib.response
+        code = "503"
+        dto = "ExceptionDto"
+        desc = "This node already reads as many analytics as it allows (`fasti.analytics.max-concurrent`) and no
+                turn came within `fasti.analytics.max-wait`. Ask again later." />
+
+    <@lib.response
         code = "501"
         dto = "ExceptionDto"
         last = true

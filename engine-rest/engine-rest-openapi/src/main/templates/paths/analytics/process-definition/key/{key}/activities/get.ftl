@@ -22,7 +22,7 @@
         name = "rework"
         location = "query"
         type = "boolean"
-        desc = "`false` leaves rework out (`repeatedInstances` and `repeatedExecutions` are 0), which makes the
+        desc = "`false` leaves rework out (`repeatedInstances` and `repeatedExecutions` are `null`), which makes the
                 call cheaper on a long history; read it with `GET .../rework`. `true` by default." />
 
     <#include "/lib/commons/analytics-params.ftl" >
@@ -57,6 +57,12 @@
         code = "404"
         dto = "ExceptionDto"
         desc = "No process with this key exists and no history of one." />
+
+    <@lib.response
+        code = "503"
+        dto = "ExceptionDto"
+        desc = "This node already reads as many analytics as it allows (`fasti.analytics.max-concurrent`) and no
+                turn came within `fasti.analytics.max-wait`. Ask again later." />
 
     <@lib.response
         code = "501"

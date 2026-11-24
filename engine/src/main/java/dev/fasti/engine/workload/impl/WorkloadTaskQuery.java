@@ -43,6 +43,11 @@ public class WorkloadTaskQuery extends TaskQueryImpl {
    */
   public void prepare(CommandContext commandContext) {
     decideAuthorizationJoinType(commandContext);
+    // The grouped statements read every selected task. With the equality form of the
+    // authorization type the database may materialise the authorization subquery on a low row
+    // estimate and check each task against all of the user's grants (20 ms became 5 s for a user
+    // with 20,000 grants on 1,000,000 tasks); the range keeps the plan of Fasti 1.2.0.
+    getAuthCheck().setAuthorizationTypeRange(true);
   }
 
   public Date getLoadOverdueBefore() {

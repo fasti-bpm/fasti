@@ -25,6 +25,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import dev.fasti.engine.audit.StatementTrace;
+import dev.fasti.engine.workload.TaskWorkload;
+import dev.fasti.engine.workload.TaskWorkloads;
 import org.apache.ibatis.datasource.pooled.PooledDataSource;
 import org.camunda.bpm.engine.AuthorizationService;
 import org.camunda.bpm.engine.IdentityService;
@@ -169,5 +171,25 @@ public class AuthorizedGroupFilterTest {
     } finally {
       authorizationService.deleteAuthorization(revoke.getId());
     }
+  }
+
+  @Test
+  public void shouldKeepTheTypeRangeForTheWorkloadStatements() {
+    identityService.setAuthentication("bob", Arrays.asList("readers"));
+    TRACE.clear();
+    assertThat(visibleTaskIds()).hasSize(3);
+    List<String> taskQuery = TRACE.executed();
+    TRACE.clear();
+    TaskWorkload workload = TaskWorkloads.query(engine).read();
+    List<String> workloadStatements = TRACE.executed();
+
+    assertThat(workload.getTotals().getOpen()).isEqualTo(3);
+    assertThat(StatementTrace.first(taskQuery, "where a.type_ in (0, 1)")).as("statements %s", taskQuery)
+        .isGreaterThanOrEqualTo(0);
+    assertThat(StatementTrace.first(taskQuery, "where a.type_ < 2")).as("statements %s", taskQuery).isEqualTo(-1);
+    assertThat(StatementTrace.first(workloadStatements, "where a.type_ < 2")).as("statements %s", workloadStatements)
+        .isGreaterThanOrEqualTo(0);
+    assertThat(StatementTrace.first(workloadStatements, "where a.type_ in (0, 1)"))
+        .as("statements %s", workloadStatements).isEqualTo(-1);
   }
 }

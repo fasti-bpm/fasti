@@ -66,6 +66,12 @@ public class AuthorizationCheck implements Serializable {
 
   protected boolean useLeftJoin = true;
 
+  /**
+   * Fasti: select the global and grant authorizations with the range {@code TYPE_ < 2} instead of
+   * {@code TYPE_ IN (0, 1)}. The rows are the same; only the plan the database picks differs.
+   */
+  protected boolean authorizationTypeRange = false;
+
   public AuthorizationCheck() {
   }
 
@@ -174,5 +180,16 @@ public class AuthorizationCheck implements Serializable {
 
   public void setUseLeftJoin(boolean useLeftJoin) {
     this.useLeftJoin = useLeftJoin;
+  }
+
+  /**
+   * Used in SQL mapping
+   */
+  public boolean isAuthorizationTypeRange() {
+    return authorizationTypeRange;
+  }
+
+  public void setAuthorizationTypeRange(boolean authorizationTypeRange) {
+    this.authorizationTypeRange = authorizationTypeRange;
   }
 }

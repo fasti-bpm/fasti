@@ -279,8 +279,8 @@ Docker Compose の場合：`FASTI_IMAGE`（または `image:` 行）を変更し
 
 ## 12. Docker を使用しない場合
 
-構成済みの Tomcat 1.2.0 バンドル（ダウンロードページ：<https://fasti.dev/download>）：
-- [fasti-bpm-tomcat-1.2.0.zip](https://assets.fasti.dev/releases/1.2.0/fasti-bpm-tomcat-1.2.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.2.0/fasti-bpm-tomcat-1.2.0.zip.sha256))
-- [fasti-bpm-tomcat-1.2.0.tar.gz](https://assets.fasti.dev/releases/1.2.0/fasti-bpm-tomcat-1.2.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.2.0/fasti-bpm-tomcat-1.2.0.tar.gz.sha256))
+構成済みの Tomcat 1.2.1 バンドル（ダウンロードページ：<https://fasti.dev/download>）：
+- [fasti-bpm-tomcat-1.2.1.zip](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.zip.sha256))
+- [fasti-bpm-tomcat-1.2.1.tar.gz](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.tar.gz.sha256))
 
-展開する前に、たとえば `sha256sum -c fasti-bpm-tomcat-1.2.0.zip.sha256` でチェックサムを検証してください。
+展開する前に、たとえば `sha256sum -c fasti-bpm-tomcat-1.2.1.zip.sha256` でチェックサムを検証してください。

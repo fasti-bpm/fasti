@@ -280,11 +280,11 @@ Still stuck? Open a GitHub issue with the log (passwords removed). Security issu
 
 ## 12. Without Docker
 
-Ready-made Tomcat 1.2.0 bundle (download page: https://fasti.dev/download):
-- [fasti-bpm-tomcat-1.2.0.zip](https://assets.fasti.dev/releases/1.2.0/fasti-bpm-tomcat-1.2.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.2.0/fasti-bpm-tomcat-1.2.0.zip.sha256))
-- [fasti-bpm-tomcat-1.2.0.tar.gz](https://assets.fasti.dev/releases/1.2.0/fasti-bpm-tomcat-1.2.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.2.0/fasti-bpm-tomcat-1.2.0.tar.gz.sha256))
+Ready-made Tomcat 1.2.1 bundle (download page: https://fasti.dev/download):
+- [fasti-bpm-tomcat-1.2.1.zip](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.zip.sha256))
+- [fasti-bpm-tomcat-1.2.1.tar.gz](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.tar.gz.sha256))
 
-Verify the checksum before extracting, for example `sha256sum -c fasti-bpm-tomcat-1.2.0.zip.sha256`.
+Verify the checksum before extracting, for example `sha256sum -c fasti-bpm-tomcat-1.2.1.zip.sha256`.
 
 <a id="13-observability"></a>
 

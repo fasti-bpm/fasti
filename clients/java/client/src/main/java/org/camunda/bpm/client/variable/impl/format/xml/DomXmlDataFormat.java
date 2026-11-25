@@ -32,6 +32,7 @@ import jakarta.xml.bind.Unmarshaller;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
@@ -266,7 +267,19 @@ public class DomXmlDataFormat implements DataFormat {
   }
 
   public static TransformerFactory defaultTransformerFactory() {
-    return TransformerFactory.newInstance();
+    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    // Fasti: no external DTDs or stylesheets while writing
+    setAttributeIfSupported(transformerFactory, XMLConstants.ACCESS_EXTERNAL_DTD, "");
+    setAttributeIfSupported(transformerFactory, XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+    return transformerFactory;
+  }
+
+  protected static void setAttributeIfSupported(TransformerFactory factory, String name, String value) {
+    try {
+      factory.setAttribute(name, value);
+    } catch (IllegalArgumentException e) {
+      // not supported by this implementation
+    }
   }
 
   public static DocumentBuilderFactory defaultDocumentBuilderFactory() {
@@ -284,7 +297,26 @@ public class DomXmlDataFormat implements DataFormat {
     documentBuilderFactory.setIgnoringElementContentWhitespace(false);
     LOG.documentBuilderFactoryConfiguration("ignoringElementContentWhitespace", "false");
 
+    // Fasti: XML variables come from the engine, that is from whoever may write a variable there;
+    // refuse document type declarations and external entities, so that such a value cannot make
+    // the worker read local files or open connections (XML external entities)
+    secure(documentBuilderFactory);
+
     return documentBuilderFactory;
+  }
+
+  protected static void secure(DocumentBuilderFactory documentBuilderFactory) {
+    try {
+      documentBuilderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+      documentBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+      documentBuilderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+      documentBuilderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+      documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+    } catch (ParserConfigurationException e) {
+      throw new IllegalStateException("The XML parser cannot be configured safely", e);
+    }
+    documentBuilderFactory.setXIncludeAware(false);
+    documentBuilderFactory.setExpandEntityReferences(false);
   }
 
   public static Class<?> loadClass(String classname, DataFormat dataFormat) {

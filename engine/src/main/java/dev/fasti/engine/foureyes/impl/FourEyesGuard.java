@@ -200,6 +200,13 @@ public final class FourEyesGuard {
     }
   }
 
+  /** Whether the activity of the process definition is a user task with a four-eyes rule. */
+  public static boolean isGuarded(ScopeImpl processDefinition, String activityId) {
+    ActivityImpl activity = processDefinition == null || activityId == null ? null
+        : processDefinition.findActivity(activityId);
+    return activity != null && activity.getProperty(FourEyesRule.PROPERTY_RULE) != null;
+  }
+
   static void collectCheckedSteps(ScopeImpl scope, Set<String> stepIds) {
     for (ActivityImpl activity : scope.getActivities()) {
       if (Boolean.TRUE.equals(activity.getProperty(FourEyesRule.PROPERTY_CHECKED))) {

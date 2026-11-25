@@ -41,7 +41,8 @@ through a second review pass. The issues found are fixed here. Same database sch
   The client now refuses document type declarations and external entities.
 - **Four-eyes rule could be skipped by starting in the middle.** A user allowed to start
   instances could start one at the guarded task (`startInstructions`), restart it there, move
-  the token there with a modification or migrate it there, and then complete it alone. Whoever
+  the token there with a modification or migrate it there (also into a task the new version
+  guards), and then complete it alone. Whoever
   places a token into the process by hand now counts as having done every checked step of that
   instance; for an asynchronous batch both the user who created it and the user who ran its
   jobs count.

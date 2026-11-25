@@ -211,6 +211,35 @@ public class FourEyesManualPlacementTest {
   }
 
   @Test
+  public void shouldCountTheUserWhoMigratesToATaskTheTargetVersionGuards() {
+    // version 1 has no rule; version 2 guards approve
+    testRule.deploy(org.camunda.bpm.model.bpmn.Bpmn.createExecutableProcess("fourEyes").camundaHistoryTimeToLive(180)
+        .startEvent()
+        .userTask("draft").name("Draft").camundaCandidateUsers(FourEyesModels.CANDIDATES)
+        .userTask("approve").name("Approve").camundaCandidateUsers(FourEyesModels.CANDIDATES)
+        .endEvent().done());
+    ProcessDefinition source = engineRule.getRepositoryService().createProcessDefinitionQuery()
+        .processDefinitionKey("fourEyes").singleResult();
+    String pi = runtimeService.startProcessInstanceById(source.getId()).getId();
+    String draft = task(pi, "draft").getId();
+    taskService.complete(draft);
+    testRule.deploy(draftApprove());
+    ProcessDefinition target = engineRule.getRepositoryService().createProcessDefinitionQuery()
+        .processDefinitionKey("fourEyes").latestVersion().singleResult();
+
+    as("alice", () -> {
+      runtimeService.newMigration(runtimeService.createMigrationPlan(source.getId(), target.getId())
+          .mapEqualActivities().build())
+          .processInstanceIds(pi)
+          .execute();
+      return null;
+    });
+
+    assertRefused("alice", task(pi, "approve"));
+    completeAs("bob", task(pi, "approve"));
+  }
+
+  @Test
   public void shouldNotCountTheUserOfAMigrationToTheSameActivities() {
     testRule.deploy(draftApprove());
     ProcessDefinition source = engineRule.getRepositoryService().createProcessDefinitionQuery()

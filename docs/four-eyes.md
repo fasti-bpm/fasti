@@ -76,7 +76,8 @@ Allowed on purpose:
 - **Starting in the middle counts.** Whoever places a token into the process by hand may skip
   the checked steps that way: a start at another activity than the start event
   (`startInstructions`), a restart, a process instance modification that starts an activity, or a
-  migration that maps an activity to a different one. From 1.3.1 that user counts as having done
+  migration that maps an active activity to a different one or into a task that the target
+  version guards. From 1.3.1 that user counts as having done
   every checked step of the instance, so the task that checks them needs another person. For an
   asynchronous restart, modification or migration (a batch) both the user who created the batch
   and the user who ran its jobs count. Calls of the Java API without an authenticated user are not

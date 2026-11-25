@@ -79,7 +79,7 @@ Cố ý cho phép:
 - **Bắt đầu giữa chừng cũng được tính.** Người tự đặt token vào quy trình có thể bỏ qua các bước
   được kiểm tra: bắt đầu tại một bước khác sự kiện bắt đầu (`startInstructions`), khởi động lại
   (restart), process instance modification có bắt đầu một bước, hoặc migration ánh xạ một bước
-  sang bước khác. Từ 1.3.1, người đó được tính là đã làm mọi bước được kiểm tra của instance, nên
+  đang chạy sang bước khác hay vào một tác vụ được bảo vệ ở phiên bản đích. Từ 1.3.1, người đó được tính là đã làm mọi bước được kiểm tra của instance, nên
   tác vụ kiểm tra các bước ấy phải do người khác hoàn thành. Với restart, modification hay
   migration chạy bất đồng bộ (batch), cả người tạo batch lẫn người chạy job của nó đều được tính.
   Lời gọi Java API không có người dùng đăng nhập thì không được ghi nhận, và các instance bị thay

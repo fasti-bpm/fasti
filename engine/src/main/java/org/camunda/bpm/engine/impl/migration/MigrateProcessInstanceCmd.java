@@ -17,7 +17,8 @@
 package org.camunda.bpm.engine.impl.migration;
 
 import dev.fasti.engine.foureyes.impl.FourEyesGuard;
-import org.camunda.bpm.engine.migration.MigrationInstruction;
+import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
+import org.camunda.bpm.engine.impl.pvm.process.ScopeImpl;
 
 
 import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureNotContainsNull;
@@ -158,10 +159,17 @@ public class MigrateProcessInstanceCmd extends AbstractMigrationCmd implements C
     executeInContext(() -> migrateProcessInstance(migratingProcessInstance),
       migratingProcessInstance.getTargetDefinition());
 
-    // Fasti: a plan that maps an activity to a different one moves tokens by hand and may skip
-    // the steps a four-eyes rule checks; the user who migrates counts as having done them
-    for (MigrationInstruction instruction : migrationPlan.getInstructions()) {
-      if (!instruction.getSourceActivityId().equals(instruction.getTargetActivityId())) {
+    // Fasti: a plan that maps an activity to a different one, or to a task the target version
+    // guards with a four-eyes rule, moves tokens by hand and may skip the steps such a rule
+    // checks; the user who migrates counts as having done them
+    for (MigratingActivityInstance activityInstance : migratingProcessInstance.getMigratingActivityInstances()) {
+      ScopeImpl source = activityInstance.getSourceScope();
+      ScopeImpl target = activityInstance.getTargetScope();
+      // the process instance itself is an activity instance whose scope is the definition
+      if (!(source instanceof ActivityImpl) || !(target instanceof ActivityImpl)) {
+        continue;
+      }
+      if (!source.getId().equals(target.getId()) || FourEyesGuard.isGuarded(targetProcessDefinition, target.getId())) {
         FourEyesGuard.recordManualPlacement(commandContext, processInstance);
         break;
       }

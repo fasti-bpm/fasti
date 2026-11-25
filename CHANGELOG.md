@@ -12,6 +12,60 @@ các mục dưới đây là khác biệt so với bản đó.
 
 ## [Unreleased]
 
+Security release. Before announcing 1.3.0 publicly we ran a pentest of the released image and
+Tomcat bundle (summary: [docs/security/pentest-1.3.md](docs/security/pentest-1.3.md)). The
+issues it found are fixed here. Same database schema as 1.0.x–1.3.0; replace the image or the
+bundle and start it.
+
+### Security
+
+- **Initial setup needs a one-time token.** While an engine has no administrator, the web
+  application offers a page that creates the first one. In the Tomcat bundle this page was on
+  by default, so whoever reached a fresh server first could create the administrator. The page
+  now also asks for a setup token printed to the server log when the page is first opened
+  (header `X-Fasti-Setup-Token` for scripts), or a fixed token of at least 16 characters from
+  `-Dfasti.setup.token` / `FASTI_SETUP_TOKEN`. The image keeps the page off unless
+  `FASTI_INITIAL_SETUP=true`.
+- **No permanent lockout by default.** After 10 failed logins a user was locked until an
+  administrator unlocked it, so anyone who knew the name of the only administrator could lock
+  it out without signing in; recovery needed an edit of `ACT_ID_USER`. `loginMaxAttempts` now
+  defaults to unlimited; failed logins still delay the next attempt (3 s, doubling up to 60 s).
+  Set `loginMaxAttempts` to bring the permanent lock back. Users locked by 1.3.0 are unlocked
+  after the upgrade.
+- **Four-eyes rule could be skipped by starting in the middle.** A user allowed to start
+  instances could start one at the guarded task (`startInstructions`), restart it there or move
+  the token there with a modification, and then complete it alone. Whoever places a token into
+  the process by hand now counts as having done every checked step of that instance.
+- **Upload limits.** Every part of a multipart request (deployments, file variables,
+  attachments) was read into memory without a limit. A request may now carry at most 100 MB
+  and 1000 parts, larger ones get `413`: `FASTI_REST_MULTIPART_MAX_SIZE` /
+  `FASTI_REST_MULTIPART_MAX_PARTS` (system properties `fasti.rest.multipart.max-size` /
+  `max-parts`).
+- **Deserialized types are validated in every mode.** Type validation of Spin JSON/XML and
+  Object variables was only on with `--production`; in the default image mode and in the
+  Tomcat bundle anyone who may write a variable could name any class as its type. It is on
+  everywhere now. **Action needed** if process applications store their own classes as JSON or
+  XML variables: allow their packages with `FASTI_DESERIALIZATION_ALLOWED_PACKAGES` (image) or
+  `deserializationAllowedPackages` in `bpm-platform.xml` (Tomcat).
+- **Single sign-on: only the chosen client registration signs users in.** With several client
+  registrations, each of them could start a login, so a second identity provider could sign in
+  as any user name, a local administrator included when users come from the database. Only
+  `fasti.security.oidc.registration-id` (or the first registration) signs users in now.
+- **Single sign-on: back-channel logout ends the session.** The logout of each session was
+  posted to the address of the incoming request, which the container often cannot reach
+  (published port, proxy name), so a user logged out at the identity provider kept the Fasti
+  session. It is posted to the local connector now.
+- Production mode: the CSRF token cookie is `Secure`, like the session cookie.
+- `FASTI_TRUSTED_PROXIES` narrows the proxies whose `X-Forwarded-*` headers are trusted (by
+  default every private address).
+- Process analytics: a user of another tenant could tell whether a process key has history in
+  a tenant they cannot see (`200` empty instead of `404`); the probe now applies the tenant
+  scope. The cache key is structured, so tenant ids containing the separator cannot share an
+  answer.
+- Query expressions: `[...]` is allowed only on `currentUserGroups()`; `${dateTime()[0]}` passed
+  the allow-list but failed every time the filter ran.
+
+
 ## [1.3.0] - 2026-11-25
 
 Process analytics: heat maps, bottlenecks and durations from the history the engine already

@@ -28,18 +28,18 @@
 อิมเมจเผยแพร่สำหรับ amd64 และ arm64 ในสองแหล่ง:
 
 ```bash
-docker pull fastidev/fasti-bpm:1.2.1              # Docker Hub
-docker pull ghcr.io/fasti-bpm/fasti-bpm:1.2.1     # GitHub Container Registry
+docker pull fastidev/fasti-bpm:1.3.0              # Docker Hub
+docker pull ghcr.io/fasti-bpm/fasti-bpm:1.3.0     # GitHub Container Registry
 ```
 
-แท็ก: `1.2.1` (รุ่นนั้นโดยเฉพาะ), `1.2` (รุ่นแพตช์ล่าสุดของ 1.2) และ `latest` (รุ่นที่เผยแพร่
+แท็ก: `1.3.0` (รุ่นนั้นโดยเฉพาะ), `1.3` (รุ่นแพตช์ล่าสุดของ 1.3) และ `latest` (รุ่นที่เผยแพร่
 ล่าสุด) อิมเมจลงลายเซ็นด้วย cosign (แบบไม่ใช้คีย์, GitHub OIDC) และมาพร้อม SBOM และเอกสารรับรอง
 แหล่งที่มา ตั้งแต่ 1.0.1 ลายเซ็นอยู่ในรูปแบบ Sigstore bundle ของ cosign 3 ส่วนอิมเมจ 1.0.0
 มีลายเซ็นในรูปแบบเดิมของ cosign 2
 
 คุณยังสามารถสร้างอิมเมจจากซอร์สโค้ดได้ (ต้องใช้ JDK 17+ และเชื่อมต่อเครือข่ายไปยัง Maven
 Central, nodejs.org และ npm registry ได้) โดยใช้ชื่อ `fasti-bpm:local` แทน
-`fastidev/fasti-bpm:1.2.1` ในทุกคำสั่งด้านล่าง:
+`fastidev/fasti-bpm:1.3.0` ในทุกคำสั่งด้านล่าง:
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
@@ -54,7 +54,7 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
   -v fasti-data:/fasti/data \
-  fastidev/fasti-bpm:1.2.1
+  fastidev/fasti-bpm:1.3.0
 ```
 
 - เปิด <http://localhost:8080/fasti/> แล้วลงชื่อเข้าใช้เป็น `admin`
@@ -102,7 +102,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
   -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
-  fastidev/fasti-bpm:1.2.1 --production
+  fastidev/fasti-bpm:1.3.0 --production
 ```
 
 - `FASTI_DB_SCHEMA_UPDATE=true` จะสร้างเฉพาะตารางที่ยังไม่มีในฐานข้อมูลใหม่เท่านั้น Fasti จะไม่
@@ -131,7 +131,7 @@ docker compose -f docker-compose.postgres.yml up -d
 docker compose -f docker-compose.postgres.yml ps      # both services "healthy"
 ```
 
-ตัวแปรที่ตั้งค่าได้เมื่อเริ่มทำงาน: `FASTI_IMAGE` (ค่าเริ่มต้น `fastidev/fasti-bpm:1.2.1` เช่น
+ตัวแปรที่ตั้งค่าได้เมื่อเริ่มทำงาน: `FASTI_IMAGE` (ค่าเริ่มต้น `fastidev/fasti-bpm:1.3.0` เช่น
 `FASTI_IMAGE=fasti-bpm:local`), `FASTI_HOST_PORT` (ค่าเริ่มต้น `8080`), `TZ` (ค่าเริ่มต้น `UTC`)
 
 <a id="6-connecting-to-an-existing-camunda-7-database"></a>
@@ -159,7 +159,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=UTC \
-  fastidev/fasti-bpm:1.2.1 --production
+  fastidev/fasti-bpm:1.3.0 --production
 ```
 
 - พอร์ตผูกกับเครื่องนี้เท่านั้น หากต้องการเข้าถึงจากระยะไกล ให้ผ่าน reverse proxy ที่ใช้ HTTPS
@@ -232,12 +232,12 @@ Kubernetes: `livenessProbe` → `/actuator/health/liveness`, `readinessProbe` �
 
 ## 10. การอัปเกรดและย้อนกลับ
 
-**การอัปเกรด Fasti** (เช่น `1.1.0` → `1.2.1`):
+**การอัปเกรด Fasti** (เช่น `1.1.0` → `1.3.0`):
 
 ```bash
-docker pull fastidev/fasti-bpm:1.2.1
+docker pull fastidev/fasti-bpm:1.3.0
 docker stop -t 60 fasti && docker rm fasti
-docker run -d --name fasti ... fastidev/fasti-bpm:1.2.1 --production   # same options as before
+docker run -d --name fasti ... fastidev/fasti-bpm:1.3.0 --production   # same options as before
 ```
 
 เมื่อใช้ Docker Compose: เปลี่ยน `FASTI_IMAGE` (หรือบรรทัด `image:`) จากนั้นเรียกใช้

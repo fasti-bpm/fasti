@@ -17,8 +17,8 @@ Hướng dẫn chuyển đổi đầy đủ (các bước, quay lại, chạy l�
 # 1. bản phân phối Run, driver JDBC và Dockerfile vào distro/docker/target/docker
 ./mvnw -pl distro/docker -am package -DskipTests
 # 2. image
-docker build -t fasti-bpm:1.2.1 \
-  --build-arg VERSION=1.2.1 --build-arg REVISION=$(git rev-parse --short HEAD) \
+docker build -t fasti-bpm:1.3.0 \
+  --build-arg VERSION=1.3.0 --build-arg REVISION=$(git rev-parse --short HEAD) \
   distro/docker/target/docker
 ```
 
@@ -95,7 +95,7 @@ docker run -d --name fasti -p 8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=UTC \
-  fasti-bpm:1.2.1
+  fasti-bpm:1.3.0
 ```
 
 `DB_PASSWORD_FILE` phải trỏ tới một file có trong container (ví dụ Docker/Kubernetes secret, hoặc
@@ -114,7 +114,7 @@ Tên biến của image cũ và các bí danh `FASTI_*` đều được chấp n
 với `DEBUG` và `JMX_PROMETHEUS`, chỉ cần một trong hai tên là `true`). Mọi thuộc tính
 Spring Boot cũng đặt được bằng biến môi trường (ví dụ `CAMUNDA_BPM_RUN_AUTH_ENABLED=true`). Các
 mục ghi **từ 1.1.0** chưa có trong các image 1.0.x; các mục ghi **từ 1.2.0** chưa có trong các
-image 1.1.x.
+image 1.1.x; các mục ghi **từ 1.3.0** chưa có trong các image 1.2.x.
 
 | Biến | Mặc định | Ý nghĩa |
 |---|---|---|
@@ -131,9 +131,9 @@ image 1.1.x.
 | `JMX_PROMETHEUS=true` | | Prometheus JMX exporter cổng `JMX_PROMETHEUS_PORT` (9404), cấu hình `JMX_PROMETHEUS_CONF`, nếu có jar trong `/fasti/javaagent` |
 | `JAVA_OPTS` | | thêm tùy chọn JVM (tách bằng khoảng trắng, không có dấu nháy) |
 | `FASTI_MAX_RAM_PERCENTAGE` | 75 | phần trăm RAM của container cho heap |
-| `FASTI_ANALYTICS_CACHE_TTL` | `60s` | **Có từ 1.3.0.** Thời gian giữ kết quả phân tích quy trình cho cùng một góc nhìn (`0` để tắt; số không có đơn vị tính là giây); số liệu đang chạy có thể cũ tối đa chừng ấy. Thiết lập `fasti.analytics.cache-ttl` |
-| `FASTI_ANALYTICS_MAX_CONCURRENT` | `2` | **Có từ 1.3.0.** Số lượt quét của phân tích quy trình (activities, rework, user task) được đọc lịch sử cùng lúc trên node này, cộng một lượt đọc nhanh (instances, trend, truy vết); các lượt khác chờ đến lượt mà không giữ kết nối CSDL, nên job và danh sách task vẫn có kết nối của chúng. `0`: không giới hạn. Thiết lập `fasti.analytics.max-concurrent` |
-| `FASTI_ANALYTICS_MAX_WAIT` | `60s` | **Có từ 1.3.0.** Thời gian chờ lượt lâu nhất; quá thời gian này REST API trả `503` (số không có đơn vị tính là giây). Thiết lập `fasti.analytics.max-wait` |
+| `FASTI_ANALYTICS_CACHE_TTL` | `60s` | **Từ 1.3.0.** Thời gian giữ kết quả phân tích quy trình cho cùng một góc nhìn (`0` để tắt; số không có đơn vị tính là giây); số liệu đang chạy có thể cũ tối đa chừng ấy. Thiết lập `fasti.analytics.cache-ttl` |
+| `FASTI_ANALYTICS_MAX_CONCURRENT` | `2` | **Từ 1.3.0.** Số lượt quét của phân tích quy trình (activities, rework, user task) được đọc lịch sử cùng lúc trên node này, cộng một lượt đọc nhanh (instances, trend, truy vết); các lượt khác chờ đến lượt mà không giữ kết nối CSDL, nên job và danh sách task vẫn có kết nối của chúng. `0`: không giới hạn. Thiết lập `fasti.analytics.max-concurrent` |
+| `FASTI_ANALYTICS_MAX_WAIT` | `60s` | **Từ 1.3.0.** Thời gian chờ lượt lâu nhất; quá thời gian này REST API trả `503` (số không có đơn vị tính là giây). Thiết lập `fasti.analytics.max-wait` |
 | `FASTI_RETURN_MEMORY` | `true` | **Có từ 1.2.1.** Trả phần heap không dùng về hệ thống (`-XX:G1PeriodicGCInterval=30000 -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=30`); `false` giữ mặc định của JVM |
 | `FASTI_DB_SCHEMA_UPDATE` | `false` (`true` với cơ sở dữ liệu H2 demo có sẵn) | `true` tạo bảng còn thiếu (cơ sở dữ liệu mới); không bao giờ nâng cấp schema |
 | `FASTI_SCHEMA_VERSION_CHECK` | `enforce` | `warn`: schema cũ hơn 7.24 chỉ cảnh báo thay vì dừng |
@@ -192,7 +192,7 @@ deployment ở `/camunda/configuration/resources`. Đường dẫn riêng của 
 | Oracle | không | giấy phép riêng: thêm `ojdbc11.jar` |
 | DB2 | không | giấy phép riêng: thêm `jcc.jar` |
 
-Thêm driver: image con (`FROM fasti-bpm:1.2.1` + `COPY ojdbc11.jar /fasti/configuration/userlib/`)
+Thêm driver: image con (`FROM fasti-bpm:1.3.0` + `COPY ojdbc11.jar /fasti/configuration/userlib/`)
 hoặc gắn thư mục và đặt `FASTI_EXTRA_LIB=/drivers`.
 
 MySQL và MariaDB lưu thời gian của engine đến từng giây (schema Camunda 7.24 không có phần lẻ của

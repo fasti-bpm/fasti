@@ -36,7 +36,7 @@ Image có trên Docker Hub (`fastidev/fasti-bpm`) và GitHub Container Registry
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='đổi-mật-khẩu-này' \
-  fastidev/fasti-bpm:1.2.1
+  fastidev/fasti-bpm:1.3.0
 ```
 
 Mở <http://localhost:8080/fasti/> và đăng nhập. Không đặt `DB_URL` thì image dùng H2 bên trong
@@ -78,6 +78,10 @@ Fasti và node 7.24 có thể dùng chung một cơ sở dữ liệu, và bạn 
   sáng và tối, dùng tốt trên điện thoại ([tính năng](https://fasti.dev/#features)).
 - **Có sẵn modeler:** sửa BPMN, DMN và biểu mẫu rồi triển khai ngay trong cùng giao diện
   ([modeler](https://fasti.dev/#modeler)).
+- **Phân tích quy trình:** bản đồ nhiệt trên sơ đồ theo trung vị, P90, P99, thời gian đang chờ,
+  làm lại hoặc sự cố, xếp hạng điểm nghẽn, các instance chậm nhất và chờ lâu nhất, xu hướng so với
+  mục tiêu, thời gian chờ và thời gian làm của user task. Do chính cơ sở dữ liệu đang dùng tính,
+  không cần thêm dịch vụ hay giấy phép ([hướng dẫn](docs/process-analytics.vi.md)).
 - **Công cụ vận hành:** lịch sử, sửa và khởi động lại instance, migration, thao tác hàng loạt,
   chạy lại job lỗi hàng loạt và nhật ký thao tác ([vận hành](https://fasti.dev/#operate)).
 - **Nhẹ cho máy chủ:** bảng khối lượng công việc mở ra với 11 request API thay cho 344
@@ -169,7 +173,9 @@ trợ cài đặt, chuyển đổi hoặc vận hành production, hay thống nh
 
 ## Lộ trình
 
-Đây là kế hoạch, không phải cam kết về ngày. Đã phát hành trong `1.2.1`: kiểm tra phân quyền nhanh
+Đây là kế hoạch, không phải cam kết về ngày. Đã phát hành trong `1.3.0`:
+[phân tích quy trình](docs/process-analytics.vi.md) với bản đồ nhiệt trên sơ đồ, điểm nghẽn, phân
+vị, phần làm lại, xu hướng và thời gian của user task, do cơ sở dữ liệu tính. Đã phát hành trong `1.2.1`: kiểm tra phân quyền nhanh
 hơn, image nhỏ hơn, khởi động nhanh hơn và dùng ít bộ nhớ hơn
 ([so sánh với Camunda 7.24](docs/benchmark-camunda-7.24.vi.md)). Đã phát hành trong `1.2.0`, tập trung vào hiệu năng:
 endpoint đếm khối lượng công việc, các chỉ mục cơ sở dữ liệu tùy chọn, cảnh báo hiệu năng khi khởi
@@ -203,6 +209,7 @@ Trên [fasti.dev](https://fasti.dev): [Cài đặt bằng Docker](https://fasti.
 | [docs/four-eyes.vi.md](docs/four-eyes.vi.md) | Nguyên tắc bốn mắt khi phê duyệt (từ 1.1.0) |
 | [docs/audit-trail.vi.md](docs/audit-trail.vi.md) | Nhật ký kiểm toán không thể sửa đổi (từ 1.1.0) |
 | [docs/performance.vi.md](docs/performance.vi.md) | Hiệu năng cơ sở dữ liệu: chỉ mục tùy chọn, cảnh báo khi khởi động, cấu hình engine, số đo (từ 1.2.0) |
+| [docs/process-analytics.vi.md](docs/process-analytics.vi.md) | Phân tích quy trình: bản đồ nhiệt, điểm nghẽn, thời lượng, REST API, cấu hình, số đo (từ 1.3.0) |
 | [docs/single-sign-on.vi.md](docs/single-sign-on.vi.md) | Đăng nhập một lần (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.vi.md](docs/api/README.vi.md) | Tích hợp qua REST API, client external task Java và JavaScript |
 | [distro/docker/README.vi.md](distro/docker/README.vi.md) | Image: biến môi trường, driver, vận hành, tinh chỉnh |

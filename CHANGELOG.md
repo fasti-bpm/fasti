@@ -12,6 +12,14 @@ các mục dưới đây là khác biệt so với bản đó.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-25
+
+Process analytics: heat maps, bottlenecks and durations from the history the engine already
+writes, measured on a year of 200,000 instances (2.45 million activity runs) on PostgreSQL 16;
+the numbers are in the [guide](docs/process-analytics.md#measured). Same database schema as
+1.0.x–1.2.1 and Camunda 7.24: replace the image or the bundle and start it. Rolling back to 1.2.1
+needs nothing either; the analytics only read the history.
+
 ### Added
 
 - [Process analytics](docs/process-analytics.md), computed by the database over the history the

@@ -28,18 +28,18 @@ kesehatan, peningkatan versi, pengembalian versi, dan pemecahan masalah. Referen
 Image dipublikasikan untuk amd64 dan arm64 di dua tempat:
 
 ```bash
-docker pull fastidev/fasti-bpm:1.2.1              # Docker Hub
-docker pull ghcr.io/fasti-bpm/fasti-bpm:1.2.1     # GitHub Container Registry
+docker pull fastidev/fasti-bpm:1.3.0              # Docker Hub
+docker pull ghcr.io/fasti-bpm/fasti-bpm:1.3.0     # GitHub Container Registry
 ```
 
-Tag: `1.2.1` (rilis tersebut secara spesifik), `1.2` (rilis patch terbaru dari 1.2), dan `latest` (rilis yang
+Tag: `1.3.0` (rilis tersebut secara spesifik), `1.3` (rilis patch terbaru dari 1.3), dan `latest` (rilis yang
 terakhir dipublikasikan). Image ditandatangani dengan cosign (tanpa kunci, GitHub OIDC) dan dilengkapi SBOM serta
 atestasi asal-usul. Sejak 1.0.1, tanda tangan menggunakan format Sigstore bundle dari cosign 3; image 1.0.0
 memiliki tanda tangan dalam format cosign 2 yang lebih lama.
 
 Anda juga dapat membangun image dari kode sumber (memerlukan JDK 17+ dan akses jaringan ke Maven
 Central, nodejs.org, dan registri npm), lalu menggunakan nama `fasti-bpm:local` sebagai pengganti
-`fastidev/fasti-bpm:1.2.1` pada setiap perintah di bawah ini:
+`fastidev/fasti-bpm:1.3.0` pada setiap perintah di bawah ini:
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
@@ -54,7 +54,7 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
   -v fasti-data:/fasti/data \
-  fastidev/fasti-bpm:1.2.1
+  fastidev/fasti-bpm:1.3.0
 ```
 
 - Buka <http://localhost:8080/fasti/> dan masuk sebagai `admin`.
@@ -102,7 +102,7 @@ docker run -d --name fasti --network fasti-net -p 127.0.0.1:8080:8080 \
   -v "$PWD/secrets/admin-password.txt:/run/secrets/admin-password:ro" \
   -e TZ=UTC \
   --memory 2g --stop-timeout 60 \
-  fastidev/fasti-bpm:1.2.1 --production
+  fastidev/fasti-bpm:1.3.0 --production
 ```
 
 - `FASTI_DB_SCHEMA_UPDATE=true` hanya membuat tabel yang belum ada dalam basis data baru; Fasti tidak pernah
@@ -131,7 +131,7 @@ docker compose -f docker-compose.postgres.yml up -d
 docker compose -f docker-compose.postgres.yml ps      # both services "healthy"
 ```
 
-Variabel yang dapat Anda tetapkan saat memulai: `FASTI_IMAGE` (nilai bawaan `fastidev/fasti-bpm:1.2.1`, misalnya
+Variabel yang dapat Anda tetapkan saat memulai: `FASTI_IMAGE` (nilai bawaan `fastidev/fasti-bpm:1.3.0`, misalnya
 `FASTI_IMAGE=fasti-bpm:local`), `FASTI_HOST_PORT` (nilai bawaan `8080`), `TZ` (nilai bawaan `UTC`).
 
 <a id="6-connecting-to-an-existing-camunda-7-database"></a>
@@ -159,7 +159,7 @@ docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -v /path/to/db-password:/run/secrets/db-password:ro \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=UTC \
-  fastidev/fasti-bpm:1.2.1 --production
+  fastidev/fasti-bpm:1.3.0 --production
 ```
 
 - Port hanya terikat ke mesin ini; untuk akses jarak jauh, gunakan reverse proxy dengan HTTPS.
@@ -232,12 +232,12 @@ Kubernetes: `livenessProbe` → `/actuator/health/liveness`, `readinessProbe` �
 
 ## 10. Peningkatan dan pengembalian versi
 
-**Meningkatkan versi Fasti** (misalnya `1.1.0` → `1.2.1`):
+**Meningkatkan versi Fasti** (misalnya `1.1.0` → `1.3.0`):
 
 ```bash
-docker pull fastidev/fasti-bpm:1.2.1
+docker pull fastidev/fasti-bpm:1.3.0
 docker stop -t 60 fasti && docker rm fasti
-docker run -d --name fasti ... fastidev/fasti-bpm:1.2.1 --production   # same options as before
+docker run -d --name fasti ... fastidev/fasti-bpm:1.3.0 --production   # same options as before
 ```
 
 Dengan Docker Compose: ubah `FASTI_IMAGE` (atau baris `image:`), lalu

@@ -16,8 +16,8 @@ Full migration guide (steps, rollback, mixed operation, limits):
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
-docker build -t fasti-bpm:1.2.1 \
-  --build-arg VERSION=1.2.1 --build-arg REVISION=$(git rev-parse --short HEAD) \
+docker build -t fasti-bpm:1.3.0 \
+  --build-arg VERSION=1.3.0 --build-arg REVISION=$(git rev-parse --short HEAD) \
   distro/docker/target/docker
 ```
 
@@ -92,7 +92,7 @@ docker run -d --name fasti -p 8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=UTC \
-  fasti-bpm:1.2.1
+  fasti-bpm:1.3.0
 ```
 
 `DB_PASSWORD_FILE` must name a file inside the container (a Docker/Kubernetes secret, or
@@ -108,7 +108,8 @@ The names of the former Camunda 7 Run image and `FASTI_*` aliases are accepted (
 set, the `FASTI_*` value is used; `DEBUG` and `JMX_PROMETHEUS` are on if either name is `true`).
 Any Spring Boot property can be set as an environment variable too (for example
 `CAMUNDA_BPM_RUN_AUTH_ENABLED=true`). Entries marked **from 1.1.0** are not in the 1.0.x
-images; entries marked **from 1.2.0** are not in the 1.1.x images.
+images; entries marked **from 1.2.0** are not in the 1.1.x images; entries marked **from 1.3.0**
+are not in the 1.2.x images.
 
 | Variable | Default | Meaning |
 |---|---|---|

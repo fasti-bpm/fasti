@@ -34,7 +34,7 @@ Camunda 7.23 이하의 데이터베이스는 먼저 SQL 스크립트로 7.24로 
    (`camunda.bpm.run.auth.enabled`), 권한 부여(`camunda.bpm.authorization.enabled`),
    플러그인, LDAP/SSO, JVM 시간대, 비밀번호 해싱(`passwordEncryptor`, `saltGenerator`),
    테이블 접두사/스키마.
-4. **이미지** `fastidev/fasti-bpm:1.2.1`**을 가져옵니다**(또는
+4. **이미지** `fastidev/fasti-bpm:1.3.0`**을 가져옵니다**(또는
    [distro/docker/README.md](../distro/docker/README.md)에 설명된 대로 소스에서 빌드합니다).
 5. **동일한 `DB_*` 변수**(및 동일한 `TZ`)로 **Fasti를 시작합니다**. Camunda Run과 달리
    Fasti 이미지는 **기본적으로 REST 인증을 요구하고 권한 검사를 적용합니다**. 데이터베이스

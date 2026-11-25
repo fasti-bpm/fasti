@@ -32,7 +32,7 @@ khởi động trên schema cũ với thông báo nêu rõ script cần chạy.
    (`camunda.bpm.run.auth.enabled`), phân quyền (`camunda.bpm.authorization.enabled`), plugin,
    LDAP/SSO, múi giờ JVM, cấu hình mật khẩu (`passwordEncryptor`, `saltGenerator`), tiền tố
    bảng/schema.
-4. **Kéo image** `fastidev/fasti-bpm:1.2.1` (hoặc build từ mã nguồn theo
+4. **Kéo image** `fastidev/fasti-bpm:1.3.0` (hoặc build từ mã nguồn theo
    [distro/docker/README.vi.md](../distro/docker/README.vi.md)).
 5. **Chạy Fasti với cùng biến `DB_*`** (và `TZ` giống node cũ). Khác Camunda Run, image Fasti
    **bật sẵn xác thực REST và phân quyền**: tài khoản trong cơ sở dữ liệu đăng nhập được,

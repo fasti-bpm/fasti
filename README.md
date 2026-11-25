@@ -36,7 +36,7 @@ Container Registry (`ghcr.io/fasti-bpm/fasti-bpm`), for amd64 and arm64:
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.2.1
+  fastidev/fasti-bpm:1.3.0
 ```
 
 Open <http://localhost:8080/fasti/> and sign in. Without `DB_URL` the image uses an H2 database
@@ -78,6 +78,10 @@ Fasti and 7.24 nodes can share one database, and you can go back
   13 languages, light and dark, usable on a phone ([features](https://fasti.dev/#features)).
 - **Modeler built in:** edit BPMN, DMN and forms and deploy them from the same interface
   ([modeler](https://fasti.dev/#modeler)).
+- **Process analytics:** a heat map on the diagram by median, P90, P99, time waiting, rework or
+  incidents, a bottleneck ranking, the slowest and longest-waiting instances, the trend against a
+  target and the waiting vs working time of user tasks. Computed by the database you already run,
+  with no extra service or license ([guide](docs/process-analytics.md)).
 - **The tools to run it:** history, instance modification and restart, migration, batch
   operations, bulk retry and the operation log ([operations](https://fasti.dev/#operate)).
 - **Light on the server:** the workload board loads with 11 API requests instead of 344
@@ -169,7 +173,9 @@ terms, write to <contact@fasti.dev>.
 
 ## Roadmap
 
-This is a plan, not a commitment to dates. Released in `1.2.1`: faster authorization checks, a
+This is a plan, not a commitment to dates. Released in `1.3.0`:
+[process analytics](docs/process-analytics.md) with a heat map on the diagram, bottlenecks,
+percentiles, rework, the trend and user-task times, computed by the database. Released in `1.2.1`: faster authorization checks, a
 smaller image that starts faster and uses less memory
 ([comparison with Camunda 7.24](docs/benchmark-camunda-7.24.md)). Released in `1.2.0`, focused on performance: a workload
 endpoint for task counts, optional database indexes, a startup performance advisor, audit trail
@@ -202,6 +208,7 @@ On [fasti.dev](https://fasti.dev): [Install with Docker](https://fasti.dev/insta
 | [docs/four-eyes.md](docs/four-eyes.md) | Four-eyes control for approvals (from 1.1.0) |
 | [docs/audit-trail.md](docs/audit-trail.md) | Immutable audit trail (from 1.1.0) |
 | [docs/performance.md](docs/performance.md) | Database performance: optional indexes, startup hints, engine settings, measurements (from 1.2.0) |
+| [docs/process-analytics.md](docs/process-analytics.md) | Process analytics: heat map, bottlenecks, durations, REST API, settings, measurements (from 1.3.0) |
 | [docs/single-sign-on.md](docs/single-sign-on.md) | Single sign-on (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
 | [docs/api/README.md](docs/api/README.md) | REST API integration, Java and JavaScript external task clients |
 | [distro/docker/README.md](distro/docker/README.md) | Image: environment variables, drivers, operations, tuning |

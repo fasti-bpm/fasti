@@ -24,7 +24,7 @@ uses this user; on a real system use your own user and password, see the
 ```bash
 docker run -d --name fasti-api -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=demo -e FASTI_ADMIN_PASSWORD=demo \
-  fastidev/fasti-bpm:1.2.1 --webapps --rest
+  fastidev/fasti-bpm:1.3.0 --webapps --rest
 ```
 
 Wait until `curl -s http://localhost:8080/actuator/health/readiness` answers `{"status":"UP"}`,
@@ -254,7 +254,7 @@ Artifact `dev.fasti.platform:fasti-external-task-client` (instead of
 `org.camunda.bpm:camunda-external-task-client`; the package `org.camunda.bpm.client` is
 unchanged). It is not on Maven Central yet: build it from source
 (`./mvnw -pl clients/java/client -am install -DskipTests`) and set `fasti.version` to
-`1.2.1`.
+`1.3.0`.
 
 ```xml
 <dependency>

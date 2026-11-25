@@ -13,7 +13,7 @@
     <groupId>dev.fasti.platform.example</groupId>
     <artifactId>fasti-example-root</artifactId>
     <relativePath>../</relativePath>
-    <version>1.2.1</version>
+    <version>1.3.0</version>
   </parent>
 
   <dependencies>

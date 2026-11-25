@@ -138,6 +138,10 @@ image 1.1.x; các mục ghi **từ 1.3.0** chưa có trong các image 1.2.x.
 | `FASTI_DB_SCHEMA_UPDATE` | `false` (`true` với cơ sở dữ liệu H2 demo có sẵn) | `true` tạo bảng còn thiếu (cơ sở dữ liệu mới); không bao giờ nâng cấp schema |
 | `FASTI_SCHEMA_VERSION_CHECK` | `enforce` | `warn`: schema cũ hơn 7.24 chỉ cảnh báo thay vì dừng |
 | `FASTI_DB_SCHEMA`, `FASTI_DB_TABLE_PREFIX` | | `camunda.bpm.database.schema-name` / `table-prefix` |
+| `FASTI_DESERIALIZATION_ALLOWED_PACKAGES` | — | Các package (cách nhau bằng dấu phẩy) mà biến Spin JSON/XML và biến Object được phép deserialize thành, ngoài các kiểu Java cơ bản; kiểm tra kiểu luôn bật |
+| `FASTI_DESERIALIZATION_ALLOWED_CLASSES` | — | Từng class được phép theo cách tương tự |
+| `FASTI_REST_MULTIPART_MAX_SIZE` | `100MB` | Kích thước lớn nhất của một request multipart (deployment, biến file, tệp đính kèm); lớn hơn thì nhận `413`; `-1`: không giới hạn |
+| `FASTI_REST_MULTIPART_MAX_PARTS` | `1000` | Số phần tối đa trong một request multipart |
 | `FASTI_HISTORY_LEVEL` | `auto` | mặc định lấy mức lịch sử đang lưu trong cơ sở dữ liệu (mới: `full`) |
 | `FASTI_JOB_EXECUTOR_ENABLED` | `true` | `false` tắt job executor của node này |
 | `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | `false` | chỉ chạy job của deployment đã đăng ký trên node này |

@@ -15,6 +15,12 @@ camunda.bpm:
   # back to the open demo mode (see README).
   authorization:
     enabled: true
+  # Spin JSON/XML and Object variables are deserialized only into allow-listed types: the basic
+  # Java types plus the packages and classes listed here, set with
+  # FASTI_DESERIALIZATION_ALLOWED_PACKAGES / FASTI_DESERIALIZATION_ALLOWED_CLASSES (comma
+  # separated). Without it, anyone who may write a variable could name any class on the class path.
+  generic-properties.properties:
+    deserialization-type-validation-enabled: true
   database:
     # never create or change tables of an existing database by default; the entrypoint switches
     # this on for the built-in H2 demo database or if FASTI_DB_SCHEMA_UPDATE=true

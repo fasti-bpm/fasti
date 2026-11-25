@@ -232,6 +232,8 @@ esac
 # --- engine -----------------------------------------------------------------------------------
 
 [ -n "${FASTI_HISTORY_LEVEL:-}" ] && add_arg "--camunda.bpm.history-level=$FASTI_HISTORY_LEVEL"
+[ -n "${FASTI_DESERIALIZATION_ALLOWED_PACKAGES:-}" ] && add_arg "--camunda.bpm.generic-properties.properties.deserialization-allowed-packages=$FASTI_DESERIALIZATION_ALLOWED_PACKAGES"
+[ -n "${FASTI_DESERIALIZATION_ALLOWED_CLASSES:-}" ] && add_arg "--camunda.bpm.generic-properties.properties.deserialization-allowed-classes=$FASTI_DESERIALIZATION_ALLOWED_CLASSES"
 [ -n "${FASTI_JOB_EXECUTOR_ENABLED:-}" ] && add_arg "--camunda.bpm.job-execution.enabled=$FASTI_JOB_EXECUTOR_ENABLED"
 [ -n "${FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE:-}" ] && add_arg "--camunda.bpm.job-execution.deployment-aware=$FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE"
 if [ -n "${FASTI_CORS_ALLOWED_ORIGINS:-}" ]; then

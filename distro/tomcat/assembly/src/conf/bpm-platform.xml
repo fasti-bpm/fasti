@@ -15,6 +15,14 @@
       <property name="history">full</property>
       <property name="databaseSchemaUpdate">true</property>
       <property name="authorizationEnabled">true</property>
+      <!-- Spin JSON/XML and Object variables are deserialized only into allow-listed types: the
+           basic Java types plus the packages and classes listed below (comma separated). Add the
+           packages of the classes your process applications store as JSON or XML variables. -->
+      <property name="deserializationTypeValidationEnabled">true</property>
+      <!--
+      <property name="deserializationAllowedPackages">com.example.orders,com.example.billing</property>
+      <property name="deserializationAllowedClasses">com.example.shared.Money</property>
+      -->
       <!-- true: only jobs of deployments registered on this server run. Set it to false when
            taking over the database of Camunda Run or deploying through the REST API, otherwise
            the timers and async continuations of those deployments do not run (README.txt). -->

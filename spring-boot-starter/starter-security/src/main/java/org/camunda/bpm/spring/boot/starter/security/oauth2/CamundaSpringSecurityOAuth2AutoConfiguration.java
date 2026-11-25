@@ -64,6 +64,11 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.core.env.Environment;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestCustomizers;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -226,13 +231,19 @@ public class CamundaSpringSecurityOAuth2AutoConfiguration {
   public SecurityFilterChain filterChain(HttpSecurity http,
                                          AuthorizeTokenFilter authorizeTokenFilter,
                                          ClientRegistrationRepository clientRegistrationRepository,
-                                         @Nullable SsoLogoutSuccessHandler ssoLogoutSuccessHandler) throws Exception {
+                                         @Nullable SsoLogoutSuccessHandler ssoLogoutSuccessHandler,
+                                         Environment environment) throws Exception {
     logger.info("Enabling Camunda Spring Security oauth2 integration");
 
     // PKCE also for confidential clients, in addition to state and nonce
     var authorizationRequestResolver = new DefaultOAuth2AuthorizationRequestResolver(
         clientRegistrationRepository, AUTHORIZATION_REQUEST_BASE_URI);
     authorizationRequestResolver.setAuthorizationRequestCustomizer(OAuth2AuthorizationRequestCustomizers.withPkce());
+    // only the registration of the login page signs users in: the user id is the bare value of a
+    // claim, so another registration (another issuer) could otherwise sign in as any user
+    String loginRegistrationId = loginRegistration(clientRegistrationRepository).getRegistrationId();
+    OAuth2AuthorizationRequestResolver loginOnlyResolver = new LoginRegistrationOnlyResolver(
+        authorizationRequestResolver, loginRegistrationId);
 
     LogoutSuccessHandler logoutSuccessHandler = ssoLogoutSuccessHandler;
     if (logoutSuccessHandler == null) {
@@ -257,9 +268,9 @@ public class CamundaSpringSecurityOAuth2AutoConfiguration {
             PathPatternRequestMatcher.withDefaults().matcher(webappPath + "/api/**")))
         .addFilterAfter(authorizeTokenFilter, OAuth2AuthorizationRequestRedirectFilter.class)
         .anonymous(AbstractHttpConfigurer::disable)
-        .oidcLogout(c -> c.backChannel(Customizer.withDefaults()))
+        .oidcLogout(c -> c.backChannel(b -> b.logoutUri(internalLogoutUri(environment))))
         .oauth2Login(c -> c
-            .authorizationEndpoint(a -> a.authorizationRequestResolver(authorizationRequestResolver))
+            .authorizationEndpoint(a -> a.authorizationRequestResolver(loginOnlyResolver))
             .successHandler(new ReturnUrlAuthenticationSuccessHandler()))
         .logout(c -> c
             .logoutRequestMatcher(new SameOriginPostRequestMatcher(LOGOUT_PATH))
@@ -275,5 +286,55 @@ public class CamundaSpringSecurityOAuth2AutoConfiguration {
     // @formatter:on
 
     return http.build();
+  }
+
+  /**
+   * The URI the back-channel logout posts to for each session it ends. Spring Security uses the
+   * base URL of the incoming logout request, which a container often cannot reach (published
+   * port, name of the proxy in front); the local connector is always reachable.
+   */
+  protected static String internalLogoutUri(Environment environment) {
+    String port = environment.getProperty("server.port", "8080");
+    if ("0".equals(port.trim()) || "-1".equals(port.trim())) {
+      return "{baseUrl}" + LOGOUT_PATH;
+    }
+    String scheme = Boolean.parseBoolean(environment.getProperty("server.ssl.enabled", "false")) ? "https" : "http";
+    String contextPath = environment.getProperty("server.servlet.context-path", "");
+    return scheme + "://localhost:" + port.trim() + contextPath + LOGOUT_PATH;
+  }
+
+  /** Resolves authorization requests of the login registration only. */
+  static final class LoginRegistrationOnlyResolver implements OAuth2AuthorizationRequestResolver {
+
+    private final OAuth2AuthorizationRequestResolver delegate;
+    private final String registrationId;
+
+    LoginRegistrationOnlyResolver(OAuth2AuthorizationRequestResolver delegate, String registrationId) {
+      this.delegate = delegate;
+      this.registrationId = registrationId;
+    }
+
+    @Override
+    public OAuth2AuthorizationRequest resolve(HttpServletRequest request) {
+      return allowed(delegate.resolve(request));
+    }
+
+    @Override
+    public OAuth2AuthorizationRequest resolve(HttpServletRequest request, String clientRegistrationId) {
+      return registrationId.equals(clientRegistrationId) ? delegate.resolve(request, clientRegistrationId) : null;
+    }
+
+    private OAuth2AuthorizationRequest allowed(OAuth2AuthorizationRequest request) {
+      if (request == null) {
+        return null;
+      }
+      Object id = request.getAttribute(OAuth2ParameterNames.REGISTRATION_ID);
+      if (!registrationId.equals(id)) {
+        logger.warn("Refused a login through client registration '{}': only '{}' signs users in ({}.registration-id)",
+            id, registrationId, FastiOidcProperties.PREFIX);
+        return null;
+      }
+      return request;
+    }
   }
 }

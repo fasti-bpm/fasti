@@ -20,6 +20,7 @@ import static org.camunda.bpm.engine.authorization.Permissions.READ_HISTORY;
 import static org.camunda.bpm.engine.authorization.Resources.PROCESS_DEFINITION;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -207,12 +208,16 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
         .run(scan, () -> execute(commandContext -> work.apply(commandContext, parameter), true)));
   }
 
-  protected String cacheKey(String kind, AnalyticsParameter parameter, Object extra) {
-    return String.join("|", kind, String.valueOf(configuration.getProcessEngineName()), parameter.processDefinitionKey,
-        String.valueOf(parameter.definitionIds), String.valueOf(parameter.tenantIds),
-        String.valueOf(parameter.tenantCheck), String.valueOf(parameter.authenticatedTenantIds),
-        String.valueOf(parameter.after.getTime()), String.valueOf(parameter.before.getTime()),
-        String.valueOf(parameter.target), String.valueOf(extra));
+  /**
+   * The key of an answer in the cache. A list of its parts rather than a joined string, so that
+   * values containing the separator (tenant ids from a token, for example) cannot make two
+   * different scopes share an entry.
+   */
+  protected Object cacheKey(String kind, AnalyticsParameter parameter, Object extra) {
+    return Arrays.asList(kind, configuration.getProcessEngineName(), parameter.processDefinitionKey,
+        List.copyOf(parameter.definitionIds), List.copyOf(parameter.tenantIds), parameter.tenantCheck,
+        parameter.authenticatedTenantIds == null ? null : List.copyOf(parameter.authenticatedTenantIds),
+        parameter.after.getTime(), parameter.before.getTime(), parameter.target, extra);
   }
 
   protected <T> T execute(Function<CommandContext, T> work, boolean reads) {
@@ -304,6 +309,16 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
     AnalyticsParameter parameter = new AnalyticsParameter();
     parameter.processDefinitionKey = processDefinitionKey;
     parameter.databaseType = configuration.getDatabaseType();
+    // the tenant scope first: the probe for history of a key without versions must not reveal
+    // whether another tenant has such history
+    parameter.tenantIds = new ArrayList<>(tenantIds);
+    if (commandContext.getTenantManager().isTenantCheckEnabled()) {
+      parameter.tenantCheck = true;
+      Authentication authentication = commandContext.getAuthentication();
+      if (authentication != null && authentication.getTenantIds() != null) {
+        parameter.authenticatedTenantIds = new ArrayList<>(authentication.getTenantIds());
+      }
+    }
     for (String id : processDefinitionIds) {
       ProcessDefinitionEntity definition = commandContext.getProcessDefinitionManager().findLatestProcessDefinitionById(id);
       if (definition == null || !processDefinitionKey.equals(definition.getKey())) {
@@ -321,14 +336,6 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
         }
       } else if (versions.size() <= MAX_RESOLVED_DEFINITIONS) {
         parameter.definitionIds.addAll(versions);
-      }
-    }
-    parameter.tenantIds = new ArrayList<>(tenantIds);
-    if (commandContext.getTenantManager().isTenantCheckEnabled()) {
-      parameter.tenantCheck = true;
-      Authentication authentication = commandContext.getAuthentication();
-      if (authentication != null && authentication.getTenantIds() != null) {
-        parameter.authenticatedTenantIds = new ArrayList<>(authentication.getTenantIds());
       }
     }
 

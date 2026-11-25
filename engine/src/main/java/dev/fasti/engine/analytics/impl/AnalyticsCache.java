@@ -45,8 +45,8 @@ public final class AnalyticsCache {
   static final int MAX_ENTRIES = 256;
 
   private static volatile Duration timeToLive = initialTimeToLive();
-  private static final Map<String, Entry> ENTRIES = new ConcurrentHashMap<>();
-  private static final Map<String, CompletableFuture<Object>> READING = new ConcurrentHashMap<>();
+  private static final Map<Object, Entry> ENTRIES = new ConcurrentHashMap<>();
+  private static final Map<Object, CompletableFuture<Object>> READING = new ConcurrentHashMap<>();
 
   private AnalyticsCache() {
   }
@@ -92,7 +92,7 @@ public final class AnalyticsCache {
   }
 
   @SuppressWarnings("unchecked")
-  static <T> T get(String key, Supplier<T> compute) {
+  static <T> T get(Object key, Supplier<T> compute) {
     T cached = cached(key);
     if (cached != null) {
       return cached;
@@ -123,7 +123,7 @@ public final class AnalyticsCache {
    * From the cache, or read now without waiting for the same read of another caller: for a caller
    * inside a transaction of the engine, which would hold its connection while it waits.
    */
-  static <T> T getWithoutWaiting(String key, Supplier<T> compute) {
+  static <T> T getWithoutWaiting(Object key, Supplier<T> compute) {
     T cached = cached(key);
     if (cached != null) {
       return cached;
@@ -134,7 +134,7 @@ public final class AnalyticsCache {
   }
 
   @SuppressWarnings("unchecked")
-  private static <T> T cached(String key) {
+  private static <T> T cached(Object key) {
     if (timeToLive.isZero()) {
       return null;
     }
@@ -167,7 +167,7 @@ public final class AnalyticsCache {
     }
   }
 
-  private static void put(String key, Object value) {
+  private static void put(Object key, Object value) {
     Duration ttl = timeToLive;
     if (ttl.isZero() || value == null) {
       return;

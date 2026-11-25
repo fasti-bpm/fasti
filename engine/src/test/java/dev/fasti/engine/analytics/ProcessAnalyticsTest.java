@@ -308,6 +308,34 @@ public class ProcessAnalyticsTest {
   }
 
   @Test
+  public void shouldNotRevealHistoryOfAnotherTenant() {
+    // a process with history in tenant ta only
+    BpmnModelInstance model = Bpmn.createExecutableProcess("tenantOnly").startEvent().endEvent().done();
+    org.camunda.bpm.engine.repository.Deployment deployment = engine.getRepositoryService().createDeployment()
+        .tenantId("ta").addModelInstance("tenantOnly.bpmn", model).deploy();
+    engine.getRuntimeService().createProcessInstanceByKey("tenantOnly").processDefinitionTenantId("ta").execute();
+    Authorization grant = engine.getAuthorizationService().createNewAuthorization(Authorization.AUTH_TYPE_GRANT);
+    grant.setUserId("carol");
+    grant.setResource(Resources.PROCESS_DEFINITION);
+    grant.setResourceId("tenantOnly");
+    grant.addPermission(Permissions.READ_HISTORY);
+    engine.getAuthorizationService().saveAuthorization(grant);
+    try {
+      // a user of tenant tb gets the same answer as for a process that does not exist
+      engine.getIdentityService().setAuthentication("carol", Collections.emptyList(), Collections.singletonList("tb"));
+      assertThatThrownBy(() -> ProcessAnalytics.query(engine).processDefinitionKey("tenantOnly").instances())
+          .isInstanceOf(org.camunda.bpm.engine.exception.NotFoundException.class);
+      // a user of tenant ta sees it
+      engine.getIdentityService().setAuthentication("carol", Collections.emptyList(), Collections.singletonList("ta"));
+      assertThat(ProcessAnalytics.query(engine).processDefinitionKey("tenantOnly").instances()).isNotNull();
+    } finally {
+      engine.getIdentityService().clearAuthentication();
+      engine.getAuthorizationService().deleteAuthorization(grant.getId());
+      engine.getRepositoryService().deleteDeployment(deployment.getId(), true);
+    }
+  }
+
+  @Test
   public void shouldNotFindAnUnknownProcess() {
     assertThatThrownBy(() -> ProcessAnalytics.query(engine).processDefinitionKey("nothing").activities())
         .isInstanceOf(org.camunda.bpm.engine.exception.NotFoundException.class);

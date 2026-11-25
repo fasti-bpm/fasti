@@ -223,7 +223,7 @@
     <include refid="limitOpen"/>
     select <include refid="limitTop"/> P.ID_
     from ${prefix}ACT_HI_PROCINST P
-    where P.PROC_DEF_KEY_ = #{processDefinitionKey}
+    where <include refid="scope"><property name="alias" value="P"/></include>
     order by P.ID_
     <include refid="limitClose"/>
   </select>

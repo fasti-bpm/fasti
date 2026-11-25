@@ -14,11 +14,19 @@ registration của Spring Security (`spring.security.oauth2.client.*`). Trên **
   `client-name`; có nhiều registration thì chọn bằng `fasti.security.oidc.registration-id`).
   Luồng authorization code có `state`, `nonce` và PKCE (S256, cả với confidential client);
   session id được thay mới khi đăng nhập. Người dùng quay lại đúng trang của giao diện mới
-  (chỉ nhận đường dẫn dưới `/fasti/app/next/`, nên không có open redirect).
+  (chỉ nhận đường dẫn dưới `/fasti/app/next/`, nên không có open redirect). **Từ 1.3.1 chỉ
+  registration này mới đăng nhập người dùng:** user id là giá trị thô của một claim, nên một
+  registration thứ hai (issuer khác) có thể đăng nhập dưới bất kỳ tên nào. Các registration khác
+  không còn bắt đầu đăng nhập hay authorization code grant được nữa; trang `/login` do Spring
+  sinh ra khi có nhiều registration vẫn liệt kê chúng, nhưng chỉ registration được chọn dùng được.
 - **Đăng xuất:** `POST /logout` (chỉ chấp nhận yêu cầu cùng origin) xóa session; khi
   `camunda.bpm.oauth2.sso-logout.enabled=true` người dùng được chuyển tới endpoint đăng xuất
   của nhà cung cấp (RP-initiated logout, `post-logout-redirect-uri`). Back-channel logout
-  của Spring Security vẫn bật. `GET /logout` không còn đăng xuất.
+  của Spring Security vẫn bật; nó kết thúc từng phiên bằng một request tới `/logout` của chính
+  server: với HTTP thường thì tới cổng nội bộ (`http://localhost:<server.port>`, hoặc
+  `server.address`), với TLS thì tới địa chỉ của request gửi đến. Đặt
+  `fasti.security.oidc.back-channel-logout-uri` khi cả hai đều không tới được server.
+  `GET /logout` không còn đăng xuất.
 - **Hết phiên:** khi access token không làm mới được hoặc session hết hạn, `/fasti/api/**`
   trả `401` (không chuyển hướng) và giao diện mới quay về trang đăng nhập.
 - **CSRF:** `/fasti/api` và `/fasti/app` vẫn được bảo vệ bởi bộ lọc CSRF của web app

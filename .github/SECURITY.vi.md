@@ -19,14 +19,15 @@ Bạn có thể mong đợi:
 | Đánh giá ban đầu (phiên bản bị ảnh hưởng, mức độ) | trong 7 ngày làm việc |
 | Sửa lỗi mức nghiêm trọng hoặc cao | bản patch sớm nhất có thể, mục tiêu 14 ngày |
 | Sửa lỗi mức trung bình hoặc thấp | bản phát hành thường kỳ tiếp theo |
-| Thông báo công khai | khi bản sửa được phát hành; ghi công người báo nếu bạn đồng ý |
+| Thông báo công khai | khi bản sửa được phát hành; ghi công người báo, trừ khi bạn không muốn |
 
 Xin dành cho chúng tôi một khoảng thời gian hợp lý để phát hành bản vá trước khi công bố chi tiết.
 
 ## Cách công bố bản sửa và sự cố
 
-- Mỗi bản sửa bảo mật có một bản patch riêng; bản đã phát hành không bao giờ bị sửa lại. Mục
-  *Security* của [CHANGELOG](../CHANGELOG.md) ghi rõ lỗi là gì và đã thay đổi gì.
+- Lỗi mức nghiêm trọng hoặc cao có bản patch riêng; bản đã phát hành không bao giờ bị sửa lại.
+  Mục *Security* của [CHANGELOG](../CHANGELOG.md) ghi mọi bản sửa bảo mật: lỗi là gì và đã thay
+  đổi gì.
 - Thông báo bảo mật nêu phiên bản và cấu hình bị ảnh hưởng, nguyên nhân gốc, phiên bản đã sửa và
   việc người dùng phải làm (ví dụ đổi một khóa bí mật). Chúng tôi không coi một sự cố là đã xử lý
   xong trước khi thông báo đó được công bố.
@@ -34,8 +35,9 @@ Xin dành cho chúng tôi một khoảng thời gian hợp lý để phát hành
   (`fasti-bpm.spdx.json` trên mỗi bản phát hành GitHub); bundle Tomcat có checksum SHA-256 đi kèm.
   Kiểm tra image bằng
   `cosign verify fastidev/fasti-bpm:<version> --certificate-identity-regexp '^https://github.com/fasti-bpm/fasti/' --certificate-oidc-issuer https://token.actions.githubusercontent.com`.
-- Fasti không gửi telemetry và không tự mở kết nối ra ngoài; nó chỉ kết nối tới cơ sở dữ liệu và
-  những gì bạn cấu hình (nhà cung cấp định danh, tracing, metrics).
+- Fasti không gửi telemetry và không tự kiểm tra cập nhật. Nó chỉ mở kết nối tới cơ sở dữ liệu,
+  tới những gì bạn cấu hình (nhà cung cấp định danh, LDAP, bộ xuất tracing) hoặc những gì mô hình
+  quy trình của bạn gọi (connector, script).
 - Kết quả các đợt tự kiểm thử bảo mật được công bố: [Kiểm thử bảo mật bản 1.3](../docs/security/pentest-1.3.vi.md);
   trạng thái của Fasti với từng thông báo bảo mật của Camunda 7: [Thông báo bảo mật của Camunda 7](../docs/security/camunda-7-advisories.vi.md);
   dữ liệu cá nhân và thời gian lưu: [Dữ liệu cá nhân](../docs/security/personal-data.vi.md).
@@ -56,7 +58,10 @@ Dự án này không liên kết với Camunda Services GmbH. Đừng báo lỗi
 > bản có hiệu lực. Chính sách cũng được đăng tại <https://fasti.dev/security#policy>.
 
 - **Dòng được hỗ trợ:** bản minor mới nhất của dòng `1.x` nhận bản sửa lỗi và bản vá bảo mật
-  (phát hành dạng patch, ví dụ `1.0.1`).
+  (phát hành dạng patch, ví dụ `1.3.1`), **ít nhất tới hết ngày 31/12/2027**.
+- **Nếu dự án dừng:** Fasti giữ nguyên schema cơ sở dữ liệu Camunda 7.24, nên cơ sở dữ liệu của
+  Fasti vẫn là cơ sở dữ liệu Camunda 7.24. Bạn có thể quay về Camunda 7.24 hoặc chuyển sang một
+  fork Camunda 7 khác mà không phải chuyển đổi dữ liệu; mã nguồn vẫn có theo giấy phép Apache 2.0.
 - **Bản vá bảo mật:** lỗ hổng của Fasti và của thư viện đi kèm được ưu tiên trước các việc khác.
   Khi image nền hoặc JRE có bản vá bảo mật ảnh hưởng tới Fasti, một bản patch dùng image nền hoặc
   JRE đã cập nhật sẽ được phát hành; image đã công bố không được build lại. Dự án theo dõi thông
@@ -72,5 +77,7 @@ Dự án này không liên kết với Camunda Services GmbH. Đừng báo lỗi
 
 ## Thông báo bảo mật
 
+- [Kiểm thử bảo mật bản 1.3](../docs/security/pentest-1.3.vi.md): các lỗi tìm thấy ở 1.3.0 và đã sửa trong 1.3.1.
+- [Thông báo bảo mật của Camunda 7](../docs/security/camunda-7-advisories.vi.md): trạng thái của Fasti với từng thông báo, gồm CVE-2026-77224 (sửa trong 1.3.1).
 - [CVE-2026-114938 ("Java4Shell")](../docs/security/CVE-2026-114938.vi.md): lỗi của Java runtime; Fasti đã làm gì và bạn cần làm gì.
 

@@ -8,9 +8,13 @@ the GDPR). It describes the engine; your processes decide what goes into it.
 
 ## Where personal data is stored
 
+The main places (other history tables, such as decisions, jobs and external tasks, can hold user
+ids and values too):
+
 | Data | Tables | Removed by |
 |---|---|---|
 | User accounts (id, name, e-mail, salted password hash), groups, memberships | `ACT_ID_*` | deleting the user in Admin or through the REST API; not used with single sign-on when users come from the token |
+| Process instances: business key, start user | `ACT_RU_EXECUTION` while running; `ACT_HI_PROCINST`, `ACT_HI_ACTINST` afterwards | history cleanup |
 | Who works on what: assignees, candidate users, owners of tasks | `ACT_RU_TASK`, `ACT_RU_IDENTITYLINK` while running; `ACT_HI_TASKINST`, `ACT_HI_IDENTITYLINK` afterwards | the end of the task; history cleanup |
 | Process variables, business keys, form data | `ACT_RU_VARIABLE` while running; `ACT_HI_VARINST`, `ACT_HI_DETAIL` afterwards; large values in `ACT_GE_BYTEARRAY` | the end of the instance; history cleanup |
 | Comments and attachments | `ACT_HI_COMMENT`, `ACT_HI_ATTACHMENT`, `ACT_GE_BYTEARRAY` | history cleanup |
@@ -20,20 +24,23 @@ the GDPR). It describes the engine; your processes decide what goes into it.
 | Absences and substitutes (if switched on) | user info `ACT_ID_INFO`; task variables `fasti_absentAssignee`, `fasti_absenceSubstitute` | deleting the absence; history cleanup |
 
 Process analytics compute from the history above and keep only a short cache in memory
-(`FASTI_ANALYTICS_CACHE_TTL`, 60 s by default); they store nothing of their own. Logs contain user
-ids (for example of failed logins) but no passwords or process data. Fasti sends no telemetry.
+(`FASTI_ANALYTICS_CACHE_TTL`, 60 s by default); they store nothing of their own. Fasti's own log lines
+carry user ids (for example of failed logins) but no passwords or variable values; exceptions
+thrown by your delegates and scripts are logged as they are. Fasti sends no telemetry.
 
 ## Keeping history no longer than needed
 
-History is removed only by **history cleanup**, and only where a time to live is set:
+History is removed automatically only by **history cleanup**, and only where a time to live is
+set:
 
 1. Give every process and decision definition a history time to live, in the model
    (`camunda:historyTimeToLive="P180D"` or a number of days) or for all deployments with the
-   engine property `historyTimeToLive`.
+   engine property `historyTimeToLive`. By default the engine refuses to deploy a definition
+   without one (`enforceHistoryTimeToLive`); definitions deployed before Camunda 7.20 may have none.
 2. Set a cleanup window, for example 22:00–06:00, with the engine properties
    `historyCleanupBatchWindowStartTime` and `historyCleanupBatchWindowEndTime` (image: a mounted file
-   named in `FASTI_CONFIG`, see the comment in `fasti-docker.yml`; the Tomcat bundle sets 00:01 in
-   `bpm-platform.xml`). Without a window, cleanup only runs when started by hand.
+   named in `FASTI_CONFIG`, see the comment in `fasti-docker.yml`; the Tomcat bundle sets only the start
+   time 00:01 in `bpm-platform.xml`, so the window lasts almost all day). Without a window, cleanup only runs when started by hand.
 3. Check that it runs: `GET /history/cleanup/configuration` shows the window and
    `GET /history/cleanup/jobs` the cleanup jobs; the history tables should stop growing once the
    first instances pass their time to live.
@@ -46,8 +53,8 @@ the removal-time strategy and its trade-offs.
 
 There is no single "forget this person" switch. User ids are plain strings in many history
 tables. To erase a person before the time to live: delete the user; delete or anonymize the
-process instances that hold their data (`DELETE /history/process-instance/{id}` deletes an
-instance's history); note that the audit trail, if it is on, keeps its records until they are purged by date
+process instances that hold their data (`DELETE /history/process-instance/{id}` deletes the
+history of a finished instance); note that the audit trail, if it is on, keeps its records until they are purged by date
 (`POST /audit/purge`), because it is built so that single records cannot be removed. Keep personal data out
 of variables where you can, store a reference to your own system instead, and that system keeps
 the data and its erasure in one place.

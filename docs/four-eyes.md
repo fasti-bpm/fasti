@@ -71,12 +71,16 @@ Allowed on purpose:
   not a completion.
 - There is **no administrator override**. Members of `camunda-admin` are refused like
   anyone else. If nobody allowed is left, reassign the task to a person who did not do the
-  checked steps, or change the instance with process instance modification.
-- **Starting in the middle counts.** Whoever places a token into the process by hand, with a
-  start at another activity than the start event (`startInstructions`), a restart or a
-  process instance modification that starts an activity, may skip the checked steps that way.
-  From 1.3.1 that user counts as having done every checked step of the instance, so the task
-  that checks them needs another person.
+  checked steps. Whoever repairs the instance with a modification counts as having done the
+  checked steps (see the next point), so another person completes the guarded task afterwards.
+- **Starting in the middle counts.** Whoever places a token into the process by hand may skip
+  the checked steps that way: a start at another activity than the start event
+  (`startInstructions`), a restart, a process instance modification that starts an activity, or a
+  migration that maps an activity to a different one. From 1.3.1 that user counts as having done
+  every checked step of the instance, so the task that checks them needs another person. For an
+  asynchronous restart, modification or migration (a batch) both the user who created the batch
+  and the user who ran its jobs count. Calls of the Java API without an authenticated user are not
+  recorded, and instances changed this way before 1.3.1 carry no record.
 
 Scope: one process instance. A called process (call activity) is a process instance of its
 own; its rules name its own steps.
@@ -176,4 +180,5 @@ Limits:
   (2000 characters).
 - CMMN human tasks are not covered.
 - Admin-only completion paths outside the task service (process instance modification,
-  deleting the instance) are not completions and are not checked.
+  deleting the instance) are not completions and are not checked: a modification can still move
+  the token past the guarded task without completing it. Grant `UPDATE_INSTANCE` accordingly.

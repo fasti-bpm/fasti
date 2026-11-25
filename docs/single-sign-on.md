@@ -15,11 +15,19 @@ Spring Security client registration (`spring.security.oauth2.client.*`). For **T
   `fasti.security.oidc.registration-id`). The authorization code flow uses `state`, `nonce`
   and PKCE (S256, also for confidential clients); the session id is replaced on login. Users
   return to the page of the new web application they started from (only paths below
-  `/fasti/app/next/` are accepted, so there is no open redirect).
+  `/fasti/app/next/` are accepted, so there is no open redirect). **From 1.3.1 only this
+  registration signs users in:** the user id is the bare value of a claim, so a second
+  registration (another issuer) could otherwise sign in as any user. Other registrations can no
+  longer start a login or an authorization code grant; Spring's generated `/login` page, shown
+  with several registrations, still lists them, but only the chosen one works.
 - **Logout:** `POST /logout` (same-origin requests only) ends the session; with
   `camunda.bpm.oauth2.sso-logout.enabled=true` the user continues to the provider's end
   session endpoint (RP-initiated logout, `post-logout-redirect-uri`). Spring Security's
-  back-channel logout stays enabled. `GET /logout` no longer logs the user out.
+  back-channel logout stays enabled; it ends each session by a request to `/logout` of this
+  server: over plain HTTP to the local connector (`http://localhost:<server.port>`, or
+  `server.address`), with TLS to the address of the incoming request. Set
+  `fasti.security.oidc.back-channel-logout-uri` when neither reaches the server. `GET /logout`
+  no longer logs the user out.
 - **Session expiry:** when the access token cannot be refreshed or the session times out,
   requests to `/fasti/api/**` return `401` (no redirect) and the new web application shows its login page.
 - **CSRF:** `/fasti/api` and `/fasti/app` keep the web applications' own CSRF filter

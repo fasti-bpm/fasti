@@ -14,10 +14,11 @@ các mục dưới đây là khác biệt so với bản đó.
 
 ## [1.3.1] - 2026-11-25
 
-Security release. Before announcing 1.3.0 publicly we ran a pentest of the released image and
-Tomcat bundle (summary: [docs/security/pentest-1.3.md](docs/security/pentest-1.3.md)). The
-issues it found are fixed here. Same database schema as 1.0.x–1.3.0; replace the image or the
-bundle and start it.
+Security release. Before announcing 1.3.0 publicly we ran an internal security test of the
+released image and Tomcat bundle and checked Fasti against the Camunda 7 advisories we know of
+(summary: [docs/security/pentest-1.3.md](docs/security/pentest-1.3.md)); the changes then went
+through a second review pass. The issues found are fixed here. Same database schema as
+1.0.x–1.3.0; replace the image or the bundle and start it. Read **Before you upgrade** below.
 
 ### Security
 
@@ -26,60 +27,95 @@ bundle and start it.
   by default, so whoever reached a fresh server first could create the administrator. The page
   now also asks for a setup token printed to the server log when the page is first opened
   (header `X-Fasti-Setup-Token` for scripts), or a fixed token of at least 16 characters from
-  `-Dfasti.setup.token` / `FASTI_SETUP_TOKEN`. The image keeps the page off unless
-  `FASTI_INITIAL_SETUP=true`.
+  `-Dfasti.setup.token` / `FASTI_SETUP_TOKEN`. The token serves once. The image keeps the page
+  off unless `FASTI_INITIAL_SETUP=true`. The setup always uses the page of the new web UI.
 - **No permanent lockout by default.** After 10 failed logins a user was locked until an
   administrator unlocked it, so anyone who knew the name of the only administrator could lock
   it out without signing in; recovery needed an edit of `ACT_ID_USER`. `loginMaxAttempts` now
   defaults to unlimited; failed logins still delay the next attempt (3 s, doubling up to 60 s).
-  Set `loginMaxAttempts` to bring the permanent lock back. Users locked by 1.3.0 are unlocked
-  after the upgrade.
+  Set `loginMaxAttempts` to bring the permanent lock back. Users locked by 1.3.0 can sign in
+  again after the upgrade.
+- **External task client: XML variables are parsed without external entities**
+  (CVE-2026-77224, fixed by Camunda only in Enterprise 7.24.x). A value written to the engine by
+  anyone allowed to set a variable could make a worker read local files or open connections.
+  The client now refuses document type declarations and external entities.
 - **Four-eyes rule could be skipped by starting in the middle.** A user allowed to start
-  instances could start one at the guarded task (`startInstructions`), restart it there or move
-  the token there with a modification, and then complete it alone. Whoever places a token into
-  the process by hand now counts as having done every checked step of that instance.
+  instances could start one at the guarded task (`startInstructions`), restart it there, move
+  the token there with a modification or migrate it there, and then complete it alone. Whoever
+  places a token into the process by hand now counts as having done every checked step of that
+  instance; for an asynchronous batch both the user who created it and the user who ran its
+  jobs count.
+- **Single sign-on: only the chosen client registration signs users in.** With several client
+  registrations, each of them could start a login, so a second identity provider could sign in
+  as any user name, a local administrator included when users come from the database. Only
+  `fasti.security.oidc.registration-id` (or the first registration) signs users in now, through
+  both the login and the OAuth2 client filters, and a login that returns from another
+  registration is refused.
+- **Single sign-on: back-channel logout ends the session.** The logout of each session was
+  posted to the address of the incoming request, which the container often cannot reach
+  (published port, proxy name), so a user logged out at the identity provider kept the Fasti
+  session. Over plain HTTP it is posted to the local connector now (`server.address` if set);
+  with TLS the address of the request is kept. `fasti.security.oidc.back-channel-logout-uri`
+  sets another one.
 - **Upload limits.** Every part of a multipart request (deployments, file variables,
   attachments) was read into memory without a limit. A request may now carry at most 100 MB
   and 1000 parts, larger ones get `413`: `FASTI_REST_MULTIPART_MAX_SIZE` /
   `FASTI_REST_MULTIPART_MAX_PARTS` (system properties `fasti.rest.multipart.max-size` /
   `max-parts`).
-- **Deserialized types are validated in every mode.** Type validation of Spin JSON/XML and
-  Object variables was only on with `--production`; in the default image mode and in the
-  Tomcat bundle anyone who may write a variable could name any class as its type. It is on
-  everywhere now. **Action needed** if process applications store their own classes as JSON or
-  XML variables: allow their packages with `FASTI_DESERIALIZATION_ALLOWED_PACKAGES` (image) or
-  `deserializationAllowedPackages` in `bpm-platform.xml` (Tomcat).
-- **Single sign-on: only the chosen client registration signs users in.** With several client
-  registrations, each of them could start a login, so a second identity provider could sign in
-  as any user name, a local administrator included when users come from the database. Only
-  `fasti.security.oidc.registration-id` (or the first registration) signs users in now.
-- **Single sign-on: back-channel logout ends the session.** The logout of each session was
-  posted to the address of the incoming request, which the container often cannot reach
-  (published port, proxy name), so a user logged out at the identity provider kept the Fasti
-  session. It is posted to the local connector now.
+- **Deserialized types are validated in the image and the Tomcat bundle.** Type validation of
+  Spin JSON/XML and Object variables was only on with `--production`; in the default image mode
+  and in the Tomcat bundle anyone who may write a variable could name any class as its type. It
+  is on in both now. Embedded engines keep the engine default (off).
 - Production mode: the CSRF token cookie is `Secure`, like the session cookie.
 - `FASTI_TRUSTED_PROXIES` narrows the proxies whose `X-Forwarded-*` headers are trusted (by
-  default every private address).
+  default every private address); redirects of the image carry a path only.
 - Process analytics: a user of another tenant could tell whether a process key has history in
   a tenant they cannot see (`200` empty instead of `404`); the probe now applies the tenant
   scope. The cache key is structured, so tenant ids containing the separator cannot share an
   answer.
-- Query expressions: `[...]` is allowed only on `currentUserGroups()`; `${dateTime()[0]}` passed
-  the allow-list but failed every time the filter ran.
-- **External task client: XML variables are parsed without external entities**
-  (CVE-2026-77224, fixed by Camunda only in Enterprise 7.24.x). A value written to the engine by
-  anyone allowed to set a variable could make a worker read local files or open connections.
-  The client now refuses document type declarations and external entities.
+- Query expressions: `[...]` is allowed only on `currentUserGroups()` and on allow-listed custom
+  functions and beans; `${dateTime()[0]}` passed the allow-list but failed every time the filter
+  ran.
 - Tomcat bundle: the web application sends `Referrer-Policy`, `Permissions-Policy` and
-  `Cross-Origin-Opener-Policy` like the image, and the REST API `X-Content-Type-Options: nosniff`.
+  `Cross-Origin-Opener-Policy` like the image, and the REST API `X-Content-Type-Options: nosniff`
+  and `X-Frame-Options: DENY`; the session id is never put into a URL. In Spring Boot
+  applications the three headers are set or turned off with the properties
+  `camunda.bpm.webapp.header-security.referrer-policy-disabled` / `-value`,
+  `permissions-policy-disabled` / `-value` and `cross-origin-opener-policy-disabled` / `-value`.
+- The image: `/actuator` lists no endpoints; `--production` also refuses a JDWP agent in
+  `JAVA_OPTS`, `JAVA_TOOL_OPTIONS` or `JDK_JAVA_OPTIONS`.
 - OpenTelemetry 1.62.0 → 1.67.0 (CVE-2026-118259; only used with `FASTI_TRACING_ENABLED=true`).
-- New page [Camunda 7 security advisories and Fasti BPM](docs/security/camunda-7-advisories.md):
-  where Fasti stands on every published Camunda 7 advisory, the 2026 ones included.
+
+### Before you upgrade
+
+- **Process applications that store their own classes as JSON or XML variables** must allow
+  them: `FASTI_DESERIALIZATION_ALLOWED_PACKAGES` (image) or `deserializationAllowedPackages` in
+  `bpm-platform.xml` (Tomcat). Packages match as prefixes: end each with a dot.
+- **First start without an administrator** (Tomcat bundle, image with `FASTI_INITIAL_SETUP=true`,
+  Spring Boot applications that embed the web application without `camunda.bpm.admin-user`):
+  the setup page asks for the token from the log (search for "setup token"). With several nodes,
+  set `FASTI_SETUP_TOKEN` (the printed token is per node) or start one node for the setup.
+  Scripts that create the first administrator through the setup endpoint send the token in
+  `X-Fasti-Setup-Token`.
+- **External task client:** XML variables with a document type declaration are refused; pass
+  your own `DocumentBuilderFactory` to `DomXmlDataFormat` if you need one.
+- **Four-eyes:** an operator who repairs an instance by modification, restart or migration now
+  counts as having done its checked steps, so another person completes the guarded task.
+- **Single sign-on with several client registrations:** only the chosen one signs users in or
+  runs an authorization code grant; Spring's generated `/login` page still lists the others.
+- **Uploads over 100 MB** get `413`: raise `FASTI_REST_MULTIPART_MAX_SIZE` if needed.
+- `loginMaxAttempts`: set it if you rely on the permanent lock.
+
+### Documentation
+
+- [Camunda 7 security advisories and Fasti BPM](docs/security/camunda-7-advisories.md): where
+  Fasti stands on the Camunda 7 advisories we know of, the 2026 ones included.
+- [Personal data and retention](docs/security/personal-data.md): where personal data is stored,
+  how history cleanup removes it, and how to erase one person's data.
 - `.github/SECURITY.md`: response times, how fixes and incidents are published, how to verify
   image signatures.
-- New page [Personal data and retention](docs/security/personal-data.md): where personal data is
-  stored, how history cleanup removes it, and how to erase one person's data.
-
+- `qa/security-smoke`: a repeatable check of some of the security controls against a running
+  server.
 
 ## [1.3.0] - 2026-11-25
 

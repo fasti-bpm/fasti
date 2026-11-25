@@ -74,12 +74,16 @@ Cố ý cho phép:
   hữu, không phải là hoàn thành.
 - **Không có quyền vượt cho quản trị viên**. Thành viên `camunda-admin` cũng bị từ chối như mọi
   người. Nếu không còn ai được phép, hãy giao lại tác vụ cho người chưa làm các bước được
-  kiểm tra, hoặc thay đổi instance bằng process instance modification.
-- **Bắt đầu giữa chừng cũng được tính.** Người tự đặt token vào quy trình, bằng cách bắt đầu tại
-  một bước khác sự kiện bắt đầu (`startInstructions`), khởi động lại (restart) hoặc process
-  instance modification có bắt đầu một bước, có thể bỏ qua các bước được kiểm tra. Từ 1.3.1,
-  người đó được tính là đã làm mọi bước được kiểm tra của instance, nên tác vụ kiểm tra các bước
-  ấy phải do người khác hoàn thành.
+  kiểm tra. Người sửa instance bằng modification được tính là đã làm các bước được kiểm tra (xem
+  ý tiếp theo), nên sau đó người khác phải hoàn thành tác vụ được bảo vệ.
+- **Bắt đầu giữa chừng cũng được tính.** Người tự đặt token vào quy trình có thể bỏ qua các bước
+  được kiểm tra: bắt đầu tại một bước khác sự kiện bắt đầu (`startInstructions`), khởi động lại
+  (restart), process instance modification có bắt đầu một bước, hoặc migration ánh xạ một bước
+  sang bước khác. Từ 1.3.1, người đó được tính là đã làm mọi bước được kiểm tra của instance, nên
+  tác vụ kiểm tra các bước ấy phải do người khác hoàn thành. Với restart, modification hay
+  migration chạy bất đồng bộ (batch), cả người tạo batch lẫn người chạy job của nó đều được tính.
+  Lời gọi Java API không có người dùng đăng nhập thì không được ghi nhận, và các instance bị thay
+  đổi theo cách này trước 1.3.1 không có bản ghi.
 
 Phạm vi: một process instance. Một quy trình được gọi (call activity) là một process instance
 riêng; quy tắc của nó nêu các bước của chính nó.
@@ -178,4 +182,5 @@ Giới hạn:
   tự).
 - Human task của CMMN không được hỗ trợ.
 - Các đường hoàn tất dành cho quản trị ngoài task service (process instance modification, xóa
-  instance) không phải là hoàn thành và không bị kiểm tra.
+  instance) không phải là hoàn thành và không bị kiểm tra: modification vẫn có thể đưa token vượt
+  qua tác vụ được bảo vệ mà không hoàn thành nó. Hãy cấp `UPDATE_INSTANCE` cho phù hợp.

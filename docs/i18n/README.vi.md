@@ -5,7 +5,7 @@
 Fasti BPM là một process engine mã nguồn mở (Apache-2.0), độc lập: nó chạy các quy trình nghiệp
 vụ mô hình hóa bằng BPMN và các bảng quyết định DMN, với tác vụ cho người dùng, hẹn giờ, message và
 lịch sử đầy đủ. Fasti xây dựng trên Camunda 7 Community Edition 7.24.0 và chạy trên chính cơ sở dữ
-liệu Camunda 7 bạn đang có, với thư viện được cập nhật, các bản vá bảo mật và giao diện web mới.
+liệu Camunda 7.24 bạn đang có, với thư viện được cập nhật, các bản vá bảo mật và giao diện web mới.
 Website: <https://fasti.dev>
 
 <p align="center">
@@ -165,11 +165,26 @@ thêm giao diện mới. Các dự án khác cũng là lựa chọn tốt. Bản
 ## Bảo mật và hỗ trợ
 
 Bản minor mới nhất của dòng `1.x` được sửa lỗi và vá bảo mật, phát hành dưới dạng bản patch như
-`1.0.1`. Vui lòng báo cáo vấn đề bảo mật một cách riêng tư, không qua issue công khai: xem
+`1.3.1`, ít nhất tới hết ngày 31/12/2027. Nếu dự án dừng, cơ sở dữ liệu của bạn vẫn là cơ sở dữ
+liệu Camunda 7.24: quay về 7.24 hoặc sang một fork khác mà không phải chuyển đổi dữ liệu. Vui lòng báo cáo vấn đề bảo mật một cách riêng tư, không qua issue công khai: xem
 [SECURITY.vi.md](../../.github/SECURITY.vi.md), nơi có cả [chính sách hỗ trợ](../../.github/SECURITY.vi.md#support-policy).
 Danh sách bản vá, Java4Shell và đợt rà soát trước phát hành: <https://fasti.dev/security>. Cần hỗ
 trợ cài đặt, chuyển đổi hoặc vận hành production, hay thống nhất điều khoản hỗ trợ, hãy gửi mail
 đến <contact@fasti.dev>.
+
+<a id="who-maintains-fasti"></a>
+
+## Ai duy trì Fasti
+
+Fasti BPM là một dự án mã nguồn mở độc lập (tổ chức GitHub `fasti-bpm`, liên hệ
+<contact@fasti.dev>). Dự án không liên kết với Camunda và không có bản enterprise.
+
+Chúng tôi dùng công cụ lập trình AI (Anthropic Claude và OpenAI Codex) để viết, rà soát và kiểm
+thử mã, như mọi công cụ khác: một thay đổi không được nhận chỉ vì công cụ đã viết nó. Mọi thay đổi
+đều qua bộ test (hơn 16.000 test của engine kế thừa từ Camunda 7 cộng với test của chúng tôi), test
+giao diện web, CI trên Java 17 và 21 và CodeQL; thay đổi liên quan tới bảo mật được rà soát thêm
+một lượt riêng. Những gì đã kiểm thử về bảo mật, và những gì chưa, nằm trong
+[kiểm thử bảo mật](../security/pentest-1.3.vi.md).
 
 <a id="timeline"></a><a id="camunda-7-milestones"></a><a id="fasti-bpm"></a><a id="roadmap-plan"></a>
 

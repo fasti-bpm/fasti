@@ -27,8 +27,9 @@ Please give us reasonable time to publish a fix before disclosing details.
 
 ## How we publish fixes and incidents
 
-- Every security fix gets a patch release; released versions are never changed afterwards. The
-  [CHANGELOG](../CHANGELOG.md) lists it under *Security* with what was wrong and what changed.
+- Critical and high issues get a patch release of their own; released versions are never changed
+  afterwards. The [CHANGELOG](../CHANGELOG.md) lists every security fix under *Security* with what
+  was wrong and what changed.
 - An advisory names the affected versions and configurations, the root cause, the fixed version
   and what users must do (for example rotate a secret). We do not call an issue resolved before
   that is published.
@@ -36,8 +37,9 @@ Please give us reasonable time to publish a fix before disclosing details.
   (`fasti-bpm.spdx.json` on each GitHub release); the Tomcat bundle has a SHA-256 checksum next to
   it. Verify an image with
   `cosign verify fastidev/fasti-bpm:<version> --certificate-identity-regexp '^https://github.com/fasti-bpm/fasti/' --certificate-oidc-issuer https://token.actions.githubusercontent.com`.
-- Fasti sends no telemetry and makes no outgoing connections of its own; it only connects to
-  the database and to what you configure (identity provider, tracing, metrics).
+- Fasti sends no telemetry and has no update check. It opens connections only to the database and
+  to what you configure (identity provider, LDAP, tracing exporter) or what your process models
+  call (connectors, scripts).
 - Our own security tests and their results are public: [Security test of 1.3](../docs/security/pentest-1.3.md);
   where Fasti stands on each Camunda 7 advisory: [Camunda 7 security advisories](../docs/security/camunda-7-advisories.md);
   personal data and retention: [Personal data](../docs/security/personal-data.md).
@@ -59,7 +61,10 @@ fork to Camunda.
 > repository is the one in force. It is also published on <https://fasti.dev/security#policy>.
 
 - **Supported line:** the latest minor release of the `1.x` line receives bug fixes and security
-  patches (as patch releases, for example `1.0.1`).
+  patches (as patch releases, for example `1.3.1`), **at least until 31 December 2027**.
+- **If the project stops:** Fasti keeps the Camunda 7.24 database schema, so a Fasti database
+  stays a Camunda 7.24 database. You can go back to Camunda 7.24 or move to another Camunda 7 fork
+  without a migration of the data; the code stays available under the Apache License 2.0.
 - **Security patches:** vulnerabilities in Fasti and in the libraries it ships take priority over
   other work. When a security fix of the base image or the JRE affects Fasti, a patch release
   with the updated base image or JRE is published; images that are already published are not
@@ -76,4 +81,6 @@ fork to Camunda.
 
 ## Advisories
 
+- [Security test of 1.3](../docs/security/pentest-1.3.md): the issues found in 1.3.0 and fixed in 1.3.1.
+- [Camunda 7 security advisories](../docs/security/camunda-7-advisories.md): where Fasti stands on each, CVE-2026-77224 (fixed in 1.3.1) included.
 - [CVE-2026-114938 ("Java4Shell")](../docs/security/CVE-2026-114938.md): a flaw in the Java runtime; what Fasti changed and what you should do.

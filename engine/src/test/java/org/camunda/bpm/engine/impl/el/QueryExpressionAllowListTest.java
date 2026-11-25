@@ -136,6 +136,8 @@ public class QueryExpressionAllowListTest {
       "${currentUser()[0]}",
       "${now()[0]}",
       "${dateTime()[0]}",
+      "${dateTime().toDate()[0]}",
+      "${currentUserGroups()[0][0]}",
       "${now().getClass()}",
       "${now().getClass().forName('java.lang.Runtime').getMethod('getRuntime').invoke(null).exec('calc')}",
       "${now().getTime()}",
@@ -497,10 +499,10 @@ public class QueryExpressionAllowListTest {
     assertEvaluationRefused("${dateTime().class}", "The property 'class' of org.joda.time.DateTime is not allowed");
     assertEvaluationRefused("${dateTime()['class']}", "The property 'class' of org.joda.time.DateTime is not allowed");
 
-    // an index is accepted by the syntax check whatever it is applied to
+    // of the built-in values only the list of groups can be indexed
     assertThatThrownBy(() -> allowList.evaluate("${'x'[0]}", expressionManager))
       .isInstanceOf(ProcessEngineException.class)
-      .hasMessageContaining("The property '0' of java.lang.String is not allowed");
+      .hasMessageContaining("only a list can be indexed");
   }
 
   // extending the allow-list /////////////////////////////////////////////////

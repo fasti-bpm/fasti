@@ -259,12 +259,14 @@ public class QueryExpressionAllowList implements QueryExpressionValidator {
         throw rejected(expression, "only a number is allowed in '[...]'");
       }
       Node indexed = node.getChild(0);
-      if (indexed instanceof AstFunction && DEFAULT_FUNCTIONS.contains(((AstFunction) indexed).getName())
-          && !CommandContextFunctions.CURRENT_USER_GROUPS.equals(((AstFunction) indexed).getName())) {
-        // only the list of groups can be indexed; anything else fails each time the query runs
+      boolean groups = indexed instanceof AstFunction
+          && CommandContextFunctions.CURRENT_USER_GROUPS.equals(((AstFunction) indexed).getName());
+      ValueKind base = checkValue(expression, indexed);
+      if (!groups && base != ValueKind.CUSTOM) {
+        // of the built-in values only the list of groups can be indexed; anything else fails
+        // each time the query runs
         throw rejected(expression, "only a list can be indexed with '[...]'");
       }
-      ValueKind base = checkValue(expression, node.getChild(0));
       return base == ValueKind.CUSTOM ? ValueKind.CUSTOM : ValueKind.PLAIN;
     }
     throw rejected(expression, "it uses a construct that is not allowed in query expressions");

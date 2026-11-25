@@ -125,6 +125,60 @@ public class FourEyesManualPlacementTest {
     completeAs("bob", task(restarted, "approve"));
   }
 
+  @Test
+  public void shouldCountTheCreatorOfAnAsyncModification() {
+    testRule.deploy(draftApprove());
+    String pi = runtimeService.startProcessInstanceByKey("fourEyes").getId();
+    ProcessDefinition definition = engineRule.getRepositoryService().createProcessDefinitionQuery()
+        .processDefinitionKey("fourEyes").singleResult();
+
+    org.camunda.bpm.engine.batch.Batch batch = as("alice", () -> runtimeService.createModification(definition.getId())
+        .cancelAllForActivity("draft")
+        .startBeforeActivity("approve")
+        .processInstanceIds(pi)
+        .executeAsync());
+    executeBatch(batch);
+
+    assertRefused("alice", task(pi, "approve"));
+    completeAs("bob", task(pi, "approve"));
+  }
+
+  @Test
+  @RequiredHistoryLevel(ProcessEngineConfiguration.HISTORY_FULL)
+  public void shouldCountTheCreatorOfAnAsyncRestart() {
+    testRule.deploy(draftApprove());
+    String pi = runtimeService.startProcessInstanceByKey("fourEyes").getId();
+    completeAs("alice", task(pi, "draft"));
+    runtimeService.deleteProcessInstance(pi, "restart");
+    ProcessDefinition definition = engineRule.getRepositoryService().createProcessDefinitionQuery()
+        .processDefinitionKey("fourEyes").singleResult();
+
+    org.camunda.bpm.engine.batch.Batch batch = as("alice", () -> runtimeService.restartProcessInstances(definition.getId())
+        .startBeforeActivity("approve")
+        .processInstanceIds(pi)
+        .initialSetOfVariables()
+        .executeAsync());
+    executeBatch(batch);
+
+    String restarted = runtimeService.createProcessInstanceQuery().processDefinitionKey("fourEyes").singleResult().getId();
+    assertRefused("alice", task(restarted, "approve"));
+    completeAs("bob", task(restarted, "approve"));
+  }
+
+  void executeBatch(org.camunda.bpm.engine.batch.Batch batch) {
+    org.camunda.bpm.engine.ManagementService management = engineRule.getManagementService();
+    for (String definitionId : new String[] {batch.getSeedJobDefinitionId(), batch.getBatchJobDefinitionId()}) {
+      for (org.camunda.bpm.engine.runtime.Job job : management.createJobQuery().jobDefinitionId(definitionId).list()) {
+        management.executeJob(job.getId());
+      }
+    }
+    for (org.camunda.bpm.engine.runtime.Job job : management.createJobQuery()
+        .jobDefinitionId(batch.getBatchJobDefinitionId()).list()) {
+      management.executeJob(job.getId());
+    }
+    management.deleteBatch(batch.getId(), true);
+  }
+
   String startEventId() {
     return engineRule.getRepositoryService().getBpmnModelInstance(engineRule.getRepositoryService()
         .createProcessDefinitionQuery().processDefinitionKey("fourEyes").singleResult().getId())

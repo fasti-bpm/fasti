@@ -113,7 +113,7 @@ public class MultipartPayloadProvider implements MessageBodyReader<MultipartForm
     }
     try {
       return parseSize(value);
-    } catch (NumberFormatException e) {
+    } catch (NumberFormatException | ArithmeticException e) {
       return defaultValue;
     }
   }
@@ -132,7 +132,8 @@ public class MultipartPayloadProvider implements MessageBodyReader<MultipartForm
       text = text.substring(0, text.length() - 2);
     }
     long number = Long.parseLong(text);
-    return number < 0 ? -1 : number * factor;
+    // an overflow would turn the limit negative, that is off: refused as invalid instead
+    return number < 0 ? -1 : Math.multiplyExact(number, factor);
   }
 
   protected MultipartFormData createMultipartFormDataInstance() {

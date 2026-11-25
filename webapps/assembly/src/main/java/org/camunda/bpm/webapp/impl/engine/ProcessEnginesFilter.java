@@ -292,8 +292,9 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
         // print the one-time setup token to the server log, the setup page asks for it
         InitialSetupToken.announce(engineName);
         if (!setupPage) {
-          // redirect to setup; the new web UI has a setup page of its own
-          String setupApp = NEXT_APP_NAME.equals(appName) ? NEXT_APP_NAME : ADMIN_APP_NAME;
+          // redirect to the setup page of the new web UI, which asks for the setup token; the
+          // classic Admin has no field for it
+          String setupApp = NEXT_APP_NAME;
           String setupPath = "%s%s/app/%s/%s/setup/#/setup";
           response.sendRedirect(String.format(setupPath, contextPath, applicationPath, setupApp, engineName));
         } else {

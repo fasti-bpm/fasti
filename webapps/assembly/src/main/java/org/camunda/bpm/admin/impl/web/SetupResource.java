@@ -121,6 +121,9 @@ public class SetupResource {
       // create group membership (add new user to admin group)
       processEngine.getIdentityService()
         .createMembership(user.getProfile().getId(), Groups.CAMUNDA_ADMIN);
+
+      // a printed token serves once: should the setup open again, a new one is printed
+      InitialSetupToken.consume(processEngineName);
     }
   }
 

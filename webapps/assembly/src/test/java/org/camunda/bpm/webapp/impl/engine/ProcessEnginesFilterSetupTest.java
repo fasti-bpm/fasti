@@ -253,7 +253,8 @@ public class ProcessEnginesFilterSetupTest {
     MockHttpServletResponse response = request("/app/tasklist/" + ENGINE_NAME + "/");
 
     // then
-    assertThat(response.getRedirectedUrl()).isEqualTo("/app/admin/" + ENGINE_NAME + "/setup/#/setup");
+    // the setup page of the new web UI asks for the setup token; the classic Admin has no field for it
+    assertThat(response.getRedirectedUrl()).isEqualTo("/app/next/" + ENGINE_NAME + "/setup/#/setup");
     assertThat(servedIndexPages).isEmpty();
   }
 

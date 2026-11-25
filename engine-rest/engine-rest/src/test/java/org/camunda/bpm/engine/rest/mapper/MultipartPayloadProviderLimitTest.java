@@ -90,6 +90,8 @@ public class MultipartPayloadProviderLimitTest {
   public void shouldIgnoreInvalidConfiguration() {
     // given
     System.setProperty(MultipartPayloadProvider.MAX_SIZE_PROPERTY, "lots");
+    assertThat(new MultipartPayloadProvider().createFileUploadInstance().getSizeMax()).isEqualTo(100L * 1024 * 1024);
+    System.setProperty(MultipartPayloadProvider.MAX_SIZE_PROPERTY, "9223372036854775807GB");
 
     // then
     assertThat(new MultipartPayloadProvider().createFileUploadInstance().getSizeMax()).isEqualTo(100L * 1024 * 1024);

@@ -16,6 +16,8 @@
  */
 package org.camunda.bpm.engine.impl.batch;
 
+import dev.fasti.engine.foureyes.impl.FourEyesGuard;
+
 import com.google.gson.JsonElement;
 import java.util.Date;
 import java.util.Iterator;
@@ -115,7 +117,10 @@ public abstract class AbstractBatchJobHandler<T extends BatchConfiguration> impl
       batch.fireHistoricUpdateEvent();
     }
 
-    executeHandler(batchConfiguration, execution, commandContext, tenantId);
+    // Fasti: the four-eyes control counts the user who created the batch (a restart or a
+    // modification placed by hand) where it would count the authenticated user
+    FourEyesGuard.runForBatchCreator(batch == null ? null : batch.getCreateUserId(),
+        () -> executeHandler(batchConfiguration, execution, commandContext, tenantId));
   }
 
   protected abstract void executeHandler(final T configuration,

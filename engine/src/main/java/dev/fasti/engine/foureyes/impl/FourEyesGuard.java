@@ -66,7 +66,28 @@ public final class FourEyesGuard {
 
   private static final Logger LOG = LoggerFactory.getLogger(FourEyesGuard.class);
 
+  /** The user who created the batch whose job runs in this thread, see {@link #runForBatchCreator}. */
+  private static final ThreadLocal<String> BATCH_CREATOR = new ThreadLocal<>();
+
   private FourEyesGuard() {
+  }
+
+  /**
+   * Runs the work of a batch job with the user who created the batch as the one who places tokens
+   * by hand: batch jobs (asynchronous restart and modification) run without an authenticated user.
+   */
+  public static void runForBatchCreator(String createUserId, Runnable work) {
+    String previous = BATCH_CREATOR.get();
+    BATCH_CREATOR.set(createUserId);
+    try {
+      work.run();
+    } finally {
+      if (previous == null) {
+        BATCH_CREATOR.remove();
+      } else {
+        BATCH_CREATOR.set(previous);
+      }
+    }
   }
 
   /** Throws a {@link FourEyesViolationException} if the actors of the task may not complete it. */
@@ -161,6 +182,9 @@ public final class FourEyesGuard {
    */
   public static void recordManualPlacement(CommandContext commandContext, ExecutionEntity processInstance) {
     String userId = commandContext.getAuthenticatedUserId();
+    if (userId == null) {
+      userId = BATCH_CREATOR.get();
+    }
     if (userId == null || processInstance == null || processInstance.getProcessDefinition() == null) {
       return;
     }

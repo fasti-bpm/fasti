@@ -110,6 +110,11 @@ public final class InitialSetupToken {
     return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
   }
 
+  /** Forgets the generated token of the engine after a successful setup. */
+  public static void consume(String engineName) {
+    TOKENS.remove(engineName);
+  }
+
   /** Forgets every generated token; for tests. */
   static void reset() {
     TOKENS.clear();

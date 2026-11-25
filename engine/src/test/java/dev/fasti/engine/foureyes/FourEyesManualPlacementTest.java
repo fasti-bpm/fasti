@@ -165,6 +165,72 @@ public class FourEyesManualPlacementTest {
     completeAs("bob", task(restarted, "approve"));
   }
 
+  @Test
+  public void shouldCountBothTheCreatorAndTheExecutorOfABatch() {
+    testRule.deploy(draftApprove());
+    String pi = runtimeService.startProcessInstanceByKey("fourEyes").getId();
+    ProcessDefinition definition = engineRule.getRepositoryService().createProcessDefinitionQuery()
+        .processDefinitionKey("fourEyes").singleResult();
+
+    org.camunda.bpm.engine.batch.Batch batch = as("alice", () -> runtimeService.createModification(definition.getId())
+        .cancelAllForActivity("draft")
+        .startBeforeActivity("approve")
+        .processInstanceIds(pi)
+        .executeAsync());
+    // bob runs the jobs of alice's batch
+    as("bob", () -> {
+      executeBatch(batch);
+      return null;
+    });
+
+    assertRefused("alice", task(pi, "approve"));
+    assertRefused("bob", task(pi, "approve"));
+    completeAs("carol", task(pi, "approve"));
+  }
+
+  @Test
+  public void shouldCountTheUserWhoMigratesToAnotherActivity() {
+    testRule.deploy(draftApprove());
+    ProcessDefinition source = engineRule.getRepositoryService().createProcessDefinitionQuery()
+        .processDefinitionKey("fourEyes").singleResult();
+    String pi = runtimeService.startProcessInstanceById(source.getId()).getId();
+    testRule.deploy(draftApprove());
+    ProcessDefinition target = engineRule.getRepositoryService().createProcessDefinitionQuery()
+        .processDefinitionKey("fourEyes").latestVersion().singleResult();
+
+    as("alice", () -> {
+      runtimeService.newMigration(runtimeService.createMigrationPlan(source.getId(), target.getId())
+          .mapActivities("draft", "approve").build())
+          .processInstanceIds(pi)
+          .execute();
+      return null;
+    });
+
+    assertRefused("alice", task(pi, "approve"));
+    completeAs("bob", task(pi, "approve"));
+  }
+
+  @Test
+  public void shouldNotCountTheUserOfAMigrationToTheSameActivities() {
+    testRule.deploy(draftApprove());
+    ProcessDefinition source = engineRule.getRepositoryService().createProcessDefinitionQuery()
+        .processDefinitionKey("fourEyes").singleResult();
+    String pi = runtimeService.startProcessInstanceById(source.getId()).getId();
+    testRule.deploy(draftApprove());
+    ProcessDefinition target = engineRule.getRepositoryService().createProcessDefinitionQuery()
+        .processDefinitionKey("fourEyes").latestVersion().singleResult();
+
+    as("alice", () -> {
+      runtimeService.newMigration(runtimeService.createMigrationPlan(source.getId(), target.getId())
+          .mapEqualActivities().build())
+          .processInstanceIds(pi)
+          .execute();
+      return null;
+    });
+
+    assertThat(runtimeService.getVariable(pi, FourEyesService.VARIABLE_PREFIX + "draft")).isNull();
+  }
+
   void executeBatch(org.camunda.bpm.engine.batch.Batch batch) {
     org.camunda.bpm.engine.ManagementService management = engineRule.getManagementService();
     for (String definitionId : new String[] {batch.getSeedJobDefinitionId(), batch.getBatchJobDefinitionId()}) {

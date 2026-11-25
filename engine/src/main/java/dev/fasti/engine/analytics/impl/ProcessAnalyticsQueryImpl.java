@@ -215,8 +215,8 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
    */
   protected Object cacheKey(String kind, AnalyticsParameter parameter, Object extra) {
     return Arrays.asList(kind, configuration.getProcessEngineName(), parameter.processDefinitionKey,
-        List.copyOf(parameter.definitionIds), List.copyOf(parameter.tenantIds), parameter.tenantCheck,
-        parameter.authenticatedTenantIds == null ? null : List.copyOf(parameter.authenticatedTenantIds),
+        new ArrayList<>(parameter.definitionIds), new ArrayList<>(parameter.tenantIds), parameter.tenantCheck,
+        parameter.authenticatedTenantIds == null ? null : new ArrayList<>(parameter.authenticatedTenantIds),
         parameter.after.getTime(), parameter.before.getTime(), parameter.target, extra);
   }
 

@@ -181,11 +181,9 @@ public final class FourEyesGuard {
    * checks them. Without an authenticated user (Java API, jobs) nothing is recorded.
    */
   public static void recordManualPlacement(CommandContext commandContext, ExecutionEntity processInstance) {
-    String userId = commandContext.getAuthenticatedUserId();
-    if (userId == null) {
-      userId = BATCH_CREATOR.get();
-    }
-    if (userId == null || processInstance == null || processInstance.getProcessDefinition() == null) {
+    // both the user who runs the command and, in a batch job, the user who created the batch
+    Set<String> placers = actors(commandContext.getAuthenticatedUserId(), BATCH_CREATOR.get());
+    if (placers.isEmpty() || processInstance == null || processInstance.getProcessDefinition() == null) {
       return;
     }
     Set<String> stepIds = new LinkedHashSet<>();
@@ -193,7 +191,7 @@ public final class FourEyesGuard {
     for (String stepId : stepIds) {
       String name = FourEyesService.VARIABLE_PREFIX + stepId;
       Set<String> users = new LinkedHashSet<>(readVariable(processInstance, name));
-      if (users.add(userId)) {
+      if (users.addAll(placers)) {
         ReservedVariables.asControl(() -> {
           processInstance.setVariableLocal(name, Variables.stringValue(JsonUtil.asString(new ArrayList<>(users))));
           return null;

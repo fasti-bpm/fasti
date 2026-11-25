@@ -16,6 +16,9 @@
  */
 package org.camunda.bpm.engine.impl.migration;
 
+import dev.fasti.engine.foureyes.impl.FourEyesGuard;
+import org.camunda.bpm.engine.migration.MigrationInstruction;
+
 
 import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureNotContainsNull;
 import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureNotEmpty;
@@ -154,6 +157,15 @@ public class MigrateProcessInstanceCmd extends AbstractMigrationCmd implements C
 
     executeInContext(() -> migrateProcessInstance(migratingProcessInstance),
       migratingProcessInstance.getTargetDefinition());
+
+    // Fasti: a plan that maps an activity to a different one moves tokens by hand and may skip
+    // the steps a four-eyes rule checks; the user who migrates counts as having done them
+    for (MigrationInstruction instruction : migrationPlan.getInstructions()) {
+      if (!instruction.getSourceActivityId().equals(instruction.getTargetActivityId())) {
+        FourEyesGuard.recordManualPlacement(commandContext, processInstance);
+        break;
+      }
+    }
 
     Map<String, ?> variables = migrationPlan.getVariables();
     if (variables != null) {

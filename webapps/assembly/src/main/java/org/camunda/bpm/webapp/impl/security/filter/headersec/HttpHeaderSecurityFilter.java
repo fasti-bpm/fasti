@@ -18,6 +18,7 @@ package org.camunda.bpm.webapp.impl.security.filter.headersec;
 
 import org.camunda.bpm.webapp.impl.security.filter.headersec.provider.impl.ContentSecurityPolicyProvider;
 import org.camunda.bpm.webapp.impl.security.filter.headersec.provider.impl.ContentTypeOptionsProvider;
+import org.camunda.bpm.webapp.impl.security.filter.headersec.provider.impl.FixedHeaderProvider;
 import org.camunda.bpm.webapp.impl.security.filter.headersec.provider.HeaderSecurityProvider;
 import org.camunda.bpm.webapp.impl.security.filter.headersec.provider.impl.StrictTransportSecurityProvider;
 import org.camunda.bpm.webapp.impl.security.filter.headersec.provider.impl.XssProtectionProvider;
@@ -45,6 +46,10 @@ public class HttpHeaderSecurityFilter implements Filter {
     add(new ContentSecurityPolicyProvider());
     add(new ContentTypeOptionsProvider());
     add(new StrictTransportSecurityProvider());
+    // Fasti: also on the Tomcat and WildFly distributions, not only in Run
+    add(FixedHeaderProvider.referrerPolicy());
+    add(FixedHeaderProvider.permissionsPolicy());
+    add(FixedHeaderProvider.crossOriginOpenerPolicy());
 
   }};
 

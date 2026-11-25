@@ -28,6 +28,25 @@
     <listener-class>org.camunda.bpm.engine.rest.impl.FetchAndLockContextListener</listener-class>
   </listener>
 
+  <!-- security headers of the answers, from Tomcat itself: nosniff and no framing; HSTS is
+       left to the proxy that terminates TLS -->
+  <filter>
+    <filter-name>HttpHeaderSecurity</filter-name>
+    <filter-class>org.apache.catalina.filters.HttpHeaderSecurityFilter</filter-class>
+    <init-param>
+      <param-name>hstsEnabled</param-name>
+      <param-value>false</param-value>
+    </init-param>
+    <init-param>
+      <param-name>antiClickJackingOption</param-name>
+      <param-value>DENY</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>HttpHeaderSecurity</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
   <filter>
     <filter-name>EmptyBodyFilter</filter-name>
     <filter-class>org.camunda.bpm.engine.rest.filter.EmptyBodyFilter</filter-class>

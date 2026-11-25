@@ -143,6 +143,37 @@
       <lineEnding>crlf</lineEnding>
       <outputDirectory></outputDirectory>
     </file>
+    <!-- Fasti: the scripts under their own names; the former names stay for existing scripts -->
+    <file>
+      <source>src/start-camunda.bat</source>
+      <destName>start-fasti.bat</destName>
+      <lineEnding>dos</lineEnding>
+      <filtered>true</filtered>
+      <outputDirectory></outputDirectory>
+    </file>
+    <file>
+      <source>src/start-camunda.sh</source>
+      <destName>start-fasti.sh</destName>
+      <lineEnding>unix</lineEnding>
+      <filtered>true</filtered>
+      <outputDirectory></outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
+    <file>
+      <source>src/shutdown-camunda.bat</source>
+      <destName>shutdown-fasti.bat</destName>
+      <lineEnding>dos</lineEnding>
+      <filtered>true</filtered>
+      <outputDirectory></outputDirectory>
+    </file>
+    <file>
+      <source>src/shutdown-camunda.sh</source>
+      <destName>shutdown-fasti.sh</destName>
+      <lineEnding>unix</lineEnding>
+      <filtered>true</filtered>
+      <outputDirectory></outputDirectory>
+      <fileMode>0755</fileMode>
+    </file>
     <file>
       <source>src/start-camunda.bat</source>
       <lineEnding>dos</lineEnding>

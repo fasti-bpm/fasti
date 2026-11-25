@@ -113,6 +113,10 @@ together with production mode, `FASTI_MANAGEMENT_PORT` in `extraEnv` instead of
 Not exposed on purpose: `FASTI_INSECURE_DEMO` (open REST API, refused with `--production`) and
 `FASTI_INITIAL_SETUP` (first-admin page, protected by a one-time token from the log). Use `admin.*` for an empty database.
 
+From 1.3.1, process applications that store their own classes as JSON or XML variables need
+`FASTI_DESERIALIZATION_ALLOWED_PACKAGES` in `extraEnv` (type validation is on), and uploads
+over 100 MB need `FASTI_REST_MULTIPART_MAX_SIZE`.
+
 ## Several replicas
 
 All pods share the database; the engine is built for that.

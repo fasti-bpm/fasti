@@ -9,7 +9,7 @@ deployments and process instances (all named ``smoke-*``) and removes them again
 
 Usage:
   python security_smoke.py --url http://localhost:8080 --admin admin --admin-password-env ADMIN_PW \
-      [--expect-production] [--setup-open] [--multipart-limit-bytes 1048576]
+      [--setup-open] [--multipart-limit-bytes 1048576]
 
 Exit code 0 when every check passed, 1 otherwise. Only the Python standard library is used.
 """
@@ -215,7 +215,6 @@ def main():
     parser.add_argument("--admin-password-env", required=True, help="environment variable that holds the password")
     parser.add_argument("--setup-open", action="store_true", help="the initial setup page is switched on")
     parser.add_argument("--multipart-limit-bytes", type=int, default=0)
-    parser.add_argument("--expect-production", action="store_true")
     args = parser.parse_args()
 
     base = args.url

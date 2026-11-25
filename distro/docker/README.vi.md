@@ -138,11 +138,11 @@ image 1.1.x; các mục ghi **từ 1.3.0** chưa có trong các image 1.2.x.
 | `FASTI_DB_SCHEMA_UPDATE` | `false` (`true` với cơ sở dữ liệu H2 demo có sẵn) | `true` tạo bảng còn thiếu (cơ sở dữ liệu mới); không bao giờ nâng cấp schema |
 | `FASTI_SCHEMA_VERSION_CHECK` | `enforce` | `warn`: schema cũ hơn 7.24 chỉ cảnh báo thay vì dừng |
 | `FASTI_DB_SCHEMA`, `FASTI_DB_TABLE_PREFIX` | | `camunda.bpm.database.schema-name` / `table-prefix` |
-| `FASTI_TRUSTED_PROXIES` | địa chỉ nội bộ | Biểu thức chính quy cho địa chỉ IP của các proxy được tin header `X-Forwarded-*`, ví dụ `10\.0\.0\.5`; proxy phải ghi đè `X-Forwarded-Host` và `X-Forwarded-Proto` |
-| `FASTI_DESERIALIZATION_ALLOWED_PACKAGES` | — | Các package (cách nhau bằng dấu phẩy) mà biến Spin JSON/XML và biến Object được phép deserialize thành, ngoài các kiểu Java cơ bản; kiểm tra kiểu luôn bật |
-| `FASTI_DESERIALIZATION_ALLOWED_CLASSES` | — | Từng class được phép theo cách tương tự |
-| `FASTI_REST_MULTIPART_MAX_SIZE` | `100MB` | Kích thước lớn nhất của một request multipart (deployment, biến file, tệp đính kèm); lớn hơn thì nhận `413`; `-1`: không giới hạn |
-| `FASTI_REST_MULTIPART_MAX_PARTS` | `1000` | Số phần tối đa trong một request multipart |
+| `FASTI_TRUSTED_PROXIES` | địa chỉ nội bộ | **Từ 1.3.1.** Biểu thức chính quy cho địa chỉ IP của các proxy được tin header `X-Forwarded-*`, ví dụ `10\.0\.0\.5`; proxy phải ghi đè `X-Forwarded-Host` và `X-Forwarded-Proto` |
+| `FASTI_DESERIALIZATION_ALLOWED_PACKAGES` | — | **Từ 1.3.1.** Các package (cách nhau bằng dấu phẩy) mà biến Spin JSON/XML và biến Object được phép deserialize thành, ngoài các kiểu Java cơ bản; kiểm tra kiểu luôn bật. So khớp theo tiền tố: kết thúc mỗi package bằng dấu chấm (`com.example.`) để không cho phép cả `com.examplefoo`. |
+| `FASTI_DESERIALIZATION_ALLOWED_CLASSES` | — | **Từ 1.3.1.** Từng class được phép theo cách tương tự |
+| `FASTI_REST_MULTIPART_MAX_SIZE` | `100MB` | **Từ 1.3.1.** Kích thước lớn nhất của một request multipart (deployment, biến file, tệp đính kèm); lớn hơn thì nhận `413`; `-1`: không giới hạn |
+| `FASTI_REST_MULTIPART_MAX_PARTS` | `1000` | **Từ 1.3.1.** Số phần tối đa trong một request multipart |
 | `FASTI_HISTORY_LEVEL` | `auto` | mặc định lấy mức lịch sử đang lưu trong cơ sở dữ liệu (mới: `full`) |
 | `FASTI_JOB_EXECUTOR_ENABLED` | `true` | `false` tắt job executor của node này |
 | `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | `false` | chỉ chạy job của deployment đã đăng ký trên node này |
@@ -150,7 +150,7 @@ image 1.1.x; các mục ghi **từ 1.3.0** chưa có trong các image 1.2.x.
 | `FASTI_REST_AUTH` | `true` | luôn bật; giá trị `false` bị từ chối (dùng `FASTI_INSECURE_DEMO`) |
 | `FASTI_REST_AUTH_CACHE_TTL` | `30s` | **Có từ 1.2.1.** Cần ghi đơn vị (`30s`; số trần tính là mili giây). Thời gian ghi nhớ một lần xác thực basic thành công của REST API, cùng nhóm và tenant của người dùng, để các request lặp lại không phải đọc lại (`0` để tắt). Người dùng bị xoá hoặc bị khoá và thay đổi thành viên nhóm có hiệu lực chậm nhất sau khoảng này; thay đổi qua REST API của cùng node xoá cache ngay. Thiết lập `fasti.rest.auth-cache-ttl` |
 | `FASTI_INITIAL_SETUP` | `false` | `true`: bật trang tạo admin đầu tiên khi chưa có admin; trang hỏi mã cài đặt dùng một lần được in vào log |
-| `FASTI_SETUP_TOKEN` | — | Mã cài đặt cố định (ít nhất 16 ký tự) thay cho mã được in ra, dùng khi cài tự động |
+| `FASTI_SETUP_TOKEN` | — | **Từ 1.3.1.** Mã cài đặt cố định (ít nhất 16 ký tự) thay cho mã được in ra, dùng khi cài tự động. Khi chạy nhiều bản sao, hãy đặt biến này (mã được in ra riêng cho từng node), hoặc chỉ chạy một bản sao lúc cài đặt. |
 | `FASTI_CORS_ALLOWED_ORIGINS` | (tắt) | bật CORS cho REST; `*` như Run trước đây |
 | `FASTI_ADMIN_USER`, `FASTI_ADMIN_PASSWORD` (+`_FILE`) | | tạo admin nếu chưa có; mật khẩu truyền qua biến môi trường, không qua dòng lệnh |
 | `FASTI_WEBAPP_PATH` | `/fasti` | `/camunda` để giữ đường dẫn cũ, không chuyển hướng |

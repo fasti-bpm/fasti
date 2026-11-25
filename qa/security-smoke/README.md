@@ -1,12 +1,12 @@
 # Security smoke test
 
-`security_smoke.py` checks that the security controls of a running Fasti BPM server hold:
-requests without a login are refused, the initial setup needs its token, deployments need the
+`security_smoke.py` checks that some security controls of a running Fasti BPM server hold:
+requests without a login are refused, the initial setup cannot be used without its token, deployments need the
 permission, query expressions stay on the allow-list, values like `${1+1}` are stored as text,
 deserialized types are validated, Java serialization is refused, multipart requests are limited
 and the four-eyes rule cannot be skipped by starting a process at the approval step.
 
-Every check sends ordinary, harmless requests and expects a refusal. Run it against a **test**
+The checks send ordinary, harmless requests; most of them expect a refusal. Run it against a **test**
 installation: it creates users, deployments and process instances named `smoke*` and removes
 them afterwards. Only the Python standard library is needed.
 

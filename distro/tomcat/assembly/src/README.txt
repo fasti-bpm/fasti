@@ -51,9 +51,11 @@ Contents:
         installed. 
 
         run the
-            start-camunda.{bat/sh}
+            start-fasti.{bat/sh}
         script (or server/apache-tomcat-${version.tomcat}/bin/startup.{bat/sh})
-        to start up the server, and shutdown-camunda.{bat/sh} to stop it.
+        to start up the server, and shutdown-fasti.{bat/sh} to stop it.
+        start-camunda.{bat/sh} and shutdown-camunda.{bat/sh} do the same and
+        stay for existing scripts.
         Java 17 or later is required (21 recommended).
 
         After starting the server, you can access the

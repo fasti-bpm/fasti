@@ -346,8 +346,11 @@ const messages = {
   'admin.setup.text':
     'No administrator exists for this engine yet. The account created here gets every permission and is a member of the administrators group.',
   'admin.setup.submit': 'Create administrator',
+  'admin.setup.token': 'Setup token',
+  'admin.setup.tokenHint':
+    'Printed in the server log when this page is first opened, for example in docker logs or catalina.out. It protects this page until an administrator exists.',
   'admin.setup.failed':
-    'The account could not be created. Perhaps an administrator was created in the meantime; then sign in instead.',
+    'The account could not be created. Check the setup token; if an administrator was created in the meantime, sign in instead.',
   'admin.setup.done': 'Administrator “{id}” created',
   'admin.setup.doneText': 'Sign in with the new account to continue.',
   'admin.setup.signIn': 'Go to sign in',

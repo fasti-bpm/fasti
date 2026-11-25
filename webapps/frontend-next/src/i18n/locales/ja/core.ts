@@ -322,7 +322,11 @@ const messages: Catalog = {
   'admin.setup.title': '最初の管理者を作成',
   'admin.setup.text': 'このエンジンにはまだ管理者がいません。ここで作成するアカウントにはすべてのパーミッションが与えられ、管理者グループのメンバーになります。',
   'admin.setup.submit': '管理者を作成',
-  'admin.setup.failed': 'アカウントを作成できませんでした。その間に管理者が作成された可能性があります。その場合はサインインしてください。',
+  'admin.setup.token': 'セットアップトークン',
+  'admin.setup.tokenHint':
+    'このページを初めて開いたときにサーバーログ（docker logs や catalina.out など）に出力されます。管理者が作成されるまで、このページを保護します。',
+  'admin.setup.failed':
+    'アカウントを作成できませんでした。セットアップトークンを確認してください。その間に管理者が作成された場合は、サインインしてください。',
   'admin.setup.done': '管理者「{id}」を作成しました',
   'admin.setup.doneText': '続行するには新しいアカウントでサインインしてください。',
   'admin.setup.signIn': 'サインインへ',

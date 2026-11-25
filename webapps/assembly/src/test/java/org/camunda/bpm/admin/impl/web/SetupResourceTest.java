@@ -41,6 +41,7 @@ import org.camunda.bpm.engine.rest.dto.identity.UserDto;
 import org.camunda.bpm.engine.rest.dto.identity.UserProfileDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
 import org.camunda.bpm.engine.test.ProcessEngineRule;
+import org.camunda.bpm.webapp.impl.security.InitialSetupToken;
 import org.camunda.bpm.webapp.impl.util.ServletContextUtil;
 import org.camunda.commons.testing.ProcessEngineLoggingRule;
 import org.junit.After;
@@ -62,6 +63,7 @@ public class SetupResourceTest {
 
   protected static final String ENGINE_NAME = "webapps-test-engine";
   protected static final String INITIAL_USER_ID = "initialAdmin";
+  protected static final String SETUP_TOKEN = "setup-token-for-tests-0123";
 
   @Rule
   public ProcessEngineRule processEngineRule = new ProcessEngineRule("camunda-test-engine.cfg.xml");
@@ -79,6 +81,8 @@ public class SetupResourceTest {
   /** the engine handed to the resource, may be replaced by a test */
   protected ProcessEngine lookedUpEngine;
   protected SetupResource resource;
+  /** the setup token the resource receives, may be replaced by a test */
+  protected String presentedToken;
 
   protected boolean authorizationEnabledInitialValue;
   protected List<String> adminUsersInitialValue;
@@ -100,16 +104,24 @@ public class SetupResourceTest {
     processEngineConfiguration.setAuthorizationEnabled(true);
 
     lookedUpEngine = processEngine;
+    System.setProperty(InitialSetupToken.PROPERTY, SETUP_TOKEN);
+    presentedToken = SETUP_TOKEN;
     resource = new SetupResource() {
       @Override
       protected ProcessEngine lookupProcessEngine(String engineName) {
         return ENGINE_NAME.equals(engineName) ? lookedUpEngine : null;
+      }
+
+      @Override
+      protected String presentedSetupToken() {
+        return presentedToken;
       }
     };
   }
 
   @After
   public void tearDown() {
+    System.clearProperty(InitialSetupToken.PROPERTY);
     identityService.clearAuthentication();
     processEngineConfiguration.setAuthorizationEnabled(authorizationEnabledInitialValue);
     processEngineConfiguration.setAdminUsers(adminUsersInitialValue);
@@ -314,6 +326,45 @@ public class SetupResourceTest {
   // setup refused //////////////////////////////////////////////////////////////
 
   @Test
+  public void shouldRefuseSetupWithoutSetupToken() {
+    // given
+    presentedToken = null;
+
+    // then
+    assertSetupRefused();
+    assertThat(loggingRule.getFilteredLog("the setup token is missing or wrong")).hasSize(1);
+  }
+
+  @Test
+  public void shouldRefuseSetupWithWrongSetupToken() {
+    // given
+    presentedToken = SETUP_TOKEN + "x";
+
+    // then
+    assertSetupRefused();
+  }
+
+  @Test
+  public void shouldReadSetupTokenFromHeader() throws Exception {
+    // given a resource that reads the header of the request
+    SetupResource headerResource = new SetupResource() {
+      @Override
+      protected ProcessEngine lookupProcessEngine(String engineName) {
+        return lookedUpEngine;
+      }
+    };
+    MockHttpServletRequest request = new MockHttpServletRequest(new MockServletContext());
+    request.addHeader(InitialSetupToken.HEADER, SETUP_TOKEN);
+    headerResource.request = request;
+
+    // when
+    headerResource.createInitialUser(ENGINE_NAME, initialUser());
+
+    // then
+    assertInitialUserCreated();
+  }
+
+  @Test
   public void shouldRefuseSetupWhenAdminGroupHasMember() {
     // given
     createUser("admin");
@@ -352,6 +403,11 @@ public class SetupResourceTest {
       @Override
       protected ProcessEngine lookupProcessEngine(String engineName) {
         return processEngine;
+      }
+
+      @Override
+      protected String presentedSetupToken() {
+        return SETUP_TOKEN;
       }
 
       @Override

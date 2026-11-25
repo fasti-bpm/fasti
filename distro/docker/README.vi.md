@@ -46,7 +46,7 @@ docker build -t fasti-bpm:1.3.0 \
   `select count(*) from ACT_RU_AUTHORIZATION`; cấp quyền trong Admin trước khi chuyển lưu lượng.
 - Không có trang "tạo admin đầu tiên" ẩn danh. Cơ sở dữ liệu trống (hoặc H2 demo): đặt
   `FASTI_ADMIN_USER` + `FASTI_ADMIN_PASSWORD` (hoặc `_FILE`). Admin đã tồn tại thì không bị đổi
-  mật khẩu. `FASTI_INITIAL_SETUP=true` bật lại trang thiết lập (có cảnh báo).
+  mật khẩu. `FASTI_INITIAL_SETUP=true` bật lại trang thiết lập; trang này hỏi mã cài đặt dùng một lần, được in vào log của container (`docker logs`) khi trang được mở lần đầu, hoặc lấy từ `FASTI_SETUP_TOKEN`.
 - Ứng dụng **từ chối khởi động** nếu cấu hình thực tế (file YAML gắn vào, biến môi trường,
   `SPRING_APPLICATION_JSON`, tham số) tắt xác thực REST hoặc phân quyền, hoặc đặt
   `camunda.bpm.admin-user.id` mà không có mật khẩu.
@@ -144,7 +144,8 @@ image 1.1.x; các mục ghi **từ 1.3.0** chưa có trong các image 1.2.x.
 | `FASTI_INSECURE_DEMO` | `false` | `true`: **tắt** xác thực REST và phân quyền, chỉ để demo (xem Bảo mật mặc định) |
 | `FASTI_REST_AUTH` | `true` | luôn bật; giá trị `false` bị từ chối (dùng `FASTI_INSECURE_DEMO`) |
 | `FASTI_REST_AUTH_CACHE_TTL` | `30s` | **Có từ 1.2.1.** Cần ghi đơn vị (`30s`; số trần tính là mili giây). Thời gian ghi nhớ một lần xác thực basic thành công của REST API, cùng nhóm và tenant của người dùng, để các request lặp lại không phải đọc lại (`0` để tắt). Người dùng bị xoá hoặc bị khoá và thay đổi thành viên nhóm có hiệu lực chậm nhất sau khoảng này; thay đổi qua REST API của cùng node xoá cache ngay. Thiết lập `fasti.rest.auth-cache-ttl` |
-| `FASTI_INITIAL_SETUP` | `false` | `true`: bật trang tạo admin đầu tiên khi chưa có admin |
+| `FASTI_INITIAL_SETUP` | `false` | `true`: bật trang tạo admin đầu tiên khi chưa có admin; trang hỏi mã cài đặt dùng một lần được in vào log |
+| `FASTI_SETUP_TOKEN` | — | Mã cài đặt cố định (ít nhất 16 ký tự) thay cho mã được in ra, dùng khi cài tự động |
 | `FASTI_CORS_ALLOWED_ORIGINS` | (tắt) | bật CORS cho REST; `*` như Run trước đây |
 | `FASTI_ADMIN_USER`, `FASTI_ADMIN_PASSWORD` (+`_FILE`) | | tạo admin nếu chưa có; mật khẩu truyền qua biến môi trường, không qua dòng lệnh |
 | `FASTI_WEBAPP_PATH` | `/fasti` | `/camunda` để giữ đường dẫn cũ, không chuyển hướng |

@@ -43,8 +43,9 @@ digest (the `apk upgrade` step still takes the latest Alpine fixes) with `--buil
   traffic.
 - There is no anonymous "create the first administrator" page. For an empty database (or the H2
   demo) set `FASTI_ADMIN_USER` + `FASTI_ADMIN_PASSWORD` (or `_FILE`); an existing administrator
-  is left unchanged (no password reset). `FASTI_INITIAL_SETUP=true` brings the setup page back,
-  with a warning.
+  is left unchanged (no password reset). `FASTI_INITIAL_SETUP=true` brings the setup page back;
+  it asks for the one-time setup token printed to the container log (`docker logs`) when the page
+  is first opened, or for `FASTI_SETUP_TOKEN`.
 - The application **refuses to start** if the effective configuration (mounted YAML files,
   environment variables, `SPRING_APPLICATION_JSON`, arguments) turns REST authentication or
   authorization off, or sets `camunda.bpm.admin-user.id` without a password.
@@ -139,7 +140,8 @@ are not in the 1.2.x images.
 | `FASTI_INSECURE_DEMO` | `false` | `true`: **turns off** REST authentication and authorization, for demos only (see Secure by default) |
 | `FASTI_REST_AUTH` | `true` | always on; `false` is refused (use `FASTI_INSECURE_DEMO`) |
 | `FASTI_REST_AUTH_CACHE_TTL` | `30s` | **From 1.2.1.** Give a unit (`30s`; a bare number is milliseconds). How long a successful basic authentication of the REST API is remembered, with the user's groups and tenants, so that repeated requests do not read them again (`0` turns it off). A deleted or locked user and changed memberships take effect after this time at the latest; changes made through the REST API of the same node clear it at once. Setting `fasti.rest.auth-cache-ttl` |
-| `FASTI_INITIAL_SETUP` | `false` | `true`: enables the page that creates the first administrator when there is none |
+| `FASTI_INITIAL_SETUP` | `false` | `true`: enables the page that creates the first administrator when there is none; it asks for a one-time setup token printed to the log |
+| `FASTI_SETUP_TOKEN` | — | Fixed setup token (at least 16 characters) instead of the printed one, for automated installations |
 | `FASTI_CORS_ALLOWED_ORIGINS` | (off) | enables CORS for REST; `*` matches the former Run default |
 | `FASTI_ADMIN_USER`, `FASTI_ADMIN_PASSWORD` (+`_FILE`) | | creates the administrator if missing; pass the password in an environment variable, not on the command line |
 | `FASTI_WEBAPP_PATH` | `/fasti` | `/camunda` keeps the old path, without redirect |

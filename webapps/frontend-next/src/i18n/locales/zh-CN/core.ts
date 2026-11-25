@@ -322,7 +322,11 @@ const messages: Catalog = {
   'admin.setup.title': '创建首个管理员',
   'admin.setup.text': '此引擎尚无管理员。在此创建的账户将获得所有权限，并成为管理员用户组的成员。',
   'admin.setup.submit': '创建管理员',
-  'admin.setup.failed': '无法创建账户。可能在此期间已有管理员被创建；如果是这样，请直接登录。',
+  'admin.setup.token': '设置令牌',
+  'admin.setup.tokenHint':
+    '首次打开此页面时会写入服务器日志，例如 docker logs 或 catalina.out。在出现管理员之前，它保护此页面。',
+  'admin.setup.failed':
+    '无法创建账户。请检查设置令牌；如果此期间已创建管理员，请直接登录。',
   'admin.setup.done': '管理员“{id}”已创建',
   'admin.setup.doneText': '请使用新账户登录以继续。',
   'admin.setup.signIn': '前往登录',

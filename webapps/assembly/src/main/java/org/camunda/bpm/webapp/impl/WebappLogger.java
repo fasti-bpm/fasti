@@ -76,6 +76,16 @@ public class WebappLogger extends BaseLogger {
         + "for process engine '{}': {}.", engineName, reason);
   }
 
+  public void warnInitialSetupToken(String engineName, String token) {
+    logWarn("010", "Process engine '{}' has no administrator yet. To create the first one on the "
+        + "setup page of the web application, enter this setup token: {}", engineName, token);
+  }
+
+  public void warnInitialSetupTokenTooShort(int minLength) {
+    logWarn("011", "The configured setup token is ignored: it must have at least {} characters. "
+        + "A random token is printed instead.", minLength);
+  }
+
   public void warnClassicWebappsEnabled(String path, String property) {
     logWarn("009", "The classic web applications Cockpit, Tasklist and Admin are served below {}/app/ "
         + "({}=true). They are deprecated: they are built on AngularJS 1.8.2 and Bootstrap 3, "

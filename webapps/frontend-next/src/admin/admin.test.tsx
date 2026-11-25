@@ -664,6 +664,7 @@ describe('initial setup', () => {
     renderApp('/setup');
 
     expect(await screen.findByRole('heading', { name: 'Create the first administrator' })).toBeVisible();
+    await user.type(screen.getByLabelText(/Setup token/), ' token-from-the-log ');
     await user.type(screen.getByLabelText(/User id/), 'admin');
     await user.type(screen.getByLabelText(/^Password/), 'Adm1n-secret');
     await user.type(screen.getByLabelText(/Repeat the password/), 'Adm1n-secret');
@@ -671,10 +672,12 @@ describe('initial setup', () => {
 
     expect(await screen.findByText('Administrator “admin” created')).toBeVisible();
     expect(screen.getByRole('link', { name: 'Go to sign in' })).toHaveAttribute('href', '/fasti/app/next/default/#/login');
-    expect(server.find('POST', '/admin/setup/default/user/create')[0]?.body).toEqual({
+    const sent = server.find('POST', '/admin/setup/default/user/create')[0];
+    expect(sent?.body).toEqual({
       profile: { id: 'admin', firstName: '', lastName: '', email: '' },
       credentials: { password: 'Adm1n-secret' },
     });
+    expect(sent?.headers.get('X-Fasti-Setup-Token')).toBe('token-from-the-log');
   });
 
   it('says so when the server refuses the setup', async () => {
@@ -686,12 +689,13 @@ describe('initial setup', () => {
     });
     renderApp('/setup');
 
-    await user.type(await screen.findByLabelText(/User id/), 'admin');
+    await user.type(await screen.findByLabelText(/Setup token/), 'wrong-token');
+    await user.type(screen.getByLabelText(/User id/), 'admin');
     await user.type(screen.getByLabelText(/^Password/), 'secret');
     await user.type(screen.getByLabelText(/Repeat the password/), 'secret');
     await user.click(screen.getByRole('button', { name: 'Create administrator' }));
 
-    expect(await screen.findByText(/Perhaps an administrator was created in the meantime/)).toBeVisible();
+    expect(await screen.findByText(/Check the setup token/)).toBeVisible();
   });
 });
 

@@ -108,8 +108,13 @@ First administrator:
 
   The distribution creates no users. When you first open
   http://localhost:8080/fasti/ and the engine has no administrator yet,
-  the web UI shows the setup page: enter the user name and the password of
-  the first administrator (group camunda-admin). The page closes once an
+  the web UI shows the setup page: enter the setup token, then the user name
+  and the password of the first administrator (group camunda-admin). The
+  setup token is a one-time code printed to the server log (logs/catalina.*
+  or the console) when the page is first opened, so that nobody else who
+  reaches the server first can create the administrator; a fixed token of
+  at least 16 characters can be set with -Dfasti.setup.token=... or the
+  environment variable FASTI_SETUP_TOKEN. The page closes once an
   administrator exists. Then sign in with that account and create further
   users under Administration. On the database of an existing Camunda 7
   installation, sign in with an existing account. The REST API cannot

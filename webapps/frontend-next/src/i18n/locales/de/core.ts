@@ -345,8 +345,11 @@ const messages: Catalog = {
   'admin.setup.text':
     'Für diese Engine gibt es noch keinen Administrator. Das hier angelegte Konto erhält alle Rechte und ist Mitglied der Administratorengruppe.',
   'admin.setup.submit': 'Administrator anlegen',
+  'admin.setup.token': 'Einrichtungstoken',
+  'admin.setup.tokenHint':
+    'Steht im Serverprotokoll, sobald diese Seite zum ersten Mal geöffnet wird, zum Beispiel in docker logs oder catalina.out. Es schützt diese Seite, bis ein Administrator existiert.',
   'admin.setup.failed':
-    'Das Konto konnte nicht angelegt werden. Vielleicht wurde inzwischen ein Administrator angelegt; melden Sie sich dann stattdessen an.',
+    'Das Konto konnte nicht angelegt werden. Prüfen Sie das Einrichtungstoken; wurde inzwischen ein Administrator angelegt, melden Sie sich stattdessen an.',
   'admin.setup.done': 'Administrator „{id}“ angelegt',
   'admin.setup.doneText': 'Melden Sie sich mit dem neuen Konto an, um fortzufahren.',
   'admin.setup.signIn': 'Zur Anmeldung',

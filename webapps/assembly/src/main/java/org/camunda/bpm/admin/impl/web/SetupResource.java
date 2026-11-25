@@ -48,6 +48,7 @@ import org.camunda.bpm.engine.rest.spi.ProcessEngineProvider;
 import org.camunda.bpm.engine.rest.util.ProvidersUtil;
 import org.camunda.bpm.webapp.impl.WebappLogger;
 import org.camunda.bpm.webapp.impl.security.InitialAdminSetup;
+import org.camunda.bpm.webapp.impl.security.InitialSetupToken;
 import org.camunda.bpm.webapp.impl.security.SecurityActions;
 import org.camunda.bpm.webapp.impl.security.SecurityActions.SecurityAction;
 import org.camunda.bpm.webapp.impl.util.ServletContextUtil;
@@ -108,6 +109,7 @@ public class SetupResource {
 
       // make sure we can process this request at this time
       ensureSetupAvailable(processEngine);
+      ensureSetupTokenPresented(processEngineName);
 
       // reuse logic from rest api implementation
       UserRestServiceImpl userRestServiceImpl = new UserRestServiceImpl(processEngineName, objectMapper);
@@ -178,6 +180,22 @@ public class SetupResource {
       LOGGER.warnSetupActionRefused(processEngine.getName(), reason);
       throw LOGGER.setupActionNotAvailable();
     }
+  }
+
+  /**
+   * The setup also asks for the one-time token printed in the server log, so
+   * that only the person who runs the server can create the first
+   * administrator, see {@link InitialSetupToken}.
+   */
+  protected void ensureSetupTokenPresented(String processEngineName) {
+    if (!InitialSetupToken.matches(processEngineName, presentedSetupToken())) {
+      LOGGER.warnSetupActionRefused(processEngineName, "the setup token is missing or wrong");
+      throw LOGGER.setupActionNotAvailable();
+    }
+  }
+
+  protected String presentedSetupToken() {
+    return request == null ? null : request.getHeader(InitialSetupToken.HEADER);
   }
 
   protected boolean isSetupEnabled() {

@@ -345,8 +345,11 @@ const messages: Catalog = {
   'admin.setup.text':
     'Aún no existe ningún administrador para este motor. La cuenta creada aquí recibe todos los permisos y es miembro del grupo de administradores.',
   'admin.setup.submit': 'Crear administrador',
+  'admin.setup.token': 'Token de configuración',
+  'admin.setup.tokenHint':
+    'Aparece en el registro del servidor la primera vez que se abre esta página, por ejemplo en docker logs o catalina.out. Protege esta página hasta que exista un administrador.',
   'admin.setup.failed':
-    'No se pudo crear la cuenta. Quizá se creó un administrador mientras tanto; en ese caso, inicie sesión.',
+    'No se pudo crear la cuenta. Compruebe el token de configuración; si mientras tanto se creó un administrador, inicie sesión.',
   'admin.setup.done': 'Administrador “{id}” creado',
   'admin.setup.doneText': 'Inicie sesión con la nueva cuenta para continuar.',
   'admin.setup.signIn': 'Ir a iniciar sesión',

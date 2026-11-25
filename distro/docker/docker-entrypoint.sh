@@ -274,7 +274,7 @@ if [ -n "$admin_password" ] && [ -z "${FASTI_ADMIN_USER:-}" ]; then
 fi
 if is_true "${FASTI_INITIAL_SETUP:-}"; then
   add_arg "--camunda.bpm.webapp.initial-setup-enabled=true"
-  log "WARNING: FASTI_INITIAL_SETUP=true: while no administrator exists, anyone who reaches the web application can create one"
+  log "FASTI_INITIAL_SETUP=true: while no administrator exists, the setup page of the web application creates one; it asks for the one-time setup token printed to this log when the page is first opened (or FASTI_SETUP_TOKEN)"
 fi
 if [ -n "${FASTI_ADMIN_USER:-}" ]; then
   [ -n "$admin_password" ] || fail "FASTI_ADMIN_USER needs FASTI_ADMIN_PASSWORD (or FASTI_ADMIN_PASSWORD_FILE)"

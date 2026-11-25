@@ -332,7 +332,11 @@ const messages: Catalog = {
   'admin.setup.title': '첫 번째 관리자 생성',
   'admin.setup.text': '이 엔진에는 아직 관리자가 없습니다. 여기서 생성한 계정은 모든 권한을 가지며 관리자 그룹의 멤버가 됩니다.',
   'admin.setup.submit': '관리자 생성',
-  'admin.setup.failed': '계정을 생성하지 못했습니다. 그사이 관리자가 생성되었을 수 있으니, 그렇다면 로그인하세요.',
+  'admin.setup.token': '설정 토큰',
+  'admin.setup.tokenHint':
+    '이 페이지를 처음 열 때 서버 로그(예: docker logs, catalina.out)에 출력됩니다. 관리자가 생길 때까지 이 페이지를 보호합니다.',
+  'admin.setup.failed':
+    '계정을 만들 수 없습니다. 설정 토큰을 확인하세요. 그사이 관리자가 만들어졌다면 로그인하세요.',
   'admin.setup.done': '관리자 “{id}”을(를) 생성했습니다',
   'admin.setup.doneText': '계속하려면 새 계정으로 로그인하세요.',
   'admin.setup.signIn': '로그인으로 이동',

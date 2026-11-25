@@ -336,8 +336,11 @@ const messages: Catalog = {
   'admin.setup.text':
     'Belum ada administrator untuk engine ini. Akun yang dibuat di sini mendapat semua izin dan menjadi anggota grup administrator.',
   'admin.setup.submit': 'Buat administrator',
+  'admin.setup.token': 'Token penyiapan',
+  'admin.setup.tokenHint':
+    'Dicetak di log server saat halaman ini pertama kali dibuka, misalnya di docker logs atau catalina.out. Token ini melindungi halaman ini sampai ada administrator.',
   'admin.setup.failed':
-    'Akun tidak dapat dibuat. Mungkin administrator sudah dibuat sementara itu; jika demikian, silakan masuk.',
+    'Akun tidak dapat dibuat. Periksa token penyiapan; jika sementara itu administrator sudah dibuat, masuklah.',
   'admin.setup.done': 'Administrator “{id}” dibuat',
   'admin.setup.doneText': 'Masuk dengan akun baru untuk melanjutkan.',
   'admin.setup.signIn': 'Ke halaman masuk',

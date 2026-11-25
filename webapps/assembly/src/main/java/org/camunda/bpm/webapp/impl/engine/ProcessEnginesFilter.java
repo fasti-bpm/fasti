@@ -47,6 +47,7 @@ import org.camunda.bpm.webapp.impl.util.ServletContextUtil;
 import org.camunda.bpm.webapp.impl.IllegalWebAppConfigurationException;
 import org.camunda.bpm.webapp.impl.filter.AbstractTemplateFilter;
 import org.camunda.bpm.webapp.impl.security.InitialAdminSetup;
+import org.camunda.bpm.webapp.impl.security.InitialSetupToken;
 import org.camunda.bpm.webapp.impl.security.SecurityActions;
 import org.camunda.bpm.webapp.impl.security.SecurityActions.SecurityAction;
 import org.camunda.bpm.webapp.plugin.spi.AppPlugin;
@@ -288,6 +289,8 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
       boolean setupPage = SETUP_PAGE.equals(pageUri);
 
       if (ServletContextUtil.isInitialSetupEnabled(request.getServletContext()) && needsInitialUser(engineName)) {
+        // print the one-time setup token to the server log, the setup page asks for it
+        InitialSetupToken.announce(engineName);
         if (!setupPage) {
           // redirect to setup; the new web UI has a setup page of its own
           String setupApp = NEXT_APP_NAME.equals(appName) ? NEXT_APP_NAME : ADMIN_APP_NAME;

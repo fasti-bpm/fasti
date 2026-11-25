@@ -537,12 +537,16 @@ export async function checkPassword(
 
 // --- initial setup -------------------------------------------------------------
 
-/** Creates the first administrator; the server refuses once one exists. */
-export function createInitialUser(user: NewUser): Promise<void> {
+/**
+ * Creates the first administrator; the server refuses once one exists. The
+ * setup token is the one-time token the server prints to its log.
+ */
+export function createInitialUser(user: NewUser, setupToken: string): Promise<void> {
   const { password, ...profile } = user;
   return request<void>(`${setupApi()}/user/create`, {
     method: 'POST',
     json: { profile, credentials: { password } },
+    headers: { 'X-Fasti-Setup-Token': setupToken.trim() },
     silentUnauthorized: true,
   });
 }

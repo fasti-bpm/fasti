@@ -9,19 +9,22 @@ import { Wordmark } from '../app/Logo';
 import { LanguageSwitch, ThemeSwitch } from '../app/preferences';
 import { enginePageUrl, env } from '../env';
 import { useI18n } from '../i18n';
-import { Notice } from '../ui';
+import { Field, Notice } from '../ui';
 import { NewUserForm } from './UsersPage';
 import './admin.css';
 
 /**
- * The first start of an engine without users: whoever opens the application
+ * The first start of an engine without users: the person who runs the server
  * creates the first administrator. The server sends every visitor here as
- * long as no administrator exists, and refuses the request afterwards.
+ * long as no administrator exists, and asks for the one-time setup token it
+ * prints to its log, so that nobody else who reaches the server first can
+ * take it over. It refuses the request once an administrator exists.
  */
 export function SetupPage() {
   const { t } = useI18n();
   const [created, setCreated] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  const [setupToken, setSetupToken] = useState('');
 
   return (
     <main className="login">
@@ -45,11 +48,23 @@ export function SetupPage() {
           <>
             <p className="muted">{t('admin.setup.text')}</p>
             {failed && <Notice tone="danger">{t('admin.setup.failed')}</Notice>}
+            <Field label={t('admin.setup.token')} required hint={t('admin.setup.tokenHint')}>
+              {(props) => (
+                <input
+                  {...props}
+                  className="input"
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={setupToken}
+                  onChange={(event) => setSetupToken(event.target.value)}
+                />
+              )}
+            </Field>
             <NewUserForm
               submitLabel={t('admin.setup.submit')}
               onSubmit={async (user) => {
                 try {
-                  await createInitialUser(user);
+                  await createInitialUser(user, setupToken);
                   setCreated(user.id);
                   return true;
                 } catch {

@@ -331,7 +331,11 @@ const messages: Catalog = {
   'admin.setup.title': 'Créer le premier administrateur',
   'admin.setup.text': 'Aucun administrateur n’existe encore pour ce moteur. Le compte créé ici reçoit toutes les permissions et devient membre du groupe des administrateurs.',
   'admin.setup.submit': 'Créer l’administrateur',
-  'admin.setup.failed': 'Le compte n’a pas pu être créé. Un administrateur a peut-être été créé entre-temps ; connectez-vous alors à la place.',
+  'admin.setup.token': 'Jeton d’installation',
+  'admin.setup.tokenHint':
+    'Écrit dans le journal du serveur à la première ouverture de cette page, par exemple dans docker logs ou catalina.out. Il protège cette page tant qu’aucun administrateur n’existe.',
+  'admin.setup.failed':
+    'Le compte n’a pas pu être créé. Vérifiez le jeton d’installation ; si un administrateur a été créé entre-temps, connectez-vous.',
   'admin.setup.done': 'Administrateur « {id} » créé',
   'admin.setup.doneText': 'Connectez-vous avec le nouveau compte pour continuer.',
   'admin.setup.signIn': 'Aller à la connexion',

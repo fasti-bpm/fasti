@@ -55,6 +55,8 @@ export interface RequestOptions {
   raw?: { body: string; contentType: string };
   /** query string as it is, e.g. `?a=1&a=2`; replaces `query` */
   search?: string;
+  /** further request headers, e.g. the setup token of the initial setup */
+  headers?: Record<string, string>;
 }
 
 const CSRF_HEADER = 'X-XSRF-TOKEN';
@@ -162,6 +164,7 @@ async function currentToken(): Promise<string | null> {
 async function send(path: string, options: RequestOptions): Promise<Response> {
   const method = options.method ?? 'GET';
   const headers: Record<string, string> = {
+    ...options.headers,
     Accept: options.accept ?? 'application/json',
   };
   let body: string | FormData | undefined;

@@ -111,7 +111,7 @@ together with production mode, `FASTI_MANAGEMENT_PORT` in `extraEnv` instead of
 `management.port`, a ServiceMonitor port the Service does not have).
 
 Not exposed on purpose: `FASTI_INSECURE_DEMO` (open REST API, refused with `--production`) and
-`FASTI_INITIAL_SETUP` (anonymous first-admin page). Use `admin.*` for an empty database.
+`FASTI_INITIAL_SETUP` (first-admin page, protected by a one-time token from the log). Use `admin.*` for an empty database.
 
 ## Several replicas
 

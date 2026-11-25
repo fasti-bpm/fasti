@@ -336,8 +336,11 @@ const messages: Catalog = {
   'admin.setup.text':
     'Engine này chưa có quản trị viên. Tài khoản tạo tại đây có mọi quyền và là thành viên của nhóm quản trị.',
   'admin.setup.submit': 'Tạo quản trị viên',
+  'admin.setup.token': 'Mã cài đặt',
+  'admin.setup.tokenHint':
+    'Được in trong log của máy chủ khi trang này được mở lần đầu, ví dụ trong docker logs hoặc catalina.out. Mã này bảo vệ trang cho tới khi có quản trị viên.',
   'admin.setup.failed':
-    'Không tạo được tài khoản. Có thể quản trị viên đã được tạo trong lúc này; khi đó hãy đăng nhập.',
+    'Không tạo được tài khoản. Hãy kiểm tra mã cài đặt; nếu quản trị viên đã được tạo trong lúc đó, hãy đăng nhập.',
   'admin.setup.done': 'Đã tạo quản trị viên “{id}”',
   'admin.setup.doneText': 'Hãy đăng nhập bằng tài khoản mới để tiếp tục.',
   'admin.setup.signIn': 'Đến trang đăng nhập',

@@ -280,8 +280,8 @@ Docker Compose के साथ: `FASTI_IMAGE` (या `image:` पंक्त�
 
 ## 12. Docker के बिना
 
-तैयार Tomcat 1.3.0 बंडल (डाउनलोड पृष्ठ: https://fasti.dev/download):
-- [fasti-bpm-tomcat-1.3.0.zip](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip.sha256))
-- [fasti-bpm-tomcat-1.3.0.tar.gz](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz.sha256))
+तैयार Tomcat 1.3.1 बंडल (डाउनलोड पृष्ठ: https://fasti.dev/download):
+- [fasti-bpm-tomcat-1.3.1.zip](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.zip.sha256))
+- [fasti-bpm-tomcat-1.3.1.tar.gz](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.tar.gz.sha256))
 
-एक्सट्रैक्ट करने से पहले चेकसम सत्यापित करें, उदाहरण के लिए `sha256sum -c fasti-bpm-tomcat-1.3.0.zip.sha256`।
+एक्सट्रैक्ट करने से पहले चेकसम सत्यापित करें, उदाहरण के लिए `sha256sum -c fasti-bpm-tomcat-1.3.1.zip.sha256`।

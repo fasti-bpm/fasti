@@ -64,6 +64,13 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.core.env.Environment;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
@@ -268,9 +275,15 @@ public class CamundaSpringSecurityOAuth2AutoConfiguration {
             PathPatternRequestMatcher.withDefaults().matcher(webappPath + "/api/**")))
         .addFilterAfter(authorizeTokenFilter, OAuth2AuthorizationRequestRedirectFilter.class)
         .anonymous(AbstractHttpConfigurer::disable)
-        .oidcLogout(c -> c.backChannel(b -> b.logoutUri(internalLogoutUri(environment))))
+        .oidcLogout(c -> c.backChannel(b -> b.logoutUri(internalLogoutUri(environment,
+            fastiOidcProperties.getBackChannelLogoutUri()))))
         .oauth2Login(c -> c
             .authorizationEndpoint(a -> a.authorizationRequestResolver(loginOnlyResolver))
+            // a second line of defence: a login that comes back from another registration
+            // (for example started by the OAuth2 client filter) is refused
+            .userInfoEndpoint(u -> u
+                .oidcUserService(loginRegistrationOnly(new OidcUserService(), loginRegistrationId))
+                .userService(loginRegistrationOnly(new DefaultOAuth2UserService(), loginRegistrationId)))
             .successHandler(new ReturnUrlAuthenticationSuccessHandler()))
         .logout(c -> c
             .logoutRequestMatcher(new SameOriginPostRequestMatcher(LOGOUT_PATH))
@@ -278,7 +291,7 @@ public class CamundaSpringSecurityOAuth2AutoConfiguration {
             .invalidateHttpSession(true)
             .logoutSuccessHandler(finalLogoutSuccessHandler)
         )
-        .oauth2Client(Customizer.withDefaults())
+        .oauth2Client(c -> c.authorizationCodeGrant(g -> g.authorizationRequestResolver(loginOnlyResolver)))
         .cors(AbstractHttpConfigurer::disable)
         // the web applications protect /api and /app with their own CSRF filter
         // (X-XSRF-TOKEN); the logout only accepts same-origin POST requests
@@ -293,14 +306,51 @@ public class CamundaSpringSecurityOAuth2AutoConfiguration {
    * base URL of the incoming logout request, which a container often cannot reach (published
    * port, name of the proxy in front); the local connector is always reachable.
    */
-  protected static String internalLogoutUri(Environment environment) {
-    String port = environment.getProperty("server.port", "8080");
-    if ("0".equals(port.trim()) || "-1".equals(port.trim())) {
+  protected static String internalLogoutUri(Environment environment, String configured) {
+    if (configured != null && !configured.isBlank()) {
+      return configured.trim();
+    }
+    String port = environment.getProperty("server.port", "8080").trim();
+    if ("0".equals(port) || "-1".equals(port) || tlsConfigured(environment)) {
+      // a random port is unknown here; with TLS the certificate rarely names the local
+      // address: keep the address of the incoming request (fasti.security.oidc.back-channel-logout-uri
+      // sets another one)
       return "{baseUrl}" + LOGOUT_PATH;
     }
-    String scheme = Boolean.parseBoolean(environment.getProperty("server.ssl.enabled", "false")) ? "https" : "http";
+    String address = environment.getProperty("server.address", "").trim();
+    String host = address.isEmpty() || "0.0.0.0".equals(address) || "::".equals(address) ? "localhost"
+        : address.contains(":") ? "[" + address + "]" : address;
     String contextPath = environment.getProperty("server.servlet.context-path", "");
-    return scheme + "://localhost:" + port.trim() + contextPath + LOGOUT_PATH;
+    return "http://" + host + ":" + port + contextPath + LOGOUT_PATH;
+  }
+
+  /** Whether the server connector uses TLS: Spring Boot turns it on as soon as a key store or bundle is set. */
+  protected static boolean tlsConfigured(Environment environment) {
+    if ("false".equalsIgnoreCase(environment.getProperty("server.ssl.enabled", "").trim())) {
+      return false;
+    }
+    return "true".equalsIgnoreCase(environment.getProperty("server.ssl.enabled", "").trim())
+        || hasText(environment.getProperty("server.ssl.key-store"))
+        || hasText(environment.getProperty("server.ssl.bundle"))
+        || hasText(environment.getProperty("server.ssl.certificate"));
+  }
+
+  private static boolean hasText(String value) {
+    return value != null && !value.isBlank();
+  }
+
+  /** Refuses a user that signed in through another than the login registration. */
+  static <R extends OAuth2UserRequest, U extends OAuth2User> OAuth2UserService<R, U> loginRegistrationOnly(
+      OAuth2UserService<R, U> delegate, String registrationId) {
+    return request -> {
+      String id = request.getClientRegistration().getRegistrationId();
+      if (!registrationId.equals(id)) {
+        logger.warn("Refused a login through client registration '{}': only '{}' signs users in", id, registrationId);
+        throw new OAuth2AuthenticationException(new OAuth2Error("invalid_client_registration",
+            "This client registration does not sign users in", null));
+      }
+      return delegate.loadUser(request);
+    };
   }
 
   /** Resolves authorization requests of the login registration only. */

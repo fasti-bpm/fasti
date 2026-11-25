@@ -57,13 +57,33 @@ class LoginRegistrationOnlyResolverTest {
 
   @Test
   void shouldPostTheBackChannelLogoutToTheLocalConnector() {
-    assertThat(CamundaSpringSecurityOAuth2AutoConfiguration.internalLogoutUri(new MockEnvironment()))
+    assertThat(uri(new MockEnvironment())).isEqualTo("http://localhost:8080/logout");
+    assertThat(uri(new MockEnvironment().withProperty("server.port", "9090")
+        .withProperty("server.servlet.context-path", "/bpm"))).isEqualTo("http://localhost:9090/bpm/logout");
+    assertThat(uri(new MockEnvironment().withProperty("server.address", "10.1.2.3")))
+        .isEqualTo("http://10.1.2.3:8080/logout");
+    assertThat(uri(new MockEnvironment().withProperty("server.address", "0.0.0.0")))
         .isEqualTo("http://localhost:8080/logout");
-    assertThat(CamundaSpringSecurityOAuth2AutoConfiguration.internalLogoutUri(new MockEnvironment()
-        .withProperty("server.port", "9443").withProperty("server.ssl.enabled", "true")))
-        .isEqualTo("https://localhost:9443/logout");
-    assertThat(CamundaSpringSecurityOAuth2AutoConfiguration.internalLogoutUri(new MockEnvironment()
-        .withProperty("server.port", "0")))
-        .isEqualTo("{baseUrl}/logout");
+  }
+
+  @Test
+  void shouldKeepTheRequestAddressWithTlsOrARandomPort() {
+    // Spring Boot turns TLS on as soon as a key store is set, without server.ssl.enabled
+    assertThat(uri(new MockEnvironment().withProperty("server.port", "8443")
+        .withProperty("server.ssl.key-store", "file:keystore.p12"))).isEqualTo("{baseUrl}/logout");
+    assertThat(uri(new MockEnvironment().withProperty("server.ssl.enabled", "true"))).isEqualTo("{baseUrl}/logout");
+    assertThat(uri(new MockEnvironment().withProperty("server.port", "0"))).isEqualTo("{baseUrl}/logout");
+    assertThat(uri(new MockEnvironment().withProperty("server.ssl.enabled", "false")
+        .withProperty("server.ssl.key-store", "file:keystore.p12"))).isEqualTo("http://localhost:8080/logout");
+  }
+
+  @Test
+  void shouldUseTheConfiguredUri() {
+    assertThat(CamundaSpringSecurityOAuth2AutoConfiguration.internalLogoutUri(new MockEnvironment(),
+        " https://fasti.internal/logout ")).isEqualTo("https://fasti.internal/logout");
+  }
+
+  private static String uri(MockEnvironment environment) {
+    return CamundaSpringSecurityOAuth2AutoConfiguration.internalLogoutUri(environment, null);
   }
 }

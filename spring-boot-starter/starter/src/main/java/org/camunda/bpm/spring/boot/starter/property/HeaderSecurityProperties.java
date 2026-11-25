@@ -41,6 +41,16 @@ public class HeaderSecurityProperties {
   protected String hstsMaxAge;
   protected String hstsValue;
 
+  // Fasti: Referrer-Policy, Permissions-Policy and Cross-Origin-Opener-Policy
+  protected boolean referrerPolicyDisabled = false;
+  protected String referrerPolicyValue;
+
+  protected boolean permissionsPolicyDisabled = false;
+  protected String permissionsPolicyValue;
+
+  protected boolean crossOriginOpenerPolicyDisabled = false;
+  protected String crossOriginOpenerPolicyValue;
+
   public Map<String, String> getInitParams() {
     Map<String, String> initParams = new HashMap<>();
 
@@ -79,6 +89,27 @@ public class HeaderSecurityProperties {
     }
     if (StringUtils.isNotBlank(hstsValue)) {
       initParams.put("hstsValue", hstsValue);
+    }
+
+    if (referrerPolicyDisabled) { // default is false
+      initParams.put("referrerPolicyDisabled", String.valueOf(referrerPolicyDisabled));
+    }
+    if (StringUtils.isNotBlank(referrerPolicyValue)) {
+      initParams.put("referrerPolicyValue", referrerPolicyValue);
+    }
+
+    if (permissionsPolicyDisabled) { // default is false
+      initParams.put("permissionsPolicyDisabled", String.valueOf(permissionsPolicyDisabled));
+    }
+    if (StringUtils.isNotBlank(permissionsPolicyValue)) {
+      initParams.put("permissionsPolicyValue", permissionsPolicyValue);
+    }
+
+    if (crossOriginOpenerPolicyDisabled) { // default is false
+      initParams.put("crossOriginOpenerPolicyDisabled", String.valueOf(crossOriginOpenerPolicyDisabled));
+    }
+    if (StringUtils.isNotBlank(crossOriginOpenerPolicyValue)) {
+      initParams.put("crossOriginOpenerPolicyValue", crossOriginOpenerPolicyValue);
     }
 
     return initParams;
@@ -172,6 +203,54 @@ public class HeaderSecurityProperties {
     this.hstsMaxAge = hstsMaxAge;
   }
 
+  public boolean isReferrerPolicyDisabled() {
+    return referrerPolicyDisabled;
+  }
+
+  public void setReferrerPolicyDisabled(boolean referrerPolicyDisabled) {
+    this.referrerPolicyDisabled = referrerPolicyDisabled;
+  }
+
+  public String getReferrerPolicyValue() {
+    return referrerPolicyValue;
+  }
+
+  public void setReferrerPolicyValue(String referrerPolicyValue) {
+    this.referrerPolicyValue = referrerPolicyValue;
+  }
+
+  public boolean isPermissionsPolicyDisabled() {
+    return permissionsPolicyDisabled;
+  }
+
+  public void setPermissionsPolicyDisabled(boolean permissionsPolicyDisabled) {
+    this.permissionsPolicyDisabled = permissionsPolicyDisabled;
+  }
+
+  public String getPermissionsPolicyValue() {
+    return permissionsPolicyValue;
+  }
+
+  public void setPermissionsPolicyValue(String permissionsPolicyValue) {
+    this.permissionsPolicyValue = permissionsPolicyValue;
+  }
+
+  public boolean isCrossOriginOpenerPolicyDisabled() {
+    return crossOriginOpenerPolicyDisabled;
+  }
+
+  public void setCrossOriginOpenerPolicyDisabled(boolean crossOriginOpenerPolicyDisabled) {
+    this.crossOriginOpenerPolicyDisabled = crossOriginOpenerPolicyDisabled;
+  }
+
+  public String getCrossOriginOpenerPolicyValue() {
+    return crossOriginOpenerPolicyValue;
+  }
+
+  public void setCrossOriginOpenerPolicyValue(String crossOriginOpenerPolicyValue) {
+    this.crossOriginOpenerPolicyValue = crossOriginOpenerPolicyValue;
+  }
+
   @Override
   public String toString() {
     StringJoiner joinedString = joinOn(this.getClass())
@@ -189,7 +268,13 @@ public class HeaderSecurityProperties {
       .add("hstsDisabled=" + hstsDisabled)
       .add("hstsMaxAge=" + hstsMaxAge)
       .add("hstsIncludeSubdomainsDisabled=" + hstsIncludeSubdomainsDisabled)
-      .add("hstsValue=" + hstsValue);
+      .add("hstsValue=" + hstsValue)
+      .add("referrerPolicyDisabled=" + referrerPolicyDisabled)
+      .add("referrerPolicyValue=" + referrerPolicyValue)
+      .add("permissionsPolicyDisabled=" + permissionsPolicyDisabled)
+      .add("permissionsPolicyValue=" + permissionsPolicyValue)
+      .add("crossOriginOpenerPolicyDisabled=" + crossOriginOpenerPolicyDisabled)
+      .add("crossOriginOpenerPolicyValue=" + crossOriginOpenerPolicyValue);
 
     return joinedString.toString();
   }

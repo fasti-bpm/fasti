@@ -48,6 +48,13 @@ public class FastiOidcProperties {
    */
   private String registrationId;
 
+  /**
+   * Where the back-channel logout posts the logout of each session, for example
+   * {@code http://localhost:8080/logout}. Defaults to the local connector for
+   * plain HTTP and to the address of the incoming request with TLS.
+   */
+  private String backChannelLogoutUri;
+
   @NestedConfigurationProperty
   private Groups groups = new Groups();
 
@@ -281,6 +288,14 @@ public class FastiOidcProperties {
 
   public void setRegistrationId(String registrationId) {
     this.registrationId = registrationId;
+  }
+
+  public String getBackChannelLogoutUri() {
+    return backChannelLogoutUri;
+  }
+
+  public void setBackChannelLogoutUri(String backChannelLogoutUri) {
+    this.backChannelLogoutUri = backChannelLogoutUri;
   }
 
   public Groups getGroups() {

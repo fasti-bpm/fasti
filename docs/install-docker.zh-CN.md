@@ -279,8 +279,8 @@ docker run -d --name fasti ... fastidev/fasti-bpm:1.3.0 --production   # same op
 
 ## 12. 不使用 Docker
 
-预构建的 Tomcat 1.2.1 软件包（下载页面：<https://fasti.dev/download>）：
-- [fasti-bpm-tomcat-1.2.1.zip](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.zip.sha256))
-- [fasti-bpm-tomcat-1.2.1.tar.gz](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.tar.gz.sha256))
+预构建的 Tomcat 1.3.0 软件包（下载页面：<https://fasti.dev/download>）：
+- [fasti-bpm-tomcat-1.3.0.zip](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip.sha256))
+- [fasti-bpm-tomcat-1.3.0.tar.gz](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz.sha256))
 
-解压前请验证校验和，例如 `sha256sum -c fasti-bpm-tomcat-1.2.1.zip.sha256`。
+解压前请验证校验和，例如 `sha256sum -c fasti-bpm-tomcat-1.3.0.zip.sha256`。

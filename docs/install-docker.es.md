@@ -280,8 +280,8 @@ Consulte el registro con `docker logs fasti` (o `docker compose logs fasti`).
 
 ## 12. Sin Docker
 
-Paquete de Tomcat 1.2.1 listo para usar (página de descarga: https://fasti.dev/download):
-- [fasti-bpm-tomcat-1.2.1.zip](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.zip.sha256))
-- [fasti-bpm-tomcat-1.2.1.tar.gz](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.tar.gz.sha256))
+Paquete de Tomcat 1.3.0 listo para usar (página de descarga: https://fasti.dev/download):
+- [fasti-bpm-tomcat-1.3.0.zip](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip.sha256))
+- [fasti-bpm-tomcat-1.3.0.tar.gz](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz.sha256))
 
-Verifique la suma de comprobación antes de extraer el archivo, por ejemplo con `sha256sum -c fasti-bpm-tomcat-1.2.1.zip.sha256`.
+Verifique la suma de comprobación antes de extraer el archivo, por ejemplo con `sha256sum -c fasti-bpm-tomcat-1.3.0.zip.sha256`.

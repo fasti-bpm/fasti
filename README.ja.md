@@ -65,11 +65,11 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**Docker イメージ**（`fastidev/fasti-bpm`、amd64 および arm64）：<https://fasti.dev/install>。手順は
   [docs/install-docker.ja.md](docs/install-docker.ja.md)、すべての変数は
   [distro/docker/README.md](distro/docker/README.md#environment-variables) を参照してください。
-- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Tomcat バンドル**（Docker を使わない場合）：<https://fasti.dev/download>。ビルド済みの Tomcat 1.2.1 バンドル：
-  - [fasti-bpm-tomcat-1.2.1.zip](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.zip)（[SHA-256](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.zip.sha256)）
-  - [fasti-bpm-tomcat-1.2.1.tar.gz](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.tar.gz)（[SHA-256](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.tar.gz.sha256)）
+- <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Tomcat バンドル**（Docker を使わない場合）：<https://fasti.dev/download>。ビルド済みの Tomcat 1.3.0 バンドル：
+  - [fasti-bpm-tomcat-1.3.0.zip](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip)（[SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip.sha256)）
+  - [fasti-bpm-tomcat-1.3.0.tar.gz](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz)（[SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz.sha256)）
 
-  展開する前にチェックサムを検証してください。例：`sha256sum -c fasti-bpm-tomcat-1.2.1.zip.sha256`。
+  展開する前にチェックサムを検証してください。例：`sha256sum -c fasti-bpm-tomcat-1.3.0.zip.sha256`。
   起動前にバンドル内の `README.txt` を読んでください。
 - **組み込み**（Spring Boot またはその他の Java アプリケーション）：新しい Maven 座標
   （`dev.fasti.platform:fasti-*`）、同じ `org.camunda.bpm.*` パッケージ。

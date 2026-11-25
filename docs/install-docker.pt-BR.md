@@ -280,8 +280,8 @@ Ainda não conseguiu resolver? Abra uma issue no GitHub com o log (sem as senhas
 
 ## 12. Sem Docker
 
-Pacote Tomcat 1.2.1 pronto para uso (página de download: https://fasti.dev/download):
-- [fasti-bpm-tomcat-1.2.1.zip](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.zip.sha256))
-- [fasti-bpm-tomcat-1.2.1.tar.gz](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.2.1/fasti-bpm-tomcat-1.2.1.tar.gz.sha256))
+Pacote Tomcat 1.3.0 pronto para uso (página de download: https://fasti.dev/download):
+- [fasti-bpm-tomcat-1.3.0.zip](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip.sha256))
+- [fasti-bpm-tomcat-1.3.0.tar.gz](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz.sha256))
 
-Verifique a soma de verificação antes de extrair, por exemplo `sha256sum -c fasti-bpm-tomcat-1.2.1.zip.sha256`.
+Verifique a soma de verificação antes de extrair, por exemplo `sha256sum -c fasti-bpm-tomcat-1.3.0.zip.sha256`.

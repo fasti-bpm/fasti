@@ -157,9 +157,12 @@ public class MultipartPayloadProvider implements MessageBodyReader<MultipartForm
         | FileCountLimitExceededException e) {
       throw new RestException(Status.REQUEST_ENTITY_TOO_LARGE, e, "multipart/form-data exceeds the configured limit: " + e.getMessage());
     } catch (Exception e) {
-      if (e.getCause() instanceof FileUploadBase.SizeLimitExceededException
-          || e.getCause() instanceof FileUploadBase.FileSizeLimitExceededException) {
-        throw new RestException(Status.REQUEST_ENTITY_TOO_LARGE, e, "multipart/form-data exceeds the configured limit");
+      // reading a part wraps the limit in further exceptions
+      for (Throwable cause = e.getCause(); cause != null && cause != cause.getCause(); cause = cause.getCause()) {
+        if (cause instanceof FileUploadBase.SizeLimitExceededException
+            || cause instanceof FileUploadBase.FileSizeLimitExceededException) {
+          throw new RestException(Status.REQUEST_ENTITY_TOO_LARGE, e, "multipart/form-data exceeds the configured limit");
+        }
       }
       throw new RestException(Status.BAD_REQUEST, e, "multipart/form-data cannot be processed");
 

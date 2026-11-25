@@ -55,6 +55,19 @@ public class MultipartPayloadProviderLimitTest {
   }
 
   @Test
+  public void shouldAnswer413WhenALargePartIsReadInChunks() {
+    // given a part far larger than the buffers of the parser
+    System.setProperty(MultipartPayloadProvider.MAX_SIZE_PROPERTY, "1MB");
+
+    // when
+    RestException e = catchThrowableOfType(() -> read(body(1, 1200 * 1024)), RestException.class);
+
+    // then
+    assertThat(e).isNotNull();
+    assertThat(e.getStatus()).isEqualTo(Status.REQUEST_ENTITY_TOO_LARGE);
+  }
+
+  @Test
   public void shouldAnswer413WhenThereAreTooManyParts() {
     // given
     System.setProperty(MultipartPayloadProvider.MAX_PARTS_PROPERTY, "3");

@@ -102,7 +102,8 @@ def check_unauthenticated(base):
         status, _, _ = anon.call("GET", path)
         record(f"no login: GET {path} refused", status in (401, 403, 404), f"status {status}")
     status, _, _ = anon.call("GET", "/actuator/health")
-    record("no login: health check answers", status == 200, f"status {status}")
+    # the Tomcat bundle has no actuator
+    record("no login: health check answers (image) or is absent (Tomcat)", status in (200, 404), f"status {status}")
 
 
 def check_setup(base, setup_open):
@@ -224,7 +225,7 @@ def main():
         print(f"admin login failed ({status}); stopping")
         return 1
 
-    pw = "Smoke-" + uuid.uuid4().hex[:12] + "-A1!"
+    pw = "Pw-" + uuid.uuid4().hex[:12] + "-Zq7!"
     users = ["smokelimited", "smokealice", "smokebob"]
     for user in users:
         admin.call("POST", "/engine-rest/user/create", {"profile": {"id": user, "firstName": "Smoke", "lastName": "Test",

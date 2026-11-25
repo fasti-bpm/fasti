@@ -179,11 +179,13 @@ trợ cài đặt, chuyển đổi hoặc vận hành production, hay thống nh
 Fasti BPM là một dự án mã nguồn mở độc lập (tổ chức GitHub `fasti-bpm`, liên hệ
 <contact@fasti.dev>). Dự án không liên kết với Camunda và không có bản enterprise.
 
-Chúng tôi dùng công cụ lập trình AI (Anthropic Claude và OpenAI Codex) để viết, rà soát và kiểm
-thử mã, như mọi công cụ khác: một thay đổi không được nhận chỉ vì công cụ đã viết nó. Mọi thay đổi
-đều qua bộ test (hơn 16.000 test của engine kế thừa từ Camunda 7 cộng với test của chúng tôi), test
-giao diện web, CI trên Java 17 và 21 và CodeQL; thay đổi liên quan tới bảo mật được rà soát thêm
-một lượt riêng. Những gì đã kiểm thử về bảo mật, và những gì chưa, nằm trong
+Chúng tôi làm việc với những model AI mạnh nhất hiện có, hiện là Claude của Anthropic (Opus và
+Fable) và GPT của OpenAI qua Codex, để viết mã và trên hết là để rà soát, săn lỗi. Thay đổi liên
+quan tới bảo mật được nhiều model rà soát song song, model này không thấy kết luận của model kia,
+và một phát hiện chỉ được tính khi đã xác nhận trong mã và bằng test; các lỗi sửa trong 1.3.1 được
+tìm ra theo cách đó. Không thay đổi nào được nhận chỉ vì model đã viết nó: mọi thay đổi đều qua bộ
+test (hơn 16.000 test của engine kế thừa từ Camunda 7 cộng với test của chúng tôi), test giao diện
+web, CI trên Java 17 và 21 và CodeQL. Những gì đã kiểm thử về bảo mật, và những gì chưa, nằm trong
 [kiểm thử bảo mật](../security/pentest-1.3.vi.md).
 
 <a id="timeline"></a><a id="camunda-7-milestones"></a><a id="fasti-bpm"></a><a id="roadmap-plan"></a>

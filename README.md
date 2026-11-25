@@ -190,12 +190,14 @@ terms, write to <contact@fasti.dev>.
 Fasti BPM is an independent open-source project (GitHub organization `fasti-bpm`, contact
 <contact@fasti.dev>). It is not affiliated with Camunda and has no enterprise edition.
 
-We use AI coding tools (Anthropic Claude and OpenAI Codex) to write, review and test code, as we
-use any other tool: a change is not accepted because a tool wrote it. Every change goes through
-the test suite (more than 16,000 engine tests inherited from Camunda 7 plus our own), the web UI
-tests, CI on Java 17 and 21 and CodeQL; security-relevant changes get a second, separate review.
-What we tested for security, and what we did not, is in the
-[security test](docs/security/pentest-1.3.md).
+We work with the most capable AI models available at the time, currently Anthropic's Claude
+(Opus and Fable) and OpenAI's GPT through Codex, to write code and above all to review it and hunt
+for bugs. Security-relevant changes are reviewed in parallel by several models that do not see each
+other's conclusions, and a finding counts only once it is confirmed in the code and by a test; this
+is how the issues fixed in 1.3.1 were found. A change is never accepted because a model wrote it:
+every change goes through the test suite (more than 16,000 engine tests inherited from Camunda 7
+plus our own), the web UI tests, CI on Java 17 and 21 and CodeQL. What we tested for security, and
+what we did not, is in the [security test](docs/security/pentest-1.3.md).
 
 <a id="timeline"></a><a id="camunda-7-milestones"></a><a id="fasti-bpm"></a><a id="roadmap-plan"></a>
 

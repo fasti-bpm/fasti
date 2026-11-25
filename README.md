@@ -199,6 +199,13 @@ every change goes through the test suite (more than 16,000 engine tests inherite
 plus our own), the web UI tests, CI on Java 17 and 21 and CodeQL. What we tested for security, and
 what we did not, is in the [security test](docs/security/pentest-1.3.md).
 
+We also study how people actually use and judge BPM tools: we read the questions and complaints of
+users on Hacker News, the Camunda forum, blogs and the issue trackers of Camunda 7 and its forks,
+above all from teams that run BPM in production, and turn what keeps coming up into features,
+fixes and documentation. That is why single sign-on, the audit trail, the four-eyes control and
+the analytics are free here, why the security results are public, and why the upgrade notes say
+plainly what changes.
+
 <a id="timeline"></a><a id="camunda-7-milestones"></a><a id="fasti-bpm"></a><a id="roadmap-plan"></a>
 
 ## Roadmap

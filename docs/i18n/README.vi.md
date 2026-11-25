@@ -188,6 +188,13 @@ test (hơn 16.000 test của engine kế thừa từ Camunda 7 cộng với test
 web, CI trên Java 17 và 21 và CodeQL. Những gì đã kiểm thử về bảo mật, và những gì chưa, nằm trong
 [kiểm thử bảo mật](../security/pentest-1.3.vi.md).
 
+Ngoài ra, chúng tôi nghiên cứu cách người dùng thực sự dùng và đánh giá công cụ BPM: đọc câu hỏi
+và phàn nàn của người dùng trên Hacker News, diễn đàn Camunda, các blog và issue tracker của
+Camunda 7 cùng các fork, nhất là từ những nhóm đang chạy BPM trên production, rồi biến những điều
+được nhắc đi nhắc lại thành tính năng, bản sửa và tài liệu. Vì vậy đăng nhập một lần, audit trail,
+luật bốn mắt và analytics đều miễn phí, kết quả kiểm thử bảo mật được công bố, và ghi chú nâng cấp
+nói rõ những gì thay đổi.
+
 <a id="timeline"></a><a id="camunda-7-milestones"></a><a id="fasti-bpm"></a><a id="roadmap-plan"></a>
 
 ## Lộ trình

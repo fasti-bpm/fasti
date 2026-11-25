@@ -347,7 +347,7 @@ const messages: Catalog = {
   'admin.setup.submit': 'Administrator anlegen',
   'admin.setup.token': 'Einrichtungstoken',
   'admin.setup.tokenHint':
-    'Steht im Serverprotokoll, sobald diese Seite zum ersten Mal geöffnet wird, zum Beispiel in docker logs oder catalina.out. Es schützt diese Seite, bis ein Administrator existiert.',
+    'Ein Einmalcode, der beim ersten Öffnen dieser Seite ins Serverprotokoll geschrieben wird: Suchen Sie im Protokoll nach "setup token" (docker logs, catalina.*.log oder die Konsole Ihrer Anwendung). Er schützt diese Seite, bis ein Administrator existiert.',
   'admin.setup.failed':
     'Das Konto konnte nicht angelegt werden. Prüfen Sie das Einrichtungstoken; wurde inzwischen ein Administrator angelegt, melden Sie sich stattdessen an.',
   'admin.setup.done': 'Administrator „{id}“ angelegt',

@@ -324,7 +324,7 @@ const messages: Catalog = {
   'admin.setup.submit': '创建管理员',
   'admin.setup.token': '设置令牌',
   'admin.setup.tokenHint':
-    '首次打开此页面时会写入服务器日志，例如 docker logs 或 catalina.out。在出现管理员之前，它保护此页面。',
+    '首次打开此页面时写入服务器日志的一次性代码：在日志中搜索“setup token”（docker logs、catalina.*.log 或应用程序的控制台）。在出现管理员之前，它保护此页面。',
   'admin.setup.failed':
     '无法创建账户。请检查设置令牌；如果此期间已创建管理员，请直接登录。',
   'admin.setup.done': '管理员“{id}”已创建',

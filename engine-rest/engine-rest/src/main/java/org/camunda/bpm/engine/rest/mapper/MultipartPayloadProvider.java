@@ -114,6 +114,9 @@ public class MultipartPayloadProvider implements MessageBodyReader<MultipartForm
     try {
       return parseSize(value);
     } catch (NumberFormatException | ArithmeticException e) {
+      java.util.logging.Logger.getLogger(MultipartPayloadProvider.class.getName()).warning(
+          "Ignoring the invalid value '" + value + "' of " + property + " / " + environmentVariable
+          + "; using " + defaultValue);
       return defaultValue;
     }
   }

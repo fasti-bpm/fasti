@@ -334,7 +334,7 @@ const messages: Catalog = {
   'admin.setup.submit': '관리자 생성',
   'admin.setup.token': '설정 토큰',
   'admin.setup.tokenHint':
-    '이 페이지를 처음 열 때 서버 로그(예: docker logs, catalina.out)에 출력됩니다. 관리자가 생길 때까지 이 페이지를 보호합니다.',
+    '이 페이지를 처음 열 때 서버 로그에 출력되는 일회용 코드입니다. 로그에서 "setup token"을 찾으세요(docker logs, catalina.*.log 또는 애플리케이션 콘솔). 관리자가 생길 때까지 이 페이지를 보호합니다.',
   'admin.setup.failed':
     '계정을 만들 수 없습니다. 설정 토큰을 확인하세요. 그사이 관리자가 만들어졌다면 로그인하세요.',
   'admin.setup.done': '관리자 “{id}”을(를) 생성했습니다',

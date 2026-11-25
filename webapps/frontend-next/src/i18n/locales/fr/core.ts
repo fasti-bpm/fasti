@@ -333,7 +333,7 @@ const messages: Catalog = {
   'admin.setup.submit': 'Créer l’administrateur',
   'admin.setup.token': 'Jeton d’installation',
   'admin.setup.tokenHint':
-    'Écrit dans le journal du serveur à la première ouverture de cette page, par exemple dans docker logs ou catalina.out. Il protège cette page tant qu’aucun administrateur n’existe.',
+    'Un code à usage unique écrit dans le journal du serveur à la première ouverture de cette page : cherchez « setup token » dans le journal (docker logs, catalina.*.log ou la console de votre application). Il protège cette page tant qu’aucun administrateur n’existe.',
   'admin.setup.failed':
     'Le compte n’a pas pu être créé. Vérifiez le jeton d’installation ; si un administrateur a été créé entre-temps, connectez-vous.',
   'admin.setup.done': 'Administrateur « {id} » créé',

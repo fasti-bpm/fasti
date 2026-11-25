@@ -306,17 +306,32 @@ public class DomXmlDataFormat implements DataFormat {
   }
 
   protected static void secure(DocumentBuilderFactory documentBuilderFactory) {
-    try {
-      documentBuilderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-      documentBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-      documentBuilderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-      documentBuilderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-      documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-    } catch (ParserConfigurationException e) {
-      throw new IllegalStateException("The XML parser cannot be configured safely", e);
+    // each feature on its own: a parser that lacks one of them still gets the others; it must
+    // support refusing document type declarations or, failing that, external entities
+    boolean doctypeRefused = setFeature(documentBuilderFactory, "http://apache.org/xml/features/disallow-doctype-decl", true);
+    boolean generalRefused = setFeature(documentBuilderFactory, "http://xml.org/sax/features/external-general-entities", false);
+    boolean parameterRefused = setFeature(documentBuilderFactory, "http://xml.org/sax/features/external-parameter-entities", false);
+    setFeature(documentBuilderFactory, XMLConstants.FEATURE_SECURE_PROCESSING, true);
+    setFeature(documentBuilderFactory, "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+    if (!doctypeRefused && !(generalRefused && parameterRefused)) {
+      throw new IllegalStateException("The XML parser " + documentBuilderFactory.getClass().getName()
+          + " cannot refuse external entities; pass a DocumentBuilderFactory that can");
     }
-    documentBuilderFactory.setXIncludeAware(false);
+    try {
+      documentBuilderFactory.setXIncludeAware(false);
+    } catch (UnsupportedOperationException e) {
+      // a parser without XInclude does not include anything either
+    }
     documentBuilderFactory.setExpandEntityReferences(false);
+  }
+
+  protected static boolean setFeature(DocumentBuilderFactory documentBuilderFactory, String feature, boolean value) {
+    try {
+      documentBuilderFactory.setFeature(feature, value);
+      return true;
+    } catch (ParserConfigurationException | RuntimeException e) {
+      return false;
+    }
   }
 
   public static Class<?> loadClass(String classname, DataFormat dataFormat) {

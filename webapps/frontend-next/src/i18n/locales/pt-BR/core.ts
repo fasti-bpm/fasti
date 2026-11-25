@@ -347,7 +347,7 @@ const messages: Catalog = {
   'admin.setup.submit': 'Criar administrador',
   'admin.setup.token': 'Token de configuração',
   'admin.setup.tokenHint':
-    'É exibido no log do servidor na primeira vez que esta página é aberta, por exemplo em docker logs ou catalina.out. Ele protege esta página até que exista um administrador.',
+    'Um código de uso único exibido no log do servidor na primeira vez que esta página é aberta: procure "setup token" no log (docker logs, catalina.*.log ou o console da sua aplicação). Ele protege esta página até que exista um administrador.',
   'admin.setup.failed':
     'Não foi possível criar a conta. Verifique o token de configuração; se um administrador foi criado nesse meio-tempo, entre.',
   'admin.setup.done': 'Administrador “{id}” criado',

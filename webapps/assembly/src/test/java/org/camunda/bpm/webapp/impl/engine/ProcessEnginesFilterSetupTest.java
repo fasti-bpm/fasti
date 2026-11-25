@@ -264,11 +264,24 @@ public class ProcessEnginesFilterSetupTest {
     initFilter("true");
 
     // when
-    MockHttpServletResponse response = request("/app/admin/" + ENGINE_NAME + "/setup/");
+    MockHttpServletResponse response = request("/app/next/" + ENGINE_NAME + "/setup/");
 
     // then
     assertThat(response.getRedirectedUrl()).isNull();
-    assertThat(servedIndexPages).containsExactly("admin");
+    assertThat(servedIndexPages).containsExactly("next");
+  }
+
+  @Test
+  public void shouldSendTheClassicSetupPageToTheNewOne() throws Exception {
+    // given the classic Admin, which has no field for the setup token
+    initFilter("true");
+
+    // when
+    MockHttpServletResponse response = request("/app/admin/" + ENGINE_NAME + "/setup/");
+
+    // then
+    assertThat(response.getRedirectedUrl()).isEqualTo("/app/next/" + ENGINE_NAME + "/setup/#/setup");
+    assertThat(servedIndexPages).isEmpty();
   }
 
   @Test

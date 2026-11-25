@@ -348,7 +348,7 @@ const messages = {
   'admin.setup.submit': 'Create administrator',
   'admin.setup.token': 'Setup token',
   'admin.setup.tokenHint':
-    'Printed in the server log when this page is first opened, for example in docker logs or catalina.out. It protects this page until an administrator exists.',
+    'A one-time code printed to the server log when this page is first opened: search the log for "setup token" (docker logs, catalina.*.log or the console of your application). It protects this page until an administrator exists.',
   'admin.setup.failed':
     'The account could not be created. Check the setup token; if an administrator was created in the meantime, sign in instead.',
   'admin.setup.done': 'Administrator “{id}” created',

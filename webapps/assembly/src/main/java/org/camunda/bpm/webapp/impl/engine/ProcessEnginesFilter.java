@@ -291,7 +291,7 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
       if (ServletContextUtil.isInitialSetupEnabled(request.getServletContext()) && needsInitialUser(engineName)) {
         // print the one-time setup token to the server log, the setup page asks for it
         InitialSetupToken.announce(engineName);
-        if (!setupPage) {
+        if (!setupPage || !NEXT_APP_NAME.equals(appName)) {
           // redirect to the setup page of the new web UI, which asks for the setup token; the
           // classic Admin has no field for it
           String setupApp = NEXT_APP_NAME;

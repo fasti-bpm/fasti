@@ -338,7 +338,7 @@ const messages: Catalog = {
   'admin.setup.submit': 'Tạo quản trị viên',
   'admin.setup.token': 'Mã cài đặt',
   'admin.setup.tokenHint':
-    'Được in trong log của máy chủ khi trang này được mở lần đầu, ví dụ trong docker logs hoặc catalina.out. Mã này bảo vệ trang cho tới khi có quản trị viên.',
+    'Mã dùng một lần được in vào log của máy chủ khi trang này được mở lần đầu: tìm chữ "setup token" trong log (docker logs, catalina.*.log hoặc console của ứng dụng). Mã này bảo vệ trang cho tới khi có quản trị viên.',
   'admin.setup.failed':
     'Không tạo được tài khoản. Hãy kiểm tra mã cài đặt; nếu quản trị viên đã được tạo trong lúc đó, hãy đăng nhập.',
   'admin.setup.done': 'Đã tạo quản trị viên “{id}”',

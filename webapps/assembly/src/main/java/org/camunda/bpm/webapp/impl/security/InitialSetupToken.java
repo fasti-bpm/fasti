@@ -49,6 +49,8 @@ public final class InitialSetupToken {
   private static final WebappLogger LOGGER = WebappLogger.INSTANCE;
   private static final SecureRandom RANDOM = new SecureRandom();
   private static final ConcurrentMap<String, String> TOKENS = new ConcurrentHashMap<>();
+  private static final java.util.concurrent.atomic.AtomicBoolean SHORT_TOKEN_REPORTED =
+      new java.util.concurrent.atomic.AtomicBoolean();
 
   /** Reads configuration; replaceable in tests. */
   static UnaryOperator<String> environment = System::getenv;
@@ -98,7 +100,9 @@ public final class InitialSetupToken {
     }
     configured = configured.trim();
     if (configured.length() < MIN_CONFIGURED_LENGTH) {
-      LOGGER.warnInitialSetupTokenTooShort(MIN_CONFIGURED_LENGTH);
+      if (SHORT_TOKEN_REPORTED.compareAndSet(false, true)) {
+        LOGGER.warnInitialSetupTokenTooShort(MIN_CONFIGURED_LENGTH);
+      }
       return null;
     }
     return configured;
@@ -118,5 +122,6 @@ public final class InitialSetupToken {
   /** Forgets every generated token; for tests. */
   static void reset() {
     TOKENS.clear();
+    SHORT_TOKEN_REPORTED.set(false);
   }
 }

@@ -338,7 +338,7 @@ const messages: Catalog = {
   'admin.setup.submit': 'Buat administrator',
   'admin.setup.token': 'Token penyiapan',
   'admin.setup.tokenHint':
-    'Dicetak di log server saat halaman ini pertama kali dibuka, misalnya di docker logs atau catalina.out. Token ini melindungi halaman ini sampai ada administrator.',
+    'Kode sekali pakai yang dicetak di log server saat halaman ini pertama kali dibuka: cari "setup token" di log (docker logs, catalina.*.log atau konsol aplikasi Anda). Kode ini melindungi halaman ini sampai ada administrator.',
   'admin.setup.failed':
     'Akun tidak dapat dibuat. Periksa token penyiapan; jika sementara itu administrator sudah dibuat, masuklah.',
   'admin.setup.done': 'Administrator “{id}” dibuat',

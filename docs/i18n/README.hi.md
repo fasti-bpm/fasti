@@ -24,7 +24,7 @@ Container Registry (`ghcr.io/fasti-bpm/fasti-bpm`) पर amd64 और arm64 क
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.3.0
+  fastidev/fasti-bpm:1.3.1
 ```
 
 <http://localhost:8080/fasti/> खोलें और साइन इन करें। `DB_URL` के बिना इमेज कंटेनर के भीतर H2 डेटाबेस

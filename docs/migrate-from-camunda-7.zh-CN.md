@@ -34,7 +34,7 @@ Camunda 7.23 及更早版本的数据库必须先使用 SQL 脚本升级到 7.24
    （`camunda.bpm.run.auth.enabled`）、授权（`camunda.bpm.authorization.enabled`）、
    插件、LDAP/SSO、JVM 时区、密码哈希配置（`passwordEncryptor`、`saltGenerator`）、
    表前缀/数据库模式。
-4. **拉取镜像** `fastidev/fasti-bpm:1.3.0`（或按照
+4. **拉取镜像** `fastidev/fasti-bpm:1.3.1`（或按照
    [distro/docker/README.md](../distro/docker/README.md) 中的说明从源代码构建）。
 5. **使用相同的 `DB_*` 变量启动 Fasti**（以及相同的 `TZ`）。与 Camunda Run 不同，
    Fasti 镜像**默认要求 REST 身份验证并强制执行授权检查**：数据库中的

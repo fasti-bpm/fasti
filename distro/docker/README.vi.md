@@ -17,8 +17,8 @@ Hướng dẫn chuyển đổi đầy đủ (các bước, quay lại, chạy l�
 # 1. bản phân phối Run, driver JDBC và Dockerfile vào distro/docker/target/docker
 ./mvnw -pl distro/docker -am package -DskipTests
 # 2. image
-docker build -t fasti-bpm:1.3.0 \
-  --build-arg VERSION=1.3.0 --build-arg REVISION=$(git rev-parse --short HEAD) \
+docker build -t fasti-bpm:1.3.1 \
+  --build-arg VERSION=1.3.1 --build-arg REVISION=$(git rev-parse --short HEAD) \
   distro/docker/target/docker
 ```
 
@@ -95,7 +95,7 @@ docker run -d --name fasti -p 8080:8080 \
   -e DB_USERNAME=camunda -e DB_PASSWORD_FILE=/run/secrets/db-password \
   -e WAIT_FOR=db.example.com:5432 \
   -e TZ=UTC \
-  fasti-bpm:1.3.0
+  fasti-bpm:1.3.1
 ```
 
 `DB_PASSWORD_FILE` phải trỏ tới một file có trong container (ví dụ Docker/Kubernetes secret, hoặc
@@ -198,7 +198,7 @@ deployment ở `/camunda/configuration/resources`. Đường dẫn riêng của 
 | Oracle | không | giấy phép riêng: thêm `ojdbc11.jar` |
 | DB2 | không | giấy phép riêng: thêm `jcc.jar` |
 
-Thêm driver: image con (`FROM fasti-bpm:1.3.0` + `COPY ojdbc11.jar /fasti/configuration/userlib/`)
+Thêm driver: image con (`FROM fasti-bpm:1.3.1` + `COPY ojdbc11.jar /fasti/configuration/userlib/`)
 hoặc gắn thư mục và đặt `FASTI_EXTRA_LIB=/drivers`.
 
 MySQL và MariaDB lưu thời gian của engine đến từng giây (schema Camunda 7.24 không có phần lẻ của

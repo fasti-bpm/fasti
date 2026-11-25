@@ -34,7 +34,7 @@ Camunda 7.23 以前のデータベースは、まず SQL スクリプトで 7.24
    （`camunda.bpm.run.auth.enabled`）、認可（`camunda.bpm.authorization.enabled`）、
    プラグイン、LDAP/SSO、JVM のタイムゾーン、パスワードのハッシュ化（`passwordEncryptor`、`saltGenerator`）、
    テーブルのプレフィックス／スキーマ。
-4. **イメージ** `fastidev/fasti-bpm:1.3.0` **を取得します**（または
+4. **イメージ** `fastidev/fasti-bpm:1.3.1` **を取得します**（または
    [distro/docker/README.md](../distro/docker/README.md) の説明に従ってソースからビルドします）。
 5. **同じ `DB_*` 変数**（および同じ `TZ`）**で Fasti を起動します**。Camunda Run とは異なり、
    Fasti イメージは**デフォルトで REST 認証を必須とし、認可を強制します**。データベース内の

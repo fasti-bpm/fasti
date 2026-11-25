@@ -38,7 +38,7 @@ Image có trên Docker Hub (`fastidev/fasti-bpm`) và GitHub Container Registry
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='đổi-mật-khẩu-này' \
-  fastidev/fasti-bpm:1.3.0
+  fastidev/fasti-bpm:1.3.1
 ```
 
 Mở <http://localhost:8080/fasti/> và đăng nhập. Không đặt `DB_URL` thì image dùng H2 bên trong

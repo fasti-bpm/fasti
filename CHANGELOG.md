@@ -12,6 +12,8 @@ các mục dưới đây là khác biệt so với bản đó.
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-11-25
+
 Security release. Before announcing 1.3.0 publicly we ran a pentest of the released image and
 Tomcat bundle (summary: [docs/security/pentest-1.3.md](docs/security/pentest-1.3.md)). The
 issues it found are fixed here. Same database schema as 1.0.x–1.3.0; replace the image or the

@@ -34,7 +34,7 @@ WildFly) Fasti สามารถทำงานบน **ฐานข้อม�
    (`camunda.bpm.run.auth.enabled`), การกำหนดสิทธิ์ (`camunda.bpm.authorization.enabled`),
    ปลั๊กอิน, LDAP/SSO, เขตเวลาของ JVM, การแฮชรหัสผ่าน (`passwordEncryptor`, `saltGenerator`),
    คำนำหน้าตาราง/สคีมา
-4. **ดึงอิมเมจ** `fastidev/fasti-bpm:1.3.0` (หรือสร้างจากซอร์สโค้ดตามที่อธิบายไว้ใน
+4. **ดึงอิมเมจ** `fastidev/fasti-bpm:1.3.1` (หรือสร้างจากซอร์สโค้ดตามที่อธิบายไว้ใน
    [distro/docker/README.md](../distro/docker/README.md))
 5. **เริ่ม Fasti ด้วยตัวแปร `DB_*` เดิม** (และ `TZ` เดิม) อิมเมจ Fasti ต่างจาก Camunda Run ตรงที่
    **กำหนดให้ต้องยืนยันตัวตน REST และบังคับใช้การกำหนดสิทธิ์โดยค่าเริ่มต้น**: บัญชีในฐานข้อมูล

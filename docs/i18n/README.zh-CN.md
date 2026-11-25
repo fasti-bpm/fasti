@@ -23,7 +23,7 @@ Container Registry（`ghcr.io/fasti-bpm/fasti-bpm`）上提供，支持 amd64 �
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.3.0
+  fastidev/fasti-bpm:1.3.1
 ```
 
 打开 <http://localhost:8080/fasti/> 并登录。未设置 `DB_URL` 时，镜像使用容器内的 H2 数据库，

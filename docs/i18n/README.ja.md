@@ -24,7 +24,7 @@ Container Registry（`ghcr.io/fasti-bpm/fasti-bpm`）で公開しています。
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.3.0
+  fastidev/fasti-bpm:1.3.1
 ```
 
 <http://localhost:8080/fasti/> を開いてサインインしてください。`DB_URL` を指定しない場合、イメージは

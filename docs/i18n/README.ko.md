@@ -24,7 +24,7 @@ Container Registry(`ghcr.io/fasti-bpm/fasti-bpm`)에서 제공됩니다.
 ```bash
 docker run -d --name fasti -p 127.0.0.1:8080:8080 \
   -e FASTI_ADMIN_USER=admin -e FASTI_ADMIN_PASSWORD='change-me' \
-  fastidev/fasti-bpm:1.3.0
+  fastidev/fasti-bpm:1.3.1
 ```
 
 <http://localhost:8080/fasti/>에 접속하여 로그인하세요. `DB_URL`이 없으면 이미지는 컨테이너 내부의 H2 데이터베이스를

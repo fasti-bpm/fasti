@@ -6,7 +6,7 @@
     <groupId>dev.fasti.platform</groupId>
     <artifactId>fasti-parent</artifactId>
     <relativePath>../parent</relativePath>
-    <version>1.3.0</version>
+    <version>1.3.1</version>
   </parent>
 
   <artifactId>fasti-database-settings</artifactId>

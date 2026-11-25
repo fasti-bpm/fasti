@@ -8,13 +8,37 @@ Xin **không** báo lỗi bảo mật qua issue, pull request hay thảo luận 
 chức năng báo lỗi riêng tư của GitHub: mở thẻ **Security** của kho mã và chọn **Report a
 vulnerability**, kèm phiên bản bị ảnh hưởng, cấu hình cần có và các bước tái hiện.
 
-Nếu không dùng được tính năng báo cáo riêng của GitHub, hãy liên hệ riêng với người duy trì qua
-thông tin liên hệ trên trang GitHub của chủ repository, và đừng gửi chi tiết khai thác trong tin
-nhắn đầu tiên.
+Nếu không dùng được tính năng báo cáo riêng của GitHub, hãy gửi thư tới <contact@fasti.dev> với
+tiêu đề "Security", và đừng gửi chi tiết khai thác trong thư đầu tiên.
 
-Bạn sẽ nhận được xác nhận đã nhận báo cáo, và chúng tôi sẽ cập nhật tình hình cho tới khi bản vá
-được phát hành. Xin dành cho chúng tôi một khoảng thời gian hợp lý để phát hành bản vá trước khi
-công bố chi tiết.
+Bạn có thể mong đợi:
+
+| Bước | Mục tiêu |
+|---|---|
+| Xác nhận đã nhận báo cáo | trong 3 ngày làm việc |
+| Đánh giá ban đầu (phiên bản bị ảnh hưởng, mức độ) | trong 7 ngày làm việc |
+| Sửa lỗi mức nghiêm trọng hoặc cao | bản patch sớm nhất có thể, mục tiêu 14 ngày |
+| Sửa lỗi mức trung bình hoặc thấp | bản phát hành thường kỳ tiếp theo |
+| Thông báo công khai | khi bản sửa được phát hành; ghi công người báo nếu bạn đồng ý |
+
+Xin dành cho chúng tôi một khoảng thời gian hợp lý để phát hành bản vá trước khi công bố chi tiết.
+
+## Cách công bố bản sửa và sự cố
+
+- Mỗi bản sửa bảo mật có một bản patch riêng; bản đã phát hành không bao giờ bị sửa lại. Mục
+  *Security* của [CHANGELOG](../CHANGELOG.md) ghi rõ lỗi là gì và đã thay đổi gì.
+- Thông báo bảo mật nêu phiên bản và cấu hình bị ảnh hưởng, nguyên nhân gốc, phiên bản đã sửa và
+  việc người dùng phải làm (ví dụ đổi một khóa bí mật). Chúng tôi không coi một sự cố là đã xử lý
+  xong trước khi thông báo đó được công bố.
+- Bản phát hành kiểm chứng được: image container được ký bằng cosign và kèm SBOM
+  (`fasti-bpm.spdx.json` trên mỗi bản phát hành GitHub); bundle Tomcat có checksum SHA-256 đi kèm.
+  Kiểm tra image bằng
+  `cosign verify fastidev/fasti-bpm:<version> --certificate-identity-regexp '^https://github.com/fasti-bpm/fasti/' --certificate-oidc-issuer https://token.actions.githubusercontent.com`.
+- Fasti không gửi telemetry và không tự mở kết nối ra ngoài; nó chỉ kết nối tới cơ sở dữ liệu và
+  những gì bạn cấu hình (nhà cung cấp định danh, tracing, metrics).
+- Kết quả các đợt tự kiểm thử bảo mật được công bố: [Kiểm thử bảo mật bản 1.3](../docs/security/pentest-1.3.vi.md);
+  trạng thái của Fasti với từng thông báo bảo mật của Camunda 7: [Thông báo bảo mật của Camunda 7](../docs/security/camunda-7-advisories.vi.md);
+  dữ liệu cá nhân và thời gian lưu: [Dữ liệu cá nhân](../docs/security/personal-data.vi.md).
 
 ## Phạm vi
 

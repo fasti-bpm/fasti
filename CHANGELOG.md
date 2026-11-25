@@ -64,6 +64,19 @@ bundle and start it.
   answer.
 - Query expressions: `[...]` is allowed only on `currentUserGroups()`; `${dateTime()[0]}` passed
   the allow-list but failed every time the filter ran.
+- **External task client: XML variables are parsed without external entities**
+  (CVE-2026-77224, fixed by Camunda only in Enterprise 7.24.x). A value written to the engine by
+  anyone allowed to set a variable could make a worker read local files or open connections.
+  The client now refuses document type declarations and external entities.
+- Tomcat bundle: the web application sends `Referrer-Policy`, `Permissions-Policy` and
+  `Cross-Origin-Opener-Policy` like the image, and the REST API `X-Content-Type-Options: nosniff`.
+- OpenTelemetry 1.62.0 → 1.67.0 (CVE-2026-118259; only used with `FASTI_TRACING_ENABLED=true`).
+- New page [Camunda 7 security advisories and Fasti BPM](docs/security/camunda-7-advisories.md):
+  where Fasti stands on every published Camunda 7 advisory, the 2026 ones included.
+- `.github/SECURITY.md`: response times, how fixes and incidents are published, how to verify
+  image signatures.
+- New page [Personal data and retention](docs/security/personal-data.md): where personal data is
+  stored, how history cleanup removes it, and how to erase one person's data.
 
 
 ## [1.3.0] - 2026-11-25

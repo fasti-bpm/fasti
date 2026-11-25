@@ -2,9 +2,11 @@
 
 # Fasti BPM Platform
 
-Fasti BPM là một engine mã nguồn mở, độc lập, xây dựng trên Camunda 7 Community Edition 7.24.0.
-Nó chạy trên chính cơ sở dữ liệu Camunda 7 bạn đang có, với thư viện được cập nhật, các bản vá
-bảo mật và giao diện web mới. Website: <https://fasti.dev>
+Fasti BPM là một process engine mã nguồn mở (Apache-2.0), độc lập: nó chạy các quy trình nghiệp
+vụ mô hình hóa bằng BPMN và các bảng quyết định DMN, với tác vụ cho người dùng, hẹn giờ, message và
+lịch sử đầy đủ. Fasti xây dựng trên Camunda 7 Community Edition 7.24.0 và chạy trên chính cơ sở dữ
+liệu Camunda 7 bạn đang có, với thư viện được cập nhật, các bản vá bảo mật và giao diện web mới.
+Website: <https://fasti.dev>
 
 <p align="center">
   <a href="https://fasti.dev"><img src="https://assets.fasti.dev/img/og-cover-2.png" alt="Fasti BPM: danh sách task của giao diện web mới" width="820"></a>
@@ -16,9 +18,9 @@ bảo mật và giao diện web mới. Website: <https://fasti.dev>
   <a href="../../LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="Giấy phép: Apache-2.0"></a>
 </p>
 
-| **Nhanh hơn ≈10 lần** | **BPMN · DMN · biểu mẫu** | **An toàn** | **13** |
+| **Nhanh hơn ≈10 lần** | **BPMN · DMN · biểu mẫu** | **Mặc định an toàn** | **13** |
 |:---:|:---:|:---:|:---:|
-| danh sách task khi bật phân quyền ([số liệu](../benchmark-camunda-7.24.vi.md)) | modeler ngay trên trình duyệt | ngay từ mặc định, có bản vá so với 7.24.0 | ngôn ngữ, trên điện thoại và máy tính |
+| danh sách task khi bật phân quyền ([số liệu](../benchmark-camunda-7.24.vi.md)) | modeler ngay trên trình duyệt | bật đăng nhập và phân quyền, [đã kiểm thử](../security/pentest-1.3.vi.md) | ngôn ngữ, trên điện thoại và máy tính |
 
 > **Không liên kết với Camunda Services GmbH; Camunda là nhãn hiệu của Camunda Services GmbH.**
 > Fasti BPM là dự án độc lập mã nguồn mở (Apache-2.0), không thuộc, không được bảo trợ hay chứng

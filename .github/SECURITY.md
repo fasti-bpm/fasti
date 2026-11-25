@@ -10,12 +10,37 @@ Use GitHub's private vulnerability reporting for this repository: open the **Sec
 and choose **Report a vulnerability**. Include the affected version, the configuration that
 is needed, and steps to reproduce.
 
-If private vulnerability reporting is unavailable, contact the maintainers privately through
-the contact listed on the repository owner's GitHub profile, and do not include exploit details
-in the first message.
+If private vulnerability reporting is unavailable, write to <contact@fasti.dev> with the subject
+"Security", and do not include exploit details in the first message.
 
-You will receive an acknowledgement, and we will keep you informed until a fix is released.
+What you can expect:
+
+| Step | Target |
+|---|---|
+| Acknowledgement | within 3 working days |
+| First assessment (affected versions, severity) | within 7 working days |
+| Fix of a critical or high issue | a patch release as soon as possible, aiming at 14 days |
+| Fix of a medium or low issue | the next regular release |
+| Public advisory | when the fix is released; we credit you unless you prefer not |
+
 Please give us reasonable time to publish a fix before disclosing details.
+
+## How we publish fixes and incidents
+
+- Every security fix gets a patch release; released versions are never changed afterwards. The
+  [CHANGELOG](../CHANGELOG.md) lists it under *Security* with what was wrong and what changed.
+- An advisory names the affected versions and configurations, the root cause, the fixed version
+  and what users must do (for example rotate a secret). We do not call an issue resolved before
+  that is published.
+- Releases are verifiable: container images are signed with cosign and carry an SBOM
+  (`fasti-bpm.spdx.json` on each GitHub release); the Tomcat bundle has a SHA-256 checksum next to
+  it. Verify an image with
+  `cosign verify fastidev/fasti-bpm:<version> --certificate-identity-regexp '^https://github.com/fasti-bpm/fasti/' --certificate-oidc-issuer https://token.actions.githubusercontent.com`.
+- Fasti sends no telemetry and makes no outgoing connections of its own; it only connects to
+  the database and to what you configure (identity provider, tracing, metrics).
+- Our own security tests and their results are public: [Security test of 1.3](../docs/security/pentest-1.3.md);
+  where Fasti stands on each Camunda 7 advisory: [Camunda 7 security advisories](../docs/security/camunda-7-advisories.md);
+  personal data and retention: [Personal data](../docs/security/personal-data.md).
 
 ## Scope
 

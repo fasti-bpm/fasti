@@ -2,9 +2,10 @@ English | [Tiếng Việt](docs/i18n/README.vi.md) | [Deutsch](docs/i18n/README.
 
 # Fasti BPM Platform
 
-Fasti BPM is an independent, open-source engine built on Camunda 7 Community Edition 7.24.0. It
-runs on your existing Camunda 7 database, with current libraries, security fixes and a new web
-interface. Website: <https://fasti.dev>
+Fasti BPM is an independent, open-source (Apache-2.0) process engine: it runs business processes
+modelled in BPMN and decisions in DMN, with user tasks, timers, messages and a full history. It is
+built on Camunda 7 Community Edition 7.24.0 and runs on your existing Camunda 7 database, with
+current libraries, security fixes and a new web interface. Website: <https://fasti.dev>
 
 <p align="center">
   <a href="https://fasti.dev"><img src="https://assets.fasti.dev/img/og-cover-2.png" alt="Fasti BPM: the task list of the new web interface" width="820"></a>
@@ -16,9 +17,9 @@ interface. Website: <https://fasti.dev>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="License: Apache-2.0"></a>
 </p>
 
-| **≈10× faster** | **BPMN · DMN · forms** | **Secure** | **13** |
+| **≈10× faster** | **BPMN · DMN · forms** | **Secure defaults** | **13** |
 |:---:|:---:|:---:|:---:|
-| task lists with authorization on ([numbers](docs/benchmark-camunda-7.24.md)) | modeler in the browser | by default, fixes over 7.24.0 | languages, phone and desktop |
+| task lists with authorization on ([numbers](docs/benchmark-camunda-7.24.md)) | modeler in the browser | login and authorization on, [tested](docs/security/pentest-1.3.md) | languages, phone and desktop |
 
 > **Not affiliated with Camunda Services GmbH; Camunda is a trademark of Camunda Services GmbH.**
 > Fasti BPM is an independent open-source project (Apache-2.0). It is not part of, sponsored by

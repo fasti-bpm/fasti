@@ -132,6 +132,10 @@ public class QueryExpressionAllowListTest {
       "${currentUserGroups().add('camunda-admin')}",
       "${currentUserGroups().stream()}",
       "${currentUserGroups()[0].getClass()}",
+      // only the list of groups can be indexed; the other values would fail on every run
+      "${currentUser()[0]}",
+      "${now()[0]}",
+      "${dateTime()[0]}",
       "${now().getClass()}",
       "${now().getClass().forName('java.lang.Runtime').getMethod('getRuntime').invoke(null).exec('calc')}",
       "${now().getTime()}",

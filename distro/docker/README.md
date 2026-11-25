@@ -134,6 +134,7 @@ are not in the 1.2.x images.
 | `FASTI_DB_SCHEMA_UPDATE` | `false` (`true` for the built-in H2 demo database) | `true` creates missing tables (new database); never upgrades a schema |
 | `FASTI_SCHEMA_VERSION_CHECK` | `enforce` | `warn`: a schema older than 7.24 only logs a warning instead of stopping |
 | `FASTI_DB_SCHEMA`, `FASTI_DB_TABLE_PREFIX` | | `camunda.bpm.database.schema-name` / `table-prefix` |
+| `FASTI_TRUSTED_PROXIES` | private addresses | Regular expression of the IP addresses of the proxies whose `X-Forwarded-*` headers are trusted, e.g. `10\.0\.0\.5`; the proxy must overwrite `X-Forwarded-Host` and `X-Forwarded-Proto` |
 | `FASTI_DESERIALIZATION_ALLOWED_PACKAGES` | — | Packages (comma separated) whose classes Spin JSON/XML and Object variables may be deserialized into, besides the basic Java types; type validation is on |
 | `FASTI_DESERIALIZATION_ALLOWED_CLASSES` | — | Single classes allowed in the same way |
 | `FASTI_REST_MULTIPART_MAX_SIZE` | `100MB` | Largest multipart request (deployment, file variable, attachment); larger requests get `413`; `-1`: no limit |

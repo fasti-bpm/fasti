@@ -18,6 +18,8 @@ camunda.bpm:
     csrf:
       enable-same-site-cookie: true
       same-site-cookie-option: STRICT
+      # the CSRF token cookie travels only over HTTPS, like the session cookie
+      enable-secure-cookie: true
     header-security:
       hsts-disabled: false
 

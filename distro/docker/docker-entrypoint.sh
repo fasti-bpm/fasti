@@ -232,6 +232,9 @@ esac
 # --- engine -----------------------------------------------------------------------------------
 
 [ -n "${FASTI_HISTORY_LEVEL:-}" ] && add_arg "--camunda.bpm.history-level=$FASTI_HISTORY_LEVEL"
+# the proxies whose X-Forwarded-* headers are trusted (a regular expression of their IP
+# addresses); by default every private address, as Tomcat does
+[ -n "${FASTI_TRUSTED_PROXIES:-}" ] && add_arg "--server.tomcat.remoteip.internal-proxies=$FASTI_TRUSTED_PROXIES"
 [ -n "${FASTI_DESERIALIZATION_ALLOWED_PACKAGES:-}" ] && add_arg "--camunda.bpm.generic-properties.properties.deserialization-allowed-packages=$FASTI_DESERIALIZATION_ALLOWED_PACKAGES"
 [ -n "${FASTI_DESERIALIZATION_ALLOWED_CLASSES:-}" ] && add_arg "--camunda.bpm.generic-properties.properties.deserialization-allowed-classes=$FASTI_DESERIALIZATION_ALLOWED_CLASSES"
 [ -n "${FASTI_JOB_EXECUTOR_ENABLED:-}" ] && add_arg "--camunda.bpm.job-execution.enabled=$FASTI_JOB_EXECUTOR_ENABLED"
@@ -348,6 +351,11 @@ if is_true "${FASTI_APPCDS:-}"; then
 fi
 if [ -n "${TZ:-}" ]; then
   JVM_OPTS="$JVM_OPTS -Duser.timezone=$TZ"
+fi
+if [ "$production" = true ]; then
+  case " ${JAVA_OPTS:-} ${JAVA_TOOL_OPTIONS:-} ${JDK_JAVA_OPTIONS:-} " in
+    *jdwp*) fail "a JDWP agent in JAVA_OPTS, JAVA_TOOL_OPTIONS or JDK_JAVA_OPTIONS cannot be combined with --production" ;;
+  esac
 fi
 if is_true "${DEBUG:-}" || is_true "${FASTI_DEBUG:-}"; then
   # JDWP has no authentication: whoever reaches the port controls the JVM

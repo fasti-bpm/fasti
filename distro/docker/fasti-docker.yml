@@ -118,6 +118,9 @@ fasti:
 management:
   endpoints:
     web:
+      # no link index at /actuator
+      discovery:
+        enabled: false
       exposure:
         include: health
   endpoint:
@@ -139,6 +142,9 @@ server:
     mime-types: text/html,text/css,text/javascript,application/javascript,image/svg+xml,application/json,application/hal+json
   shutdown: graceful
   forward-headers-strategy: native
+  # redirects carry a path only, never a host taken from the Host or X-Forwarded-Host header
+  tomcat:
+    use-relative-redirects: true
 
 spring:
   # room for every job executor thread plus the requests that use the database at the same time

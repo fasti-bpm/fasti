@@ -37,6 +37,8 @@
       <http-only>true</http-only>
       <secure>false</secure>
     </cookie-config>
+    <!-- never put the session id into a URL (;jsessionid=...) -->
+    <tracking-mode>COOKIE</tracking-mode>
   </session-config>
 
   <!--

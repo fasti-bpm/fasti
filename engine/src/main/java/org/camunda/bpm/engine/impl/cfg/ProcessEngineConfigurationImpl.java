@@ -1046,7 +1046,15 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
   protected String failedJobRetryTimeCycle;
 
   // login attempts ///////////////////////////////////////////////////////
-  protected int loginMaxAttempts = 10;
+  /**
+   * Failed logins after which a user stays locked until an administrator
+   * unlocks it. Off by default in Fasti (Camunda 7: 10): anyone who knows a
+   * user name could otherwise lock that user, the only administrator
+   * included, for good. Failed logins still delay the next attempt, see
+   * {@link #loginDelayBase}, {@link #loginDelayFactor} and
+   * {@link #loginDelayMaxTime}.
+   */
+  protected int loginMaxAttempts = Integer.MAX_VALUE;
   protected int loginDelayFactor = 2;
   protected int loginDelayMaxTime = 60;
   protected int loginDelayBase = 3;

@@ -1,4 +1,4 @@
-[English](README.md) | [Tiếng Việt](README.vi.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | [Bahasa Indonesia](README.id.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | [ไทย](README.th.md) | 简体中文
+[English](../../README.md) | [Tiếng Việt](README.vi.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | [Bahasa Indonesia](README.id.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | [ไทย](README.th.md) | 简体中文
 
 > 本译文由社区维护，可能落后于英文版；以英文版为准。欢迎指正。
 
@@ -52,7 +52,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
   Java4Shell 已缓解。Tomcat 和 WildFly 的 REST API 要求凭据，且不创建任何用户（第一个管理员在设置页面上
   创建）；Run zip 和 Spring Boot starter 保留 Camunda 7 的默认设置。所有发行版都包含安全修复，并会在启动时
   对受 Java4Shell 影响的 JVM 发出警告（[安全](https://fasti.dev/security)）。
-- **单点登录**：OpenID Connect 和 JWT bearer token（[指南](docs/single-sign-on.zh-CN.md)）。
+- **单点登录**：OpenID Connect 和 JWT bearer token（[指南](../single-sign-on.zh-CN.md)）。
 - **现代平台**：Java 17 或更高版本、Spring Boot 4.1、GraalJS 25、Jackson 2.21
   （[性能](https://fasti.dev/#performance)）。
 
@@ -61,8 +61,8 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 ## 获取 Fasti
 
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**Docker 镜像**（`fastidev/fasti-bpm`，支持 amd64 和 arm64）：<https://fasti.dev/install>；分步说明见
-  [docs/install-docker.zh-CN.md](docs/install-docker.zh-CN.md)，全部变量见
-  [distro/docker/README.md](distro/docker/README.md#environment-variables)。
+  [docs/install-docker.zh-CN.md](../install-docker.zh-CN.md)，全部变量见
+  [distro/docker/README.md](../../distro/docker/README.md#environment-variables)。
 - <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Tomcat 捆绑包**（不使用 Docker）：<https://fasti.dev/download>。预构建的 Tomcat 1.3.0 捆绑包：
   - [fasti-bpm-tomcat-1.3.0.zip](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip)（[SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip.sha256)）
   - [fasti-bpm-tomcat-1.3.0.tar.gz](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz)（[SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz.sha256)）
@@ -70,7 +70,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
   解压前请验证校验和，例如执行 `sha256sum -c fasti-bpm-tomcat-1.3.0.zip.sha256`。启动前请阅读
   捆绑包中的 `README.txt`。
 - **嵌入式**，用于 Spring Boot 或其他 Java 应用：新的 Maven 坐标（`dev.fasti.platform:fasti-*`），
-  相同的 `org.camunda.bpm.*` 包；参见 [docs/embedding.zh-CN.md](docs/embedding.zh-CN.md)。
+  相同的 `org.camunda.bpm.*` 包；参见 [docs/embedding.zh-CN.md](../embedding.zh-CN.md)。
 
 <a id="moving-from-camunda-7"></a>
 
@@ -80,10 +80,10 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 让 Fasti 与它们并行运行，也可以随时回退到 Camunda 7.24。Fasti 镜像已在 PostgreSQL 16、MariaDB 11.8、MySQL 8.4、SQL Server 2022 和 Oracle Database 23ai 上测试过接管由 Camunda Run 7.24 创建的数据库；回退到 Camunda Run 已在除 MySQL 外的相同数据库上测试。DB2 尚未测试。
 每个 REST 客户端（包括外部任务 worker）现在都必须发送 Basic 凭据或 bearer token。
 
-嵌入式 Spring Boot 应用还需迁移到 Spring Boot 4.1 和 Java 17；更早的 schema 需先用标准脚本升级。为 Camunda 7 构建的插件和流程应用必须基于 Fasti 制品重新构建，才能在 Fasti 内运行。并行运行和回退都有限制（所有节点配置相同、由哪个节点运行作业、使用 Fasti 独有功能的流程）：参见[混合运行](docs/migrate-from-camunda-7.zh-CN.md#mixed-operation-with-camunda-7-nodes)和[回退](docs/migrate-from-camunda-7.zh-CN.md#rollback-to-camunda-724)。
+嵌入式 Spring Boot 应用还需迁移到 Spring Boot 4.1 和 Java 17；更早的 schema 需先用标准脚本升级。为 Camunda 7 构建的插件和流程应用必须基于 Fasti 制品重新构建，才能在 Fasti 内运行。并行运行和回退都有限制（所有节点配置相同、由哪个节点运行作业、使用 Fasti 独有功能的流程）：参见[混合运行](../migrate-from-camunda-7.zh-CN.md#mixed-operation-with-camunda-7-nodes)和[回退](../migrate-from-camunda-7.zh-CN.md#rollback-to-camunda-724)。
 
 迁移步骤与限制：<https://fasti.dev/install#migrate> 以及
-[迁移指南](docs/migrate-from-camunda-7.zh-CN.md)（回滚、旧版 schema、测试结果）。
+[迁移指南](../migrate-from-camunda-7.zh-CN.md)（回滚、旧版 schema、测试结果）。
 
 <a id="comparison"></a><a id="how-it-compares"></a>
 
@@ -98,8 +98,8 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 ## 安全与支持
 
 `1.x` 系列的最新次版本会以补丁版本（如 `1.0.1`）的形式获得缺陷修复和安全补丁。请私下报告安全问题，
-不要提交到公开的 issue：参见 [SECURITY.md](SECURITY.md#security-policy)，其中也包含
-[支持政策](SECURITY.md#support-policy)。修复列表、Java4Shell 和发布前审查：
+不要提交到公开的 issue：参见 [SECURITY.md](../../.github/SECURITY.md#security-policy)，其中也包含
+[支持政策](../../.github/SECURITY.md#support-policy)。修复列表、Java4Shell 和发布前审查：
 <https://fasti.dev/security>。如需安装、迁移或生产运维方面的帮助，或商定支持条款，请发邮件至
 <contact@fasti.dev>。
 
@@ -128,20 +128,20 @@ Camunda 7 CE 终止到 2027 年目标的时间线：
 
 | 文档 | 内容 |
 |---|---|
-| [docs/install-docker.md](docs/install-docker.zh-CN.md) | 使用 Docker 安装的分步指南 |
-| [docs/install-kubernetes.md](docs/install-kubernetes.md) | 在 Kubernetes 上安装：Helm chart 和原生清单（自 1.1.0 起） |
-| [docs/migrate-from-camunda-7.md](docs/migrate-from-camunda-7.zh-CN.md) | 从 Camunda 7 迁移、回滚、限制 |
-| [docs/embedding.md](docs/embedding.zh-CN.md) | 兼容性、与 7.24.0 的差异、版本规则、Maven 坐标、启动检查 |
-| [docs/web-ui.md](docs/web-ui.zh-CN.md) | Web 界面：用户要求的功能、`/fasti` 路径、经典应用 |
-| [docs/absence.md](docs/absence.md) | 缺勤期间的代理人（自 1.1.0 起） |
-| [docs/four-eyes.md](docs/four-eyes.md) | 审批的四眼原则控制（自 1.1.0 起） |
-| [docs/audit-trail.md](docs/audit-trail.md) | 不可篡改的审计轨迹（自 1.1.0 起） |
-| [docs/single-sign-on.md](docs/single-sign-on.zh-CN.md) | 单点登录（OpenID Connect）：Run、Spring Boot、Tomcat、WildFly |
-| [docs/api/README.md](docs/api/README.md) | REST API 集成、Java 和 JavaScript 外部任务客户端 |
-| [distro/docker/README.md](distro/docker/README.md) | 镜像：环境变量、驱动、运维、调优 |
-| [webapps/frontend-next/README.md](webapps/frontend-next/README.md#new-web-ui-frontend-next) | 全新的 Web UI |
-| [docs/security/CVE-2026-114938.md](docs/security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell 与 Fasti |
-| [CHANGELOG.md](CHANGELOG.md)、[SECURITY.md](SECURITY.md#security-policy) | 变更、安全、支持政策 |
+| [docs/install-docker.md](../install-docker.zh-CN.md) | 使用 Docker 安装的分步指南 |
+| [docs/install-kubernetes.md](../install-kubernetes.md) | 在 Kubernetes 上安装：Helm chart 和原生清单（自 1.1.0 起） |
+| [docs/migrate-from-camunda-7.md](../migrate-from-camunda-7.zh-CN.md) | 从 Camunda 7 迁移、回滚、限制 |
+| [docs/embedding.md](../embedding.zh-CN.md) | 兼容性、与 7.24.0 的差异、版本规则、Maven 坐标、启动检查 |
+| [docs/web-ui.md](../web-ui.zh-CN.md) | Web 界面：用户要求的功能、`/fasti` 路径、经典应用 |
+| [docs/absence.md](../absence.md) | 缺勤期间的代理人（自 1.1.0 起） |
+| [docs/four-eyes.md](../four-eyes.md) | 审批的四眼原则控制（自 1.1.0 起） |
+| [docs/audit-trail.md](../audit-trail.md) | 不可篡改的审计轨迹（自 1.1.0 起） |
+| [docs/single-sign-on.md](../single-sign-on.zh-CN.md) | 单点登录（OpenID Connect）：Run、Spring Boot、Tomcat、WildFly |
+| [docs/api/README.md](../api/README.md) | REST API 集成、Java 和 JavaScript 外部任务客户端 |
+| [distro/docker/README.md](../../distro/docker/README.md) | 镜像：环境变量、驱动、运维、调优 |
+| [webapps/frontend-next/README.md](../../webapps/frontend-next/README.md#new-web-ui-frontend-next) | 全新的 Web UI |
+| [docs/security/CVE-2026-114938.md](../security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell 与 Fasti |
+| [CHANGELOG.md](../../CHANGELOG.md)、[SECURITY.md](../../.github/SECURITY.md#security-policy) | 变更、安全、支持政策 |
 
 <a id="build"></a>
 
@@ -155,8 +155,8 @@ Camunda 7 CE 终止到 2027 年目标的时间线：
 ```
 
 完整构建会运行所有 Java 测试和 Web UI 单元测试（接近一小时；Playwright
-端到端测试单独运行，参见 [webapps/frontend-next](webapps/frontend-next/README.md#end-to-end-tests-playwright)）。
-参见 [TESTING.md](TESTING.md)。构建容器镜像（首次构建大约需要 10–20 分钟）：
+端到端测试单独运行，参见 [webapps/frontend-next](../../webapps/frontend-next/README.md#end-to-end-tests-playwright)）。
+参见 [TESTING.md](../testing.md)。构建容器镜像（首次构建大约需要 10–20 分钟）：
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
@@ -167,8 +167,8 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 
 ## 参与贡献
 
-欢迎在 GitHub 上提问、报告缺陷和提交 pull request；参见 [CONTRIBUTING.md](CONTRIBUTING.md#how-to-contribute)
-和[行为准则](CODE_OF_CONDUCT.md)。特别欢迎母语使用者审阅译文。
+欢迎在 GitHub 上提问、报告缺陷和提交 pull request；参见 [CONTRIBUTING.md](../../.github/CONTRIBUTING.md#how-to-contribute)
+和[行为准则](../../.github/CODE_OF_CONDUCT.md)。特别欢迎母语使用者审阅译文。
 
 <a id="acknowledgements"></a>
 
@@ -185,4 +185,4 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 
 ## 许可证
 
-[Apache License 2.0](LICENSE)。原始代码的版权信息请参见 [NOTICE](NOTICE)。
+[Apache License 2.0](../../LICENSE)。原始代码的版权信息请参见 [NOTICE](../../NOTICE)。

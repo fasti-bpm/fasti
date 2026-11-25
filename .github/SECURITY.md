@@ -41,14 +41,14 @@ fork to Camunda.
   rebuilt. The project follows public security advisories about Camunda 7 and its forks and
   checks whether Fasti is affected.
 - **Compatibility:** the `1.x` line keeps the 7.24 database schema and the `org.camunda.bpm.*`
-  packages. Breaking changes are marked **BREAKING** in the [CHANGELOG](CHANGELOG.md).
+  packages. Breaking changes are marked **BREAKING** in the [CHANGELOG](../CHANGELOG.md).
 - **Support:** questions and bugs are welcome on GitHub; support there is best effort, without an
   SLA. For help with installation, migration or production, and for support terms, write to
   <contact@fasti.dev>.
-- **Fixed defects:** the *Fixed* and *Security* sections of the [CHANGELOG](CHANGELOG.md) list
+- **Fixed defects:** the *Fixed* and *Security* sections of the [CHANGELOG](../CHANGELOG.md) list
   what was fixed compared with Camunda 7 CE 7.24.0, with what was wrong and what changed,
   including problems in Fasti's own code; advisories are listed below.
 
 ## Advisories
 
-- [CVE-2026-114938 ("Java4Shell")](docs/security/CVE-2026-114938.md): a flaw in the Java runtime; what Fasti changed and what you should do.
+- [CVE-2026-114938 ("Java4Shell")](../docs/security/CVE-2026-114938.md): a flaw in the Java runtime; what Fasti changed and what you should do.

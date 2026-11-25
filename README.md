@@ -1,4 +1,4 @@
-English | [Tiếng Việt](README.vi.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | [Bahasa Indonesia](README.id.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | [ไทย](README.th.md) | [简体中文](README.zh-CN.md)
+English | [Tiếng Việt](docs/i18n/README.vi.md) | [Deutsch](docs/i18n/README.de.md) | [Español](docs/i18n/README.es.md) | [Français](docs/i18n/README.fr.md) | [हिन्दी](docs/i18n/README.hi.md) | [Bahasa Indonesia](docs/i18n/README.id.md) | [日本語](docs/i18n/README.ja.md) | [한국어](docs/i18n/README.ko.md) | [Português (Brasil)](docs/i18n/README.pt-BR.md) | [Русский](docs/i18n/README.ru.md) | [ไทย](docs/i18n/README.th.md) | [简体中文](docs/i18n/README.zh-CN.md)
 
 # Fasti BPM Platform
 
@@ -164,8 +164,8 @@ adds a new interface. The other projects are sound choices too. The full table, 
 
 The latest minor release of the `1.x` line receives bug fixes and security patches, as patch
 releases such as `1.0.1`. Please report security problems privately, not in a public issue: see
-[SECURITY.md](SECURITY.md#security-policy), which also holds the
-[support policy](SECURITY.md#support-policy). Fix list, Java4Shell and the pre-release review:
+[SECURITY.md](.github/SECURITY.md#security-policy), which also holds the
+[support policy](.github/SECURITY.md#support-policy). Fix list, Java4Shell and the pre-release review:
 <https://fasti.dev/security>. For help with installation, migration or production, and for support
 terms, write to <contact@fasti.dev>.
 
@@ -214,7 +214,7 @@ On [fasti.dev](https://fasti.dev): [Install with Docker](https://fasti.dev/insta
 | [distro/docker/README.md](distro/docker/README.md) | Image: environment variables, drivers, operations, tuning |
 | [webapps/frontend-next/README.md](webapps/frontend-next/README.md#new-web-ui-frontend-next) | The new web UI |
 | [docs/security/CVE-2026-114938.md](docs/security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell and Fasti |
-| [CHANGELOG.md](CHANGELOG.md), [SECURITY.md](SECURITY.md#security-policy) | Changes, security, support policy |
+| [CHANGELOG.md](CHANGELOG.md), [SECURITY.md](.github/SECURITY.md#security-policy) | Changes, security, support policy |
 
 <a id="build"></a>
 
@@ -229,7 +229,7 @@ npm registry (the build downloads Node/npm for the web UI).
 
 A full build runs all Java tests and the web UI unit tests (close to an hour; the Playwright
 end-to-end tests run separately, see [webapps/frontend-next](webapps/frontend-next/README.md#end-to-end-tests-playwright)).
-See [TESTING.md](TESTING.md). To build the container image (the first build takes about 10–20
+See [TESTING.md](docs/testing.md). To build the container image (the first build takes about 10–20
 minutes):
 
 ```bash
@@ -242,11 +242,11 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 ## Contributing
 
 Questions, bug reports and pull requests are welcome on GitHub; see
-[CONTRIBUTING.md](CONTRIBUTING.md#how-to-contribute) and the
-[Code of Conduct](CODE_OF_CONDUCT.md). Reviews of the translations by native speakers are
+[CONTRIBUTING.md](.github/CONTRIBUTING.md#how-to-contribute) and the
+[Code of Conduct](.github/CODE_OF_CONDUCT.md). Reviews of the translations by native speakers are
 especially welcome.
 
-Using Fasti BPM in your organization? [Add it to the adopters](ADOPTERS.md): a short form, and
+Using Fasti BPM in your organization? [Add it to the adopters](docs/adopters.md): a short form, and
 only with your permission.
 
 <a id="acknowledgements"></a>

@@ -274,7 +274,7 @@ Read the log with `docker logs fasti` (or `docker compose logs fasti`).
 | The container keeps restarting and the log shows `OutOfMemoryError` | the JVM exits when memory runs out: raise the container memory limit (2 GB) |
 
 Still stuck? Open a GitHub issue with the log (passwords removed). Security issues: see
-[SECURITY.md](../SECURITY.md#security-policy).
+[SECURITY.md](../.github/SECURITY.md#security-policy).
 
 <a id="12-without-docker"></a>
 

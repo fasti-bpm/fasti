@@ -274,7 +274,7 @@ Lesen Sie das Protokoll mit `docker logs fasti` (oder `docker compose logs fasti
 | Der Container startet ständig neu und das Protokoll zeigt `OutOfMemoryError` | Die JVM beendet sich bei Speichermangel: Erhöhen Sie das Speicherlimit des Containers (2 GB) |
 
 Kommen Sie weiterhin nicht weiter? Erstellen Sie ein GitHub-Issue mit dem Protokoll (Passwörter entfernen). Bei Sicherheitsproblemen siehe
-[SECURITY.md](../SECURITY.md#security-policy).
+[SECURITY.md](../.github/SECURITY.md#security-policy).
 
 <a id="12-without-docker"></a>
 

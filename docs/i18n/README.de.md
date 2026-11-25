@@ -1,4 +1,4 @@
-[English](README.md) | [Tiếng Việt](README.vi.md) | Deutsch | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | [Bahasa Indonesia](README.id.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | [ไทย](README.th.md) | [简体中文](README.zh-CN.md)
+[English](../../README.md) | [Tiếng Việt](README.vi.md) | Deutsch | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | [Bahasa Indonesia](README.id.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | [ไทย](README.th.md) | [简体中文](README.zh-CN.md)
 
 > Diese Übersetzung wird von der Community gepflegt und kann hinter der englischen Fassung zurückliegen; maßgeblich ist die englische Fassung. Korrekturen sind willkommen.
 
@@ -56,7 +56,7 @@ Vollständige Anleitung, auch mit Ihrer eigenen Datenbank: <https://fasti.dev/in
   Einrichtungsseite angelegt); das Run-Zip und der Spring Boot Starter behalten die Standardwerte
   von Camunda 7. Jede Distribution enthält die Sicherheitskorrekturen und warnt beim Start vor einer
   JVM, die für Java4Shell anfällig ist ([Sicherheit](https://fasti.dev/security)).
-- **Single Sign-on**: OpenID Connect und JWT-Bearer-Tokens ([Anleitung](docs/single-sign-on.de.md)).
+- **Single Sign-on**: OpenID Connect und JWT-Bearer-Tokens ([Anleitung](../single-sign-on.de.md)).
 - **Aktuelle Plattform**: Java 17 oder höher, Spring Boot 4.1, GraalJS 25, Jackson 2.21
   ([Leistung](https://fasti.dev/#performance)).
 
@@ -65,8 +65,8 @@ Vollständige Anleitung, auch mit Ihrer eigenen Datenbank: <https://fasti.dev/in
 ## Fasti beziehen
 
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**Docker-Image** (`fastidev/fasti-bpm`, amd64 und arm64): <https://fasti.dev/install>;
-  Schritt für Schritt in [docs/install-docker.de.md](docs/install-docker.de.md), alle Variablen in
-  [distro/docker/README.md](distro/docker/README.md#environment-variables).
+  Schritt für Schritt in [docs/install-docker.de.md](../install-docker.de.md), alle Variablen in
+  [distro/docker/README.md](../../distro/docker/README.md#environment-variables).
 - <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Tomcat-Bundle**, ohne Docker: <https://fasti.dev/download>. Fertiges Tomcat 1.3.0-Bundle:
   - [fasti-bpm-tomcat-1.3.0.zip](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip.sha256))
   - [fasti-bpm-tomcat-1.3.0.tar.gz](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz.sha256))
@@ -76,7 +76,7 @@ Vollständige Anleitung, auch mit Ihrer eigenen Datenbank: <https://fasti.dev/in
   im Bundle.
 - **Eingebettet** in Spring Boot oder eine andere Java-Anwendung: neue Maven-Koordinaten
   (`dev.fasti.platform:fasti-*`), dieselben Pakete `org.camunda.bpm.*`; siehe
-  [docs/embedding.de.md](docs/embedding.de.md).
+  [docs/embedding.de.md](../embedding.de.md).
 
 <a id="moving-from-camunda-7"></a>
 
@@ -95,11 +95,11 @@ Schemas werden zuvor mit den Standardskripten aktualisiert. Plugins und Prozessa
 Camunda 7 gebaut wurden, müssen gegen die Fasti-Artefakte neu gebaut werden, um in Fasti zu laufen.
 Parallelbetrieb und Rückkehr haben Grenzen (gleiche Konfiguration auf allen Knoten, welcher Knoten
 Jobs ausführt, Prozesse mit Fasti-spezifischen Funktionen): siehe
-[Mischbetrieb](docs/migrate-from-camunda-7.de.md#mixed-operation-with-camunda-7-nodes) und
-[Rückkehr](docs/migrate-from-camunda-7.de.md#rollback-to-camunda-724).
+[Mischbetrieb](../migrate-from-camunda-7.de.md#mixed-operation-with-camunda-7-nodes) und
+[Rückkehr](../migrate-from-camunda-7.de.md#rollback-to-camunda-724).
 
 Migrationsschritte und Grenzen: <https://fasti.dev/install#migrate> und der
-[Migrationsleitfaden](docs/migrate-from-camunda-7.de.md) (Rollback, ältere Schemas, Testergebnisse).
+[Migrationsleitfaden](../migrate-from-camunda-7.de.md) (Rollback, ältere Schemas, Testergebnisse).
 
 <a id="comparison"></a><a id="how-it-compares"></a>
 
@@ -116,8 +116,8 @@ Tabelle mit Quellen: <https://fasti.dev/compare>.
 
 Das neueste Minor-Release der Linie `1.x` erhält Bugfixes und Sicherheitspatches als Patch-Releases
 wie `1.0.1`. Bitte melden Sie Sicherheitsprobleme vertraulich, nicht in einem öffentlichen Issue:
-siehe [SECURITY.md](SECURITY.md#security-policy), wo auch die
-[Support-Richtlinie](SECURITY.md#support-policy) steht. Liste der Korrekturen, Java4Shell und die
+siehe [SECURITY.md](../../.github/SECURITY.md#security-policy), wo auch die
+[Support-Richtlinie](../../.github/SECURITY.md#support-policy) steht. Liste der Korrekturen, Java4Shell und die
 Prüfung vor der Veröffentlichung: <https://fasti.dev/security>. Für Hilfe bei Installation, Migration
 oder Betrieb sowie für Support-Bedingungen schreiben Sie an <contact@fasti.dev>.
 
@@ -149,20 +149,20 @@ Auf [fasti.dev](https://fasti.dev): [Installation mit Docker](https://fasti.dev/
 
 | Dokument | Inhalt |
 |---|---|
-| [docs/install-docker.de.md](docs/install-docker.de.md) | Installation mit Docker, Schritt für Schritt |
-| [docs/install-kubernetes.md](docs/install-kubernetes.md) | Installation auf Kubernetes: Helm-Chart und einfache Manifeste (ab 1.1.0) |
-| [docs/migrate-from-camunda-7.de.md](docs/migrate-from-camunda-7.de.md) | Umstieg von Camunda 7, Rollback, Einschränkungen |
-| [docs/embedding.de.md](docs/embedding.de.md) | Kompatibilität, Unterschiede zu 7.24.0, Versionierung, Maven-Koordinaten, Prüfung beim Start |
-| [docs/web-ui.de.md](docs/web-ui.de.md) | Die Weboberfläche: von Anwendern gewünschte Funktionen, der Pfad `/fasti`, die klassischen Anwendungen |
-| [docs/absence.md](docs/absence.md) | Vertretungen bei Abwesenheit (ab 1.1.0) |
-| [docs/four-eyes.md](docs/four-eyes.md) | Vier-Augen-Prinzip für Freigaben (ab 1.1.0) |
-| [docs/audit-trail.md](docs/audit-trail.md) | Unveränderlicher Audit-Trail (ab 1.1.0) |
-| [docs/single-sign-on.de.md](docs/single-sign-on.de.md) | Single Sign-on (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
-| [docs/api/README.md](docs/api/README.md) | REST-API-Integration, Java- und JavaScript-Clients für externe Aufgaben |
-| [distro/docker/README.md](distro/docker/README.md) | Image: Umgebungsvariablen, Treiber, Betrieb, Optimierung |
-| [webapps/frontend-next/README.md](webapps/frontend-next/README.md#new-web-ui-frontend-next) | Die neue Weboberfläche |
-| [docs/security/CVE-2026-114938.md](docs/security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell und Fasti |
-| [CHANGELOG.md](CHANGELOG.md), [SECURITY.md](SECURITY.md#security-policy) | Änderungen, Sicherheit, Support-Richtlinie |
+| [docs/install-docker.de.md](../install-docker.de.md) | Installation mit Docker, Schritt für Schritt |
+| [docs/install-kubernetes.md](../install-kubernetes.md) | Installation auf Kubernetes: Helm-Chart und einfache Manifeste (ab 1.1.0) |
+| [docs/migrate-from-camunda-7.de.md](../migrate-from-camunda-7.de.md) | Umstieg von Camunda 7, Rollback, Einschränkungen |
+| [docs/embedding.de.md](../embedding.de.md) | Kompatibilität, Unterschiede zu 7.24.0, Versionierung, Maven-Koordinaten, Prüfung beim Start |
+| [docs/web-ui.de.md](../web-ui.de.md) | Die Weboberfläche: von Anwendern gewünschte Funktionen, der Pfad `/fasti`, die klassischen Anwendungen |
+| [docs/absence.md](../absence.md) | Vertretungen bei Abwesenheit (ab 1.1.0) |
+| [docs/four-eyes.md](../four-eyes.md) | Vier-Augen-Prinzip für Freigaben (ab 1.1.0) |
+| [docs/audit-trail.md](../audit-trail.md) | Unveränderlicher Audit-Trail (ab 1.1.0) |
+| [docs/single-sign-on.de.md](../single-sign-on.de.md) | Single Sign-on (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
+| [docs/api/README.md](../api/README.md) | REST-API-Integration, Java- und JavaScript-Clients für externe Aufgaben |
+| [distro/docker/README.md](../../distro/docker/README.md) | Image: Umgebungsvariablen, Treiber, Betrieb, Optimierung |
+| [webapps/frontend-next/README.md](../../webapps/frontend-next/README.md#new-web-ui-frontend-next) | Die neue Weboberfläche |
+| [docs/security/CVE-2026-114938.md](../security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell und Fasti |
+| [CHANGELOG.md](../../CHANGELOG.md), [SECURITY.md](../../.github/SECURITY.md#security-policy) | Änderungen, Sicherheit, Support-Richtlinie |
 
 <a id="build"></a>
 
@@ -176,8 +176,8 @@ npm-Registry (der Build lädt Node/npm für die Weboberfläche herunter).
 ```
 
 Ein vollständiger Build führt alle Java-Tests und die Unit-Tests der Weboberfläche aus (knapp eine
-Stunde; die Playwright-End-to-End-Tests werden separat ausgeführt, siehe [webapps/frontend-next](webapps/frontend-next/README.md#end-to-end-tests-playwright)).
-Siehe [TESTING.md](TESTING.md). So erstellen Sie das Container-Image (der erste Build dauert etwa
+Stunde; die Playwright-End-to-End-Tests werden separat ausgeführt, siehe [webapps/frontend-next](../../webapps/frontend-next/README.md#end-to-end-tests-playwright)).
+Siehe [TESTING.md](../testing.md). So erstellen Sie das Container-Image (der erste Build dauert etwa
 10–20 Minuten):
 
 ```bash
@@ -190,8 +190,8 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 ## Mitwirken
 
 Fragen, Fehlerberichte und Pull Requests sind auf GitHub willkommen; siehe
-[CONTRIBUTING.md](CONTRIBUTING.md#how-to-contribute) und den
-[Verhaltenskodex](CODE_OF_CONDUCT.md). Besonders willkommen sind Durchsichten der Übersetzungen
+[CONTRIBUTING.md](../../.github/CONTRIBUTING.md#how-to-contribute) und den
+[Verhaltenskodex](../../.github/CODE_OF_CONDUCT.md). Besonders willkommen sind Durchsichten der Übersetzungen
 durch Muttersprachler.
 
 <a id="acknowledgements"></a>
@@ -209,4 +209,4 @@ durch Muttersprachler.
 
 ## Lizenz
 
-[Apache License 2.0](LICENSE). Angaben zum Urheberrecht des ursprünglichen Codes finden Sie in [NOTICE](NOTICE).
+[Apache License 2.0](../../LICENSE). Angaben zum Urheberrecht des ursprünglichen Codes finden Sie in [NOTICE](../../NOTICE).

@@ -273,7 +273,7 @@ docker run -d --name fasti ... fastidev/fasti-bpm:1.3.0 --production   # same op
 | 容器不断重启，日志显示 `OutOfMemoryError` | JVM 会在内存耗尽时退出：提高容器内存限制（2 GB） |
 
 仍然无法解决？请提交 GitHub issue，并附上日志（移除密码）。安全问题：参见
-[SECURITY.md](../SECURITY.md#security-policy)。
+[SECURITY.md](../.github/SECURITY.md#security-policy)。
 
 <a id="12-without-docker"></a>
 

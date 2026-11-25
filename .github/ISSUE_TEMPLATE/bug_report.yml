@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Security vulnerabilities: do **not** report them here, see SECURITY.md.
+        Security vulnerabilities: do **not** report them here, see .github/SECURITY.md.
   - type: input
     id: version
     attributes:

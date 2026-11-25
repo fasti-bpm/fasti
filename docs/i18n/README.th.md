@@ -1,4 +1,4 @@
-[English](README.md) | [Tiếng Việt](README.vi.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | [Bahasa Indonesia](README.id.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | ไทย | [简体中文](README.zh-CN.md)
+[English](../../README.md) | [Tiếng Việt](README.vi.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | [Bahasa Indonesia](README.id.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | ไทย | [简体中文](README.zh-CN.md)
 
 > คำแปลนี้ดูแลโดยชุมชนและอาจล้าหลังฉบับภาษาอังกฤษ ฉบับภาษาอังกฤษเป็นฉบับที่ใช้อ้างอิงหลัก ยินดีรับการแก้ไข
 
@@ -55,7 +55,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
   ในหน้า setup) ส่วน Run zip และ Spring Boot starter ยังคงค่าเริ่มต้นของ Camunda 7 ทุกรูปแบบการแจกจ่าย
   มีการแก้ไขด้านความปลอดภัย และแจ้งเตือนตอนเริ่มทำงานหาก JVM ได้รับผลกระทบจาก Java4Shell
   ([ความปลอดภัย](https://fasti.dev/security))
-- **Single sign-on**: OpenID Connect และ JWT bearer token ([คู่มือ](docs/single-sign-on.th.md))
+- **Single sign-on**: OpenID Connect และ JWT bearer token ([คู่มือ](../single-sign-on.th.md))
 - **แพลตฟอร์มปัจจุบัน**: Java 17 ขึ้นไป, Spring Boot 4.1, GraalJS 25, Jackson 2.21
   ([ประสิทธิภาพ](https://fasti.dev/#performance))
 
@@ -64,8 +64,8 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 ## วิธีรับ Fasti
 
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**อิมเมจ Docker** (`fastidev/fasti-bpm`, amd64 และ arm64): <https://fasti.dev/install> ดูขั้นตอน
-  ทีละขั้นใน [docs/install-docker.th.md](docs/install-docker.th.md) และตัวแปรทั้งหมดใน
-  [distro/docker/README.md](distro/docker/README.md#environment-variables)
+  ทีละขั้นใน [docs/install-docker.th.md](../install-docker.th.md) และตัวแปรทั้งหมดใน
+  [distro/docker/README.md](../../distro/docker/README.md#environment-variables)
 - <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**ชุด Tomcat** โดยไม่ใช้ Docker: <https://fasti.dev/download> ชุด Tomcat 1.3.0 ที่พร้อมใช้งาน:
   - [fasti-bpm-tomcat-1.3.0.zip](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip.sha256))
   - [fasti-bpm-tomcat-1.3.0.tar.gz](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz.sha256))
@@ -74,7 +74,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
   และอ่าน `README.txt` ในชุดก่อนเริ่มใช้งาน
 - **แบบฝัง** ใน Spring Boot หรือแอปพลิเคชัน Java อื่น: พิกัด Maven ใหม่
   (`dev.fasti.platform:fasti-*`) แพ็กเกจ `org.camunda.bpm.*` ชุดเดิม ดู
-  [docs/embedding.th.md](docs/embedding.th.md)
+  [docs/embedding.th.md](../embedding.th.md)
 
 <a id="moving-from-camunda-7"></a>
 
@@ -85,10 +85,10 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 image ของ Fasti ผ่านการทดสอบการรับช่วงต่อฐานข้อมูลที่ Camunda Run 7.24 สร้างไว้บน PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022 และ Oracle Database 23ai แล้ว และทดสอบการย้อนกลับไปใช้ Camunda Run บนฐานข้อมูลเดียวกันนี้แล้ว ยกเว้น MySQL ส่วน DB2 ยังไม่ได้ทดสอบ ทุก REST client รวมถึง
 external task worker ต้องส่งข้อมูลรับรองแบบ Basic หรือ bearer token
 
-แอปพลิเคชัน Spring Boot แบบ embedded ต้องย้ายไปใช้ Spring Boot 4.1 และ Java 17 ด้วย ส่วน schema รุ่นเก่าต้องอัปเกรดด้วยสคริปต์มาตรฐานก่อน plugin และ process application ที่สร้างสำหรับ Camunda 7 ต้อง build ใหม่กับ artifact ของ Fasti จึงจะทำงานภายใน Fasti ได้ การทำงานคู่กันและการย้อนกลับมีข้อจำกัด (การตั้งค่าเดียวกันทุกโหนด โหนดใดรัน job และ process ที่ใช้ฟีเจอร์เฉพาะของ Fasti) ดู [การทำงานแบบผสม](docs/migrate-from-camunda-7.th.md#mixed-operation-with-camunda-7-nodes) และ [การย้อนกลับ](docs/migrate-from-camunda-7.th.md#rollback-to-camunda-724)
+แอปพลิเคชัน Spring Boot แบบ embedded ต้องย้ายไปใช้ Spring Boot 4.1 และ Java 17 ด้วย ส่วน schema รุ่นเก่าต้องอัปเกรดด้วยสคริปต์มาตรฐานก่อน plugin และ process application ที่สร้างสำหรับ Camunda 7 ต้อง build ใหม่กับ artifact ของ Fasti จึงจะทำงานภายใน Fasti ได้ การทำงานคู่กันและการย้อนกลับมีข้อจำกัด (การตั้งค่าเดียวกันทุกโหนด โหนดใดรัน job และ process ที่ใช้ฟีเจอร์เฉพาะของ Fasti) ดู [การทำงานแบบผสม](../migrate-from-camunda-7.th.md#mixed-operation-with-camunda-7-nodes) และ [การย้อนกลับ](../migrate-from-camunda-7.th.md#rollback-to-camunda-724)
 
 ขั้นตอนและข้อจำกัดของการย้ายระบบ: <https://fasti.dev/install#migrate> และ
-[คู่มือการย้ายระบบ](docs/migrate-from-camunda-7.th.md) (การย้อนกลับ schema รุ่นเก่า และผลการทดสอบ)
+[คู่มือการย้ายระบบ](../migrate-from-camunda-7.th.md) (การย้อนกลับ schema รุ่นเก่า และผลการทดสอบ)
 
 <a id="comparison"></a><a id="how-it-compares"></a>
 
@@ -105,8 +105,8 @@ external task worker ต้องส่งข้อมูลรับรอง�
 
 รีลีส minor ล่าสุดของสาย `1.x` จะได้รับการแก้บั๊กและแพตช์ความปลอดภัย ในรูปแบบรีลีส patch เช่น
 `1.0.1` โปรดรายงานปัญหาด้านความปลอดภัยเป็นการส่วนตัว ไม่ใช่ใน issue สาธารณะ ดู
-[SECURITY.md](SECURITY.md#security-policy) ซึ่งมี
-[นโยบายการสนับสนุน](SECURITY.md#support-policy) อยู่ด้วย รายการการแก้ไข Java4Shell และการตรวจทาน
+[SECURITY.md](../../.github/SECURITY.md#security-policy) ซึ่งมี
+[นโยบายการสนับสนุน](../../.github/SECURITY.md#support-policy) อยู่ด้วย รายการการแก้ไข Java4Shell และการตรวจทาน
 ก่อนรีลีส: <https://fasti.dev/security> หากต้องการความช่วยเหลือด้านการติดตั้ง การย้ายระบบ หรือ
 การใช้งานจริง และเงื่อนไขการสนับสนุน ส่งอีเมลมาที่ <contact@fasti.dev>
 
@@ -137,20 +137,20 @@ AngularJS ไทม์ไลน์ตั้งแต่การสิ้นส�
 
 | เอกสาร | เนื้อหา |
 |---|---|
-| [docs/install-docker.md](docs/install-docker.th.md) | การติดตั้งด้วย Docker ทีละขั้นตอน |
-| [docs/install-kubernetes.md](docs/install-kubernetes.md) | การติดตั้งบน Kubernetes: Helm chart และ manifest แบบธรรมดา (ตั้งแต่ 1.1.0) |
-| [docs/migrate-from-camunda-7.md](docs/migrate-from-camunda-7.th.md) | การย้ายจาก Camunda 7 การย้อนกลับ และข้อจำกัด |
-| [docs/embedding.md](docs/embedding.th.md) | ความเข้ากันได้ สิ่งที่แตกต่างจาก 7.24.0 การกำหนดเวอร์ชัน พิกัด Maven และการตรวจสอบเมื่อเริ่มทำงาน |
-| [docs/web-ui.md](docs/web-ui.th.md) | เว็บอินเทอร์เฟซ: ฟีเจอร์ที่ผู้ใช้ร้องขอ พาธ `/fasti` และแอปแบบคลาสสิก |
-| [docs/absence.md](docs/absence.md) | ผู้ปฏิบัติงานแทนระหว่างที่ไม่อยู่ (ตั้งแต่ 1.1.0) |
-| [docs/four-eyes.md](docs/four-eyes.md) | การควบคุมแบบ four-eyes สำหรับการอนุมัติ (ตั้งแต่ 1.1.0) |
-| [docs/audit-trail.md](docs/audit-trail.md) | Audit trail ที่แก้ไขไม่ได้ (ตั้งแต่ 1.1.0) |
-| [docs/single-sign-on.md](docs/single-sign-on.th.md) | การลงชื่อเข้าใช้ครั้งเดียว (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
-| [docs/api/README.md](docs/api/README.md) | การเชื่อมต่อ REST API และไคลเอนต์งานภายนอกสำหรับ Java กับ JavaScript |
-| [distro/docker/README.md](distro/docker/README.md) | อิมเมจ: ตัวแปรสภาพแวดล้อม ไดรเวอร์ การดูแลระบบ และการปรับแต่ง |
-| [webapps/frontend-next/README.md](webapps/frontend-next/README.md#new-web-ui-frontend-next) | เว็บ UI ใหม่ |
-| [docs/security/CVE-2026-114938.md](docs/security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell และ Fasti |
-| [CHANGELOG.md](CHANGELOG.md), [SECURITY.md](SECURITY.md#security-policy) | การเปลี่ยนแปลง ความปลอดภัย และนโยบายการสนับสนุน |
+| [docs/install-docker.md](../install-docker.th.md) | การติดตั้งด้วย Docker ทีละขั้นตอน |
+| [docs/install-kubernetes.md](../install-kubernetes.md) | การติดตั้งบน Kubernetes: Helm chart และ manifest แบบธรรมดา (ตั้งแต่ 1.1.0) |
+| [docs/migrate-from-camunda-7.md](../migrate-from-camunda-7.th.md) | การย้ายจาก Camunda 7 การย้อนกลับ และข้อจำกัด |
+| [docs/embedding.md](../embedding.th.md) | ความเข้ากันได้ สิ่งที่แตกต่างจาก 7.24.0 การกำหนดเวอร์ชัน พิกัด Maven และการตรวจสอบเมื่อเริ่มทำงาน |
+| [docs/web-ui.md](../web-ui.th.md) | เว็บอินเทอร์เฟซ: ฟีเจอร์ที่ผู้ใช้ร้องขอ พาธ `/fasti` และแอปแบบคลาสสิก |
+| [docs/absence.md](../absence.md) | ผู้ปฏิบัติงานแทนระหว่างที่ไม่อยู่ (ตั้งแต่ 1.1.0) |
+| [docs/four-eyes.md](../four-eyes.md) | การควบคุมแบบ four-eyes สำหรับการอนุมัติ (ตั้งแต่ 1.1.0) |
+| [docs/audit-trail.md](../audit-trail.md) | Audit trail ที่แก้ไขไม่ได้ (ตั้งแต่ 1.1.0) |
+| [docs/single-sign-on.md](../single-sign-on.th.md) | การลงชื่อเข้าใช้ครั้งเดียว (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
+| [docs/api/README.md](../api/README.md) | การเชื่อมต่อ REST API และไคลเอนต์งานภายนอกสำหรับ Java กับ JavaScript |
+| [distro/docker/README.md](../../distro/docker/README.md) | อิมเมจ: ตัวแปรสภาพแวดล้อม ไดรเวอร์ การดูแลระบบ และการปรับแต่ง |
+| [webapps/frontend-next/README.md](../../webapps/frontend-next/README.md#new-web-ui-frontend-next) | เว็บ UI ใหม่ |
+| [docs/security/CVE-2026-114938.md](../security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell และ Fasti |
+| [CHANGELOG.md](../../CHANGELOG.md), [SECURITY.md](../../.github/SECURITY.md#security-policy) | การเปลี่ยนแปลง ความปลอดภัย และนโยบายการสนับสนุน |
 
 <a id="build"></a>
 
@@ -164,8 +164,8 @@ AngularJS ไทม์ไลน์ตั้งแต่การสิ้นส�
 ```
 
 การบิลด์เต็มรูปแบบจะรันการทดสอบ Java ทั้งหมดและการทดสอบหน่วยของเว็บ UI (เกือบหนึ่งชั่วโมง; การทดสอบ
-แบบครบวงจรด้วย Playwright รันแยกต่างหาก ดู [webapps/frontend-next](webapps/frontend-next/README.md#end-to-end-tests-playwright))
-ดู [TESTING.md](TESTING.md) หากต้องการบิลด์อิมเมจคอนเทนเนอร์ (การบิลด์ครั้งแรกใช้เวลาประมาณ 10–20
+แบบครบวงจรด้วย Playwright รันแยกต่างหาก ดู [webapps/frontend-next](../../webapps/frontend-next/README.md#end-to-end-tests-playwright))
+ดู [TESTING.md](../testing.md) หากต้องการบิลด์อิมเมจคอนเทนเนอร์ (การบิลด์ครั้งแรกใช้เวลาประมาณ 10–20
 นาที):
 
 ```bash
@@ -178,7 +178,7 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 ## ร่วมพัฒนา
 
 ยินดีรับคำถาม รายงานบั๊ก และ pull request บน GitHub ดู
-[CONTRIBUTING.md](CONTRIBUTING.md#how-to-contribute) และ[จรรยาบรรณ](CODE_OF_CONDUCT.md)
+[CONTRIBUTING.md](../../.github/CONTRIBUTING.md#how-to-contribute) และ[จรรยาบรรณ](../../.github/CODE_OF_CONDUCT.md)
 ยินดีเป็นอย่างยิ่งหากเจ้าของภาษาช่วยตรวจทานคำแปล
 
 <a id="acknowledgements"></a>
@@ -195,4 +195,4 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 
 ## สัญญาอนุญาต
 
-[สัญญาอนุญาต Apache 2.0](LICENSE) ดูลิขสิทธิ์ของโค้ดต้นฉบับใน [NOTICE](NOTICE)
+[สัญญาอนุญาต Apache 2.0](../../LICENSE) ดูลิขสิทธิ์ของโค้ดต้นฉบับใน [NOTICE](../../NOTICE)

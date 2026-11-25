@@ -4,7 +4,7 @@
  */
 // Checks the license header of every source file.
 //
-// Rule (see CONTRIBUTING.md): files written for Fasti BPM, i.e. files that do
+// Rule (see .github/CONTRIBUTING.md): files written for Fasti BPM, i.e. files that do
 // not exist in the upstream tag 7.24.0, must start with the Fasti header (the
 // one at the top of this file). Files that exist upstream keep the header of
 // Camunda 7 CE, as do new files copied from an upstream file (listed in

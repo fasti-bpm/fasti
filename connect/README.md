@@ -7,7 +7,7 @@ camunda-connect
   <a href="https://forum.camunda.org/">Forum</a> |
   <a href="https://jira.camunda.com/browse/CAM">Issues</a> |
   <a href="../LICENSE">License</a> |
-  <a href="../CONTRIBUTING.md">Contribute</a>
+  <a href="../.github/CONTRIBUTING.md">Contribute</a>
 </p>
 
 Simple API for connecting HTTP Services and other things.

@@ -7,7 +7,7 @@ camunda-spin
   <a href="https://forum.camunda.org/">Forum</a> |
   <a href="https://app.camunda.com/jira/browse/CAM">Issues</a> |
   <a href="../LICENSE">License</a> |
-  <a href="../CONTRIBUTING.md">Contribute</a>
+  <a href="../.github/CONTRIBUTING.md">Contribute</a>
 </p>
 
 Library for simple XML and JSON processing on the JVM (Java Virtual Machine), targeting Java and

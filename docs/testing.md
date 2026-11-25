@@ -76,7 +76,7 @@ There is a special profile for the WildFly Application Servers:
 
 # Testing a Given Database
 
-The upstream Camunda 7 documentation lists the database technologies it supports on [Supported Database Products](https://docs.camunda.org/manual/latest/introduction/supported-environments/#supported-database-products); the databases tested with Fasti BPM are listed in the [migration guide](docs/migrate-from-camunda-7.md#limits). Upstream support means that the engine integrates well with the database technology’s JDBC behavior (there are some [documented](https://docs.camunda.org/manual/latest/user-guide/process-engine/database/) limitations, e.g., isolation level `READ_COMMITTED` is required for all databases). We test a database technology with a specific database, i.e., we test it in one environment, not all possible environments that you can imagine (e.g., we test Postgres on local Docker containers, but not as hosted databases on AWS or Azure).
+The upstream Camunda 7 documentation lists the database technologies it supports on [Supported Database Products](https://docs.camunda.org/manual/latest/introduction/supported-environments/#supported-database-products); the databases tested with Fasti BPM are listed in the [migration guide](migrate-from-camunda-7.md#limits). Upstream support means that the engine integrates well with the database technology’s JDBC behavior (there are some [documented](https://docs.camunda.org/manual/latest/user-guide/process-engine/database/) limitations, e.g., isolation level `READ_COMMITTED` is required for all databases). We test a database technology with a specific database, i.e., we test it in one environment, not all possible environments that you can imagine (e.g., we test Postgres on local Docker containers, but not as hosted databases on AWS or Azure).
 
 # No Maven? No problem!
 
@@ -84,7 +84,7 @@ This project provides a [Maven Wrapper](https://github.com/takari/maven-wrapper)
 to build and test the project with the same version that this project uses. It's also useful for developers that don't want
 to install Maven at all. By executing the `mvnw` script (Unix), or `mvnw.cmd` script (Windows), a Maven distro will be 
 downloaded and installed in the `$USER_HOME/.m2/wrapper/dists` folder of the system. You can check the download URL in
-the [.mvn/wrapper/maven-wrapper.properties](.mvn/wrapper/maven-wrapper.properties) file.
+the [.mvn/wrapper/maven-wrapper.properties](../.mvn/wrapper/maven-wrapper.properties) file.
 
 The Maven Wrapper requires Maven commands to be executed from the root of the project. As this project
 is a multi-module (Maven Reactor) project, this is also a good best practice to apply.
@@ -104,7 +104,7 @@ To build the whole project, or just a module, one of the following commands may 
 
 > Note: Above the `mvn -f` command line option is recommended over the `mvn -pl` option. The reason is that `-pl` will
 build only the specified module, and will ignore any sub-modules that it might contain (unless the `-amd` option is also
-added). As this project has a multi-tiered module hierarchy (e.g. the [qa](qa/) module has modules of 
+added). As this project has a multi-tiered module hierarchy (e.g. the [qa](../qa/) module has modules of 
 its own), the `mvn -f` command option is simpler. 
 
 ## What about database technology X in environment Y?
@@ -127,11 +127,11 @@ It is also possible to use Testcontainers to run the test suite against a given 
 Docker image can be used this way, please perform the following steps:
 
 1. Ensure that your Docker image is compatible with Testcontainers;
-1. Provide the repository name of your Docker image in the [testcontainers.properties](./test-utils/testcontainers/src/main/resources/testcontainers.properties) file;
+1. Provide the repository name of your Docker image in the [testcontainers.properties](../test-utils/testcontainers/src/main/resources/testcontainers.properties) file;
    * If you use a private Docker repository, please include it in the Docker image name (e.g. private.registry.org/postgres)
 1. In the `pom.xml` file located in the `./database` folder, check out the `database.tc.url` property to ensure that 
    the Docker tags match.
-1. Make sure that the `testcontainers` profile is added to your Maven `settings.xml` (you can find it [here](settings/maven/nexus-settings.xml)).
+1. Make sure that the `testcontainers` profile is added to your Maven `settings.xml` (you can find it [here](../settings/maven/nexus-settings.xml)).
 
 At the moment, Testcontainers can be used with the supported versions of the following databases. Please make 
 sure that the database image is configured according to [this guide](https://docs.camunda.org/manual/latest/user-guide/process-engine/database/database-configuration/#isolation-level-configuration):

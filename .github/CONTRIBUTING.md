@@ -12,7 +12,7 @@ Edition 7.24.0.
   version), the steps to reproduce and what you expected to happen. A failing unit test is
   the most helpful reproduction.
 * Do **not** report security issues in public. See [SECURITY.md](SECURITY.md).
-* Using Fasti BPM in your organization? See [ADOPTERS.md](ADOPTERS.md) to be listed.
+* Using Fasti BPM in your organization? See [docs/adopters.md](../docs/adopters.md) to be listed.
 
 ## Build from source
 
@@ -22,7 +22,7 @@ Requires JDK 17 or later (21 recommended). The Maven wrapper is included:
 ./mvnw clean verify
 ```
 
-See [TESTING.md](TESTING.md) for the test suites and database profiles.
+See [TESTING.md](../docs/testing.md) for the test suites and database profiles.
 
 ## Pull requests
 

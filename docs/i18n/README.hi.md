@@ -1,4 +1,4 @@
-[English](README.md) | [Tiếng Việt](README.vi.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | हिन्दी | [Bahasa Indonesia](README.id.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | [ไทย](README.th.md) | [简体中文](README.zh-CN.md)
+[English](../../README.md) | [Tiếng Việt](README.vi.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | हिन्दी | [Bahasa Indonesia](README.id.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | [ไทย](README.th.md) | [简体中文](README.zh-CN.md)
 
 > यह अनुवाद समुदाय द्वारा बनाए रखा जाता है और अंग्रेज़ी संस्करण से पीछे हो सकता है; अंग्रेज़ी संस्करण ही प्रामाणिक है। सुधारों का स्वागत है।
 
@@ -55,7 +55,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
   नहीं बनाते (पहला administrator setup page पर बनाया जाता है); Run zip और Spring Boot starter
   Camunda 7 के defaults रखते हैं। हर distribution में security fixes हैं और Java4Shell से
   प्रभावित JVM पर startup के समय चेतावनी दी जाती है ([सुरक्षा](https://fasti.dev/security))।
-- **Single sign-on**: OpenID Connect और JWT bearer tokens ([गाइड](docs/single-sign-on.hi.md))।
+- **Single sign-on**: OpenID Connect और JWT bearer tokens ([गाइड](../single-sign-on.hi.md))।
 - **वर्तमान प्लेटफ़ॉर्म**: Java 17 या बाद का संस्करण, Spring Boot 4.1, GraalJS 25, Jackson 2.21
   ([प्रदर्शन](https://fasti.dev/#performance))।
 
@@ -64,8 +64,8 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 ## Fasti प्राप्त करें
 
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**Docker इमेज** (`fastidev/fasti-bpm`, amd64 और arm64): <https://fasti.dev/install>; चरण-दर-चरण
-  निर्देश [docs/install-docker.hi.md](docs/install-docker.hi.md) में, सभी वेरिएबल
-  [distro/docker/README.md](distro/docker/README.md#environment-variables) में।
+  निर्देश [docs/install-docker.hi.md](../install-docker.hi.md) में, सभी वेरिएबल
+  [distro/docker/README.md](../../distro/docker/README.md#environment-variables) में।
 - <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Tomcat बंडल**, Docker के बिना: <https://fasti.dev/download>। तैयार Tomcat 1.3.0 बंडल:
   - [fasti-bpm-tomcat-1.3.0.zip](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip.sha256))
   - [fasti-bpm-tomcat-1.3.0.tar.gz](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz.sha256))
@@ -74,7 +74,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
   और शुरू करने से पहले बंडल में `README.txt` पढ़ें।
 - **एम्बेडेड**, Spring Boot या किसी अन्य Java एप्लिकेशन में: नए Maven निर्देशांक
   (`dev.fasti.platform:fasti-*`), वही `org.camunda.bpm.*` पैकेज;
-  [docs/embedding.hi.md](docs/embedding.hi.md) देखें।
+  [docs/embedding.hi.md](../embedding.hi.md) देखें।
 
 <a id="moving-from-camunda-7"></a>
 
@@ -92,11 +92,11 @@ standard scripts से upgrade किया जाता है। Camunda 7 �
 Fasti के भीतर चलाने के लिए Fasti artifacts के विरुद्ध दोबारा build करना होगा। साथ-साथ चलाने और वापस
 जाने की सीमाएँ हैं (हर node पर समान configuration, कौन-सा node jobs चलाता है, Fasti की विशेष
 सुविधाओं वाले processes): देखें
-[मिश्रित संचालन](docs/migrate-from-camunda-7.hi.md#mixed-operation-with-camunda-7-nodes) और
-[रोलबैक](docs/migrate-from-camunda-7.hi.md#rollback-to-camunda-724)।
+[मिश्रित संचालन](../migrate-from-camunda-7.hi.md#mixed-operation-with-camunda-7-nodes) और
+[रोलबैक](../migrate-from-camunda-7.hi.md#rollback-to-camunda-724)।
 
 Migration के चरण और सीमाएँ: <https://fasti.dev/install#migrate> और
-[माइग्रेशन गाइड](docs/migrate-from-camunda-7.hi.md) (रोलबैक, पुराने स्कीमा, परीक्षण परिणाम)।
+[माइग्रेशन गाइड](../migrate-from-camunda-7.hi.md) (रोलबैक, पुराने स्कीमा, परीक्षण परिणाम)।
 
 <a id="comparison"></a><a id="how-it-compares"></a>
 
@@ -113,8 +113,8 @@ schema को बनाए रखता है, इसलिए यह बदल
 
 `1.x` line की नवीनतम minor release को bug fixes और security patches मिलते हैं, `1.0.1` जैसी
 patch releases के रूप में। कृपया security समस्याएँ निजी तौर पर report करें, किसी public issue में
-नहीं: [SECURITY.md](SECURITY.md#security-policy) देखें, जिसमें
-[सहायता नीति](SECURITY.md#support-policy) भी है। सुधारों की सूची, Java4Shell और pre-release
+नहीं: [SECURITY.md](../../.github/SECURITY.md#security-policy) देखें, जिसमें
+[सहायता नीति](../../.github/SECURITY.md#support-policy) भी है। सुधारों की सूची, Java4Shell और pre-release
 समीक्षा: <https://fasti.dev/security>। इंस्टॉलेशन, माइग्रेशन या प्रोडक्शन में मदद और सहायता की
 शर्तों के लिए <contact@fasti.dev> पर लिखें।
 
@@ -145,20 +145,20 @@ control, immutable audit trail, AI assistants के लिए MCP server, औ�
 
 | दस्तावेज़ | विषय-वस्तु |
 |---|---|
-| [docs/install-docker.md](docs/install-docker.hi.md) | Docker के साथ चरण-दर-चरण स्थापना |
-| [docs/install-kubernetes.md](docs/install-kubernetes.md) | Kubernetes पर स्थापना: Helm chart और सादे manifests (1.1.0 से) |
-| [docs/migrate-from-camunda-7.md](docs/migrate-from-camunda-7.hi.md) | Camunda 7 से माइग्रेशन, रोलबैक, सीमाएँ |
-| [docs/embedding.md](docs/embedding.hi.md) | संगतता, 7.24.0 से क्या अलग है, संस्करण निर्धारण, Maven निर्देशांक, स्टार्टअप जाँच |
-| [docs/web-ui.md](docs/web-ui.hi.md) | वेब इंटरफ़ेस: उपयोगकर्ताओं द्वारा माँगी गई सुविधाएँ, `/fasti` पथ, क्लासिक ऐप्स |
-| [docs/absence.md](docs/absence.md) | अनुपस्थिति में substitute (1.1.0 से) |
-| [docs/four-eyes.md](docs/four-eyes.md) | Approvals के लिए four-eyes control (1.1.0 से) |
-| [docs/audit-trail.md](docs/audit-trail.md) | Immutable audit trail (1.1.0 से) |
-| [docs/single-sign-on.md](docs/single-sign-on.hi.md) | सिंगल साइन-ऑन (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
-| [docs/api/README.md](docs/api/README.md) | REST API इंटीग्रेशन, Java और JavaScript एक्सटर्नल टास्क क्लाइंट |
-| [distro/docker/README.md](distro/docker/README.md) | इमेज: एनवायरनमेंट वेरिएबल, ड्राइवर, संचालन, ट्यूनिंग |
-| [webapps/frontend-next/README.md](webapps/frontend-next/README.md#new-web-ui-frontend-next) | नया वेब UI |
-| [docs/security/CVE-2026-114938.md](docs/security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell और Fasti |
-| [CHANGELOG.md](CHANGELOG.md), [SECURITY.md](SECURITY.md#security-policy) | बदलाव, सुरक्षा, सहायता नीति |
+| [docs/install-docker.md](../install-docker.hi.md) | Docker के साथ चरण-दर-चरण स्थापना |
+| [docs/install-kubernetes.md](../install-kubernetes.md) | Kubernetes पर स्थापना: Helm chart और सादे manifests (1.1.0 से) |
+| [docs/migrate-from-camunda-7.md](../migrate-from-camunda-7.hi.md) | Camunda 7 से माइग्रेशन, रोलबैक, सीमाएँ |
+| [docs/embedding.md](../embedding.hi.md) | संगतता, 7.24.0 से क्या अलग है, संस्करण निर्धारण, Maven निर्देशांक, स्टार्टअप जाँच |
+| [docs/web-ui.md](../web-ui.hi.md) | वेब इंटरफ़ेस: उपयोगकर्ताओं द्वारा माँगी गई सुविधाएँ, `/fasti` पथ, क्लासिक ऐप्स |
+| [docs/absence.md](../absence.md) | अनुपस्थिति में substitute (1.1.0 से) |
+| [docs/four-eyes.md](../four-eyes.md) | Approvals के लिए four-eyes control (1.1.0 से) |
+| [docs/audit-trail.md](../audit-trail.md) | Immutable audit trail (1.1.0 से) |
+| [docs/single-sign-on.md](../single-sign-on.hi.md) | सिंगल साइन-ऑन (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
+| [docs/api/README.md](../api/README.md) | REST API इंटीग्रेशन, Java और JavaScript एक्सटर्नल टास्क क्लाइंट |
+| [distro/docker/README.md](../../distro/docker/README.md) | इमेज: एनवायरनमेंट वेरिएबल, ड्राइवर, संचालन, ट्यूनिंग |
+| [webapps/frontend-next/README.md](../../webapps/frontend-next/README.md#new-web-ui-frontend-next) | नया वेब UI |
+| [docs/security/CVE-2026-114938.md](../security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell और Fasti |
+| [CHANGELOG.md](../../CHANGELOG.md), [SECURITY.md](../../.github/SECURITY.md#security-policy) | बदलाव, सुरक्षा, सहायता नीति |
 
 <a id="build"></a>
 
@@ -172,8 +172,8 @@ JDK 17 या बाद का संस्करण आवश्यक है (
 ```
 
 पूरा बिल्ड सभी Java परीक्षण और वेब UI यूनिट परीक्षण चलाता है (लगभग एक घंटा; Playwright
-एंड-टू-एंड परीक्षण अलग से चलते हैं, [webapps/frontend-next](webapps/frontend-next/README.md#end-to-end-tests-playwright) देखें)।
-[TESTING.md](TESTING.md) देखें। कंटेनर इमेज बनाने के लिए (पहले बिल्ड में लगभग 10–20 मिनट
+एंड-टू-एंड परीक्षण अलग से चलते हैं, [webapps/frontend-next](../../webapps/frontend-next/README.md#end-to-end-tests-playwright) देखें)।
+[TESTING.md](../testing.md) देखें। कंटेनर इमेज बनाने के लिए (पहले बिल्ड में लगभग 10–20 मिनट
 लगते हैं):
 
 ```bash
@@ -186,7 +186,7 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 ## योगदान
 
 प्रश्न, बग रिपोर्ट और pull request GitHub पर स्वागत योग्य हैं;
-[CONTRIBUTING.md](CONTRIBUTING.md#how-to-contribute) और [आचार संहिता](CODE_OF_CONDUCT.md) देखें।
+[CONTRIBUTING.md](../../.github/CONTRIBUTING.md#how-to-contribute) और [आचार संहिता](../../.github/CODE_OF_CONDUCT.md) देखें।
 मातृभाषी लोगों द्वारा अनुवादों की समीक्षा का विशेष रूप से स्वागत है।
 
 <a id="acknowledgements"></a>
@@ -204,4 +204,4 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 
 ## लाइसेंस
 
-[Apache License 2.0](LICENSE)। मूल कोड के कॉपीराइट के लिए [सूचना](NOTICE) देखें।
+[Apache License 2.0](../../LICENSE)। मूल कोड के कॉपीराइट के लिए [सूचना](../../NOTICE) देखें।

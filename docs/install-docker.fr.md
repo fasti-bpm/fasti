@@ -275,7 +275,7 @@ Consultez le journal avec `docker logs fasti` (ou `docker compose logs fasti`).
 | Le conteneur redémarre en boucle et le journal affiche `OutOfMemoryError` | la JVM s’arrête lorsque la mémoire est épuisée : augmentez la limite de mémoire du conteneur (2 Go) |
 
 Toujours bloqué ? Ouvrez un ticket GitHub en joignant le journal (après suppression des mots de passe). Problèmes de sécurité : consultez
-[SECURITY.md](../SECURITY.md#security-policy).
+[SECURITY.md](../.github/SECURITY.md#security-policy).
 
 <a id="12-without-docker"></a>
 

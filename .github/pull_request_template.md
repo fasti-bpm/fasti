@@ -8,7 +8,7 @@
 - [ ] Tests cover the change
 - [ ] `./mvnw verify` passes for the affected modules
 - [ ] Web UI: `npm run lint`, `npm run typecheck` and `npm test` pass
-- [ ] License headers follow CONTRIBUTING.md
+- [ ] License headers follow .github/CONTRIBUTING.md
 - [ ] Docs updated (English; `.vi.md` and other translations updated or noted as out of date)
 - [ ] No code copied from other Camunda 7 forks
 

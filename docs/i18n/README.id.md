@@ -1,4 +1,4 @@
-[English](README.md) | [Tiếng Việt](README.vi.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | Bahasa Indonesia | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | [ไทย](README.th.md) | [简体中文](README.zh-CN.md)
+[English](../../README.md) | [Tiếng Việt](README.vi.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | Bahasa Indonesia | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | [ไทย](README.th.md) | [简体中文](README.zh-CN.md)
 
 > Terjemahan ini dikelola oleh komunitas dan mungkin tertinggal dari versi bahasa Inggris; versi bahasa Inggris adalah acuan resmi. Koreksi sangat diterima.
 
@@ -55,7 +55,7 @@ Panduan lengkap, termasuk dengan database Anda sendiri: <https://fasti.dev/insta
   (administrator pertama dibuat di halaman penyiapan); zip Run dan starter Spring Boot tetap
   memakai default Camunda 7. Setiap distribusi memiliki perbaikan keamanan dan memberi peringatan
   saat start pada JVM yang rentan terhadap Java4Shell ([keamanan](https://fasti.dev/security)).
-- **Single sign-on**: OpenID Connect dan JWT bearer token ([panduan](docs/single-sign-on.id.md)).
+- **Single sign-on**: OpenID Connect dan JWT bearer token ([panduan](../single-sign-on.id.md)).
 - **Platform terkini**: Java 17 atau yang lebih baru, Spring Boot 4.1, GraalJS 25, Jackson 2.21
   ([kinerja](https://fasti.dev/#performance)).
 
@@ -64,8 +64,8 @@ Panduan lengkap, termasuk dengan database Anda sendiri: <https://fasti.dev/insta
 ## Dapatkan Fasti
 
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**Image Docker** (`fastidev/fasti-bpm`, amd64 dan arm64): <https://fasti.dev/install>; langkah
-  demi langkah di [docs/install-docker.id.md](docs/install-docker.id.md), semua variabel di
-  [distro/docker/README.md](distro/docker/README.md#environment-variables).
+  demi langkah di [docs/install-docker.id.md](../install-docker.id.md), semua variabel di
+  [distro/docker/README.md](../../distro/docker/README.md#environment-variables).
 - <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Paket Tomcat**, tanpa Docker: <https://fasti.dev/download>. Paket Tomcat 1.3.0 siap pakai:
   - [fasti-bpm-tomcat-1.3.0.zip](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip.sha256))
   - [fasti-bpm-tomcat-1.3.0.tar.gz](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz.sha256))
@@ -74,7 +74,7 @@ Panduan lengkap, termasuk dengan database Anda sendiri: <https://fasti.dev/insta
   dan baca `README.txt` dalam paket sebelum menjalankannya.
 - **Tertanam** di Spring Boot atau aplikasi Java lainnya: koordinat Maven baru
   (`dev.fasti.platform:fasti-*`), package `org.camunda.bpm.*` yang sama; lihat
-  [docs/embedding.id.md](docs/embedding.id.md).
+  [docs/embedding.id.md](../embedding.id.md).
 
 <a id="moving-from-camunda-7"></a>
 
@@ -92,11 +92,11 @@ di-upgrade terlebih dahulu dengan skrip standar. Plugin dan process application 
 Camunda 7 harus di-build ulang terhadap artefak Fasti agar dapat berjalan di dalam Fasti.
 Menjalankan berdampingan dan kembali ke Camunda 7.24 memiliki batasan (konfigurasi yang sama di
 setiap node, node mana yang menjalankan job, proses yang memakai fitur khusus Fasti): lihat
-[operasi campuran](docs/migrate-from-camunda-7.id.md#mixed-operation-with-camunda-7-nodes) dan
-[rollback](docs/migrate-from-camunda-7.id.md#rollback-to-camunda-724).
+[operasi campuran](../migrate-from-camunda-7.id.md#mixed-operation-with-camunda-7-nodes) dan
+[rollback](../migrate-from-camunda-7.id.md#rollback-to-camunda-724).
 
 Langkah dan batasan: <https://fasti.dev/install#migrate> dan
-[panduan migrasi](docs/migrate-from-camunda-7.id.md) (rollback, skema yang lebih lama, hasil
+[panduan migrasi](../migrate-from-camunda-7.id.md) (rollback, skema yang lebih lama, hasil
 pengujian).
 
 <a id="comparison"></a><a id="how-it-compares"></a>
@@ -114,8 +114,8 @@ lengkapnya, beserta sumber: <https://fasti.dev/compare>.
 
 Rilis minor terbaru dari lini `1.x` menerima perbaikan bug dan patch keamanan, sebagai rilis
 patch seperti `1.0.1`. Mohon laporkan masalah keamanan secara privat, bukan di issue publik:
-lihat [SECURITY.md](SECURITY.md#security-policy), yang juga memuat
-[kebijakan dukungan](SECURITY.md#support-policy). Daftar perbaikan, Java4Shell, dan tinjauan
+lihat [SECURITY.md](../../.github/SECURITY.md#security-policy), yang juga memuat
+[kebijakan dukungan](../../.github/SECURITY.md#support-policy). Daftar perbaikan, Java4Shell, dan tinjauan
 pra-rilis: <https://fasti.dev/security>. Untuk bantuan instalasi, migrasi, atau produksi, serta
 ketentuan dukungan, kirim email ke <contact@fasti.dev>.
 
@@ -145,20 +145,20 @@ Di [fasti.dev](https://fasti.dev): [Instalasi dengan Docker](https://fasti.dev/i
 
 | Dokumen | Isi |
 |---|---|
-| [docs/install-docker.id.md](docs/install-docker.id.md) | Instalasi dengan Docker, langkah demi langkah |
-| [docs/install-kubernetes.md](docs/install-kubernetes.md) | Instalasi di Kubernetes: Helm chart dan manifest biasa (sejak 1.1.0) |
-| [docs/migrate-from-camunda-7.id.md](docs/migrate-from-camunda-7.id.md) | Beralih dari Camunda 7, rollback, batasan |
-| [docs/embedding.id.md](docs/embedding.id.md) | Kompatibilitas, perbedaan dari 7.24.0, penomoran versi, koordinat Maven, pemeriksaan saat startup |
-| [docs/web-ui.id.md](docs/web-ui.id.md) | Antarmuka web: fitur yang diminta pengguna, path `/fasti`, aplikasi klasik |
-| [docs/absence.md](docs/absence.md) | Pengganti selama berhalangan (sejak 1.1.0) |
-| [docs/four-eyes.md](docs/four-eyes.md) | Kontrol empat mata untuk persetujuan (sejak 1.1.0) |
-| [docs/audit-trail.md](docs/audit-trail.md) | Jejak audit yang tidak dapat diubah (sejak 1.1.0) |
-| [docs/single-sign-on.id.md](docs/single-sign-on.id.md) | Single sign-on (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
-| [docs/api/README.md](docs/api/README.md) | Integrasi REST API, klien tugas eksternal Java dan JavaScript |
-| [distro/docker/README.md](distro/docker/README.md) | Image: variabel lingkungan, driver, operasi, penyesuaian |
-| [webapps/frontend-next/README.md](webapps/frontend-next/README.md#new-web-ui-frontend-next) | UI web baru |
-| [docs/security/CVE-2026-114938.md](docs/security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell dan Fasti |
-| [CHANGELOG.md](CHANGELOG.md), [SECURITY.md](SECURITY.md#security-policy) | Perubahan, keamanan, kebijakan dukungan |
+| [docs/install-docker.id.md](../install-docker.id.md) | Instalasi dengan Docker, langkah demi langkah |
+| [docs/install-kubernetes.md](../install-kubernetes.md) | Instalasi di Kubernetes: Helm chart dan manifest biasa (sejak 1.1.0) |
+| [docs/migrate-from-camunda-7.id.md](../migrate-from-camunda-7.id.md) | Beralih dari Camunda 7, rollback, batasan |
+| [docs/embedding.id.md](../embedding.id.md) | Kompatibilitas, perbedaan dari 7.24.0, penomoran versi, koordinat Maven, pemeriksaan saat startup |
+| [docs/web-ui.id.md](../web-ui.id.md) | Antarmuka web: fitur yang diminta pengguna, path `/fasti`, aplikasi klasik |
+| [docs/absence.md](../absence.md) | Pengganti selama berhalangan (sejak 1.1.0) |
+| [docs/four-eyes.md](../four-eyes.md) | Kontrol empat mata untuk persetujuan (sejak 1.1.0) |
+| [docs/audit-trail.md](../audit-trail.md) | Jejak audit yang tidak dapat diubah (sejak 1.1.0) |
+| [docs/single-sign-on.id.md](../single-sign-on.id.md) | Single sign-on (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
+| [docs/api/README.md](../api/README.md) | Integrasi REST API, klien tugas eksternal Java dan JavaScript |
+| [distro/docker/README.md](../../distro/docker/README.md) | Image: variabel lingkungan, driver, operasi, penyesuaian |
+| [webapps/frontend-next/README.md](../../webapps/frontend-next/README.md#new-web-ui-frontend-next) | UI web baru |
+| [docs/security/CVE-2026-114938.md](../security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell dan Fasti |
+| [CHANGELOG.md](../../CHANGELOG.md), [SECURITY.md](../../.github/SECURITY.md#security-policy) | Perubahan, keamanan, kebijakan dukungan |
 
 <a id="build"></a>
 
@@ -172,8 +172,8 @@ nodejs.org, serta registri npm (proses build mengunduh Node/npm untuk UI web).
 ```
 
 Build lengkap menjalankan semua pengujian Java dan pengujian unit UI web (hampir satu jam;
-pengujian end-to-end Playwright dijalankan secara terpisah, lihat [webapps/frontend-next](webapps/frontend-next/README.md#end-to-end-tests-playwright)).
-Lihat [TESTING.md](TESTING.md). Untuk membangun image container (build pertama memerlukan waktu
+pengujian end-to-end Playwright dijalankan secara terpisah, lihat [webapps/frontend-next](../../webapps/frontend-next/README.md#end-to-end-tests-playwright)).
+Lihat [TESTING.md](../testing.md). Untuk membangun image container (build pertama memerlukan waktu
 sekitar 10–20 menit):
 
 ```bash
@@ -186,8 +186,8 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 ## Berkontribusi
 
 Pertanyaan, laporan bug, dan pull request dipersilakan di GitHub; lihat
-[CONTRIBUTING.md](CONTRIBUTING.md#how-to-contribute) dan
-[Kode Etik](CODE_OF_CONDUCT.md). Tinjauan terjemahan oleh penutur asli sangat kami harapkan.
+[CONTRIBUTING.md](../../.github/CONTRIBUTING.md#how-to-contribute) dan
+[Kode Etik](../../.github/CODE_OF_CONDUCT.md). Tinjauan terjemahan oleh penutur asli sangat kami harapkan.
 
 <a id="acknowledgements"></a>
 
@@ -204,4 +204,4 @@ Pertanyaan, laporan bug, dan pull request dipersilakan di GitHub; lihat
 
 ## Lisensi
 
-[Lisensi Apache 2.0](LICENSE). Lihat [NOTICE](NOTICE) untuk hak cipta kode asli.
+[Lisensi Apache 2.0](../../LICENSE). Lihat [NOTICE](../../NOTICE) untuk hak cipta kode asli.

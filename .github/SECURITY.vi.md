@@ -38,15 +38,15 @@ Dự án này không liên kết với Camunda Services GmbH. Đừng báo lỗi
   JRE đã cập nhật sẽ được phát hành; image đã công bố không được build lại. Dự án theo dõi thông
   báo bảo mật công khai về Camunda 7 và các fork của nó, và kiểm tra Fasti có bị ảnh hưởng không.
 - **Tương thích:** dòng `1.x` giữ schema cơ sở dữ liệu 7.24 và package `org.camunda.bpm.*`. Thay
-  đổi phá vỡ tương thích được ghi **BREAKING** trong [CHANGELOG](CHANGELOG.md).
+  đổi phá vỡ tương thích được ghi **BREAKING** trong [CHANGELOG](../CHANGELOG.md).
 - **Hỗ trợ:** câu hỏi và lỗi xin gửi lên GitHub; hỗ trợ ở đó trong khả năng của nhóm, không có
   SLA. Cần hỗ trợ cài đặt, chuyển đổi hoặc vận hành production, hay thống nhất điều khoản hỗ trợ,
   hãy gửi mail đến <contact@fasti.dev>.
-- **Danh sách lỗi đã vá:** mục *Fixed* và *Security* của [CHANGELOG](CHANGELOG.md) liệt kê các lỗi
+- **Danh sách lỗi đã vá:** mục *Fixed* và *Security* của [CHANGELOG](../CHANGELOG.md) liệt kê các lỗi
   đã sửa so với Camunda 7 CE 7.24.0, kèm điều gì đã sai và điều gì đã thay đổi, kể cả các vấn đề
   trong mã của chính Fasti; thông báo bảo mật được liệt kê bên dưới.
 
 ## Thông báo bảo mật
 
-- [CVE-2026-114938 ("Java4Shell")](docs/security/CVE-2026-114938.vi.md): lỗi của Java runtime; Fasti đã làm gì và bạn cần làm gì.
+- [CVE-2026-114938 ("Java4Shell")](../docs/security/CVE-2026-114938.vi.md): lỗi của Java runtime; Fasti đã làm gì và bạn cần làm gì.
 

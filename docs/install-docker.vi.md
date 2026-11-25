@@ -269,7 +269,7 @@ Xem log bằng `docker logs fasti` (hoặc `docker compose logs fasti`).
 | Không kết nối được SQL Server (lỗi chứng chỉ) | cài chứng chỉ hợp lệ cho SQL Server, đúng tên máy trong URL; `trustServerCertificate=true` chỉ để thử cục bộ |
 | Container khởi động lại liên tục, log có `OutOfMemoryError` | JVM thoát khi hết bộ nhớ: tăng giới hạn bộ nhớ (2 GB) của container |
 
-Vẫn chưa được? Mở issue trên GitHub kèm log (bỏ mật khẩu). Lỗi bảo mật: xem [SECURITY.vi.md](../SECURITY.vi.md).
+Vẫn chưa được? Mở issue trên GitHub kèm log (bỏ mật khẩu). Lỗi bảo mật: xem [SECURITY.vi.md](../.github/SECURITY.vi.md).
 
 <a id="12-without-docker"></a>
 

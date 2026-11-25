@@ -1,5 +1,5 @@
 name: Add your organization to the adopters
-description: You use Fasti BPM and want to be listed in ADOPTERS.md / Đơn vị bạn dùng Fasti BPM và muốn được ghi tên
+description: You use Fasti BPM and want to be listed in docs/adopters.md / Đơn vị bạn dùng Fasti BPM và muốn được ghi tên
 title: "Adopter: "
 labels: [adopter]
 body:

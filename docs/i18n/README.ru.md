@@ -1,4 +1,4 @@
-[English](README.md) | [Tiếng Việt](README.vi.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | [Bahasa Indonesia](README.id.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | Русский | [ไทย](README.th.md) | [简体中文](README.zh-CN.md)
+[English](../../README.md) | [Tiếng Việt](README.vi.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | [Bahasa Indonesia](README.id.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | Русский | [ไทย](README.th.md) | [简体中文](README.zh-CN.md)
 
 > Этот перевод поддерживается сообществом и может отставать от английской версии; основной является английская версия. Исправления приветствуются.
 
@@ -56,7 +56,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
   Run и стартер Spring Boot сохраняют настройки Camunda 7 по умолчанию. Все дистрибутивы содержат
   исправления безопасности и при запуске предупреждают, если JVM уязвима для Java4Shell
   ([безопасность](https://fasti.dev/security)).
-- **Единый вход**: OpenID Connect и JWT bearer-токены ([руководство](docs/single-sign-on.ru.md)).
+- **Единый вход**: OpenID Connect и JWT bearer-токены ([руководство](../single-sign-on.ru.md)).
 - **Современная платформа**: Java 17 или новее, Spring Boot 4.1, GraalJS 25, Jackson 2.21
   ([производительность](https://fasti.dev/#performance)).
 
@@ -65,8 +65,8 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 ## Как получить Fasti
 
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**Образ Docker** (`fastidev/fasti-bpm`, amd64 и arm64): <https://fasti.dev/install>; пошаговая
-  инструкция — в [docs/install-docker.ru.md](docs/install-docker.ru.md), все переменные — в
-  [distro/docker/README.md](distro/docker/README.md#environment-variables).
+  инструкция — в [docs/install-docker.ru.md](../install-docker.ru.md), все переменные — в
+  [distro/docker/README.md](../../distro/docker/README.md#environment-variables).
 - <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Дистрибутив Tomcat**, без Docker: <https://fasti.dev/download>. Готовый дистрибутив Tomcat 1.3.0:
   - [fasti-bpm-tomcat-1.3.0.zip](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip.sha256))
   - [fasti-bpm-tomcat-1.3.0.tar.gz](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz.sha256))
@@ -75,7 +75,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
   а перед запуском прочитайте `README.txt` в дистрибутиве.
 - **Встраивание** в Spring Boot или другое Java-приложение: новые координаты Maven
   (`dev.fasti.platform:fasti-*`), те же пакеты `org.camunda.bpm.*`; см.
-  [docs/embedding.ru.md](docs/embedding.ru.md).
+  [docs/embedding.ru.md](../embedding.ru.md).
 
 <a id="moving-from-camunda-7"></a>
 
@@ -94,11 +94,11 @@ bearer-токен.
 необходимо пересобрать с артефактами Fasti, чтобы они работали внутри Fasti. У параллельной работы и
 возврата есть ограничения (одинаковая конфигурация на всех узлах, какой узел выполняет задания,
 процессы с функциями, которые есть только в Fasti): см.
-[смешанная работа](docs/migrate-from-camunda-7.ru.md#mixed-operation-with-camunda-7-nodes) и
-[откат](docs/migrate-from-camunda-7.ru.md#rollback-to-camunda-724).
+[смешанная работа](../migrate-from-camunda-7.ru.md#mixed-operation-with-camunda-7-nodes) и
+[откат](../migrate-from-camunda-7.ru.md#rollback-to-camunda-724).
 
 Шаги и ограничения: <https://fasti.dev/install#migrate> и
-[руководство по миграции](docs/migrate-from-camunda-7.ru.md) (откат, более старые схемы, результаты
+[руководство по миграции](../migrate-from-camunda-7.ru.md) (откат, более старые схемы, результаты
 тестов).
 
 <a id="comparison"></a><a id="how-it-compares"></a>
@@ -116,8 +116,8 @@ bearer-токен.
 
 Последний минорный релиз линейки `1.x` получает исправления ошибок и патчи безопасности в виде
 патч-релизов, например `1.0.1`. Пожалуйста, сообщайте о проблемах безопасности в частном порядке,
-а не в публичном issue: см. [SECURITY.md](SECURITY.md#security-policy), где также описана
-[политика поддержки](SECURITY.md#support-policy). Список исправлений, Java4Shell и проверка перед
+а не в публичном issue: см. [SECURITY.md](../../.github/SECURITY.md#security-policy), где также описана
+[политика поддержки](../../.github/SECURITY.md#support-policy). Список исправлений, Java4Shell и проверка перед
 выпуском: <https://fasti.dev/security>. За помощью с установкой, миграцией или эксплуатацией, а
 также по условиям поддержки пишите на <contact@fasti.dev>.
 
@@ -148,20 +148,20 @@ bearer-токен.
 
 | Документ | Содержание |
 |---|---|
-| [docs/install-docker.ru.md](docs/install-docker.ru.md) | Пошаговая установка с Docker |
-| [docs/install-kubernetes.md](docs/install-kubernetes.md) | Установка в Kubernetes: Helm chart и простые манифесты (с 1.1.0) |
-| [docs/migrate-from-camunda-7.ru.md](docs/migrate-from-camunda-7.ru.md) | Переход с Camunda 7, откат, ограничения |
-| [docs/embedding.ru.md](docs/embedding.ru.md) | Совместимость, отличия от 7.24.0, версионирование, координаты Maven, проверка при запуске |
-| [docs/web-ui.ru.md](docs/web-ui.ru.md) | Веб-интерфейс: функции, о которых просили пользователи, путь `/fasti`, классические приложения |
-| [docs/absence.md](docs/absence.md) | Замещение на время отсутствия (с 1.1.0) |
-| [docs/four-eyes.md](docs/four-eyes.md) | Принцип «четырёх глаз» для согласований (с 1.1.0) |
-| [docs/audit-trail.md](docs/audit-trail.md) | Неизменяемый журнал аудита (с 1.1.0) |
-| [docs/single-sign-on.ru.md](docs/single-sign-on.ru.md) | Единый вход (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
-| [docs/api/README.md](docs/api/README.md) | Интеграция через REST API, клиенты внешних задач на Java и JavaScript |
-| [distro/docker/README.md](distro/docker/README.md) | Образ: переменные окружения, драйверы, эксплуатация, настройка |
-| [webapps/frontend-next/README.md](webapps/frontend-next/README.md#new-web-ui-frontend-next) | Новый веб-интерфейс |
-| [docs/security/CVE-2026-114938.md](docs/security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell и Fasti |
-| [CHANGELOG.md](CHANGELOG.md), [SECURITY.md](SECURITY.md#security-policy) | Изменения, безопасность, политика поддержки |
+| [docs/install-docker.ru.md](../install-docker.ru.md) | Пошаговая установка с Docker |
+| [docs/install-kubernetes.md](../install-kubernetes.md) | Установка в Kubernetes: Helm chart и простые манифесты (с 1.1.0) |
+| [docs/migrate-from-camunda-7.ru.md](../migrate-from-camunda-7.ru.md) | Переход с Camunda 7, откат, ограничения |
+| [docs/embedding.ru.md](../embedding.ru.md) | Совместимость, отличия от 7.24.0, версионирование, координаты Maven, проверка при запуске |
+| [docs/web-ui.ru.md](../web-ui.ru.md) | Веб-интерфейс: функции, о которых просили пользователи, путь `/fasti`, классические приложения |
+| [docs/absence.md](../absence.md) | Замещение на время отсутствия (с 1.1.0) |
+| [docs/four-eyes.md](../four-eyes.md) | Принцип «четырёх глаз» для согласований (с 1.1.0) |
+| [docs/audit-trail.md](../audit-trail.md) | Неизменяемый журнал аудита (с 1.1.0) |
+| [docs/single-sign-on.ru.md](../single-sign-on.ru.md) | Единый вход (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
+| [docs/api/README.md](../api/README.md) | Интеграция через REST API, клиенты внешних задач на Java и JavaScript |
+| [distro/docker/README.md](../../distro/docker/README.md) | Образ: переменные окружения, драйверы, эксплуатация, настройка |
+| [webapps/frontend-next/README.md](../../webapps/frontend-next/README.md#new-web-ui-frontend-next) | Новый веб-интерфейс |
+| [docs/security/CVE-2026-114938.md](../security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell и Fasti |
+| [CHANGELOG.md](../../CHANGELOG.md), [SECURITY.md](../../.github/SECURITY.md#security-policy) | Изменения, безопасность, политика поддержки |
 
 <a id="build"></a>
 
@@ -175,8 +175,8 @@ bearer-токен.
 ```
 
 Полная сборка запускает все тесты Java и модульные тесты веб-интерфейса (около часа; сквозные
-тесты Playwright запускаются отдельно, см. [webapps/frontend-next](webapps/frontend-next/README.md#end-to-end-tests-playwright)).
-См. [TESTING.md](TESTING.md). Чтобы собрать образ контейнера (первая сборка занимает примерно
+тесты Playwright запускаются отдельно, см. [webapps/frontend-next](../../webapps/frontend-next/README.md#end-to-end-tests-playwright)).
+См. [TESTING.md](../testing.md). Чтобы собрать образ контейнера (первая сборка занимает примерно
 10–20 минут):
 
 ```bash
@@ -189,8 +189,8 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 ## Участие в проекте
 
 Вопросы, сообщения об ошибках и pull requests приветствуются на GitHub; см.
-[CONTRIBUTING.md](CONTRIBUTING.md#how-to-contribute) и
-[Кодекс поведения](CODE_OF_CONDUCT.md). Особенно приветствуются рецензии переводов от носителей
+[CONTRIBUTING.md](../../.github/CONTRIBUTING.md#how-to-contribute) и
+[Кодекс поведения](../../.github/CODE_OF_CONDUCT.md). Особенно приветствуются рецензии переводов от носителей
 языка.
 
 <a id="acknowledgements"></a>
@@ -208,4 +208,4 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 
 ## Лицензия
 
-[Лицензия Apache 2.0](LICENSE). Сведения об авторских правах на оригинальный код см. в [NOTICE](NOTICE).
+[Лицензия Apache 2.0](../../LICENSE). Сведения об авторских правах на оригинальный код см. в [NOTICE](../../NOTICE).

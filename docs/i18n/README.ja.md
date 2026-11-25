@@ -1,4 +1,4 @@
-[English](README.md) | [Tiếng Việt](README.vi.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | [Bahasa Indonesia](README.id.md) | 日本語 | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | [ไทย](README.th.md) | [简体中文](README.zh-CN.md)
+[English](../../README.md) | [Tiếng Việt](README.vi.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | [Bahasa Indonesia](README.id.md) | 日本語 | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | [ไทย](README.th.md) | [简体中文](README.zh-CN.md)
 
 > この翻訳はコミュニティによって管理されており、英語版より古い場合があります。正式な内容は英語版です。修正を歓迎します。
 
@@ -54,7 +54,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
   認証情報を要求し、ユーザーを作成しません（最初の管理者はセットアップページで作成します）。Run zip と
   Spring Boot starter は Camunda 7 のデフォルトのままです。すべてのディストリビューションにセキュリティ修正が
   含まれ、Java4Shell の影響を受ける JVM では起動時に警告します（[セキュリティ](https://fasti.dev/security)）。
-- **シングルサインオン**：OpenID Connect と JWT bearer token（[ガイド](docs/single-sign-on.ja.md)）。
+- **シングルサインオン**：OpenID Connect と JWT bearer token（[ガイド](../single-sign-on.ja.md)）。
 - **最新のプラットフォーム**：Java 17 以降、Spring Boot 4.1、GraalJS 25、Jackson 2.21
   （[パフォーマンス](https://fasti.dev/#performance)）。
 
@@ -63,8 +63,8 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 ## Fasti の入手
 
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**Docker イメージ**（`fastidev/fasti-bpm`、amd64 および arm64）：<https://fasti.dev/install>。手順は
-  [docs/install-docker.ja.md](docs/install-docker.ja.md)、すべての変数は
-  [distro/docker/README.md](distro/docker/README.md#environment-variables) を参照してください。
+  [docs/install-docker.ja.md](../install-docker.ja.md)、すべての変数は
+  [distro/docker/README.md](../../distro/docker/README.md#environment-variables) を参照してください。
 - <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Tomcat バンドル**（Docker を使わない場合）：<https://fasti.dev/download>。ビルド済みの Tomcat 1.3.0 バンドル：
   - [fasti-bpm-tomcat-1.3.0.zip](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip)（[SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip.sha256)）
   - [fasti-bpm-tomcat-1.3.0.tar.gz](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz)（[SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz.sha256)）
@@ -73,7 +73,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
   起動前にバンドル内の `README.txt` を読んでください。
 - **組み込み**（Spring Boot またはその他の Java アプリケーション）：新しい Maven 座標
   （`dev.fasti.platform:fasti-*`）、同じ `org.camunda.bpm.*` パッケージ。
-  [docs/embedding.ja.md](docs/embedding.ja.md) を参照してください。
+  [docs/embedding.ja.md](../embedding.ja.md) を参照してください。
 
 <a id="moving-from-camunda-7"></a>
 
@@ -84,10 +84,10 @@ Camunda 7.24 を運用している場合、Fasti はスキーマを変更せず�
 Fasti のイメージは、PostgreSQL 16、MariaDB 11.8、MySQL 8.4、SQL Server 2022、Oracle Database 23ai 上で Camunda Run 7.24 が作成したデータベースを引き継ぐテストを行っています。Camunda Run に戻すテストは、MySQL を除く同じデータベースで行っています。DB2 はまだテストしていません。外部タスク
 ワーカーを含むすべての REST クライアントは、Basic 認証情報または bearer token を送信する必要があります。
 
-組み込み型の Spring Boot アプリケーションは、Spring Boot 4.1 と Java 17 への移行も必要です。それより古いスキーマは、まず標準スクリプトでアップグレードしてください。Camunda 7 向けにビルドされたプラグインやプロセスアプリケーションを Fasti 内で動かすには、Fasti のアーティファクトに対して再ビルドする必要があります。並行稼働と切り戻しには制約があります（全ノードで同じ設定、どのノードがジョブを実行するか、Fasti 固有の機能を使うプロセス）。[混在運用](docs/migrate-from-camunda-7.ja.md#mixed-operation-with-camunda-7-nodes) と [ロールバック](docs/migrate-from-camunda-7.ja.md#rollback-to-camunda-724) を参照してください。
+組み込み型の Spring Boot アプリケーションは、Spring Boot 4.1 と Java 17 への移行も必要です。それより古いスキーマは、まず標準スクリプトでアップグレードしてください。Camunda 7 向けにビルドされたプラグインやプロセスアプリケーションを Fasti 内で動かすには、Fasti のアーティファクトに対して再ビルドする必要があります。並行稼働と切り戻しには制約があります（全ノードで同じ設定、どのノードがジョブを実行するか、Fasti 固有の機能を使うプロセス）。[混在運用](../migrate-from-camunda-7.ja.md#mixed-operation-with-camunda-7-nodes) と [ロールバック](../migrate-from-camunda-7.ja.md#rollback-to-camunda-724) を参照してください。
 
 移行の手順と制限：<https://fasti.dev/install#migrate> および
-[移行ガイド](docs/migrate-from-camunda-7.ja.md)（ロールバック、古いスキーマ、テスト結果）。
+[移行ガイド](../migrate-from-camunda-7.ja.md)（ロールバック、古いスキーマ、テスト結果）。
 
 <a id="comparison"></a><a id="how-it-compares"></a>
 
@@ -104,7 +104,7 @@ Camunda 7 を引き継ぐ優れたプロジェクトはいくつもあります�
 
 `1.x` 系の最新マイナーリリースが、`1.0.1` のようなパッチリリースとしてバグ修正とセキュリティパッチを
 受け取ります。セキュリティ上の問題は、公開 issue ではなく非公開で報告してください。
-[SECURITY.md](SECURITY.md#security-policy) を参照してください。[サポートポリシー](SECURITY.md#support-policy)
+[SECURITY.md](../../.github/SECURITY.md#security-policy) を参照してください。[サポートポリシー](../../.github/SECURITY.md#support-policy)
 も同じファイルに記載しています。修正一覧、Java4Shell、リリース前のレビュー：
 <https://fasti.dev/security>。インストール・移行・本番運用の支援やサポート条件については
 <contact@fasti.dev> までご連絡ください。
@@ -136,20 +136,20 @@ AI アシスタント向けの MCP サーバー、新しいインターフェー
 
 | ドキュメント | 内容 |
 |---|---|
-| [docs/install-docker.md](docs/install-docker.ja.md) | Docker でのインストール手順 |
-| [docs/install-kubernetes.md](docs/install-kubernetes.md) | Kubernetes へのインストール：Helm チャートとプレーンなマニフェスト（1.1.0 以降） |
-| [docs/migrate-from-camunda-7.md](docs/migrate-from-camunda-7.ja.md) | Camunda 7 からの移行、ロールバック、制限事項 |
-| [docs/embedding.md](docs/embedding.ja.md) | 互換性、7.24.0 との違い、バージョニング、Maven 座標、起動時チェック |
-| [docs/web-ui.md](docs/web-ui.ja.md) | Web インターフェース：ユーザーが要望した機能、`/fasti` パス、従来のアプリケーション |
-| [docs/absence.md](docs/absence.md) | 不在時の代理者設定（1.1.0 以降） |
-| [docs/four-eyes.md](docs/four-eyes.md) | 承認に対する四眼原則（フォーアイズ）による統制（1.1.0 以降） |
-| [docs/audit-trail.md](docs/audit-trail.md) | 改ざん不能な監査証跡（1.1.0 以降） |
-| [docs/single-sign-on.md](docs/single-sign-on.ja.md) | シングルサインオン（OpenID Connect）：Run、Spring Boot、Tomcat、WildFly |
-| [docs/api/README.md](docs/api/README.md) | REST API 連携、Java および JavaScript の外部タスククライアント |
-| [distro/docker/README.md](distro/docker/README.md) | イメージ：環境変数、ドライバー、運用、チューニング |
-| [webapps/frontend-next/README.md](webapps/frontend-next/README.md#new-web-ui-frontend-next) | 新しい Web UI |
-| [docs/security/CVE-2026-114938.md](docs/security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell と Fasti |
-| [CHANGELOG.md](CHANGELOG.md)、[SECURITY.md](SECURITY.md#security-policy) | 変更、セキュリティ、サポートポリシー |
+| [docs/install-docker.md](../install-docker.ja.md) | Docker でのインストール手順 |
+| [docs/install-kubernetes.md](../install-kubernetes.md) | Kubernetes へのインストール：Helm チャートとプレーンなマニフェスト（1.1.0 以降） |
+| [docs/migrate-from-camunda-7.md](../migrate-from-camunda-7.ja.md) | Camunda 7 からの移行、ロールバック、制限事項 |
+| [docs/embedding.md](../embedding.ja.md) | 互換性、7.24.0 との違い、バージョニング、Maven 座標、起動時チェック |
+| [docs/web-ui.md](../web-ui.ja.md) | Web インターフェース：ユーザーが要望した機能、`/fasti` パス、従来のアプリケーション |
+| [docs/absence.md](../absence.md) | 不在時の代理者設定（1.1.0 以降） |
+| [docs/four-eyes.md](../four-eyes.md) | 承認に対する四眼原則（フォーアイズ）による統制（1.1.0 以降） |
+| [docs/audit-trail.md](../audit-trail.md) | 改ざん不能な監査証跡（1.1.0 以降） |
+| [docs/single-sign-on.md](../single-sign-on.ja.md) | シングルサインオン（OpenID Connect）：Run、Spring Boot、Tomcat、WildFly |
+| [docs/api/README.md](../api/README.md) | REST API 連携、Java および JavaScript の外部タスククライアント |
+| [distro/docker/README.md](../../distro/docker/README.md) | イメージ：環境変数、ドライバー、運用、チューニング |
+| [webapps/frontend-next/README.md](../../webapps/frontend-next/README.md#new-web-ui-frontend-next) | 新しい Web UI |
+| [docs/security/CVE-2026-114938.md](../security/CVE-2026-114938.md#cve-2026-114938-java4shell-and-fasti-bpm) | Java4Shell と Fasti |
+| [CHANGELOG.md](../../CHANGELOG.md)、[SECURITY.md](../../.github/SECURITY.md#security-policy) | 変更、セキュリティ、サポートポリシー |
 
 <a id="build"></a>
 
@@ -163,8 +163,8 @@ JDK 17 以降（21 を推奨）と、Maven Central、nodejs.org、npm レジス�
 ```
 
 完全なビルドでは、すべての Java テストと Web UI のユニットテストを実行します（1 時間近くかかります。Playwright の
-エンドツーエンドテストは別途実行します。[webapps/frontend-next](webapps/frontend-next/README.md#end-to-end-tests-playwright) を参照）。
-[TESTING.md](TESTING.md) を参照してください。コンテナイメージをビルドするには、次を実行します（初回のビルドには
+エンドツーエンドテストは別途実行します。[webapps/frontend-next](../../webapps/frontend-next/README.md#end-to-end-tests-playwright) を参照）。
+[TESTING.md](../testing.md) を参照してください。コンテナイメージをビルドするには、次を実行します（初回のビルドには
 約 10～20 分かかります）。
 
 ```bash
@@ -176,8 +176,8 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 
 ## コントリビュート
 
-質問、バグ報告、プルリクエストを GitHub で歓迎します。[CONTRIBUTING.md](CONTRIBUTING.md#how-to-contribute) と
-[行動規範](CODE_OF_CONDUCT.md) を参照してください。ネイティブスピーカーによる翻訳のレビューは
+質問、バグ報告、プルリクエストを GitHub で歓迎します。[CONTRIBUTING.md](../../.github/CONTRIBUTING.md#how-to-contribute) と
+[行動規範](../../.github/CODE_OF_CONDUCT.md) を参照してください。ネイティブスピーカーによる翻訳のレビューは
 特に歓迎します。
 
 <a id="acknowledgements"></a>
@@ -195,4 +195,4 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 
 ## ライセンス
 
-[Apache License 2.0](LICENSE)。オリジナルコードの著作権については [NOTICE](NOTICE) を参照してください。
+[Apache License 2.0](../../LICENSE)。オリジナルコードの著作権については [NOTICE](../../NOTICE) を参照してください。

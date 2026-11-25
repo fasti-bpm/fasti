@@ -1,4 +1,4 @@
-[English](README.md) | Tiếng Việt | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | [Bahasa Indonesia](README.id.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | [ไทย](README.th.md) | [简体中文](README.zh-CN.md)
+[English](../../README.md) | Tiếng Việt | [Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [हिन्दी](README.hi.md) | [Bahasa Indonesia](README.id.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português (Brasil)](README.pt-BR.md) | [Русский](README.ru.md) | [ไทย](README.th.md) | [简体中文](README.zh-CN.md)
 
 # Fasti BPM Platform
 
@@ -13,12 +13,12 @@ bảo mật và giao diện web mới. Website: <https://fasti.dev>
 <p align="center">
   <a href="https://github.com/fasti-bpm/fasti/releases/latest"><img src="https://img.shields.io/github/v/release/fasti-bpm/fasti?label=release" alt="Bản phát hành mới nhất"></a>
   <a href="https://hub.docker.com/r/fastidev/fasti-bpm"><img src="https://img.shields.io/docker/pulls/fastidev/fasti-bpm" alt="Lượt tải Docker"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="Giấy phép: Apache-2.0"></a>
+  <a href="../../LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="Giấy phép: Apache-2.0"></a>
 </p>
 
 | **Nhanh hơn ≈10 lần** | **BPMN · DMN · biểu mẫu** | **An toàn** | **13** |
 |:---:|:---:|:---:|:---:|
-| danh sách task khi bật phân quyền ([số liệu](docs/benchmark-camunda-7.24.vi.md)) | modeler ngay trên trình duyệt | ngay từ mặc định, có bản vá so với 7.24.0 | ngôn ngữ, trên điện thoại và máy tính |
+| danh sách task khi bật phân quyền ([số liệu](../benchmark-camunda-7.24.vi.md)) | modeler ngay trên trình duyệt | ngay từ mặc định, có bản vá so với 7.24.0 | ngôn ngữ, trên điện thoại và máy tính |
 
 > **Không liên kết với Camunda Services GmbH; Camunda là nhãn hiệu của Camunda Services GmbH.**
 > Fasti BPM là dự án độc lập mã nguồn mở (Apache-2.0), không thuộc, không được bảo trợ hay chứng
@@ -69,8 +69,8 @@ Fasti và node 7.24 có thể dùng chung một cơ sở dữ liệu, và bạn 
 - **Lớp bảo vệ thêm:** allow-list cho expression trong query và filter, kiểm quyền attachment và
   comment ngay trong engine, gia cố security filter, header và cookie của các ứng dụng web, và
   cảnh báo khi khởi động nếu JVM bị Java4Shell ảnh hưởng
-  ([bảo mật](https://fasti.dev/security), [cái gì khác](docs/migrate-from-camunda-7.vi.md#what-differs)).
-- **Đăng nhập một lần (SSO):** OpenID Connect và JWT bearer token ([hướng dẫn](docs/single-sign-on.vi.md)).
+  ([bảo mật](https://fasti.dev/security), [cái gì khác](../migrate-from-camunda-7.vi.md#what-differs)).
+- **Đăng nhập một lần (SSO):** OpenID Connect và JWT bearer token ([hướng dẫn](../single-sign-on.vi.md)).
 
 ### Giao diện web mới
 
@@ -81,17 +81,17 @@ Fasti và node 7.24 có thể dùng chung một cơ sở dữ liệu, và bạn 
 - **Phân tích quy trình:** bản đồ nhiệt trên sơ đồ theo trung vị, P90, P99, thời gian đang chờ,
   làm lại hoặc sự cố, xếp hạng điểm nghẽn, các instance chậm nhất và chờ lâu nhất, xu hướng so với
   mục tiêu, thời gian chờ và thời gian làm của user task. Do chính cơ sở dữ liệu đang dùng tính,
-  không cần thêm dịch vụ hay giấy phép ([hướng dẫn](docs/process-analytics.vi.md)).
+  không cần thêm dịch vụ hay giấy phép ([hướng dẫn](../process-analytics.vi.md)).
 - **Công cụ vận hành:** lịch sử, sửa và khởi động lại instance, migration, thao tác hàng loạt,
   chạy lại job lỗi hàng loạt và nhật ký thao tác ([vận hành](https://fasti.dev/#operate)).
 - **Nhẹ cho máy chủ:** bảng khối lượng công việc mở ra với 11 request API thay cho 344
-  ([hiệu năng giao diện web](docs/performance-web-ui.vi.md)).
+  ([hiệu năng giao diện web](../performance-web-ui.vi.md)).
 
 ### Nhanh hơn, khi vẫn bật bảo mật
 
 Đo trên PostgreSQL 16 với 1.000.000 task và 2.200.000 bản ghi phân quyền, gọi REST bằng tài khoản
 quản trị, so với Camunda Run 7.24.0 trên cùng máy
-([bản so sánh](docs/benchmark-camunda-7.24.vi.md)):
+([bản so sánh](../benchmark-camunda-7.24.vi.md)):
 
 | | Camunda 7.24 | Fasti 1.2.1 |
 |---|---|---|
@@ -102,7 +102,7 @@ quản trị, so với Camunda Run 7.24.0 trên cùng máy
 Image nặng 390 MB, khởi động trong 4,8 s và trả phần bộ nhớ không dùng về hệ thống.
 
 - **Script chỉ mục tùy chọn** cho sáu loại cơ sở dữ liệu: một lần quét job khi rảnh 162 ms → 0,1 ms,
-  task quá hạn sắp theo hạn 61 ms → 0,3 ms ([hiệu năng cơ sở dữ liệu](docs/performance.vi.md)).
+  task quá hạn sắp theo hạn 61 ms → 0,3 ms ([hiệu năng cơ sở dữ liệu](../performance.vi.md)).
 - **Một request cho khối lượng công việc của cả nhóm** (`/task/workload`) thay cho 145.
 
 ### Nền tảng hiện tại
@@ -115,8 +115,8 @@ vá bảo mật.
 ## Tải Fasti
 
 - <a id="one-command-on-your-existing-camunda-724-database"></a>**Image Docker** (`fastidev/fasti-bpm`, amd64 và arm64): <https://fasti.dev/install>;
-  từng bước trong [docs/install-docker.vi.md](docs/install-docker.vi.md), toàn bộ biến trong
-  [distro/docker/README.vi.md](distro/docker/README.vi.md).
+  từng bước trong [docs/install-docker.vi.md](../install-docker.vi.md), toàn bộ biến trong
+  [distro/docker/README.vi.md](../../distro/docker/README.vi.md).
 - <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Gói Tomcat**, không dùng Docker: <https://fasti.dev/download>. Gói Tomcat 1.3.0 dựng sẵn:
   - [fasti-bpm-tomcat-1.3.0.zip](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.zip.sha256))
   - [fasti-bpm-tomcat-1.3.0.tar.gz](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.0/fasti-bpm-tomcat-1.3.0.tar.gz.sha256))
@@ -125,7 +125,7 @@ vá bảo mật.
   và đọc `README.txt` trong gói trước khi chạy.
 - **Nhúng** vào Spring Boot hoặc một ứng dụng Java khác: tọa độ Maven mới
   (`dev.fasti.platform:fasti-*`), vẫn các package `org.camunda.bpm.*`; xem
-  [docs/embedding.vi.md](docs/embedding.vi.md).
+  [docs/embedding.vi.md](../embedding.vi.md).
 
 <a id="moving-from-camunda-7"></a>
 
@@ -142,11 +142,11 @@ external task worker, từ nay phải gửi thông tin đăng nhập Basic hoặ
 nâng cấp bằng các script chuẩn trước. Plugin và process application viết cho Camunda 7 phải được
 build lại với các artifact của Fasti thì mới chạy được bên trong Fasti. Chạy song song và quay lại
 đều có giới hạn (cùng cấu hình trên mọi nút, nút nào chạy job, process dùng tính năng chỉ Fasti có):
-xem [chạy song song](docs/migrate-from-camunda-7.vi.md#mixed-operation-with-camunda-7-nodes) và
-[quay lại](docs/migrate-from-camunda-7.vi.md#rollback-to-camunda-724).
+xem [chạy song song](../migrate-from-camunda-7.vi.md#mixed-operation-with-camunda-7-nodes) và
+[quay lại](../migrate-from-camunda-7.vi.md#rollback-to-camunda-724).
 
 Các bước chuyển đổi và giới hạn: <https://fasti.dev/install#migrate> và
-[hướng dẫn chuyển đổi](docs/migrate-from-camunda-7.vi.md) (quay lại, schema cũ hơn, kết quả kiểm
+[hướng dẫn chuyển đổi](../migrate-from-camunda-7.vi.md) (quay lại, schema cũ hơn, kết quả kiểm
 thử).
 
 <a id="comparison"></a><a id="how-it-compares"></a>
@@ -164,7 +164,7 @@ thêm giao diện mới. Các dự án khác cũng là lựa chọn tốt. Bản
 
 Bản minor mới nhất của dòng `1.x` được sửa lỗi và vá bảo mật, phát hành dưới dạng bản patch như
 `1.0.1`. Vui lòng báo cáo vấn đề bảo mật một cách riêng tư, không qua issue công khai: xem
-[SECURITY.vi.md](SECURITY.vi.md), nơi có cả [chính sách hỗ trợ](SECURITY.vi.md#support-policy).
+[SECURITY.vi.md](../../.github/SECURITY.vi.md), nơi có cả [chính sách hỗ trợ](../../.github/SECURITY.vi.md#support-policy).
 Danh sách bản vá, Java4Shell và đợt rà soát trước phát hành: <https://fasti.dev/security>. Cần hỗ
 trợ cài đặt, chuyển đổi hoặc vận hành production, hay thống nhất điều khoản hỗ trợ, hãy gửi mail
 đến <contact@fasti.dev>.
@@ -174,10 +174,10 @@ trợ cài đặt, chuyển đổi hoặc vận hành production, hay thống nh
 ## Lộ trình
 
 Đây là kế hoạch, không phải cam kết về ngày. Đã phát hành trong `1.3.0`:
-[phân tích quy trình](docs/process-analytics.vi.md) với bản đồ nhiệt trên sơ đồ, điểm nghẽn, phân
+[phân tích quy trình](../process-analytics.vi.md) với bản đồ nhiệt trên sơ đồ, điểm nghẽn, phân
 vị, phần làm lại, xu hướng và thời gian của user task, do cơ sở dữ liệu tính. Đã phát hành trong `1.2.1`: kiểm tra phân quyền nhanh
 hơn, image nhỏ hơn, khởi động nhanh hơn và dùng ít bộ nhớ hơn
-([so sánh với Camunda 7.24](docs/benchmark-camunda-7.24.vi.md)). Đã phát hành trong `1.2.0`, tập trung vào hiệu năng:
+([so sánh với Camunda 7.24](../benchmark-camunda-7.24.vi.md)). Đã phát hành trong `1.2.0`, tập trung vào hiệu năng:
 endpoint đếm khối lượng công việc, các chỉ mục cơ sở dữ liệu tùy chọn, cảnh báo hiệu năng khi khởi
 động, tinh chỉnh nhật ký kiểm toán và giao diện web nhanh hơn. Đã phát hành trong `1.1.0`: Helm
 chart và manifest Kubernetes, metrics cho Prometheus, tracing bằng OpenTelemetry, log có cấu trúc
@@ -200,22 +200,22 @@ Trên [fasti.dev](https://fasti.dev): [Cài đặt bằng Docker](https://fasti.
 
 | Tài liệu | Nội dung |
 |---|---|
-| [docs/install-docker.vi.md](docs/install-docker.vi.md) | Cài đặt bằng Docker từng bước |
-| [docs/install-kubernetes.vi.md](docs/install-kubernetes.vi.md) | Cài đặt trên Kubernetes: Helm chart và manifest thuần (từ 1.1.0) |
-| [docs/migrate-from-camunda-7.vi.md](docs/migrate-from-camunda-7.vi.md) | Chuyển từ Camunda 7, quay lại, giới hạn |
-| [docs/embedding.vi.md](docs/embedding.vi.md) | Tương thích, khác gì so với 7.24.0, phiên bản, tọa độ Maven, kiểm tra khi khởi động |
-| [docs/web-ui.vi.md](docs/web-ui.vi.md) | Giao diện web: tính năng người dùng yêu cầu, đường dẫn `/fasti`, các ứng dụng cổ điển |
-| [docs/absence.vi.md](docs/absence.vi.md) | Người thay thế khi vắng mặt (từ 1.1.0) |
-| [docs/four-eyes.vi.md](docs/four-eyes.vi.md) | Nguyên tắc bốn mắt khi phê duyệt (từ 1.1.0) |
-| [docs/audit-trail.vi.md](docs/audit-trail.vi.md) | Nhật ký kiểm toán không thể sửa đổi (từ 1.1.0) |
-| [docs/performance.vi.md](docs/performance.vi.md) | Hiệu năng cơ sở dữ liệu: chỉ mục tùy chọn, cảnh báo khi khởi động, cấu hình engine, số đo (từ 1.2.0) |
-| [docs/process-analytics.vi.md](docs/process-analytics.vi.md) | Phân tích quy trình: bản đồ nhiệt, điểm nghẽn, thời lượng, REST API, cấu hình, số đo (từ 1.3.0) |
-| [docs/single-sign-on.vi.md](docs/single-sign-on.vi.md) | Đăng nhập một lần (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
-| [docs/api/README.vi.md](docs/api/README.vi.md) | Tích hợp qua REST API, client external task Java và JavaScript |
-| [distro/docker/README.vi.md](distro/docker/README.vi.md) | Image: biến môi trường, driver, vận hành, tinh chỉnh |
-| [webapps/frontend-next/README.vi.md](webapps/frontend-next/README.vi.md) | Giao diện web mới |
-| [docs/security/CVE-2026-114938.vi.md](docs/security/CVE-2026-114938.vi.md) | Java4Shell và Fasti |
-| [CHANGELOG.md](CHANGELOG.md), [SECURITY.vi.md](SECURITY.vi.md) | Thay đổi, bảo mật, chính sách hỗ trợ |
+| [docs/install-docker.vi.md](../install-docker.vi.md) | Cài đặt bằng Docker từng bước |
+| [docs/install-kubernetes.vi.md](../install-kubernetes.vi.md) | Cài đặt trên Kubernetes: Helm chart và manifest thuần (từ 1.1.0) |
+| [docs/migrate-from-camunda-7.vi.md](../migrate-from-camunda-7.vi.md) | Chuyển từ Camunda 7, quay lại, giới hạn |
+| [docs/embedding.vi.md](../embedding.vi.md) | Tương thích, khác gì so với 7.24.0, phiên bản, tọa độ Maven, kiểm tra khi khởi động |
+| [docs/web-ui.vi.md](../web-ui.vi.md) | Giao diện web: tính năng người dùng yêu cầu, đường dẫn `/fasti`, các ứng dụng cổ điển |
+| [docs/absence.vi.md](../absence.vi.md) | Người thay thế khi vắng mặt (từ 1.1.0) |
+| [docs/four-eyes.vi.md](../four-eyes.vi.md) | Nguyên tắc bốn mắt khi phê duyệt (từ 1.1.0) |
+| [docs/audit-trail.vi.md](../audit-trail.vi.md) | Nhật ký kiểm toán không thể sửa đổi (từ 1.1.0) |
+| [docs/performance.vi.md](../performance.vi.md) | Hiệu năng cơ sở dữ liệu: chỉ mục tùy chọn, cảnh báo khi khởi động, cấu hình engine, số đo (từ 1.2.0) |
+| [docs/process-analytics.vi.md](../process-analytics.vi.md) | Phân tích quy trình: bản đồ nhiệt, điểm nghẽn, thời lượng, REST API, cấu hình, số đo (từ 1.3.0) |
+| [docs/single-sign-on.vi.md](../single-sign-on.vi.md) | Đăng nhập một lần (OpenID Connect): Run, Spring Boot, Tomcat, WildFly |
+| [docs/api/README.vi.md](../api/README.vi.md) | Tích hợp qua REST API, client external task Java và JavaScript |
+| [distro/docker/README.vi.md](../../distro/docker/README.vi.md) | Image: biến môi trường, driver, vận hành, tinh chỉnh |
+| [webapps/frontend-next/README.vi.md](../../webapps/frontend-next/README.vi.md) | Giao diện web mới |
+| [docs/security/CVE-2026-114938.vi.md](../security/CVE-2026-114938.vi.md) | Java4Shell và Fasti |
+| [CHANGELOG.md](../../CHANGELOG.md), [SECURITY.vi.md](../../.github/SECURITY.vi.md) | Thay đổi, bảo mật, chính sách hỗ trợ |
 
 <a id="build"></a>
 
@@ -229,8 +229,8 @@ Yêu cầu: JDK 17 trở lên (khuyến nghị 21) và mạng tới Maven Centra
 ```
 
 Build đầy đủ chạy toàn bộ test Java và test đơn vị của web UI (có thể mất gần một giờ; test
-đầu-cuối Playwright chạy riêng, xem [webapps/frontend-next](webapps/frontend-next/README.vi.md)).
-Xem thêm [TESTING.md](TESTING.md). Để build image container (lần đầu mất khoảng 10–20 phút):
+đầu-cuối Playwright chạy riêng, xem [webapps/frontend-next](../../webapps/frontend-next/README.vi.md)).
+Xem thêm [TESTING.md](../testing.md). Để build image container (lần đầu mất khoảng 10–20 phút):
 
 ```bash
 ./mvnw -pl distro/docker -am package -DskipTests
@@ -242,10 +242,10 @@ docker build -t fasti-bpm:local distro/docker/target/docker
 ## Đóng góp
 
 Câu hỏi, báo lỗi và pull request đều được chào đón trên GitHub; xem
-[CONTRIBUTING.vi.md](CONTRIBUTING.vi.md) và [Quy tắc ứng xử](CODE_OF_CONDUCT.vi.md). Rất mong
+[CONTRIBUTING.vi.md](../../.github/CONTRIBUTING.vi.md) và [Quy tắc ứng xử](../../.github/CODE_OF_CONDUCT.vi.md). Rất mong
 người bản ngữ giúp rà soát các bản dịch.
 
-Đơn vị của bạn đang dùng Fasti BPM? [Hãy ghi tên vào danh sách](ADOPTERS.vi.md): một biểu mẫu
+Đơn vị của bạn đang dùng Fasti BPM? [Hãy ghi tên vào danh sách](../adopters.vi.md): một biểu mẫu
 ngắn, và chỉ khi bạn đồng ý.
 
 <a id="acknowledgements"></a>
@@ -261,4 +261,4 @@ ngắn, và chỉ khi bạn đồng ý.
 
 ## Giấy phép
 
-[Apache License 2.0](LICENSE). Xem [NOTICE](NOTICE) về bản quyền của mã gốc.
+[Apache License 2.0](../../LICENSE). Xem [NOTICE](../../NOTICE) về bản quyền của mã gốc.

@@ -274,7 +274,7 @@ docker run -d --name fasti ... fastidev/fasti-bpm:1.3.0 --production   # same op
 | Контейнер постоянно перезапускается, а в журнале появляется `OutOfMemoryError` | JVM завершает работу при нехватке памяти: увеличьте ограничение памяти контейнера (2 ГБ) |
 
 Проблема не решена? Создайте обращение в GitHub и приложите журнал (удалив пароли). Проблемы безопасности: см.
-[SECURITY.md](../SECURITY.md#security-policy).
+[SECURITY.md](../.github/SECURITY.md#security-policy).
 
 <a id="12-without-docker"></a>
 

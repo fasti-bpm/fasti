@@ -274,7 +274,7 @@ Consulte el registro con `docker logs fasti` (o `docker compose logs fasti`).
 | El contenedor se reinicia continuamente y el registro muestra `OutOfMemoryError` | la JVM termina cuando se agota la memoria: aumente el límite de memoria del contenedor (2 GB) |
 
 ¿Sigue teniendo problemas? Abra una incidencia en GitHub con el registro (sin contraseñas). Problemas de seguridad: consulte
-[SECURITY.md](../SECURITY.md#security-policy).
+[SECURITY.md](../.github/SECURITY.md#security-policy).
 
 <a id="12-without-docker"></a>
 

@@ -232,7 +232,7 @@ limitations under the License.</license.inlineHeader>
         </plugin>
         <plugin>
           <!-- Header check (profile license-header-check). Files written for Fasti BPM carry
-               the Fasti SPDX header instead of the Camunda one (see CONTRIBUTING.md); it is
+               the Fasti SPDX header instead of the Camunda one (see .github/CONTRIBUTING.md); it is
                accepted as a valid header so that the format goal does not replace it. -->
           <groupId>com.mycila</groupId>
           <artifactId>license-maven-plugin</artifactId>

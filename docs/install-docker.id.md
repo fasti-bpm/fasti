@@ -274,7 +274,7 @@ Baca log dengan `docker logs fasti` (atau `docker compose logs fasti`).
 | Kontainer terus memulai ulang dan log menampilkan `OutOfMemoryError` | JVM berhenti saat memori habis: naikkan batas memori kontainer (2 GB) |
 
 Masih mengalami kendala? Buat issue GitHub dengan menyertakan log (hapus kata sandi). Masalah keamanan: lihat
-[SECURITY.md](../SECURITY.md#security-policy).
+[SECURITY.md](../.github/SECURITY.md#security-policy).
 
 <a id="12-without-docker"></a>
 

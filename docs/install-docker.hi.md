@@ -274,7 +274,7 @@ Docker Compose के साथ: `FASTI_IMAGE` (या `image:` पंक्त�
 | कंटेनर बार-बार रीस्टार्ट होता है और लॉग में `OutOfMemoryError` दिखाई देता है | मेमोरी समाप्त होने पर JVM बंद हो जाता है: कंटेनर की मेमोरी सीमा बढ़ाएँ (2 GB) |
 
 अभी भी समस्या है? लॉग के साथ GitHub इश्यू खोलें (पासवर्ड हटाकर)। सुरक्षा संबंधी समस्याओं के लिए:
-[SECURITY.md](../SECURITY.md#security-policy) देखें।
+[SECURITY.md](../.github/SECURITY.md#security-policy) देखें।
 
 <a id="12-without-docker"></a>
 

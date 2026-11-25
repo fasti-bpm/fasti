@@ -274,7 +274,7 @@ docker run -d --name fasti ... fastidev/fasti-bpm:1.3.0 --production   # same op
 | คอนเทนเนอร์เริ่มใหม่ซ้ำ ๆ และบันทึกแสดง `OutOfMemoryError` | JVM ออกจากการทำงานเมื่อหน่วยความจำหมด: เพิ่มขีดจำกัดหน่วยความจำของคอนเทนเนอร์ (2 GB) |
 
 ยังแก้ไขไม่ได้ใช่ไหม? เปิด issue บน GitHub พร้อมบันทึก (ลบรหัสผ่านออกแล้ว) สำหรับปัญหาด้านความปลอดภัย: ดู
-[SECURITY.md](../SECURITY.md#security-policy)
+[SECURITY.md](../.github/SECURITY.md#security-policy)
 
 <a id="12-without-docker"></a>
 

@@ -1,12 +1,12 @@
 # Tổ chức sử dụng
 
-Các tổ chức đang dùng Fasti BPM, được ghi tên theo yêu cầu của chính họ. [English](ADOPTERS.md)
+Các tổ chức đang dùng Fasti BPM, được ghi tên theo yêu cầu của chính họ. [English](adopters.md)
 
 Đơn vị của bạn đang dùng Fasti BPM? Hãy báo để được ghi tên ở đây:
 
 - **[Mở issue giới thiệu đơn vị](https://github.com/fasti-bpm/fasti/issues/new?template=adopter.yml)**
   (một biểu mẫu ngắn), hoặc mở pull request thêm một dòng vào bảng trong
-  [ADOPTERS.md](ADOPTERS.md).
+  [docs/adopters.md](adopters.md).
 - **Không được phép nêu tên công khai?** Gửi thư tới contact@fasti.dev. Chúng tôi ghi không kèm tên
   (ví dụ "một ngân hàng ở Việt Nam") hoặc không ghi, tùy bạn chọn.
 
@@ -22,4 +22,4 @@ Các tổ chức đang dùng Fasti BPM, được ghi tên theo yêu cầu của 
 - **Ghi đúng mức độ sử dụng:** *Evaluating* (đang dùng thử), *Pilot* (thí điểm) hoặc *Production*
   (vận hành thật). Khi thay đổi, hãy cập nhật.
 
-Danh sách nằm trong [ADOPTERS.md](ADOPTERS.md), để mọi người chỉ phải sửa một nơi.
+Danh sách nằm trong [docs/adopters.md](adopters.md), để mọi người chỉ phải sửa một nơi.

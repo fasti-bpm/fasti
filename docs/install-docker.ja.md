@@ -273,7 +273,7 @@ Docker Compose の場合：`FASTI_IMAGE`（または `image:` 行）を変更し
 | コンテナーが再起動を繰り返し、ログに `OutOfMemoryError` が表示される | メモリが不足すると JVM は終了します。コンテナーのメモリ上限（2 GB）を引き上げてください |
 
 解決しない場合は、ログからパスワードを削除したうえで、ログを添えて GitHub の Issue を作成してください。セキュリティ上の問題については、
-[SECURITY.md](../SECURITY.md#security-policy) を参照してください。
+[SECURITY.md](../.github/SECURITY.md#security-policy) を参照してください。
 
 <a id="12-without-docker"></a>
 

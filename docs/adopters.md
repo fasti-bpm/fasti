@@ -1,6 +1,6 @@
 # Adopters
 
-Organizations that use Fasti BPM, listed at their own request. [Tiếng Việt](ADOPTERS.vi.md)
+Organizations that use Fasti BPM, listed at their own request. [Tiếng Việt](adopters.vi.md)
 
 Using Fasti BPM? Tell us and you are added here:
 

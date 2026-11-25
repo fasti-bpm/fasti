@@ -12,6 +12,7 @@ Edition 7.24.0.
   version), the steps to reproduce and what you expected to happen. A failing unit test is
   the most helpful reproduction.
 * Do **not** report security issues in public. See [SECURITY.md](SECURITY.md).
+* Using Fasti BPM in your organization? See [ADOPTERS.md](ADOPTERS.md) to be listed.
 
 ## Build from source
 

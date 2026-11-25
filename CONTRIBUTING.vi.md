@@ -11,6 +11,7 @@ Cảm ơn bạn quan tâm tới Fasti BPM Platform, một bản fork độc lậ
 * Với lỗi, hãy nêu phiên bản, môi trường (cơ sở dữ liệu, máy chủ ứng dụng, phiên bản Java), các
   bước tái hiện và kết quả bạn mong đợi. Một unit test thất bại là cách tái hiện hữu ích nhất.
 * **Không** báo lỗi bảo mật công khai. Xem [SECURITY.vi.md](SECURITY.vi.md).
+* Đơn vị của bạn đang dùng Fasti BPM? Xem [ADOPTERS.vi.md](ADOPTERS.vi.md) để được ghi tên.
 
 ## Build từ mã nguồn
 

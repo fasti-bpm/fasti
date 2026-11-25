@@ -245,6 +245,9 @@ Câu hỏi, báo lỗi và pull request đều được chào đón trên GitHub
 [CONTRIBUTING.vi.md](CONTRIBUTING.vi.md) và [Quy tắc ứng xử](CODE_OF_CONDUCT.vi.md). Rất mong
 người bản ngữ giúp rà soát các bản dịch.
 
+Đơn vị của bạn đang dùng Fasti BPM? [Hãy ghi tên vào danh sách](ADOPTERS.vi.md): một biểu mẫu
+ngắn, và chỉ khi bạn đồng ý.
+
 <a id="acknowledgements"></a>
 
 ## Ghi nhận

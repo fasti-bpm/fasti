@@ -246,6 +246,9 @@ Questions, bug reports and pull requests are welcome on GitHub; see
 [Code of Conduct](CODE_OF_CONDUCT.md). Reviews of the translations by native speakers are
 especially welcome.
 
+Using Fasti BPM in your organization? [Add it to the adopters](ADOPTERS.md): a short form, and
+only with your permission.
+
 <a id="acknowledgements"></a>
 
 ## Acknowledgements

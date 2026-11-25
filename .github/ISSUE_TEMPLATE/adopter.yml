@@ -1,0 +1,72 @@
+name: Add your organization to the adopters
+description: You use Fasti BPM and want to be listed in ADOPTERS.md / Đơn vị bạn dùng Fasti BPM và muốn được ghi tên
+title: "Adopter: "
+labels: [adopter]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for telling us. This issue is **public**: do not write anything confidential.
+        To be listed without your name, write to contact@fasti.dev instead.
+
+        Cảm ơn bạn đã cho chúng tôi biết. Issue này **công khai**: đừng ghi thông tin mật.
+        Muốn được ghi không kèm tên, hãy gửi thư tới contact@fasti.dev.
+  - type: input
+    id: organization
+    attributes:
+      label: Organization / Tổ chức
+      description: The name as it should appear in the list.
+    validations:
+      required: true
+  - type: input
+    id: website
+    attributes:
+      label: Website
+      placeholder: https://example.com
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Stage / Mức độ sử dụng
+      options:
+        - Evaluating (đang dùng thử)
+        - Pilot (thí điểm)
+        - Production (vận hành thật)
+    validations:
+      required: true
+  - type: input
+    id: since
+    attributes:
+      label: Since / Từ khi nào
+      placeholder: 2026-11
+  - type: textarea
+    id: usage
+    attributes:
+      label: How it is used / Dùng vào việc gì
+      description: One sentence for the list, for example the processes and a rough volume. You may add more below it.
+      placeholder: Loan approval, about 5,000 instances a day
+    validations:
+      required: true
+  - type: dropdown
+    id: logo
+    attributes:
+      label: Logo
+      description: May we show your logo in the README and on fasti.dev? / Được phép hiển thị logo trên README và fasti.dev không?
+      options:
+        - No, text only (Không, chỉ ghi chữ)
+        - Yes, the logo may be shown (Có, được hiển thị logo)
+    validations:
+      required: true
+  - type: textarea
+    id: logo-file
+    attributes:
+      label: Logo file / Tệp logo
+      description: Only if you allowed it above. Drop an SVG or a PNG of at least 400 px wide here.
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Confirmation / Xác nhận
+      options:
+        - label: I may speak for this organization on this. / Tôi có thẩm quyền đại diện tổ chức về việc này.
+          required: true
+        - label: The listing is public, and the organization can have it removed at any time. / Việc ghi tên là công khai, và tổ chức có thể yêu cầu gỡ bất cứ lúc nào.
+          required: true

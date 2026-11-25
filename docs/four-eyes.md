@@ -72,6 +72,11 @@ Allowed on purpose:
 - There is **no administrator override**. Members of `camunda-admin` are refused like
   anyone else. If nobody allowed is left, reassign the task to a person who did not do the
   checked steps, or change the instance with process instance modification.
+- **Starting in the middle counts.** Whoever places a token into the process by hand, with a
+  start at another activity than the start event (`startInstructions`), a restart or a
+  process instance modification that starts an activity, may skip the checked steps that way.
+  From 1.3.1 that user counts as having done every checked step of the instance, so the task
+  that checks them needs another person.
 
 Scope: one process instance. A called process (call activity) is a process instance of its
 own; its rules name its own steps.

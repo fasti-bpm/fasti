@@ -40,6 +40,8 @@ import org.camunda.bpm.engine.impl.UserOperationLogQueryImpl;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.TaskEntity;
+import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
+import org.camunda.bpm.engine.impl.pvm.process.ScopeImpl;
 import org.camunda.bpm.engine.impl.util.JsonUtil;
 import org.camunda.bpm.engine.variable.Variables;
 import org.slf4j.Logger;
@@ -147,6 +149,41 @@ public final class FourEyesGuard {
         processInstance.setVariableLocal(name, Variables.stringValue(JsonUtil.asString(new ArrayList<>(users))));
         return null;
       });
+    }
+  }
+
+  /**
+   * Counts the authenticated user as having done every checked step of the process instance.
+   * Called when a user places a token into a process by hand: a start at another activity than the
+   * start event (also by a restart) or a modification that starts an activity. That way the
+   * checked steps can be skipped, and the same person could otherwise complete the task that
+   * checks them. Without an authenticated user (Java API, jobs) nothing is recorded.
+   */
+  public static void recordManualPlacement(CommandContext commandContext, ExecutionEntity processInstance) {
+    String userId = commandContext.getAuthenticatedUserId();
+    if (userId == null || processInstance == null || processInstance.getProcessDefinition() == null) {
+      return;
+    }
+    Set<String> stepIds = new LinkedHashSet<>();
+    collectCheckedSteps(processInstance.getProcessDefinition(), stepIds);
+    for (String stepId : stepIds) {
+      String name = FourEyesService.VARIABLE_PREFIX + stepId;
+      Set<String> users = new LinkedHashSet<>(readVariable(processInstance, name));
+      if (users.add(userId)) {
+        ReservedVariables.asControl(() -> {
+          processInstance.setVariableLocal(name, Variables.stringValue(JsonUtil.asString(new ArrayList<>(users))));
+          return null;
+        });
+      }
+    }
+  }
+
+  static void collectCheckedSteps(ScopeImpl scope, Set<String> stepIds) {
+    for (ActivityImpl activity : scope.getActivities()) {
+      if (Boolean.TRUE.equals(activity.getProperty(FourEyesRule.PROPERTY_CHECKED))) {
+        stepIds.add(activity.getId());
+      }
+      collectCheckedSteps(activity, stepIds);
     }
   }
 

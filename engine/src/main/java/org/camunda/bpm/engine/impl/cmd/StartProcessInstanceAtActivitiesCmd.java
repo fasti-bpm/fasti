@@ -26,6 +26,7 @@ import java.util.List;
 import org.camunda.bpm.engine.exception.NotValidException;
 import org.camunda.bpm.engine.history.UserOperationLogEntry;
 import org.camunda.bpm.engine.impl.ProcessEngineLogger;
+import dev.fasti.engine.foureyes.impl.FourEyesGuard;
 import org.camunda.bpm.engine.impl.ProcessInstanceModificationBuilderImpl;
 import org.camunda.bpm.engine.impl.ProcessInstantiationBuilderImpl;
 import org.camunda.bpm.engine.impl.cfg.CommandChecker;
@@ -100,6 +101,12 @@ public class StartProcessInstanceAtActivitiesCmd implements Command<ProcessInsta
     // are only set if there is a single start activity. Accordingly,
     // we reset the flag in case we have more than one start instruction.
     processInstance.setStarting(instructions.size() == 1);
+
+    // Fasti: a start at another activity than the start event may skip the steps a four-eyes rule
+    // checks; the user who starts it that way counts as having done them
+    if (instructions.size() != 1 || initialActivity != processDefinition.getInitial()) {
+      FourEyesGuard.recordManualPlacement(commandContext, processInstance);
+    }
 
     for (int i = 0; i < instructions.size(); i++) {
       AbstractProcessInstanceModificationCommand instruction = instructions.get(i);

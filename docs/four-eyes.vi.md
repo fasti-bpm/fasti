@@ -75,6 +75,11 @@ Cố ý cho phép:
 - **Không có quyền vượt cho quản trị viên**. Thành viên `camunda-admin` cũng bị từ chối như mọi
   người. Nếu không còn ai được phép, hãy giao lại tác vụ cho người chưa làm các bước được
   kiểm tra, hoặc thay đổi instance bằng process instance modification.
+- **Bắt đầu giữa chừng cũng được tính.** Người tự đặt token vào quy trình, bằng cách bắt đầu tại
+  một bước khác sự kiện bắt đầu (`startInstructions`), khởi động lại (restart) hoặc process
+  instance modification có bắt đầu một bước, có thể bỏ qua các bước được kiểm tra. Từ 1.3.1,
+  người đó được tính là đã làm mọi bước được kiểm tra của instance, nên tác vụ kiểm tra các bước
+  ấy phải do người khác hoàn thành.
 
 Phạm vi: một process instance. Một quy trình được gọi (call activity) là một process instance
 riêng; quy tắc của nó nêu các bước của chính nó.

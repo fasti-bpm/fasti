@@ -19,6 +19,7 @@ package org.camunda.bpm.engine.impl.cmd;
 
 import java.util.Collections;
 import java.util.List;
+import dev.fasti.engine.foureyes.impl.FourEyesGuard;
 import org.camunda.bpm.engine.history.UserOperationLogEntry;
 import org.camunda.bpm.engine.impl.ProcessEngineLogger;
 import org.camunda.bpm.engine.impl.ProcessInstanceModificationBuilderImpl;
@@ -66,6 +67,15 @@ public class ModifyProcessInstanceCmd implements Command<Void> {
     processInstance.setPreserveScope(true);
 
     List<AbstractProcessInstanceModificationCommand> instructions = builder.getModificationOperations();
+
+    // Fasti: starting activities by hand may skip the steps a four-eyes rule checks; the user who
+    // does it counts as having done them
+    for (AbstractProcessInstanceModificationCommand instruction : instructions) {
+      if (instruction instanceof AbstractInstantiationCmd) {
+        FourEyesGuard.recordManualPlacement(commandContext, processInstance);
+        break;
+      }
+    }
 
     checkCancellation(commandContext);
     for (int i = 0; i < instructions.size(); i++) {

@@ -30,6 +30,15 @@
         <type>pom</type>
       </dependency>
 
+      <!-- OpenTelemetry: imported before the Spring Boot BOM, see ${version.opentelemetry} -->
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-bom</artifactId>
+        <version>${version.opentelemetry}</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>

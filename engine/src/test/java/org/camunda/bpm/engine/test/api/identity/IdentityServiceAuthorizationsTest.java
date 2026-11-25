@@ -76,6 +76,7 @@ public class IdentityServiceAuthorizationsTest extends PluggableProcessEngineTes
 
   @After
   public void tearDown() throws Exception {
+    processEngineConfiguration.setLoginMaxAttempts(Integer.MAX_VALUE);
     processEngineConfiguration.setAuthorizationEnabled(false);
     cleanupAfterTest();
 
@@ -1341,6 +1342,8 @@ public class IdentityServiceAuthorizationsTest extends PluggableProcessEngineTes
   }
 
   protected void lockUser(String userId, String invalidPassword) throws ParseException {
+    // Fasti: the permanent lock is off by default; reset in tearDown
+    processEngineConfiguration.setLoginMaxAttempts(10);
     Date now = ClockUtil.getCurrentTime();
     try {
       for (int i = 0; i <= 11; i++) {

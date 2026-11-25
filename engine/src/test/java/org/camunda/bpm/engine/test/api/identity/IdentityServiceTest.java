@@ -82,13 +82,18 @@ public class IdentityServiceTest {
   protected IdentityService identityService;
   protected ProcessEngine processEngine;
 
+  /** Fasti: the permanent lock is off by default; the tests of it set it on */
+  protected int loginMaxAttemptsInitialValue;
+
   @Before
   public void init() {
     identityService = engineRule.getIdentityService();
+    loginMaxAttemptsInitialValue = engineRule.getProcessEngineConfiguration().getLoginMaxAttempts();
   }
 
   @After
   public void cleanUp() {
+    engineRule.getProcessEngineConfiguration().setLoginMaxAttempts(loginMaxAttemptsInitialValue);
     for (User user : identityService.createUserQuery().list()) {
       identityService.deleteUser(user.getId());
     }
@@ -701,7 +706,8 @@ public class IdentityServiceTest {
   @Test
   @WatchLogger(loggerNames = {INDENTITY_LOGGER}, level = "INFO")
   public void testUsuccessfulAttemptsResultInBlockedUser() throws ParseException {
-    // given
+    // given the permanent lock of Camunda 7 (off by default in Fasti)
+    engineRule.getProcessEngineConfiguration().setLoginMaxAttempts(10);
     User user = identityService.newUser("johndoe");
     user.setPassword("xxx");
     identityService.saveUser(user);

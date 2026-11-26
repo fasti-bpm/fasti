@@ -49,11 +49,13 @@
               factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
               pathname="conf/tomcat-users.xml" />
 
-    <!-- Additional properties can be set to avoid a common exception
-         regarding connection timeout in the connection pool:
-          testOnBorrow="true"
-          validationQuery="SELECT 1"
-    -->
+    <!-- Connection pool of the engine (docs/tuning-runtime.md), as in Run and the container image:
+         room for the 10 job executor threads of conf/bpm-platform.xml plus the requests that use
+         the database at the same time; 10 connections stay open when idle. testOnBorrow checks a
+         connection before it is handed out (with the driver's Connection.isValid(), at most every
+         validationInterval of 3 s), so that connections broken by a database restart or a
+         firewall are replaced instead of failing a request. A request waits at most 10 s
+         (maxWait) for a free connection. -->
     <Resource name="jdbc/ProcessEngine"
               auth="Container"
               type="javax.sql.DataSource" 
@@ -65,8 +67,10 @@
               username="sa"  
               password="sa"
               maxActive="20"
-              minIdle="5"
-              maxIdle="20" />
+              minIdle="10"
+              maxIdle="20"
+              maxWait="10000"
+              testOnBorrow="true" />
 
     <Resource name="global/camunda-bpm-platform/process-engine/ProcessEngineService!org.camunda.bpm.ProcessEngineService" auth="Container"
               type="org.camunda.bpm.ProcessEngineService"

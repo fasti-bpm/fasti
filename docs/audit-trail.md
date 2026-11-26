@@ -175,10 +175,25 @@ cleanly. Such a checkpoint is a record like the others, comes earlier than the i
 put one (which verification accepts, also that of earlier versions), and holds the head of its
 chain only for itself, waiting for it at most 5 seconds (a chain held longer is signed the next
 time). Before signing, the node checks that the last record still matches its hash and the
-head. A node that stops without shutting down (killed, out of memory) leaves at most the records
-of the last `checkpoint-interval-seconds` unsigned. So do commands that still run while the engine
-closes (a request being served, a job of a job executor that other engines share): their records
-are signed when the node runs again with the same node id.
+head. When the engine shuts down it waits for these last checkpoints 10 seconds in all; a chain
+it could not sign in that time (held by a transaction) stays as it is. A node that stops without
+shutting down (killed, out of memory) leaves at most the records of the last
+`checkpoint-interval-seconds` unsigned. So do commands that still run while the engine closes (a
+request being served, a job of a job executor that other engines share).
+
+**Chains that a node left behind.** A chain whose node id does not come back (a pod that was
+killed, a node id that changed, a node of an earlier version) would stay unsigned. So in each
+round every node also signs chains of other node ids whose head has not moved for three
+`checkpoint-interval-seconds`, and at least 15 minutes, up to 100 chains per round (the others
+follow in the next rounds). It uses the same head lock and the same checks, and signs only if the
+head is still where it was found idle and the last record is not a checkpoint: two nodes that do
+this at the same time write one checkpoint, the second finds it at the end. With
+`checkpoint-interval-seconds` set to `0` there are no rounds and such chains are not signed. Be
+aware what a late checkpoint means: it attests the records as they are when it is written. A
+record changed in the database before that, by someone who also fixed the hashes and the head,
+is signed as it is then; only a checkpoint written with the record (every `checkpoint-interval`
+records), the checkpoint log lines and the last hashes kept outside the database speak about the
+time before.
 
 With a key set, a signature that is missing is as much a break as one that is wrong, because
 someone who rewrites a chain cannot forge signatures but can remove them:
@@ -435,6 +450,11 @@ Oracle database was at hand.
   of this version (see "Upgrading existing tables").
 - If the tables become unwritable (dropped, a record inserted from outside at the next
   position), commands that produce history fail rather than run unrecorded.
+- **Upgrading from 1.3.x with a key**: verification now calls a chain with records but no
+  checkpoint "not authenticated" (the web UI: not signed yet). Chains that 1.3.x nodes wrote
+  without reaching a checkpoint show so until the first round after the upgrade signs them: the
+  chains of a node that runs again with the same node id after `checkpoint-interval-seconds` or
+  when it shuts down, the chains left behind once they have been idle for the time above.
 
 ## Limits
 

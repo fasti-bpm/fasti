@@ -169,10 +169,24 @@ phần cuối của từng chuỗi của nó có bản ghi sau điểm kiểm tr
 như vậy là một bản ghi như mọi bản ghi khác, đến sớm hơn chỗ khoảng cách sẽ đặt (việc kiểm tra chấp
 nhận điều này, kể cả ở các bản trước), và chỉ giữ head của chuỗi cho riêng nó, chờ head tối đa 5
 giây (chuỗi bị giữ lâu hơn sẽ được ký lần sau). Trước khi ký, node kiểm tra bản ghi cuối vẫn khớp
-mã băm của nó và head. Node dừng mà không tắt êm (bị kill, hết bộ nhớ) để lại chưa ký nhiều nhất là
-các bản ghi của `checkpoint-interval-seconds` giây cuối. Các lệnh còn chạy trong lúc engine tắt (một
-request đang được phục vụ, một job của job executor dùng chung với engine khác) cũng vậy: bản ghi của
-chúng được ký khi node chạy lại với cùng node id.
+mã băm của nó và head. Khi tắt, engine chờ các điểm kiểm tra cuối này tổng cộng 10 giây; chuỗi
+không ký kịp trong thời gian đó (đang bị một giao dịch giữ) được để nguyên. Node dừng mà không tắt
+êm (bị kill, hết bộ nhớ) để lại chưa ký nhiều nhất là các bản ghi của `checkpoint-interval-seconds`
+giây cuối. Các lệnh còn chạy trong lúc engine tắt (một request đang được phục vụ, một job của job
+executor dùng chung với engine khác) cũng vậy.
+
+**Chuỗi mà một node bỏ lại.** Chuỗi có node id không quay lại nữa (pod bị kill, node id đã đổi,
+node của bản trước) sẽ mãi chưa được ký. Vì vậy ở mỗi lượt, mọi node còn ký các chuỗi của node id
+khác có head không đổi trong ba lần `checkpoint-interval-seconds` và ít nhất 15 phút, tối đa 100
+chuỗi mỗi lượt (các chuỗi còn lại ở lượt sau). Node dùng cùng khóa head và cùng các phép kiểm tra,
+và chỉ ký nếu head vẫn ở chỗ lúc thấy nó đứng yên và bản ghi cuối không phải điểm kiểm tra: hai node
+làm việc này cùng lúc chỉ ghi một điểm kiểm tra, node thứ hai thấy nó ở cuối chuỗi. Khi
+`checkpoint-interval-seconds` là `0` thì không có lượt nào và các chuỗi như vậy không được ký. Cần
+hiểu đúng ý nghĩa của điểm kiểm tra ghi muộn: nó chứng thực các bản ghi như chúng đang có lúc ký.
+Một bản ghi bị sửa trong cơ sở dữ liệu trước đó, bởi người đã sửa cả mã băm và head, sẽ được ký
+đúng như lúc ấy; chỉ điểm kiểm tra ghi cùng bản ghi (mỗi `checkpoint-interval` bản ghi), các dòng
+log điểm kiểm tra và các mã băm cuối lưu ngoài cơ sở dữ liệu mới nói được về khoảng thời gian trước
+đó.
 
 Khi đã đặt khóa, thiếu chữ ký cũng là một chỗ đứt như chữ ký sai, vì người viết lại chuỗi không
 giả được chữ ký nhưng xóa được chúng:
@@ -418,6 +432,11 @@ dữ liệu Oracle để thử.
   cấp bảng đã có").
 - Nếu không ghi được vào bảng (bị xóa, hoặc có bản ghi chèn từ bên ngoài vào vị trí kế tiếp), các
   lệnh tạo lịch sử sẽ thất bại thay vì chạy mà không được ghi.
+- **Nâng cấp từ 1.3.x khi có khóa**: việc kiểm tra nay coi chuỗi có bản ghi nhưng chưa có điểm kiểm
+  tra là "chưa xác thực" (giao diện web: chưa được ký). Các chuỗi mà node 1.3.x đã ghi nhưng chưa
+  tới điểm kiểm tra nào hiện như vậy cho đến lượt ký đầu tiên sau khi nâng cấp: chuỗi của node chạy
+  lại với cùng node id sau `checkpoint-interval-seconds` giây hoặc khi node tắt, chuỗi bị bỏ lại
+  khi chúng đã đứng yên đủ thời gian nói trên.
 
 ## Giới hạn
 

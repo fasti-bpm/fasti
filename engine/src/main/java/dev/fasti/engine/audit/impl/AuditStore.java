@@ -81,11 +81,18 @@ public final class AuditStore {
     public final String chainId;
     public final long sequence;
     public final String hash;
+    /** The time of the last record, as {@link #heads(CommandContext, AuditSettings)} reads it; 0 otherwise. */
+    public final long time;
 
     Head(String chainId, long sequence, String hash) {
+      this(chainId, sequence, hash, 0);
+    }
+
+    Head(String chainId, long sequence, String hash, long time) {
       this.chainId = chainId;
       this.sequence = sequence;
       this.hash = hash;
+      this.time = time;
     }
   }
 
@@ -224,13 +231,23 @@ public final class AuditStore {
    */
   public static AuditRecord checkpointTail(CommandContext commandContext, AuditSettings settings, String chainId,
       int lockTimeoutSeconds) {
+    return checkpointTail(commandContext, settings, chainId, lockTimeoutSeconds, -1);
+  }
+
+  /**
+   * {@link #checkpointTail(CommandContext, AuditSettings, String, int)}, only if the head is still
+   * at {@code expectedSequence} once it is locked (any position with a negative one): a chain that
+   * moved meanwhile is written to, and left to its writer.
+   */
+  public static AuditRecord checkpointTail(CommandContext commandContext, AuditSettings settings, String chainId,
+      int lockTimeoutSeconds, long expectedSequence) {
     if (!settings.isSigned() || settings.getCheckpointInterval() <= 0) {
       return null;
     }
     Connection connection = connection(commandContext);
     try {
       Head head = lockHead(commandContext, settings, chainId, false, lockTimeoutSeconds);
-      if (head == null || head.sequence <= 0) {
+      if (head == null || head.sequence <= 0 || (expectedSequence >= 0 && head.sequence != expectedSequence)) {
         return null;
       }
       AuditRecord last = find(commandContext, settings, chainId, head.sequence);
@@ -873,10 +890,10 @@ public final class AuditStore {
 
   static List<Head> heads(Connection connection, AuditSettings settings) throws SQLException {
     List<Head> heads = new ArrayList<>();
-    try (PreparedStatement select = connection.prepareStatement("select CHAIN_ID_, SEQ_, HASH_ from " + heads(settings));
+    try (PreparedStatement select = connection.prepareStatement("select CHAIN_ID_, SEQ_, HASH_, TIME_ from " + heads(settings));
         ResultSet result = select.executeQuery()) {
       while (result.next()) {
-        heads.add(new Head(result.getString(1), result.getLong(2), result.getString(3)));
+        heads.add(new Head(result.getString(1), result.getLong(2), result.getString(3), result.getLong(4)));
       }
     }
     return heads;

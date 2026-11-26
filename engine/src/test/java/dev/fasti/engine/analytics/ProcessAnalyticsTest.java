@@ -296,6 +296,17 @@ public class ProcessAnalyticsTest {
   }
 
   @Test
+  public void shouldNotKeepARangeThatEndsNow() {
+    ProcessAnalyticsQuery untilNow = ProcessAnalytics.query(engine).processDefinitionKey("order")
+        .finishedAfter(new Date(T0.getTime() - HOUR));
+    List<ActivityAnalytics> first = untilNow.activities();
+    List<ActivityAnalytics> second = untilNow.activities();
+    assertThat(second).isNotSameAs(first).hasSameSizeAs(first);
+    assertThat(ProcessAnalytics.query(engine).processDefinitionKey("order").instances())
+        .isNotSameAs(ProcessAnalytics.query(engine).processDefinitionKey("order").instances());
+  }
+
+  @Test
   public void shouldReadAgainWithoutCache() {
     java.time.Duration ttl = ProcessAnalytics.getCacheTimeToLive();
     ProcessAnalytics.setCacheTimeToLive(java.time.Duration.ZERO);
@@ -351,6 +362,18 @@ public class ProcessAnalyticsTest {
     assertThat(one.keySet()).isEqualTo(all.keySet());
     assertThat(one.get("review").getFinished()).isEqualTo(all.get("review").getFinished());
     assertThat(one.get("review").getRunning()).isEqualTo(1);
+  }
+
+  @Test
+  public void shouldGiveTheSameUserTaskTimesForTheVersionAndForAllVersions() {
+    String id = engine.getRepositoryService().createProcessDefinitionQuery().processDefinitionKey("order")
+        .singleResult().getId();
+    UserTaskAnalytics all = query().userTasks(1000);
+    UserTaskAnalytics one = query().processDefinitionIdIn(Collections.singletonList(id)).userTasks(1000);
+    assertThat(one.getTasks()).isEqualTo(all.getTasks()).isEqualTo(47);
+    assertThat(one.getByTask()).extracting(UserTaskAnalytics.UserTaskTimes::getCount)
+        .containsExactlyElementsOf(all.getByTask().stream().map(UserTaskAnalytics.UserTaskTimes::getCount)
+            .collect(Collectors.toList()));
   }
 
   @Test

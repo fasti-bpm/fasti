@@ -1920,6 +1920,8 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
           configuration = parser.parse();
 
           configuration.setDefaultStatementTimeout(jdbcStatementTimeout);
+          // Fasti: the statement timeout of the process analytics (only their statements are wrapped)
+          configuration.addInterceptor(new dev.fasti.engine.analytics.impl.AnalyticsStatementTimeout());
 
           if (isJdbcBatchProcessing()) {
             configuration.setDefaultExecutorType(ExecutorType.BATCH);

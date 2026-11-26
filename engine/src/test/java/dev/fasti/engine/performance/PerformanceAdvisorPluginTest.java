@@ -122,7 +122,7 @@ public class PerformanceAdvisorPluginTest {
     runScript(CREATE_SCRIPT, true);
     runScript(CREATE_SCRIPT, true);
     List<String> created = indexSnapshot();
-    assertThat(created).hasSize(stock.size() + 7).anyMatch(index -> index.startsWith("ACT_HI_PROCINST FASTI_IDX_HI_PI_PDEF_START "));
+    assertThat(created).hasSize(stock.size() + 8).anyMatch(index -> index.startsWith("ACT_HI_PROCINST FASTI_IDX_HI_PI_PDEF_START "));
 
     runScript(DROP_SCRIPT, false);
     runScript(DROP_SCRIPT, false);
@@ -265,6 +265,24 @@ public class PerformanceAdvisorPluginTest {
   }
 
   // configuration /////////////////////////////////////////////////////////////////////
+
+  @Test
+  public void shouldHintAtTheQueryLimitsThatAreNotSet() {
+    List<String> neither = warnings(start(configuration -> { }), ConfigAdvisor.NO_QUERY_LIMITS);
+    assertThat(neither).hasSize(1);
+    assertThat(neither.get(0)).contains("jdbcStatementTimeout and queryMaxResultsLimit are not set")
+        .contains("jdbc-statement-timeout").contains("fasti.analytics.statement-timeout");
+
+    List<String> one = warnings(start(configuration -> configuration.setJdbcStatementTimeout(60)),
+        ConfigAdvisor.NO_QUERY_LIMITS);
+    assertThat(one).hasSize(1);
+    assertThat(one.get(0)).contains("queryMaxResultsLimit is not set").doesNotContain("jdbcStatementTimeout and");
+
+    assertThat(warnings(start(configuration -> {
+      configuration.setJdbcStatementTimeout(60);
+      configuration.setQueryMaxResultsLimit(2000);
+    }), ConfigAdvisor.NO_QUERY_LIMITS)).isEmpty();
+  }
 
   @Test
   public void shouldWarnAboutHistoryWithoutCleanupWindow() {

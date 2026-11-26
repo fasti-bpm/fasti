@@ -51,6 +51,7 @@ Nhóm thứ hai nằm trong script dưới dạng chú thích. Chỉ tạo khi c
 |---|---|---|
 | `FASTI_IDX_HI_PI_PDEF_START` | `ACT_HI_PROCINST (PROC_DEF_ID_, START_TIME_)` | danh sách lịch sử của một định nghĩa quy trình, mới nhất trước, nhất là khi bật phân quyền |
 | `FASTI_IDX_HI_AI_PDEF_START` | `ACT_HI_ACTINST (PROC_DEF_ID_, START_TIME_)` | trang thống kê hoạt động của một định nghĩa có lịch sử lớn (thêm một mục chỉ mục cho mỗi activity instance trong bảng lịch sử lớn nhất) |
+| `FASTI_IDX_HI_TI_PDKEY_END` | `ACT_HI_TASKINST (PROC_DEF_KEY_, END_TIME_)` | thời gian user task của [phân tích quy trình](process-analytics.vi.md) trên quy trình có nhiều user task: chỉ mục gốc chỉ trên `PROC_DEF_KEY_` buộc cơ sở dữ liệu đọc mọi task của quy trình để tìm những task mới nhất trong khoảng thời gian (thêm một mục chỉ mục cho mỗi user task). Chưa đo |
 | `FASTI_IDX_INC_TIMESTAMP` | `ACT_RU_INCIDENT (INCIDENT_TIMESTAMP_)` | hàng chục nghìn incident đang mở, sắp xếp cũ nhất trước |
 
 ### Chạy song song với Camunda 7.24 và quay lui
@@ -171,6 +172,11 @@ này.
   hiện khi đã có chỉ mục job `NULLS FIRST` của script (xem [Lấy job](#lay-job)). Thông báo cũng nói
   cái giá của `ensureJobDueDateNotNull=true`: node như vậy không bao giờ lấy các job không có hạn do
   node Camunda 7.24 và node Fasti với mặc định ghi ra.
+- **`FASTI-PERF-007`**: chưa đặt `jdbcStatementTimeout` hoặc `queryMaxResultsLimit` (mặc định cả hai
+  đều chưa đặt). Thiếu cái đầu, một truy vấn bất thường giữ kết nối lâu bao nhiêu tùy nó; thiếu cái
+  sau, truy vấn của người dùng đã đăng nhập có thể liệt kê không giới hạn. Xem phần *Cấu hình engine
+  cho cơ sở dữ liệu lớn*; phân tích quy trình có giới hạn thời gian câu lệnh riêng
+  ([phân tích quy trình](process-analytics.vi.md)).
 
 | Bản phân phối | Công tắc (`warn` mặc định, `off`) |
 |---|---|

@@ -17,6 +17,7 @@
 package dev.fasti.engine.workload.impl;
 
 import java.text.Normalizer;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,25 +31,46 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import dev.fasti.engine.analytics.impl.ReadCache;
 import dev.fasti.engine.workload.TaskLoad;
 import dev.fasti.engine.workload.TaskWorkload;
 import dev.fasti.engine.workload.TaskWorkloadQuery;
 import dev.fasti.engine.workload.WorkloadNotAvailableException;
 import org.apache.ibatis.session.Configuration;
 import org.camunda.bpm.engine.BadUserRequestException;
+import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
+import org.camunda.bpm.engine.impl.context.Context;
+import org.camunda.bpm.engine.impl.identity.Authentication;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.util.ClockUtil;
 
 /**
  * Reads the workload in one command: the totals, the unclaimed tasks without a group, and one
  * grouped statement each for the groups and the users asked for.
+ *
+ * <p>An answer is kept for a short time ({@link #CACHE}, 5 seconds by default), and callers that
+ * ask the same at the same time share one read. The key holds the question and everything the
+ * task query decides by: the authenticated user, groups and tenants, and the authorization, tenant
+ * and task settings of the engine, so a user only ever gets an answer read under the same
+ * permissions. A grant revoked meanwhile shows for at most the time to live.</p>
  */
 public class TaskWorkloadQueryImpl implements TaskWorkloadQuery {
 
   static final String SELECT_TOTALS = "selectFastiTaskLoadTotals";
   static final String SELECT_BY_ASSIGNEE = "selectFastiTaskLoadByAssignee";
   static final String SELECT_BY_GROUP = "selectFastiTaskLoadByCandidateGroup";
+
+  /** {@code fasti.workload.cacheTtlSeconds}: how long an answer is kept, in seconds; 0 turns this off. */
+  public static final String CACHE_TTL_PROPERTY = "fasti.workload.cacheTtlSeconds";
+  static final Duration DEFAULT_CACHE_TTL = Duration.ofSeconds(5);
+  static final Duration MAX_CACHE_TTL = Duration.ofHours(1);
+  static final int MAX_CACHE_ENTRIES = 256;
+  /** The longest wait for the same read of another caller. */
+  static final Duration READ_TIME = Duration.ofMinutes(5);
+
+  public static final ReadCache CACHE = new ReadCache(initialTimeToLive(), MAX_CACHE_TTL, MAX_CACHE_ENTRIES,
+      () -> READ_TIME, "workload is", ProcessEngineException::new);
 
   private static final Pattern MARKS = Pattern.compile("\\p{M}+");
   private static final Pattern TRAILING_SPACES = Pattern.compile(" +$");
@@ -112,9 +134,46 @@ public class TaskWorkloadQueryImpl implements TaskWorkloadQuery {
     return new ArrayList<>(distinct);
   }
 
+  private static Duration initialTimeToLive() {
+    String value = System.getProperty(CACHE_TTL_PROPERTY);
+    if (value == null || value.trim().isEmpty()) {
+      return DEFAULT_CACHE_TTL;
+    }
+    try {
+      long seconds = Long.parseLong(value.trim());
+      return seconds <= 0 ? Duration.ZERO : Duration.ofSeconds(Math.min(seconds, MAX_CACHE_TTL.getSeconds()));
+    } catch (NumberFormatException e) {
+      return DEFAULT_CACHE_TTL;
+    }
+  }
+
   @Override
   public TaskWorkload read() {
-    return configuration.getCommandExecutorTxRequired().execute(this::read);
+    if (Context.getCommandContext() != null) {
+      // inside a transaction of the engine (a delegate, a listener): read in it, as a task query
+      // would, since that command may check authorizations and tenants unlike its caller
+      return configuration.getCommandExecutorTxRequired().execute(this::read);
+    }
+    return CACHE.get(cacheKey(), true, () -> configuration.getCommandExecutorTxRequired().execute(this::read));
+  }
+
+  /**
+   * The question and what the task query selects by besides it. A list of parts, so that ids that
+   * contain a separator cannot make two questions share an entry.
+   */
+  protected Object cacheKey() {
+    Authentication authentication = configuration.getIdentityService().getCurrentAuthentication();
+    // the name and the instance of the configuration: two engines of one name (tests, a redeployment) do not share
+    return Arrays.asList(configuration.getProcessEngineName(), System.identityHashCode(configuration),
+        new ArrayList<>(groupIds), new ArrayList<>(userIds),
+        overdueBefore == null ? null : overdueBefore.getTime(),
+        tenantIds == null ? null : new ArrayList<>(Arrays.asList(tenantIds)),
+        // no authentication skips the tenant check, an authentication without tenants does not
+        authentication != null, authentication == null ? null : authentication.getUserId(),
+        authentication == null || authentication.getGroupIds() == null ? null : new ArrayList<>(authentication.getGroupIds()),
+        authentication == null || authentication.getTenantIds() == null ? null : new ArrayList<>(authentication.getTenantIds()),
+        configuration.isAuthorizationEnabled(), configuration.getAuthorizationCheckRevokes(),
+        configuration.isTenantCheckEnabled(), configuration.isCmmnEnabled(), configuration.isStandaloneTasksEnabled());
   }
 
   protected TaskWorkload read(CommandContext commandContext) {

@@ -31,7 +31,12 @@ import java.util.List;
  * <p>Answers are kept for a short time ({@code AnalyticsCache}, 60 seconds by default, system
  * property {@code fasti.analytics.cacheTtlSeconds}): the same query within that time, by the same
  * or another user who passes the permission check, gets the same answer without reading the
- * history again. Answers are shared and must not be changed.</p>
+ * history again. Only answers of a range with {@link #finishedBefore(Date)} are kept; calls that
+ * ask the same at the same time share one read either way. Answers are shared and must not be
+ * changed.</p>
+ *
+ * <p>Each statement may run for {@link ProcessAnalytics#setStatementTimeout} (120 seconds by
+ * default); a longer one fails the call with {@link AnalyticsTimeoutException}.</p>
  *
  * <p>The range selects what <em>finished</em> (activities, process instances, tasks): from
  * {@link #finishedAfter(Date)} (inclusive) to {@link #finishedBefore(Date)} (exclusive), by

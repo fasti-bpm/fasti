@@ -87,17 +87,27 @@ Kết quả được giữ 60 giây cho cùng một truy vấn (`fasti.analytics
 `FASTI_ANALYTICS_CACHE_TTL`, `0` để tắt, số không có đơn vị tính là giây), nên mở lại một góc nhìn
 hoặc đồng nghiệp mở cùng góc nhìn sẽ không phải đọc lại lịch sử; quyền vẫn được kiểm tra ở mỗi lần
 gọi, còn số liệu đang chạy có thể cũ tối đa chừng ấy. Các lần gọi hỏi cùng một thứ vào cùng lúc chỉ
-đọc một lần. Chỉ lần gọi có `finishedBefore` mới được giữ: thiếu nó, khoảng thời gian kết thúc ở
-mili giây hiện tại. Giao diện web cho khoảng thời gian kết thúc ở phút tròn kế tiếp (5, 15 và 60
-phút với 30, 90 và 365 ngày), nên mọi người xem cùng một khoảng dùng chung một lần đọc.
+đọc một lần. Chỉ kết quả của lần gọi có `finishedBefore` mới được giữ: thiếu nó, khoảng thời gian
+kết thúc ở mili giây hiện tại, nên sẽ không ai hỏi lại đúng kết quả đó (các lần gọi như vậy vẫn
+dùng chung một lần đọc đang chạy). Giao diện web cho khoảng thời gian kết thúc ở phút tròn kế tiếp
+(5, 15 và 60 phút với 30, 90 và 365 ngày), nên mọi người xem cùng một khoảng dùng chung một lần
+đọc. Mỗi node giữ tối đa 256 kết quả; khi có kết quả mới, các kết quả đã hết hạn nhường chỗ trước,
+sau đó đến kết quả cũ nhất.
 
 **Engine được ưu tiên.** Mỗi node chạy cùng lúc tối đa hai lượt quét khoảng thời gian (activities,
 rework, user task) (`fasti.analytics.max-concurrent`, trên image là
 `FASTI_ANALYTICS_MAX_CONCURRENT`, `0` để không giới hạn), cộng một lượt đọc nhanh (instances, trend,
 truy vết), nên các phần nhanh của một màn hình không phải chờ sau các lượt quét. Các lượt khác chờ đến lượt theo thứ tự mà không giữ kết nối CSDL, nên job executor, danh sách
 task và health check vẫn có kết nối của chúng. Lần gọi không đến lượt trong 60 giây
-(`fasti.analytics.max-wait`, trên image là `FASTI_ANALYTICS_MAX_WAIT`) nhận 503. Java:
-`ProcessAnalytics.setMaxConcurrent(int)` và `setMaxWait(Duration)`.
+(`fasti.analytics.max-wait`, trên image là `FASTI_ANALYTICS_MAX_WAIT`) nhận 503. Mỗi câu lệnh
+được chạy tối đa 120 giây (`fasti.analytics.statement-timeout`, trên image là
+`FASTI_ANALYTICS_STATEMENT_TIMEOUT`, `0` để không có giới hạn riêng, số không có đơn vị tính là
+giây), để hai lượt quét chậm không giữ mãi cả hai lượt và kết nối của chúng; `jdbcStatementTimeout`
+thấp hơn của engine vẫn áp dụng. Lần gọi có câu lệnh chạy lâu hơn nhận 503 kèm thông báo đề nghị
+chọn khoảng thời gian ngắn hơn (Java: `AnalyticsTimeoutException`, một loại
+`AnalyticsBusyException`). Giới hạn được đặt cho từng câu lệnh qua JDBC nên dùng được trên mọi cơ
+sở dữ liệu được hỗ trợ. Java: `ProcessAnalytics.setMaxConcurrent(int)`, `setMaxWait(Duration)` và
+`setStatementTimeout(Duration)`.
 
 ## Java
 
@@ -124,9 +134,14 @@ một thời lượng được xếp vào khoảng của nó bằng `CASE` lồn
 của nó bằng `CASE` của các mốc ngày truyền vào, nên không cần hàm ngày tháng, logarit hay phân
 vị. Không ghi gì và không đổi schema.
 
-Chi phí tăng theo lượng lịch sử của quy trình trong khoảng thời gian: các câu lệnh về bước đọc các
-lượt của quy trình kết thúc trong khoảng đó, qua chỉ mục `(PROC_DEF_ID_, END_TIME_)` khi chọn phiên
-bản. Khoảng ngắn hơn và một phiên bản thì rẻ hơn. Thời gian user task đọc tối đa `maxTasks` task,
+Chi phí tăng theo lượng lịch sử của quy trình trong khoảng thời gian: các câu lệnh đọc các lượt của
+quy trình kết thúc trong khoảng đó. Trên `ACT_HI_ACTINST` và `ACT_HI_PROCINST` chúng dùng chỉ mục
+`(PROC_DEF_ID_, END_TIME_)` (các phiên bản của quy trình được quy về id). Schema gốc chỉ đánh chỉ
+mục `ACT_HI_TASKINST` và `ACT_HI_INCIDENT` theo `PROC_DEF_KEY_`, nên các câu lệnh đó luôn kèm key
+(và thêm các phiên bản đã chọn) và chỉ đọc task và incident của đúng quy trình đó. Với quy trình có
+nhiều user task, chỉ mục tùy chọn `FASTI_IDX_HI_TI_PDKEY_END` trên
+`ACT_HI_TASKINST (PROC_DEF_KEY_, END_TIME_)` giúp phần thời gian user task chỉ đọc các task mới nhất
+của khoảng thời gian ([hiệu năng](performance.vi.md)). Khoảng ngắn hơn và một phiên bản thì rẻ hơn. Thời gian user task đọc tối đa `maxTasks` task,
 mới nhất trước; phần truy vết đọc tối đa `maxResults` lượt; cả hai giới hạn ngay trong SQL. Ứng
 dụng thay `mappings.xml` mặc định bằng bản riêng phải thêm
 `dev/fasti/engine/analytics/ProcessAnalytics.xml`; thiếu nó các endpoint trả 501.

@@ -26,6 +26,19 @@ public final class TaskWorkloads {
   private TaskWorkloads() {
   }
 
+  /**
+   * How long an answer is kept for the same question of the same user (5 seconds by default, at
+   * most an hour); {@link java.time.Duration#ZERO} turns this off. Callers that ask the same at the
+   * same time share one read either way.
+   */
+  public static void setCacheTimeToLive(java.time.Duration timeToLive) {
+    TaskWorkloadQueryImpl.CACHE.setTimeToLive(timeToLive);
+  }
+
+  public static java.time.Duration getCacheTimeToLive() {
+    return TaskWorkloadQueryImpl.CACHE.getTimeToLive();
+  }
+
   public static TaskWorkloadQuery query(ProcessEngine processEngine) {
     return new TaskWorkloadQueryImpl((ProcessEngineConfigurationImpl) processEngine.getProcessEngineConfiguration());
   }

@@ -59,6 +59,8 @@ public class CamundaBpmRunRestConfiguration {
   protected static final String ANALYTICS_CACHE_TTL_PROPERTY = "fasti.analytics.cache-ttl";
   protected static final String ANALYTICS_MAX_CONCURRENT_PROPERTY = "fasti.analytics.max-concurrent";
   protected static final String ANALYTICS_MAX_WAIT_PROPERTY = "fasti.analytics.max-wait";
+  protected static final String ANALYTICS_STATEMENT_TIMEOUT_PROPERTY = "fasti.analytics.statement-timeout";
+  protected static final String WORKLOAD_CACHE_TTL_PROPERTY = "fasti.workload.cache-ttl";
 
   protected static final String BEARER_AUTHENTICATION_PROVIDER =
       "org.camunda.bpm.spring.boot.starter.security.oauth2.impl.BearerTokenAuthenticationProvider";
@@ -109,7 +111,10 @@ public class CamundaBpmRunRestConfiguration {
     return registration;
   }
 
-  /** Fasti: the answer cache and the turns of the process analytics, with or without REST authentication. */
+  /**
+   * Fasti: the answer cache, the turns and the statement timeout of the process analytics, and the
+   * answer cache of the workload, with or without REST authentication.
+   */
   @PostConstruct
   public void analyticsSettings() {
     Duration analyticsCache = seconds(ANALYTICS_CACHE_TTL_PROPERTY);
@@ -123,6 +128,14 @@ public class CamundaBpmRunRestConfiguration {
     Duration analyticsWait = seconds(ANALYTICS_MAX_WAIT_PROPERTY);
     if (analyticsWait != null) {
       dev.fasti.engine.analytics.ProcessAnalytics.setMaxWait(analyticsWait);
+    }
+    Duration analyticsTimeout = seconds(ANALYTICS_STATEMENT_TIMEOUT_PROPERTY);
+    if (analyticsTimeout != null) {
+      dev.fasti.engine.analytics.ProcessAnalytics.setStatementTimeout(analyticsTimeout);
+    }
+    Duration workloadCache = seconds(WORKLOAD_CACHE_TTL_PROPERTY);
+    if (workloadCache != null) {
+      dev.fasti.engine.workload.TaskWorkloads.setCacheTimeToLive(workloadCache);
     }
   }
 

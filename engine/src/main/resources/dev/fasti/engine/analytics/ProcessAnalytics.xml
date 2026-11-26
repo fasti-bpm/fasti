@@ -78,7 +78,9 @@
     <result property="firstAssignment" column="FIRST_ASSIGN_" jdbcType="TIMESTAMP" />
   </resultMap>
 
-  <!-- the process (or the chosen versions of it) and the tenants the user may read -->
+  <!-- the process (or the chosen versions of it) and the tenants the user may read: for
+    ACT_HI_ACTINST and ACT_HI_PROCINST, whose indexes on (PROC_DEF_ID_, END_TIME_) the ids of the
+    versions can seek -->
   <sql id="scope">
     <choose>
       <when test="definitionIds != null and definitionIds.size > 0">
@@ -88,6 +90,21 @@
         ${alias}.PROC_DEF_KEY_ = #{processDefinitionKey}
       </otherwise>
     </choose>
+    <include refid="tenantScope"/>
+  </sql>
+
+  <!-- the same for ACT_HI_TASKINST and ACT_HI_INCIDENT: the stock schema indexes their
+    PROC_DEF_KEY_, not their PROC_DEF_ID_, so the key is always given for the database to seek that
+    index, and the chosen versions (versions of the key, checked before) narrow it down -->
+  <sql id="scopeByKey">
+    ${alias}.PROC_DEF_KEY_ = #{processDefinitionKey}
+    <if test="definitionIds != null and definitionIds.size > 0">
+      and ${alias}.PROC_DEF_ID_ in <foreach item="id" collection="definitionIds" open="(" separator="," close=")">#{id}</foreach>
+    </if>
+    <include refid="tenantScope"/>
+  </sql>
+
+  <sql id="tenantScope">
     <if test="tenantIds != null and tenantIds.size > 0">
       and ${alias}.TENANT_ID_ in <foreach item="tenantId" collection="tenantIds" open="(" separator="," close=")">#{tenantId}</foreach>
     </if>
@@ -180,7 +197,7 @@
       sum(case when I.INCIDENT_STATE_ = 0 then 1 else 0 end) as COUNT_,
       sum(case when I.CREATE_TIME_ &gt;= #{after} and I.CREATE_TIME_ &lt; #{before} then 1 else 0 end) as EXTRA_
     from ${prefix}ACT_HI_INCIDENT I
-    where <include refid="scope"><property name="alias" value="I"/></include>
+    where <include refid="scopeByKey"><property name="alias" value="I"/></include>
       and (I.INCIDENT_STATE_ = 0 or (I.CREATE_TIME_ &gt;= #{after} and I.CREATE_TIME_ &lt; #{before}))
     group by I.ACTIVITY_ID_
   </select>
@@ -302,7 +319,7 @@
       <include refid="limitOpen"/>
       select <include refid="limitTop"/> T.ID_, T.TASK_DEF_KEY_, T.NAME_, T.ASSIGNEE_, T.START_TIME_, T.END_TIME_
       from ${prefix}ACT_HI_TASKINST T
-      where <include refid="scope"><property name="alias" value="T"/></include>
+      where <include refid="scopeByKey"><property name="alias" value="T"/></include>
         and T.END_TIME_ &gt;= #{after} and T.END_TIME_ &lt; #{before}
         and T.DELETE_REASON_ = 'completed'
       order by T.END_TIME_ desc, T.ID_

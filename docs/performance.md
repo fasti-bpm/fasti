@@ -53,6 +53,7 @@ A second group is in the scripts as comments. Create those only for the usage na
 |---|---|---|
 | `FASTI_IDX_HI_PI_PDEF_START` | `ACT_HI_PROCINST (PROC_DEF_ID_, START_TIME_)` | history list of one definition newest first, in particular with authorization enabled |
 | `FASTI_IDX_HI_AI_PDEF_START` | `ACT_HI_ACTINST (PROC_DEF_ID_, START_TIME_)` | the activity statistics of a definition page on definitions with large histories (one more entry per activity instance in the largest history table) |
+| `FASTI_IDX_HI_TI_PDKEY_END` | `ACT_HI_TASKINST (PROC_DEF_KEY_, END_TIME_)` | the user task times of the [process analytics](process-analytics.md) on processes with many user tasks: the stock index on `PROC_DEF_KEY_` alone makes the database read every task of the process to find the newest ones of the range (one more entry per user task). Not measured yet |
 | `FASTI_IDX_INC_TIMESTAMP` | `ACT_RU_INCIDENT (INCIDENT_TIMESTAMP_)` | tens of thousands of open incidents, sorted oldest first |
 
 ### Side by side with Camunda 7.24, and rollback
@@ -177,6 +178,11 @@ INFO instead of WARN. Each message ends with the address of this page.
   [Job acquisition](#job-acquisition)). The message also says what `ensureJobDueDateNotNull=true`
   costs: such a node never acquires the jobs without due date that Camunda 7.24 nodes and Fasti
   nodes with the default write.
+- **`FASTI-PERF-007`**: `jdbcStatementTimeout` or `queryMaxResultsLimit` is not set (both are
+  unset by default). Without the first, a pathological query holds its connection for as long as
+  it takes; without the second, a query of an authenticated user may list without limit. See
+  [Engine settings for large databases](#engine-settings-for-large-databases); the process
+  analytics have a statement timeout of their own ([process analytics](process-analytics.md)).
 
 | Distribution | Switches (`warn` default, `off`) |
 |---|---|

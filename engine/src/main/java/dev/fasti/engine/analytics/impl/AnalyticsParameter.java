@@ -59,6 +59,7 @@ public class AnalyticsParameter {
   protected String periodOfStartSql;
   protected String databaseType;
   protected int maxResults;
+  protected int statementTimeoutSeconds;
 
   public String getProcessDefinitionKey() {
     return processDefinitionKey;
@@ -112,6 +113,11 @@ public class AnalyticsParameter {
   /** The row limit of the limited statements. */
   public int getMaxResults() {
     return maxResults;
+  }
+
+  /** The query timeout of each statement in seconds ({@link AnalyticsStatementTimeout}); 0: none of its own. */
+  public int getStatementTimeoutSeconds() {
+    return statementTimeoutSeconds;
   }
 
   public Date getPeriodStart() {

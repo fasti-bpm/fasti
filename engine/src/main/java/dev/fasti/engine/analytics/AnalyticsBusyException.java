@@ -30,4 +30,8 @@ public class AnalyticsBusyException extends ProcessEngineException {
   public AnalyticsBusyException(String message) {
     super(message);
   }
+
+  protected AnalyticsBusyException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

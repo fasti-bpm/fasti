@@ -65,6 +65,15 @@ execute fasti_stmt;
 deallocate prepare fasti_stmt;
 
 set @fasti_ddl = (select if(count(*) > 0,
+    'drop index FASTI_IDX_HI_TI_PDKEY_END on ACT_HI_TASKINST',
+    'do 0')
+  from information_schema.statistics
+  where table_schema = database() and table_name = 'ACT_HI_TASKINST' and index_name = 'FASTI_IDX_HI_TI_PDKEY_END');
+prepare fasti_stmt from @fasti_ddl;
+execute fasti_stmt;
+deallocate prepare fasti_stmt;
+
+set @fasti_ddl = (select if(count(*) > 0,
     'drop index FASTI_IDX_INC_TIMESTAMP on ACT_RU_INCIDENT',
     'do 0')
   from information_schema.statistics

@@ -48,6 +48,27 @@ COPY docker-entrypoint.sh /fasti/docker-entrypoint.sh
 RUN chmod 0755 /fasti/docker-entrypoint.sh \
  && find /fasti -type d -exec chmod 0755 {} + \
  && find /fasti -type f ! -name docker-entrypoint.sh -exec chmod 0644 {} +
+# The files go into the image in three layers, so that an update pulls only what changed:
+# GraalJS with Truffle and ICU (about 65 MB, rarely updated), the other third-party jars of the
+# application, its modules and the JDBC drivers, and last the Fasti jars, configuration and
+# scripts, which change with every release. Only the build splits them; every file ends up at
+# the same path with the same mode. The third-party files get a fixed modification time, so that
+# the same jars (their names carry their versions) give the same layer in every build.
+RUN mkdir -p /layers/graal/fasti /layers/deps/fasti /layers/app \
+ && cd /fasti \
+ && find ./internal ./configuration/drivers -type f -name '*.jar' ! -name 'fasti-*' > /tmp/third-party \
+ && while IFS= read -r f; do \
+      case "${f##*/}" in \
+        js-language-*|js-scriptengine-*|icu4j-*|truffle-*|regex-*|polyglot-*|collections-*|nativeimage-*|word-*|jniutils-*) layer=graal ;; \
+        *) layer=deps ;; \
+      esac; \
+      mkdir -p "/layers/$layer/fasti/${f%/*}" && mv "$f" "/layers/$layer/fasti/$f" || exit 1; \
+    done < /tmp/third-party \
+ && rm /tmp/third-party \
+ && cd / \
+ && mv /fasti /layers/app/fasti \
+ && find /layers -type d -exec chmod 0755 {} + \
+ && find /layers/graal /layers/deps -exec touch -d '2000-01-01 00:00:00' {} +
 
 FROM ${JRE_IMAGE}
 ARG VERSION=1.3.1
@@ -69,7 +90,9 @@ ENV FASTI_HOME=/fasti \
 RUN apk upgrade --no-cache \
  && addgroup -S -g 1000 fasti \
  && adduser -S -D -H -u 1000 -G fasti -h /fasti -s /sbin/nologin fasti
-COPY --from=unpack /fasti /fasti
+COPY --from=unpack /layers/graal/fasti/ /fasti/
+COPY --from=unpack /layers/deps/fasti/ /fasti/
+COPY --from=unpack /layers/app/fasti/ /fasti/
 ARG MIN_JAVA_VERSION
 RUN chown fasti:fasti /fasti/data \
  && java -version \

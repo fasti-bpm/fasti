@@ -296,6 +296,17 @@ public class ProcessAnalyticsTest {
   }
 
   @Test
+  public void shouldNotKeepARangeThatEndsNow() {
+    ProcessAnalyticsQuery untilNow = ProcessAnalytics.query(engine).processDefinitionKey("order")
+        .finishedAfter(new Date(T0.getTime() - HOUR));
+    List<ActivityAnalytics> first = untilNow.activities();
+    List<ActivityAnalytics> second = untilNow.activities();
+    assertThat(second).isNotSameAs(first).hasSameSizeAs(first);
+    assertThat(ProcessAnalytics.query(engine).processDefinitionKey("order").instances())
+        .isNotSameAs(ProcessAnalytics.query(engine).processDefinitionKey("order").instances());
+  }
+
+  @Test
   public void shouldReadAgainWithoutCache() {
     java.time.Duration ttl = ProcessAnalytics.getCacheTimeToLive();
     ProcessAnalytics.setCacheTimeToLive(java.time.Duration.ZERO);

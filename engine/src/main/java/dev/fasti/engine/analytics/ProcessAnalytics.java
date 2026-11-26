@@ -56,6 +56,20 @@ public final class ProcessAnalytics {
     return dev.fasti.engine.analytics.impl.AnalyticsLimiter.getMaxWait();
   }
 
+  /**
+   * How long one analytics statement may run (120 s by default, at most a day); then the query
+   * fails with {@link AnalyticsTimeoutException}, and the turn and the connection are free again.
+   * {@link java.time.Duration#ZERO}: no timeout of its own (the {@code jdbcStatementTimeout} of the
+   * engine, if set, still applies; a lower one of those always does).
+   */
+  public static void setStatementTimeout(java.time.Duration statementTimeout) {
+    dev.fasti.engine.analytics.impl.AnalyticsStatementTimeout.setTimeout(statementTimeout);
+  }
+
+  public static java.time.Duration getStatementTimeout() {
+    return dev.fasti.engine.analytics.impl.AnalyticsStatementTimeout.getTimeout();
+  }
+
   public static ProcessAnalyticsQuery query(ProcessEngine processEngine) {
     return new ProcessAnalyticsQueryImpl((ProcessEngineConfigurationImpl) processEngine.getProcessEngineConfiguration());
   }

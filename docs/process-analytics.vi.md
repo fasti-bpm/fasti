@@ -87,17 +87,27 @@ Kết quả được giữ 60 giây cho cùng một truy vấn (`fasti.analytics
 `FASTI_ANALYTICS_CACHE_TTL`, `0` để tắt, số không có đơn vị tính là giây), nên mở lại một góc nhìn
 hoặc đồng nghiệp mở cùng góc nhìn sẽ không phải đọc lại lịch sử; quyền vẫn được kiểm tra ở mỗi lần
 gọi, còn số liệu đang chạy có thể cũ tối đa chừng ấy. Các lần gọi hỏi cùng một thứ vào cùng lúc chỉ
-đọc một lần. Chỉ lần gọi có `finishedBefore` mới được giữ: thiếu nó, khoảng thời gian kết thúc ở
-mili giây hiện tại. Giao diện web cho khoảng thời gian kết thúc ở phút tròn kế tiếp (5, 15 và 60
-phút với 30, 90 và 365 ngày), nên mọi người xem cùng một khoảng dùng chung một lần đọc.
+đọc một lần. Chỉ kết quả của lần gọi có `finishedBefore` mới được giữ: thiếu nó, khoảng thời gian
+kết thúc ở mili giây hiện tại, nên sẽ không ai hỏi lại đúng kết quả đó (các lần gọi như vậy vẫn
+dùng chung một lần đọc đang chạy). Giao diện web cho khoảng thời gian kết thúc ở phút tròn kế tiếp
+(5, 15 và 60 phút với 30, 90 và 365 ngày), nên mọi người xem cùng một khoảng dùng chung một lần
+đọc. Mỗi node giữ tối đa 256 kết quả; khi có kết quả mới, các kết quả đã hết hạn nhường chỗ trước,
+sau đó đến kết quả cũ nhất.
 
 **Engine được ưu tiên.** Mỗi node chạy cùng lúc tối đa hai lượt quét khoảng thời gian (activities,
 rework, user task) (`fasti.analytics.max-concurrent`, trên image là
 `FASTI_ANALYTICS_MAX_CONCURRENT`, `0` để không giới hạn), cộng một lượt đọc nhanh (instances, trend,
 truy vết), nên các phần nhanh của một màn hình không phải chờ sau các lượt quét. Các lượt khác chờ đến lượt theo thứ tự mà không giữ kết nối CSDL, nên job executor, danh sách
 task và health check vẫn có kết nối của chúng. Lần gọi không đến lượt trong 60 giây
-(`fasti.analytics.max-wait`, trên image là `FASTI_ANALYTICS_MAX_WAIT`) nhận 503. Java:
-`ProcessAnalytics.setMaxConcurrent(int)` và `setMaxWait(Duration)`.
+(`fasti.analytics.max-wait`, trên image là `FASTI_ANALYTICS_MAX_WAIT`) nhận 503. Mỗi câu lệnh
+được chạy tối đa 120 giây (`fasti.analytics.statement-timeout`, trên image là
+`FASTI_ANALYTICS_STATEMENT_TIMEOUT`, `0` để không có giới hạn riêng, số không có đơn vị tính là
+giây), để hai lượt quét chậm không giữ mãi cả hai lượt và kết nối của chúng; `jdbcStatementTimeout`
+thấp hơn của engine vẫn áp dụng. Lần gọi có câu lệnh chạy lâu hơn nhận 503 kèm thông báo đề nghị
+chọn khoảng thời gian ngắn hơn (Java: `AnalyticsTimeoutException`, một loại
+`AnalyticsBusyException`). Giới hạn được đặt cho từng câu lệnh qua JDBC nên dùng được trên mọi cơ
+sở dữ liệu được hỗ trợ. Java: `ProcessAnalytics.setMaxConcurrent(int)`, `setMaxWait(Duration)` và
+`setStatementTimeout(Duration)`.
 
 ## Java
 

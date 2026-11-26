@@ -55,7 +55,8 @@
         code = "503"
         dto = "ExceptionDto"
         desc = "This node already reads as many analytics as it allows (`fasti.analytics.max-concurrent`) and no
-                turn came within `fasti.analytics.max-wait`. Ask again later." />
+                turn came within `fasti.analytics.max-wait`, or a statement ran longer than
+                `fasti.analytics.statement-timeout` (the message says which). Ask again later, or for a shorter range." />
 
     <@lib.response
         code = "501"

@@ -39,7 +39,9 @@ import java.util.function.Supplier;
 
 import dev.fasti.engine.analytics.ActivityAnalytics;
 import dev.fasti.engine.analytics.ActivityRework;
+import dev.fasti.engine.analytics.AnalyticsBusyException;
 import dev.fasti.engine.analytics.AnalyticsNotAvailableException;
+import dev.fasti.engine.analytics.AnalyticsTimeoutException;
 import dev.fasti.engine.analytics.DurationStatistics;
 import dev.fasti.engine.analytics.InstanceAnalytics;
 import dev.fasti.engine.analytics.PeriodAnalytics;
@@ -54,6 +56,7 @@ import dev.fasti.engine.analytics.impl.AnalyticsRows.InstanceCountRow;
 import dev.fasti.engine.analytics.impl.AnalyticsRows.KeyCountRow;
 import dev.fasti.engine.analytics.impl.AnalyticsRows.UserTaskRow;
 import dev.fasti.engine.analytics.impl.DurationBuckets.Histogram;
+import dev.fasti.engine.performance.impl.IndexCatalog;
 import org.apache.ibatis.session.Configuration;
 import org.camunda.bpm.engine.BadUserRequestException;
 import org.camunda.bpm.engine.exception.NotFoundException;
@@ -194,45 +197,73 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
    * the {@link AnalyticsCache} when the same was read shortly before. The checks run in a short
    * transaction of their own; the read waits for its turn ({@link AnalyticsLimiter}) without
    * holding a database connection, and then reads in a transaction of its own.
+   *
+   * <p>Only the answers of a range with {@link #finishedBefore(Date)} are kept: a range that ends
+   * now ends at another millisecond on the next call, so such an answer would never be asked for
+   * again and would only push out others. The calls that ask it at the same time still share one
+   * read.</p>
    */
   protected <T> T executeCached(String kind, Object extra, BiFunction<CommandContext, AnalyticsParameter, T> work) {
+    boolean keep = finishedBefore != null;
     if (org.camunda.bpm.engine.impl.context.Context.getCommandContext() != null) {
       // called inside a transaction of the engine (a delegate, a listener): it holds a connection
       // already, so it reads in that transaction without waiting for a turn or for other callers
       return execute(commandContext -> {
         AnalyticsParameter parameter = prepare(commandContext);
-        return AnalyticsCache.getWithoutWaiting(cacheKey(kind, parameter, extra),
+        return AnalyticsCache.getWithoutWaiting(cacheKey(kind, parameter, extra), keep,
             () -> work.apply(commandContext, parameter));
       }, true);
     }
     AnalyticsParameter parameter = execute(this::prepare, false);
     boolean scan = "activities".equals(kind) || "rework".equals(kind) || "userTasks".equals(kind);
-    return AnalyticsCache.get(cacheKey(kind, parameter, extra), () -> AnalyticsLimiter
+    return AnalyticsCache.get(cacheKey(kind, parameter, extra), keep, () -> AnalyticsLimiter
         .run(scan, () -> execute(commandContext -> work.apply(commandContext, parameter), true)));
   }
 
   /**
    * The key of an answer in the cache. A list of its parts rather than a joined string, so that
    * values containing the separator (tenant ids from a token, for example) cannot make two
-   * different scopes share an entry.
+   * different scopes share an entry. A range that ends now has no end in the key (and no start
+   * either, unless one was given): the calls that ask for it at the same time share the read that
+   * started first, whose range ends at most as long before theirs as that read has taken.
    */
   protected Object cacheKey(String kind, AnalyticsParameter parameter, Object extra) {
+    Long after = finishedBefore == null && finishedAfter == null ? null : parameter.after.getTime();
+    Long before = finishedBefore == null ? null : parameter.before.getTime();
     return Arrays.asList(kind, configuration.getProcessEngineName(), parameter.processDefinitionKey,
         new ArrayList<>(parameter.definitionIds), new ArrayList<>(parameter.tenantIds), parameter.tenantCheck,
         parameter.authenticatedTenantIds == null ? null : new ArrayList<>(parameter.authenticatedTenantIds),
-        parameter.after.getTime(), parameter.before.getTime(), parameter.target, extra);
+        after, before, parameter.target, extra);
   }
 
   protected <T> T execute(Function<CommandContext, T> work, boolean reads) {
     if (processDefinitionKey == null) {
       throw new BadUserRequestException("processDefinitionKey is required");
     }
-    return configuration.getCommandExecutorTxRequired().execute(commandContext -> {
-      if (reads) {
-        customPlans(commandContext);
+    try {
+      return configuration.getCommandExecutorTxRequired().execute(commandContext -> {
+        if (reads) {
+          customPlans(commandContext);
+        }
+        return work.apply(commandContext);
+      });
+    } catch (AnalyticsBusyException e) {
+      throw e;
+    } catch (RuntimeException e) {
+      if (IndexCatalog.isTimeout(e)) {
+        throw timedOut(e);
       }
-      return work.apply(commandContext);
-    });
+      throw e;
+    }
+  }
+
+  /** A statement that ran into its query timeout, or that the database cancelled, as a clear failure. */
+  protected AnalyticsTimeoutException timedOut(RuntimeException e) {
+    int seconds = AnalyticsStatementTimeout.seconds();
+    return new AnalyticsTimeoutException("The analytics of process " + processDefinitionKey + " were not read: a "
+        + "statement ran longer than " + (seconds > 0 ? seconds + " s (fasti.analytics.statement-timeout"
+            + " or a lower jdbcStatementTimeout of the engine)" : "the jdbcStatementTimeout of the engine")
+        + ", or the database cancelled it. Ask for a shorter range or fewer versions.", e);
   }
 
   /**
@@ -312,6 +343,7 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
     AnalyticsParameter parameter = new AnalyticsParameter();
     parameter.processDefinitionKey = processDefinitionKey;
     parameter.databaseType = configuration.getDatabaseType();
+    parameter.statementTimeoutSeconds = AnalyticsStatementTimeout.seconds();
     // the tenant scope first: the probe for history of a key without versions must not reveal
     // whether another tenant has such history
     parameter.tenantIds = new ArrayList<>(tenantIds);

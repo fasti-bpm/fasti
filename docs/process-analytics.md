@@ -85,17 +85,27 @@ Answers are kept for 60 seconds for the same query (`fasti.analytics.cache-ttl`,
 `FASTI_ANALYTICS_CACHE_TTL`, `0` turns this off, a number without unit is seconds), so a view
 opened again or by a colleague is answered without reading the history; the permission is checked
 on every call, and what runs now may be up to that much older. Calls that ask the same at the same
-time read it once. Only calls with `finishedBefore` are kept: without it the range ends at the
-current millisecond. The web interface ends the range at the next full minute (5, 15 and 60
-minutes for 30, 90 and 365 days), so everyone looking at a range shares one read.
+time read it once. Only answers of calls with `finishedBefore` are kept: without it the range ends
+at the current millisecond, so the same answer would never be asked for again (such calls still
+share a read that is running). The web interface ends the range at the next full minute (5, 15
+and 60 minutes for 30, 90 and 365 days), so everyone looking at a range shares one read. At most
+256 answers are kept per node; when a new one comes, expired answers make room first, then the
+oldest.
 
 **The engine comes first.** At most two scans of the range (activities, rework, user tasks) run
 at the same time on a node (`fasti.analytics.max-concurrent`, image
 `FASTI_ANALYTICS_MAX_CONCURRENT`, `0` for no limit), plus one quick read (instances, trend, runs),
 so the quick parts of a view do not wait behind its scans. The others wait for their turn, in order, without holding a database connection, so the job executor,
 task lists and the health check keep theirs. A call that gets no turn within 60 seconds
-(`fasti.analytics.max-wait`, image `FASTI_ANALYTICS_MAX_WAIT`) answers 503. Java:
-`ProcessAnalytics.setMaxConcurrent(int)` and `setMaxWait(Duration)`.
+(`fasti.analytics.max-wait`, image `FASTI_ANALYTICS_MAX_WAIT`) answers 503. Each statement may
+run for 120 seconds (`fasti.analytics.statement-timeout`, image
+`FASTI_ANALYTICS_STATEMENT_TIMEOUT`, `0` for no timeout of its own, a number without unit is
+seconds), so that two slow scans cannot hold both turns and their connections indefinitely; a
+lower `jdbcStatementTimeout` of the engine applies either way. A call whose statement runs longer
+answers 503 with a message that asks for a shorter range (Java: `AnalyticsTimeoutException`, a
+kind of `AnalyticsBusyException`). The timeout is set on each statement through JDBC, so it works
+on every supported database. Java: `ProcessAnalytics.setMaxConcurrent(int)`,
+`setMaxWait(Duration)` and `setStatementTimeout(Duration)`.
 
 ## Java
 

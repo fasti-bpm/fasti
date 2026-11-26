@@ -43,6 +43,7 @@ public class ConfigAdvisor {
   public static final String SMALL_POOL = "FASTI-PERF-004";
   public static final String JOBS_WITHOUT_DUE_DATE = "FASTI-PERF-005";
   public static final String DUE_DATE_ORDER_WITH_NULLS = "FASTI-PERF-006";
+  public static final String NO_QUERY_LIMITS = "FASTI-PERF-007";
 
   /** Connections the engine needs besides one per job thread: job acquisition and one request. */
   protected static final int POOL_MARGIN = 2;
@@ -72,6 +73,7 @@ public class ConfigAdvisor {
     if (executesJobs) {
       acquisitionByDueDate(configuration, jobIndexPresent, warnings);
     }
+    queryLimits(configuration, warnings);
     return warnings;
   }
 
@@ -175,6 +177,29 @@ public class ConfigAdvisor {
   protected static Integer intProperty(Object target, String getter) {
     Object value = property(target, getter);
     return value instanceof Integer ? (Integer) value : null;
+  }
+
+  // queries ///////////////////////////////////////////////////////////////////////////
+
+  protected static void queryLimits(ProcessEngineConfigurationImpl configuration, List<String> warnings) {
+    List<String> unset = new ArrayList<>();
+    Integer statementTimeout = configuration.getJdbcStatementTimeout();
+    if (statementTimeout == null || statementTimeout <= 0) {
+      unset.add("jdbcStatementTimeout");
+    }
+    if (configuration.getQueryMaxResultsLimit() == Integer.MAX_VALUE) {
+      unset.add("queryMaxResultsLimit");
+    }
+    if (unset.isEmpty()) {
+      return;
+    }
+    warnings.add(NO_QUERY_LIMITS + " " + String.join(" and ", unset) + (unset.size() == 1 ? " is" : " are") + " not set. "
+        + "Without jdbcStatementTimeout a pathological query (a filter no index serves, a lock wait) runs and holds its "
+        + "connection for as long as it takes; without queryMaxResultsLimit a query of an authenticated user may list "
+        + "without limit. Set them, for example to 60 (seconds) and 2000, after checking that no client asks for more "
+        + "rows in one page (Spring Boot, Run and the container image: "
+        + "camunda.bpm.generic-properties.properties.jdbc-statement-timeout and ...query-max-results-limit). The process "
+        + "analytics have a statement timeout of their own (fasti.analytics.statement-timeout, 120 s).");
   }
 
   // jobs //////////////////////////////////////////////////////////////////////////////

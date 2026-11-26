@@ -178,6 +178,11 @@ INFO instead of WARN. Each message ends with the address of this page.
   [Job acquisition](#job-acquisition)). The message also says what `ensureJobDueDateNotNull=true`
   costs: such a node never acquires the jobs without due date that Camunda 7.24 nodes and Fasti
   nodes with the default write.
+- **`FASTI-PERF-007`**: `jdbcStatementTimeout` or `queryMaxResultsLimit` is not set (both are
+  unset by default). Without the first, a pathological query holds its connection for as long as
+  it takes; without the second, a query of an authenticated user may list without limit. See
+  [Engine settings for large databases](#engine-settings-for-large-databases); the process
+  analytics have a statement timeout of their own ([process analytics](process-analytics.md)).
 
 | Distribution | Switches (`warn` default, `off`) |
 |---|---|

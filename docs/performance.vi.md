@@ -172,6 +172,11 @@ này.
   hiện khi đã có chỉ mục job `NULLS FIRST` của script (xem [Lấy job](#lay-job)). Thông báo cũng nói
   cái giá của `ensureJobDueDateNotNull=true`: node như vậy không bao giờ lấy các job không có hạn do
   node Camunda 7.24 và node Fasti với mặc định ghi ra.
+- **`FASTI-PERF-007`**: chưa đặt `jdbcStatementTimeout` hoặc `queryMaxResultsLimit` (mặc định cả hai
+  đều chưa đặt). Thiếu cái đầu, một truy vấn bất thường giữ kết nối lâu bao nhiêu tùy nó; thiếu cái
+  sau, truy vấn của người dùng đã đăng nhập có thể liệt kê không giới hạn. Xem phần *Cấu hình engine
+  cho cơ sở dữ liệu lớn*; phân tích quy trình có giới hạn thời gian câu lệnh riêng
+  ([phân tích quy trình](process-analytics.vi.md)).
 
 | Bản phân phối | Công tắc (`warn` mặc định, `off`) |
 |---|---|

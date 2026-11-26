@@ -66,6 +66,8 @@ let inFlight: Promise<void> | null = null;
 let again = false;
 /** an upload of a connection that ended meanwhile, still under way */
 let previousUpload: Promise<void> | null = null;
+/** keys of earlier versions (old name, new name) kept until an upload with their values was stored */
+let legacyAwaitingUpload: [string, string][] = [];
 let rejectionReported = false;
 let exitListening = false;
 const replacedListeners = new Set<() => void>();
@@ -174,6 +176,7 @@ async function uploadOnce(): Promise<boolean> {
   }
   try {
     await target.save(document);
+    if (generation === connection) dropUploadedLegacyKeys(document);
     return true;
   } catch (error) {
     if (generation !== connection) {
@@ -305,20 +308,48 @@ function adoptRenamedKeys(userId: string, sameOwner: boolean): void {
   }
 }
 
-/** Removes the keys of earlier versions; answers the values adopted for them, by their new names. */
-function takeRenamedKeys(userId: string): PreferenceDocument {
+/**
+ * Once the server copy is known: the values adopted for the keys of earlier versions, by their new
+ * names, that the server does not have yet. Their old keys stay until an upload with them was
+ * stored (see {@link uploadOnce}); a failed one leaves them for the next connection to adopt
+ * again. Old keys whose value the server has already, or that left nothing, are removed now.
+ */
+function takeRenamedKeys(userId: string, stored: PreferenceDocument): PreferenceDocument {
   const adopted: PreferenceDocument = {};
+  legacyAwaitingUpload = [];
   try {
     for (const [legacy, next] of renamedKeys(userId)) {
       if (window.localStorage.getItem(PREFIX + legacy) === null) continue;
-      window.localStorage.removeItem(PREFIX + legacy);
       const value = readPreference<unknown>(next, undefined);
-      if (value !== undefined) adopted[next] = value;
+      if (value === undefined || next in stored) {
+        window.localStorage.removeItem(PREFIX + legacy);
+      } else {
+        adopted[next] = value;
+        legacyAwaitingUpload.push([legacy, next]);
+      }
     }
   } catch {
     // no storage
   }
   return adopted;
+}
+
+/** After an upload was stored: the old keys whose values it carried are not needed any more. */
+function dropUploadedLegacyKeys(document: PreferenceDocument): void {
+  if (legacyAwaitingUpload.length === 0) return;
+  const remaining: [string, string][] = [];
+  for (const [legacy, next] of legacyAwaitingUpload) {
+    if (next in document) {
+      try {
+        window.localStorage.removeItem(PREFIX + legacy);
+      } catch {
+        // no storage
+      }
+    } else {
+      remaining.push([legacy, next]);
+    }
+  }
+  legacyAwaitingUpload = remaining;
 }
 
 /**
@@ -377,7 +408,7 @@ export async function connectPreferences(
   remoteUser = userId;
   remoteOwner = ownerId;
   // the server copy is known now: the values of the old keys go into it below
-  const adopted = takeRenamedKeys(userId);
+  const adopted = takeRenamedKeys(userId, stored);
   if (Object.keys(stored).length === 0 && sameOwner) {
     // first use: the preferences of this browser become the server copy
     if (Object.keys(localDocument(userId)).length > 0) {
@@ -446,6 +477,7 @@ export function disconnectPreferences(): void {
   remoteOwner = null;
   dirty = false;
   again = false;
+  legacyAwaitingUpload = [];
   if (inFlight) {
     // still under way: the next connection waits for it a moment (see connectPreferences)
     const before = inFlight;

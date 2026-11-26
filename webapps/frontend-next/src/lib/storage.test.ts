@@ -354,6 +354,38 @@ describe('keys that left the namespace of the per-user Tasklist entries', () => 
     expect(remote.save).toHaveBeenCalledWith({ theme: 'dark', 'tasks.notify': true });
   });
 
+  it('keeps them until an upload with their values was stored', async () => {
+    vi.useFakeTimers();
+    window.localStorage.setItem('fasti.next.tasklist.notify', 'true');
+    const failing = { load: vi.fn(async () => ({ theme: 'dark' })), save: vi.fn(async () => Promise.reject(new ApiError('server', 503))) };
+
+    await connectPreferences('alice', failing);
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(failing.save).toHaveBeenCalledWith({ theme: 'dark', 'tasks.notify': true });
+    expect(window.localStorage.getItem('fasti.next.tasklist.notify')).toBe('true');
+    // the page is reloaded: the server copy still lacks the value, and so does a local copy that was lost
+    disconnectPreferences();
+    window.localStorage.removeItem('fasti.next.tasks.notify');
+    const remote = remoteWith({ theme: 'dark' });
+    await connectPreferences('alice', remote);
+    await vi.runAllTimersAsync();
+
+    expect(readPreference('tasks.notify', false)).toBe(true);
+    expect(remote.save).toHaveBeenCalledWith({ theme: 'dark', 'tasks.notify': true });
+    expect(window.localStorage.getItem('fasti.next.tasklist.notify')).toBeNull();
+  });
+
+  it('drops an old key at once when the server already has its value', async () => {
+    window.localStorage.setItem('fasti.next.tasklist.notify', 'true');
+    const remote = remoteWith({ 'tasks.notify': false });
+
+    await connectPreferences('alice', remote);
+
+    expect(window.localStorage.getItem('fasti.next.tasklist.notify')).toBeNull();
+    expect(readPreference('tasks.notify', true)).toBe(false);
+    expect(remote.save).not.toHaveBeenCalled();
+  });
+
   it('drops them for a new user of a shared browser', async () => {
     await connectPreferences('bob', remoteWith({ theme: 'light' }));
     disconnectPreferences();

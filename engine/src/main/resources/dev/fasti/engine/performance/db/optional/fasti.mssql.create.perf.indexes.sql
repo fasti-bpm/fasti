@@ -72,6 +72,13 @@ if object_id('ACT_ID_INFO') is not null
 -- if not exists (select 1 from sys.indexes where name = 'FASTI_IDX_HI_AI_PDEF_START' and object_id = object_id('ACT_HI_ACTINST'))
 --   create index FASTI_IDX_HI_AI_PDEF_START on ACT_HI_ACTINST (PROC_DEF_ID_, START_TIME_);
 --
+-- User task times of the process analytics (the newest user tasks of one process completed in
+-- a range): the stock index of ACT_HI_TASKINST on PROC_DEF_KEY_ alone makes the database read all
+-- tasks of the process. One more entry per user task, so only where that view is used on
+-- processes with many tasks.
+-- if not exists (select 1 from sys.indexes where name = 'FASTI_IDX_HI_TI_PDKEY_END' and object_id = object_id('ACT_HI_TASKINST'))
+--   create index FASTI_IDX_HI_TI_PDKEY_END on ACT_HI_TASKINST (PROC_DEF_KEY_, END_TIME_);
+--
 -- Open incidents oldest first (incidents page, dashboard), with tens of thousands of open incidents.
 -- if not exists (select 1 from sys.indexes where name = 'FASTI_IDX_INC_TIMESTAMP' and object_id = object_id('ACT_RU_INCIDENT'))
 --   create index FASTI_IDX_INC_TIMESTAMP on ACT_RU_INCIDENT (INCIDENT_TIMESTAMP_);

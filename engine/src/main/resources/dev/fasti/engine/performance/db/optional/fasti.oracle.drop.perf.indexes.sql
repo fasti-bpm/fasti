@@ -55,6 +55,13 @@ end;
 /
 
 begin
+  execute immediate 'drop index FASTI_IDX_HI_TI_PDKEY_END';
+exception when others then
+  if sqlcode != -1418 then raise; end if;
+end;
+/
+
+begin
   execute immediate 'drop index FASTI_IDX_INC_TIMESTAMP';
 exception when others then
   if sqlcode != -1418 then raise; end if;

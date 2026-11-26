@@ -92,8 +92,11 @@ public class ProcessAnalyticsQueryImpl implements ProcessAnalyticsQuery {
   static final int RUNNING_CHECKS_PER_STATEMENT = 200;
   static final int MAX_RUNNING_CHECKS = 2000;
   /**
-   * The versions of a process are resolved to their ids, so that the statements can seek the
-   * indexes on {@code (PROC_DEF_ID_, END_TIME_)}; with more versions than this the key is used.
+   * The versions of a process are resolved to their ids, so that the statements on
+   * {@code ACT_HI_ACTINST} and {@code ACT_HI_PROCINST} can seek the indexes on
+   * {@code (PROC_DEF_ID_, END_TIME_)}; with more versions than this the key is used. The statements
+   * on {@code ACT_HI_TASKINST} and {@code ACT_HI_INCIDENT}, whose stock index is on
+   * {@code PROC_DEF_KEY_}, always give the key as well.
    */
   static final int MAX_RESOLVED_DEFINITIONS = 500;
   static final String MULTI_INSTANCE_SUFFIX = "#multiInstanceBody";

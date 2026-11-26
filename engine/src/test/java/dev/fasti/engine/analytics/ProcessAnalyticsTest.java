@@ -354,6 +354,18 @@ public class ProcessAnalyticsTest {
   }
 
   @Test
+  public void shouldGiveTheSameUserTaskTimesForTheVersionAndForAllVersions() {
+    String id = engine.getRepositoryService().createProcessDefinitionQuery().processDefinitionKey("order")
+        .singleResult().getId();
+    UserTaskAnalytics all = query().userTasks(1000);
+    UserTaskAnalytics one = query().processDefinitionIdIn(Collections.singletonList(id)).userTasks(1000);
+    assertThat(one.getTasks()).isEqualTo(all.getTasks()).isEqualTo(47);
+    assertThat(one.getByTask()).extracting(UserTaskAnalytics.UserTaskTimes::getCount)
+        .containsExactlyElementsOf(all.getByTask().stream().map(UserTaskAnalytics.UserTaskTimes::getCount)
+            .collect(Collectors.toList()));
+  }
+
+  @Test
   public void shouldRefuseVersionsOfAnotherProcess() {
     assertThatThrownBy(() -> query().processDefinitionIdIn(Collections.singletonList("other:1:1")).activities())
         .isInstanceOf(BadUserRequestException.class);

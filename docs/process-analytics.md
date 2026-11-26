@@ -123,10 +123,15 @@ period through a `CASE` of bound dates, so no date, logarithm or percentile func
 Nothing is written and the schema is unchanged.
 
 The cost grows with the history of the process in the range: the statements read the runs of the
-process that finished in it, through the index on `(PROC_DEF_ID_, END_TIME_)` (the versions of a
-process are resolved to their ids). Shorter ranges and one version are cheaper. User task times read
-at most `maxTasks` tasks, the newest first, and the drill-down at most `maxResults` runs; both limit
-in SQL. An application that replaced the default `mappings.xml` must add
+process that finished in it. On `ACT_HI_ACTINST` and `ACT_HI_PROCINST` they seek the indexes on
+`(PROC_DEF_ID_, END_TIME_)` (the versions of a process are resolved to their ids). The stock
+schema indexes `ACT_HI_TASKINST` and `ACT_HI_INCIDENT` on `PROC_DEF_KEY_` only, so those
+statements always give the key (and the chosen versions besides) and read the tasks and incidents
+of that one process. For processes with many user tasks, the optional index
+`FASTI_IDX_HI_TI_PDKEY_END` on `ACT_HI_TASKINST (PROC_DEF_KEY_, END_TIME_)` lets the user task
+times read only the newest tasks of the range ([performance](performance.md)). Shorter ranges and
+one version are cheaper. User task times read at most `maxTasks` tasks, the newest first, and the
+drill-down at most `maxResults` runs; both limit in SQL. An application that replaced the default `mappings.xml` must add
 `dev/fasti/engine/analytics/ProcessAnalytics.xml`; without it the endpoints answer 501.
 
 ## Measured

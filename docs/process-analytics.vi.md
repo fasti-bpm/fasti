@@ -124,9 +124,14 @@ một thời lượng được xếp vào khoảng của nó bằng `CASE` lồn
 của nó bằng `CASE` của các mốc ngày truyền vào, nên không cần hàm ngày tháng, logarit hay phân
 vị. Không ghi gì và không đổi schema.
 
-Chi phí tăng theo lượng lịch sử của quy trình trong khoảng thời gian: các câu lệnh về bước đọc các
-lượt của quy trình kết thúc trong khoảng đó, qua chỉ mục `(PROC_DEF_ID_, END_TIME_)` khi chọn phiên
-bản. Khoảng ngắn hơn và một phiên bản thì rẻ hơn. Thời gian user task đọc tối đa `maxTasks` task,
+Chi phí tăng theo lượng lịch sử của quy trình trong khoảng thời gian: các câu lệnh đọc các lượt của
+quy trình kết thúc trong khoảng đó. Trên `ACT_HI_ACTINST` và `ACT_HI_PROCINST` chúng dùng chỉ mục
+`(PROC_DEF_ID_, END_TIME_)` (các phiên bản của quy trình được quy về id). Schema gốc chỉ đánh chỉ
+mục `ACT_HI_TASKINST` và `ACT_HI_INCIDENT` theo `PROC_DEF_KEY_`, nên các câu lệnh đó luôn kèm key
+(và thêm các phiên bản đã chọn) và chỉ đọc task và incident của đúng quy trình đó. Với quy trình có
+nhiều user task, chỉ mục tùy chọn `FASTI_IDX_HI_TI_PDKEY_END` trên
+`ACT_HI_TASKINST (PROC_DEF_KEY_, END_TIME_)` giúp phần thời gian user task chỉ đọc các task mới nhất
+của khoảng thời gian ([hiệu năng](performance.vi.md)). Khoảng ngắn hơn và một phiên bản thì rẻ hơn. Thời gian user task đọc tối đa `maxTasks` task,
 mới nhất trước; phần truy vết đọc tối đa `maxResults` lượt; cả hai giới hạn ngay trong SQL. Ứng
 dụng thay `mappings.xml` mặc định bằng bản riêng phải thêm
 `dev/fasti/engine/analytics/ProcessAnalytics.xml`; thiếu nó các endpoint trả 501.

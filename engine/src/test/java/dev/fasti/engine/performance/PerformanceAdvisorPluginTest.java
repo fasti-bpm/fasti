@@ -122,7 +122,7 @@ public class PerformanceAdvisorPluginTest {
     runScript(CREATE_SCRIPT, true);
     runScript(CREATE_SCRIPT, true);
     List<String> created = indexSnapshot();
-    assertThat(created).hasSize(stock.size() + 7).anyMatch(index -> index.startsWith("ACT_HI_PROCINST FASTI_IDX_HI_PI_PDEF_START "));
+    assertThat(created).hasSize(stock.size() + 8).anyMatch(index -> index.startsWith("ACT_HI_PROCINST FASTI_IDX_HI_PI_PDEF_START "));
 
     runScript(DROP_SCRIPT, false);
     runScript(DROP_SCRIPT, false);

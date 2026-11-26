@@ -16,4 +16,5 @@ drop index if exists FASTI_IDX_ID_INFO_USER on ACT_ID_INFO;
 -- the commented indexes of the create script, if they were created
 drop index if exists FASTI_IDX_HI_PI_PDEF_START on ACT_HI_PROCINST;
 drop index if exists FASTI_IDX_HI_AI_PDEF_START on ACT_HI_ACTINST;
+drop index if exists FASTI_IDX_HI_TI_PDKEY_END on ACT_HI_TASKINST;
 drop index if exists FASTI_IDX_INC_TIMESTAMP on ACT_RU_INCIDENT;

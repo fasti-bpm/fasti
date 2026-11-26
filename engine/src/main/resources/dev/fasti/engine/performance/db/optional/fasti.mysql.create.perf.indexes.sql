@@ -113,6 +113,19 @@ deallocate prepare fasti_stmt;
 -- execute fasti_stmt;
 -- deallocate prepare fasti_stmt;
 --
+-- User task times of the process analytics (the newest user tasks of one process completed in
+-- a range): the stock index of ACT_HI_TASKINST on PROC_DEF_KEY_ alone makes the database read all
+-- tasks of the process. One more entry per user task, so only where that view is used on
+-- processes with many tasks.
+-- set @fasti_ddl = (select if(count(*) = 0,
+--     'create index FASTI_IDX_HI_TI_PDKEY_END on ACT_HI_TASKINST (PROC_DEF_KEY_, END_TIME_) algorithm=inplace lock=none',
+--     'do 0')
+--   from information_schema.statistics
+--   where table_schema = database() and table_name = 'ACT_HI_TASKINST' and index_name = 'FASTI_IDX_HI_TI_PDKEY_END');
+-- prepare fasti_stmt from @fasti_ddl;
+-- execute fasti_stmt;
+-- deallocate prepare fasti_stmt;
+--
 -- Open incidents oldest first (incidents page, dashboard), with tens of thousands of open incidents.
 -- set @fasti_ddl = (select if(count(*) = 0,
 --     'create index FASTI_IDX_INC_TIMESTAMP on ACT_RU_INCIDENT (INCIDENT_TIMESTAMP_) algorithm=inplace lock=none',

@@ -98,6 +98,17 @@ end;
 -- end;
 -- /
 --
+-- User task times of the process analytics (the newest user tasks of one process completed in
+-- a range): the stock index of ACT_HI_TASKINST on PROC_DEF_KEY_ alone makes the database read all
+-- tasks of the process. One more entry per user task, so only where that view is used on
+-- processes with many tasks.
+-- begin
+--   execute immediate 'create index FASTI_IDX_HI_TI_PDKEY_END on ACT_HI_TASKINST (PROC_DEF_KEY_, END_TIME_)';
+-- exception when others then
+--   if sqlcode not in (-955, -1408) then raise; end if;
+-- end;
+-- /
+--
 -- Open incidents oldest first (incidents page, dashboard), with tens of thousands of open incidents.
 -- begin
 --   execute immediate 'create index FASTI_IDX_INC_TIMESTAMP on ACT_RU_INCIDENT (INCIDENT_TIMESTAMP_)';

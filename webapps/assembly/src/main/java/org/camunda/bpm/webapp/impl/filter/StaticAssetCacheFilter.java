@@ -28,12 +28,12 @@ import org.camunda.bpm.engine.impl.util.ProductPropertiesUtil;
  *   new name;</li>
  *   <li>the build output of the classic applications and of the form frame of the new web UI,
  *   requested as <code>?bust=VERSION</code> with the version of this release: scripts, styles,
- *   fonts and images below <code>/lib/</code> and <code>/assets/</code>, and the bundles directly
- *   below <code>/app/{cockpit,tasklist,admin,welcome,forms}/</code>. The bundles name the release
- *   in the query string, so a new release is fetched anew. Files that operators edit
+ *   fonts and images below <code>/lib/</code> and <code>/assets/</code>, and the bundles of the
+ *   applications (<code>/app/cockpit/camunda-cockpit-bootstrap.js</code>,
+ *   <code>/app/forms/fasti-form-frame.js</code>, ...). The bundles name the release in the query
+ *   string, so a new release is fetched anew. Files that operators edit
  *   (<code>scripts/config.js</code>, <code>styles/user-styles.css</code>, translations, custom
- *   scripts) are below subfolders of the applications and keep their headers, whatever the
- *   query string.</li>
+ *   scripts of any name) keep their headers, whatever the query string.</li>
  * </ul>
  * Every other GET below <code>/app/next/</code> gets <code>no-cache</code>, above all
  * <code>index.html</code>, which names the current assets; other requests are left alone.
@@ -55,10 +55,16 @@ public class StaticAssetCacheFilter implements Filter {
 
   protected static final Pattern NEXT_APP = Pattern.compile(".*/app/next/.*");
 
-  /** Build output of the classic applications, relative to the application path. */
+  /**
+   * Build output of the classic applications, relative to the application path: the files below
+   * {@code /lib/} and {@code /assets/} and the bundles of the applications by name. Other files
+   * below an application can be custom scripts of operators, which the applications request
+   * with the same query string.
+   */
   protected static final Pattern VERSIONED_FILE = Pattern.compile(
-      "/(?:lib/(?:[\\w.-]+/)*|assets/(?:[\\w.-]+/)*|app/(?:cockpit|tasklist|admin|welcome|forms)/)"
-      + "[\\w.-]+\\.(?:js|css|woff2?|ttf|eot|svg|png|jpe?g|gif|ico|webp)");
+      "/(?:(?:lib|assets)/(?:[\\w.-]+/)*[\\w.-]+\\.(?:js|css|woff2?|ttf|eot|svg|png|jpe?g|gif|ico|webp)"
+      + "|app/(cockpit|tasklist|admin|welcome)/camunda-\\1-bootstrap\\.(?:js|css)"
+      + "|app/forms/fasti-form-frame\\.(?:js|css))");
 
   protected String applicationPath = "";
 

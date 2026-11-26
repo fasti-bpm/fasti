@@ -55,6 +55,8 @@ public class StaticAssetCacheFilterTest {
         .isEqualTo(StaticAssetCacheFilter.IMMUTABLE);
     assertThat(get("/app/tasklist/camunda-tasklist-bootstrap.css", "bust=1.3.1").getHeader("Cache-Control"))
         .isEqualTo(StaticAssetCacheFilter.IMMUTABLE);
+    assertThat(get("/app/cockpit/camunda-cockpit-bootstrap.js", "bust=1.3.1").getHeader("Cache-Control"))
+        .isEqualTo(StaticAssetCacheFilter.IMMUTABLE);
     assertThat(get("/assets/bpmn.woff2", "bust=1.3.1").getHeader("Cache-Control"))
         .isEqualTo(StaticAssetCacheFilter.IMMUTABLE);
   }
@@ -91,6 +93,10 @@ public class StaticAssetCacheFilterTest {
     assertThat(get("/app/tasklist/locales/vi.json", "bust=1.3.1").getHeader("Cache-Control")).isNull();
     assertThat(get("/app/cockpit/scripts/custom.js", "bust=1.3.1").getHeader("Cache-Control")).isNull();
     assertThat(get("/app/tasklist/index.html", "bust=1.3.1").getHeader("Cache-Control")).isNull();
+    assertThat(get("/app/tasklist/custom.js", "bust=1.3.1").getHeader("Cache-Control")).isNull();
+    assertThat(get("/app/forms/form-helpers.js", "bust=1.3.1").getHeader("Cache-Control")).isNull();
+    assertThat(get("/app/cockpit/camunda-tasklist-bootstrap.js", "bust=1.3.1").getHeader("Cache-Control"))
+        .isNull();
   }
 
   @Test

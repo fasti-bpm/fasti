@@ -111,11 +111,70 @@ Going further:
   locking conflict, harmless). Keep `max-jobs-per-acquisition` at 16 or below and set
   `camunda.bpm.job-execution.backoff-time-in-millis` (for example 50, with `max-backoff` 5000) so
   that a node that lost jobs waits a moment before it acquires again.
-- `spring.datasource.hikari.connection-timeout` (default 30 s) decides how long a request waits
-  for a connection when the pool is empty. A lower value (5 to 10 s) makes the readiness probe
-  report an exhausted pool sooner.
+- `spring.datasource.hikari.connection-timeout` decides how long a request waits for a
+  connection when the pool is empty: 10 s in Run and the image from 1.3.2 (HikariCP's default,
+  and the value up to 1.3.1, is 30 s); see [HTTP server and connection waits](#http-server-and-connection-waits).
 - Nodes that only serve the web UI or the REST API: `camunda.bpm.job-execution.enabled: false`
   (`FASTI_JOB_EXECUTOR_ENABLED=false`).
+
+## HTTP server and connection waits
+
+From 1.3.2, in `configuration/default.yml` and `production.yml` of Run and in the configuration
+of the container image (applications that embed the starter keep the Spring Boot defaults):
+
+| Setting | Up to 1.3.1 | From 1.3.2 | Why |
+|---|---|---|---|
+| `server.tomcat.threads.max` | 200 (Tomcat) | 100 | with a pool of 20 and 10 job threads about ten requests use the database at once; more threads only wait for a connection, each with its stack and buffers |
+| `spring.datasource.hikari.connection-timeout` | 30000 ms (HikariCP) | 10000 ms | a request gives up after 10 s when the pool is exhausted or the database does not answer: the error shows sooner, a waiting request holds its thread for a third of the time, and the readiness probe (`db`) reports the problem sooner |
+| `server.compression` | off in Run, on in the image | on: HTML, CSS, JavaScript, SVG, JSON, XML above 2 KB | the first load of the new web UI transfers about a third of the bytes; turn it off (`server.compression.enabled: false`) when a proxy compresses |
+| `server.servlet.session.cookie.name` | `JSESSIONID` | `FASTI_SESSION` | see below |
+
+**Probes.** Tomcat serves the health endpoints with the same threads as the application. When
+every thread waits for a connection (a database that hangs, a pool held by long jobs), the
+liveness probe queues too; with the 10 s connection timeout a thread is free again after at
+most 10 s, and the Helm chart and the manifests allow four failed liveness probes 15 s apart
+before a restart. A probe that never waits behind requests needs the actuator on a port of its
+own, which also gets a thread pool of its own: `management.server.port` (image:
+`FASTI_MANAGEMENT_PORT`, Helm chart: `management.port`, which moves the probes there). With that
+port, keep `server.tomcat.threads.max` at or above the requests you expect at the same time.
+
+**Session cookie.** Browsers send cookies to every port of a host, so with `JSESSIONID` and
+`Path=/` two applications on one host (Fasti and Camunda 7 Run, or two Fasti installations on
+different ports) replaced each other's session cookie, and opening one signed the user out of
+the other. From 1.3.2 the cookie is `FASTI_SESSION`; the filter of the web applications that
+adds `SameSite` follows the same name (`camunda.bpm.webapp.session-cookie.cookie-name` is set to
+`${server.servlet.session.cookie.name}`). Upgrading ends every web session once. Give two Fasti
+installations on one host different names (`SERVER_SERVLET_SESSION_COOKIE_NAME`). The Tomcat and
+WildFly distributions keep `JSESSIONID`: there the cookie path is the context path (`/fasti`),
+which already keeps it apart.
+
+**Limits for large databases and clusters.** `production.yml` of Run carries these commented out:
+
+| Setting | Example | Effect |
+|---|---|---|
+| `camunda.bpm.generic-properties.properties.jdbc-statement-timeout` | 60 | seconds after which the database cancels a statement; keep it above the slowest legitimate statement (reports, history cleanup, large deployments) |
+| `camunda.bpm.generic-properties.properties.query-max-results-limit` | 10000 | most results one query of a signed-in user (REST API, web UI) may return; a list request without paging then fails with "An unbound number of results is forbidden!", so try the web UI and every REST client first |
+| `camunda.bpm.job-execution.backoff-time-in-millis`, `max-backoff` | 50, 5000 | several nodes: a node whose acquisition lost jobs to another one waits before it acquires again, doubling the wait up to `max-backoff` |
+
+## Tomcat and WildFly distributions
+
+From 1.3.2 the servlet distributions start with the values of Run and the image instead of the
+upstream defaults:
+
+| Setting | Up to 1.3.1 | From 1.3.2 | Where |
+|---|---|---|---|
+| Jobs per acquisition | 3 | 10 | Tomcat: `maxJobsPerAcquisition` of the job acquisition in `conf/bpm-platform.xml`; WildFly: same property in the `job-acquisition` of the Fasti subsystem in `standalone.xml` |
+| Job threads (core / max) | Tomcat 3 / 10, WildFly 3 / 5 | 10 / 10 | Tomcat: `corePoolSize`, `maxPoolSize` under `job-executor` / `properties`; WildFly: `core-threads`, `max-threads` |
+| Job queue | Tomcat 3, WildFly 10 | 10 | Tomcat: `queueSize`; WildFly: `queue-length` |
+| Connections (max / idle) | Tomcat 20 / 5, WildFly 20 / 0 (IronJacamar defaults) | 20 / 10 | Tomcat: `maxActive`, `minIdle` of `jdbc/ProcessEngine` in `conf/server.xml`; WildFly: `pool` of `java:jboss/datasources/ProcessEngine` |
+| Connection check before use | none | `Connection.isValid()` of the driver | Tomcat: `testOnBorrow="true"` (no `validationQuery`, so it works on every supported database; checked at most every 3 s per connection, `validationInterval`); WildFly: `JDBC4ValidConnectionChecker` with `validate-on-match` |
+| Wait for a free connection | 30 s | 10 s | Tomcat: `maxWait`; WildFly: `blocking-timeout-millis` |
+| Heap | Tomcat `-Xmx512m`, WildFly `-Xmx768m` | `-Xmx1g` | Tomcat: `bin/setenv.sh` / `setenv.bat`; WildFly: `bin/standalone.conf` / `.conf.bat` |
+
+Without the connection check, connections broken by a database restart or a firewall that drops
+idle connections stayed in the pool and failed the next requests. An installation that keeps its
+configuration files from 1.3.1 keeps the former values; copy the changed elements from the new
+files.
 
 ## Audit trail
 

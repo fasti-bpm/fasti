@@ -109,11 +109,68 @@ Muốn nhiều hơn:
   `max-jobs-per-acquisition` từ 16 trở xuống và đặt
   `camunda.bpm.job-execution.backoff-time-in-millis` (ví dụ 50, với `max-backoff` 5000) để node vừa
   mất job chờ một chút rồi mới lấy tiếp.
-- `spring.datasource.hikari.connection-timeout` (mặc định 30 giây) quyết định một yêu cầu chờ kết
-  nối bao lâu khi pool hết. Giá trị thấp hơn (5 đến 10 giây) giúp readiness probe báo pool cạn sớm
-  hơn.
+- `spring.datasource.hikari.connection-timeout` quyết định một yêu cầu chờ kết nối bao lâu khi
+  pool hết: 10 giây trong Run và image từ 1.3.2 (mặc định của HikariCP, và giá trị đến 1.3.1, là
+  30 giây); xem [Máy chủ HTTP và thời gian chờ kết nối](#máy-chủ-http-và-thời-gian-chờ-kết-nối).
 - Node chỉ phục vụ giao diện web hoặc REST API: `camunda.bpm.job-execution.enabled: false`
   (`FASTI_JOB_EXECUTOR_ENABLED=false`).
+
+## Máy chủ HTTP và thời gian chờ kết nối
+
+Từ 1.3.2, trong `configuration/default.yml` và `production.yml` của Run và trong cấu hình của
+container image (ứng dụng nhúng starter giữ mặc định của Spring Boot):
+
+| Thiết lập | Đến 1.3.1 | Từ 1.3.2 | Vì sao |
+|---|---|---|---|
+| `server.tomcat.threads.max` | 200 (Tomcat) | 100 | với pool 20 và 10 luồng job, khoảng mười yêu cầu dùng cơ sở dữ liệu cùng lúc; thêm luồng chỉ chờ kết nối, mỗi luồng tốn stack và bộ đệm riêng |
+| `spring.datasource.hikari.connection-timeout` | 30000 ms (HikariCP) | 10000 ms | yêu cầu bỏ cuộc sau 10 giây khi pool cạn hoặc cơ sở dữ liệu không trả lời: lỗi hiện sớm hơn, yêu cầu đang chờ giữ luồng chỉ bằng một phần ba thời gian, và readiness probe (`db`) báo sự cố sớm hơn |
+| `server.compression` | tắt trong Run, bật trong image | bật: HTML, CSS, JavaScript, SVG, JSON, XML trên 2 KB | lần tải đầu của giao diện web mới chỉ truyền khoảng một phần ba số byte; tắt (`server.compression.enabled: false`) khi proxy đã nén |
+| `server.servlet.session.cookie.name` | `JSESSIONID` | `FASTI_SESSION` | xem bên dưới |
+
+**Probe.** Tomcat phục vụ các endpoint health bằng chính các luồng của ứng dụng. Khi mọi luồng
+đang chờ kết nối (cơ sở dữ liệu bị treo, pool bị job dài giữ hết), liveness probe cũng phải xếp
+hàng; với thời gian chờ kết nối 10 giây, mỗi luồng rảnh lại sau tối đa 10 giây, và Helm chart cùng
+manifest cho phép bốn lần liveness probe thất bại cách nhau 15 giây rồi mới khởi động lại. Muốn
+probe không bao giờ chờ sau các yêu cầu, cho actuator một cổng riêng, cổng này cũng có nhóm luồng
+riêng: `management.server.port` (image: `FASTI_MANAGEMENT_PORT`, Helm chart: `management.port`,
+khi đó các probe chuyển sang cổng này). Có cổng riêng rồi thì giữ `server.tomcat.threads.max`
+không thấp hơn số yêu cầu đồng thời dự kiến.
+
+**Cookie phiên.** Trình duyệt gửi cookie cho mọi cổng của một máy, nên với `JSESSIONID` và
+`Path=/`, hai ứng dụng trên cùng một máy (Fasti và Camunda 7 Run, hoặc hai bản Fasti ở hai cổng)
+ghi đè cookie phiên của nhau, và mở ứng dụng này làm người dùng bị đăng xuất khỏi ứng dụng kia.
+Từ 1.3.2 cookie là `FASTI_SESSION`; bộ lọc của web app thêm `SameSite` theo cùng tên đó
+(`camunda.bpm.webapp.session-cookie.cookie-name` được đặt là
+`${server.servlet.session.cookie.name}`). Lần nâng cấp làm mọi phiên web kết thúc một lần. Hai bản
+Fasti trên cùng một máy cần hai tên khác nhau (`SERVER_SERVLET_SESSION_COOKIE_NAME`). Bản Tomcat
+và WildFly giữ `JSESSIONID`: ở đó path của cookie là context path (`/fasti`), vốn đã tách riêng.
+
+**Giới hạn cho cơ sở dữ liệu lớn và cụm nhiều node.** `production.yml` của Run có sẵn các dòng
+sau ở dạng chú thích:
+
+| Thiết lập | Ví dụ | Tác dụng |
+|---|---|---|
+| `camunda.bpm.generic-properties.properties.jdbc-statement-timeout` | 60 | số giây sau đó cơ sở dữ liệu hủy một câu lệnh; giữ cao hơn câu lệnh hợp lệ chậm nhất (báo cáo, dọn lịch sử, deployment lớn) |
+| `camunda.bpm.generic-properties.properties.query-max-results-limit` | 10000 | số kết quả tối đa một truy vấn của người dùng đã đăng nhập (REST API, giao diện web) được trả về; khi đó yêu cầu lấy danh sách không phân trang sẽ lỗi "An unbound number of results is forbidden!", nên hãy thử giao diện web và mọi client REST trước |
+| `camunda.bpm.job-execution.backoff-time-in-millis`, `max-backoff` | 50, 5000 | nhiều node: node có lần lấy job bị node khác giành mất sẽ chờ rồi mới lấy tiếp, thời gian chờ tăng gấp đôi tới `max-backoff` |
+
+## Bản Tomcat và WildFly
+
+Từ 1.3.2 các bản servlet khởi động với giá trị giống Run và image thay cho mặc định upstream:
+
+| Thiết lập | Đến 1.3.1 | Từ 1.3.2 | Ở đâu |
+|---|---|---|---|
+| Job mỗi lần lấy | 3 | 10 | Tomcat: `maxJobsPerAcquisition` của job acquisition trong `conf/bpm-platform.xml`; WildFly: cùng thuộc tính trong `job-acquisition` của subsystem Fasti ở `standalone.xml` |
+| Luồng job (lõi / tối đa) | Tomcat 3 / 10, WildFly 3 / 5 | 10 / 10 | Tomcat: `corePoolSize`, `maxPoolSize` dưới `job-executor` / `properties`; WildFly: `core-threads`, `max-threads` |
+| Hàng đợi job | Tomcat 3, WildFly 10 | 10 | Tomcat: `queueSize`; WildFly: `queue-length` |
+| Kết nối (tối đa / rảnh) | Tomcat 20 / 5, WildFly 20 / 0 (mặc định IronJacamar) | 20 / 10 | Tomcat: `maxActive`, `minIdle` của `jdbc/ProcessEngine` trong `conf/server.xml`; WildFly: `pool` của `java:jboss/datasources/ProcessEngine` |
+| Kiểm tra kết nối trước khi dùng | không | `Connection.isValid()` của driver | Tomcat: `testOnBorrow="true"` (không đặt `validationQuery`, nên chạy được trên mọi cơ sở dữ liệu được hỗ trợ; mỗi kết nối được kiểm tra tối đa 3 giây một lần, `validationInterval`); WildFly: `JDBC4ValidConnectionChecker` với `validate-on-match` |
+| Chờ kết nối rảnh | 30 giây | 10 giây | Tomcat: `maxWait`; WildFly: `blocking-timeout-millis` |
+| Heap | Tomcat `-Xmx512m`, WildFly `-Xmx768m` | `-Xmx1g` | Tomcat: `bin/setenv.sh` / `setenv.bat`; WildFly: `bin/standalone.conf` / `.conf.bat` |
+
+Không có bước kiểm tra kết nối thì các kết nối bị đứt do cơ sở dữ liệu khởi động lại, hoặc do
+tường lửa cắt kết nối rảnh, vẫn nằm trong pool và làm hỏng các yêu cầu tiếp theo. Bản cài giữ lại
+tệp cấu hình từ 1.3.1 thì vẫn dùng giá trị cũ; hãy chép các phần tử đã đổi từ tệp mới.
 
 ## Nhật ký kiểm toán
 

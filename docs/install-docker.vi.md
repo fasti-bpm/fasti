@@ -29,8 +29,9 @@ docker pull fastidev/fasti-bpm:1.3.1              # Docker Hub
 docker pull ghcr.io/fasti-bpm/fasti-bpm:1.3.1     # GitHub Container Registry
 ```
 
-Tag: `1.3.1` (đúng một bản), `1.3` (bản vá mới nhất của 1.3) và `latest` (bản phát hành được
-công bố gần nhất). Image được ký bằng cosign (keyless, GitHub OIDC) và kèm SBOM và provenance.
+Tag: `1.3.1` (đúng một bản), `1.3` (bản vá mới nhất của 1.3) và `latest` (bản phát hành có số
+phiên bản cao nhất: bản bảo trì của một dòng cũ, ví dụ 1.2.4 ra sau 1.3.0, không đổi nó, và bản
+thử nghiệm như `-rc` không bao giờ được gắn). Image được ký bằng cosign (keyless, GitHub OIDC) và kèm SBOM và provenance.
 Từ 1.0.1, chữ ký dùng định dạng Sigstore bundle của cosign 3; image 1.0.0 mang chữ ký theo định
 dạng cũ của cosign 2.
 
@@ -179,7 +180,11 @@ nhau). Điều kiện:
   (`FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE=true` cho Fasti). Điều này chỉ bảo vệ job bất đồng bộ:
   bắt đầu instance hay hoàn thành task qua Fasti vẫn chạy delegate ngay trên Fasti, nên hãy gửi
   các yêu cầu đó tới node có đủ lớp Java;
-- load balancer: sticky session cho web app; REST với Basic auth không cần.
+- load balancer: sticky session cho web app; REST với Basic auth không cần;
+- trên cùng một máy: từ 1.3.2 cookie phiên là `FASTI_SESSION`, không còn là `JSESSIONID`. Trình
+  duyệt gửi cookie cho mọi cổng của một máy, nên với `JSESSIONID` và `Path=/` (Camunda 7 Run và
+  Fasti đến 1.3.1), mở ứng dụng này làm người dùng bị đăng xuất khỏi ứng dụng kia. Nếu đổi tên
+  (`SERVER_SERVLET_SESSION_COOKIE_NAME`), hãy giữ một tên riêng.
 
 Chi tiết: [Chạy lẫn với node Camunda 7](migrate-from-camunda-7.vi.md#chạy-lẫn-với-node-camunda-7).
 
@@ -197,7 +202,8 @@ Chi tiết: [Chạy lẫn với node Camunda 7](migrate-from-camunda-7.vi.md#ch�
 | `FASTI_JOB_EXECUTOR_ENABLED`, `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | job executor của node |
 | `FASTI_EXTRA_LIB` | thư mục jar thêm (driver Oracle, DB2) |
 | `FASTI_DB_CONN_MAXACTIVE` | kích thước tối đa của pool kết nối (mặc định 20; khi rảnh giữ mở 10, `FASTI_DB_CONN_MINIDLE`) |
-| `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | tùy chọn JVM, phần trăm RAM cho heap (75) |
+| `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | tùy chọn JVM, phần trăm RAM của container cho heap (75; 60 khi giới hạn dưới 1,5 GiB) |
+| `SERVER_SERVLET_SESSION_COOKIE_NAME` | tên cookie phiên (mặc định `FASTI_SESSION`; đến 1.3.1 là `JSESSIONID`) |
 
 Bảng đầy đủ: [distro/docker/README.vi.md](../distro/docker/README.vi.md#biến-môi-trường).
 
@@ -238,7 +244,8 @@ docker run -d --name fasti ... fastidev/fasti-bpm:1.3.1 --production   # cùng t
 Với compose: đổi `FASTI_IMAGE` (hoặc dòng `image:`) rồi `docker compose -f docker-compose.postgres.yml up -d`.
 Đọc [CHANGELOG](../CHANGELOG.md) trước, nhất là các mục **BREAKING**. Dòng `1.x` giữ schema 7.24,
 nên nâng cấp trong dòng này không đụng tới schema. `docker stop -t 60` cho request đang chạy kết
-thúc êm trước khi container bị dừng.
+thúc êm trước khi container bị dừng. Nâng từ 1.3.1 trở về trước lên 1.3.2 trở về sau thì mọi
+người dùng web bị đăng xuất một lần: cookie phiên đổi tên từ `JSESSIONID` thành `FASTI_SESSION`.
 
 **Quay lại:**
 

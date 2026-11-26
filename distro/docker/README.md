@@ -126,7 +126,10 @@ are not in the 1.2.x images.
 | `DEBUG=true` | | remote debugging on port `FASTI_DEBUG_PORT` (8000) |
 | `JMX_PROMETHEUS=true` | | Prometheus JMX exporter on port `JMX_PROMETHEUS_PORT` (9404), configuration `JMX_PROMETHEUS_CONF`, if the agent jar is in `/fasti/javaagent` |
 | `JAVA_OPTS` | | additional JVM options (space-separated, no quotes) |
-| `FASTI_MAX_RAM_PERCENTAGE` | 75 | percentage of container memory used for the heap |
+| `FASTI_MAX_RAM_PERCENTAGE` | 75 (60 below a 1.5 GiB limit) | percentage of container memory used for the heap. **From 1.3.2** the default is 60 when the container memory limit (cgroup v2 or v1) is below 1.5 GiB, as metaspace, code cache, threads and GraalJS need about 400-500 MB besides the heap |
+| `SERVER_SERVLET_SESSION_COOKIE_NAME` | `FASTI_SESSION` | **From 1.3.2** (up to 1.3.1 `JSESSIONID`). Name of the session cookie of the web applications; keep it distinct from other applications on the same host, as browsers send cookies to every port of a host |
+| `SERVER_TOMCAT_THREADS_MAX` | 100 | **From 1.3.2** (up to 1.3.1 Tomcat's 200). Request threads; see Performance tuning |
+| `SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT` | 10000 | **From 1.3.2** (up to 1.3.1 HikariCP's 30000). Milliseconds a request waits for a free connection |
 | `FASTI_ANALYTICS_CACHE_TTL` | `60s` | **From 1.3.0.** How long the answers of the process analytics are kept for the same view (`0` turns this off; a number without unit is seconds); what runs now may be that much older. Setting `fasti.analytics.cache-ttl` |
 | `FASTI_ANALYTICS_MAX_CONCURRENT` | `2` | **From 1.3.0.** How many scans of the process analytics (activities, rework, user tasks) read the history at the same time on this node, plus one quick read (instances, trend, runs); the others wait for their turn without holding a database connection, so jobs and task lists keep theirs. `0`: no limit. Setting `fasti.analytics.max-concurrent` |
 | `FASTI_ANALYTICS_MAX_WAIT` | `60s` | **From 1.3.0.** The longest wait for that turn; then the REST API answers `503` (a number without unit is seconds). Setting `fasti.analytics.max-wait` |
@@ -170,7 +173,7 @@ are not in the 1.2.x images.
 | `FASTI_AUDIT_HMAC_KEY`, `FASTI_AUDIT_HMAC_KEY_FILE` | | **From 1.1.0.** Key that signs the checkpoints of the audit trail (at least 32 bytes), or the path of a file that holds it (Docker/Kubernetes secret) |
 | `FASTI_PERFORMANCE_INDEX_CHECK` | `warn` | **From 1.2.0.** One warning at start listing the [optional performance indexes](../../docs/performance.md) of `/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql` that the database does not have; `off` silences it |
 | `FASTI_PERFORMANCE_CONFIG_CHECK` | `warn` | **From 1.2.0.** Warnings at start for settings that cost performance as the data grows (history without cleanup window, connection pool smaller than the job executor needs, …); `off` silences them |
-| `FASTI_APPCDS`, `FASTI_APPCDS_FILE` | `false`, `/fasti/data/fasti-appcds.jsa` | class data sharing for faster startup (see Performance tuning) |
+| `FASTI_APPCDS`, `FASTI_APPCDS_FILE` | `false`, `/fasti/data/fasti-appcds.jsa` | class data sharing for faster startup (see Performance tuning); works from 1.3.2 on |
 | `FASTI_BASE64_INTRINSICS` | `false` | `false` adds `-XX:-UseBASE64Intrinsics` to mitigate CVE-2026-114938 ("Java4Shell"); `true` keeps the JVM Base64 intrinsic. See [docs/security/CVE-2026-114938.md](../../docs/security/CVE-2026-114938.md) |
 
 Start arguments of the former image work: `--webapps`, `--rest`, `--example`, `--oauth2`,
@@ -222,7 +225,7 @@ can miss such rows; with 1.0.x, connect through MySQL Connector/J instead
 - Behind a proxy, `X-Forwarded-*` headers are trusted from private networks; the proxy must
   overwrite them. `--production` sets `Secure` cookies and needs HTTPS at the proxy.
 - Several nodes behind a load balancer: use sticky sessions for the web applications (sessions
-  are per node); Basic-auth REST calls need none. All nodes need the same history level, time
+  are per node, in the cookie `FASTI_SESSION`); Basic-auth REST calls need none. All nodes need the same history level, time
   zone, process classes and plugins, and password settings.
 
 ## Performance tuning
@@ -236,21 +239,35 @@ about 50k process instances, 360k history rows, 10k open tasks):
 | First load of the new web UI (bytes transferred) | 960 KB | 330 KB (gzip, on by default) |
 | Startup (`Started … in`) | about 6–11 s depending on host and load | somewhat faster with `FASTI_APPCDS=true` (from the second run) |
 
-- **JVM:** heap is `FASTI_MAX_RAM_PERCENTAGE` (75) % of the memory limit; always set a memory
+- **JVM:** heap is `FASTI_MAX_RAM_PERCENTAGE` % of the memory limit: 75, or 60 when the limit
+  is below 1.5 GiB (from 1.3.2; at 75 % such a container left too little for metaspace, code
+  cache, threads and GraalJS and could be killed for exceeding its limit). Always set a memory
   limit. Below 2 CPUs or ~1.8 GB the JVM picks Serial GC; give real workloads at least 2 CPUs
   and 2 GB, or set `JAVA_OPTS=-XX:+UseG1GC`. Extra flags go into `JAVA_OPTS`.
 - **Faster startup:** `FASTI_APPCDS=true` writes a class data sharing archive to
-  `/fasti/data/fasti-appcds.jsa` on a clean shutdown and reuses it on later starts. `/fasti/data`
-  must be writable (mount a volume to keep it across re-created containers). An archive that
-  does not match the JDK or class path is ignored; delete the file when upgrading the image so
-  that it is created again.
+  `/fasti/data/fasti-appcds.jsa` on a clean shutdown and reuses it on later starts. Up to 1.3.1
+  this did not work: the JVM refused to write the archive (a directory came before the jars on
+  the class path) and exited with code 1 on every stop. `/fasti/data` must be writable and kept:
+  mount a volume, as on Kubernetes an `emptyDir` is new on every pod start and the archive is
+  then written again each time (`FASTI_APPCDS_FILE` can point to another volume). An archive
+  that does not match the JDK or class path (other image, other start arguments, a jar added to
+  `configuration/userlib`) is ignored and written again on the next clean shutdown.
 - **Connection pool (HikariCP):** up to 20 connections by default (10 up to 1.1): the ten job
   executor threads plus room for concurrent REST requests. An idle node keeps 10 open and opens
   the others under load. Change them with `FASTI_DB_CONN_MAXACTIVE` (for example 30) and
   `FASTI_DB_CONN_MINIDLE`. The maxima of all nodes together (Camunda 7.24 nodes included), plus
   other clients and the reserve of the database, must stay below its connection limit
   (`max_connections`); count the nodes at their highest (autoscaling maximum plus the extra pods
-  of a rolling update).
+  of a rolling update). **From 1.3.2** a request waits at most 10 s for a free connection
+  (`SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT`, HikariCP's default 30 s), so an exhausted pool
+  shows as errors and in the readiness probe instead of tying up request threads.
+- **Request threads:** **from 1.3.2** at most 100 (`SERVER_TOMCAT_THREADS_MAX`, Tomcat's
+  default 200). With 20 connections and 10 job threads about ten requests use the database at
+  once; more threads only queue for a connection while holding memory. Pages, scripts and the
+  health endpoints need no connection but share these threads, and so does the liveness probe:
+  when every thread waits for the database, they wait too (each waiting request at most the 10 s
+  above). For a probe that never queues behind requests, give the actuator
+  its own port and thread pool: `FASTI_MANAGEMENT_PORT` (Helm chart: `management.port`).
 - **Job executor:** defaults as in Run: 10 threads, a queue of 10 and 10 jobs per acquisition
   (up to 1.1: core 3, max 10, queue 3, 3 jobs per acquisition). For many async/timer jobs raise
   `CAMUNDA_BPM_JOB_EXECUTION_MAX_POOL_SIZE`, `..._QUEUE_CAPACITY` and
@@ -264,7 +281,7 @@ about 50k process instances, 360k history rows, 10k open tasks):
 - **Several nodes:** every node's job executor acquires from the same tables; more nodes raise
   job throughput and also optimistic locking conflicts (harmless, the job is retried). Keep
   `max-jobs-per-acquisition` moderate (≤ 16) with many nodes. The web UI needs sticky sessions.
-- **Compression and caching:** gzip is on for pages, scripts, styles and JSON above 2 KB
+- **Compression and caching:** gzip is on for pages, scripts, styles, SVG, JSON and XML above 2 KB
   (`server.compression.enabled=false` if a proxy compresses already). Content-hashed files of
   the new web UI are cached for a year (`immutable`); `index.html` is always revalidated
   (`no-cache`).

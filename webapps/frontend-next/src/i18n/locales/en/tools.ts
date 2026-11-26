@@ -194,6 +194,7 @@ const messages = {
   'views.name': 'Name of the view',
   'views.save': 'Save',
   'views.remove': 'Remove the view {name}',
+  'views.limit': 'At most {count} saved views. Remove one first.',
   'incidents.groups.toggle': 'Group by cause',
   'incidents.groups.title': 'Incidents grouped by cause',
   'incidents.groups.problem': 'Problem',

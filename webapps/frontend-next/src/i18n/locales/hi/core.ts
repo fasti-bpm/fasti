@@ -952,6 +952,8 @@ const messages: Catalog = {
 
   'login.engine': 'इंजन: {engine}',
   'login.failed': 'उपयोगकर्ता नाम या पासवर्ड गलत है।',
+  'session.switched': 'दूसरे टैब में {user} के रूप में साइन इन किया गया। यह पेज फिर से लोड हुआ।',
+  'prefs.syncRejected': 'सर्वर ने आपकी प्राथमिकताएँ स्वीकार नहीं कीं। वे केवल इस ब्राउज़र में रहेंगी।',
   'login.forbidden': 'इस खाते को एप्लिकेशन का उपयोग करने की अनुमति नहीं है।',
   'login.password': 'पासवर्ड',
   'login.submit': 'साइन इन करें',

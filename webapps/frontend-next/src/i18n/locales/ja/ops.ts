@@ -97,6 +97,8 @@ const messages: Catalog = {
   'ops.history.legend': '緑の枠線: 通過、破線: キャンセル。バッジは実行中および終了したアクティビティインスタンスの数です。',
   'ops.history.notFound': '履歴に見つかりません',
   'ops.history.nothing': '記録はありません',
+  'ops.history.capped': '最初の {count} 件のみ表示しています。',
+  'ops.history.cappedLatest': '最新の {count} 件のみ表示しています。',
   'ops.history.noUpdates': '記録された変更はありません',
   'ops.history.openRunning': '実行中のインスタンスを開く',
   'ops.history.reason': '理由: {reason}',

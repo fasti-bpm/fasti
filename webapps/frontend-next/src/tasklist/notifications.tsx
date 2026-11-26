@@ -7,11 +7,12 @@ import { Bell, BellOff } from 'lucide-react';
 import type { TaskListItem } from '../api/types';
 import { useI18n } from '../i18n';
 import { parseEngineDate } from '../lib/dates';
-import { readPreference, writePreference } from '../lib/storage';
+import { onPreferencesReplaced, readPreference, writePreference } from '../lib/storage';
 import { IconButton } from '../ui';
 import { useToast } from '../ui/toast';
 
-const PREFERENCE = 'tasklist.notify';
+/** outside `tasklist.`, where the entries of other users of the browser lie */
+const PREFERENCE = 'tasks.notify';
 
 function supported(): boolean {
   return typeof window !== 'undefined' && 'Notification' in window;
@@ -89,6 +90,8 @@ export function notificationsAllowed(): boolean {
  */
 export function useNotifyPreference(): [boolean, () => void, boolean] {
   const [on, setOn] = useState(() => readPreference<boolean>(PREFERENCE, false));
+  // the copy of the server may arrive after the first look
+  useEffect(() => onPreferencesReplaced(() => setOn(readPreference<boolean>(PREFERENCE, false))), []);
   const [allowed, setAllowed] = useState(notificationsAllowed);
   const toggle = () => {
     const next = !on;

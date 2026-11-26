@@ -937,6 +937,8 @@ const messages: Catalog = {
 
   'login.engine': 'Engine: {engine}',
   'login.failed': 'Tên đăng nhập hoặc mật khẩu không đúng.',
+  'session.switched': 'Một thẻ khác đã đăng nhập bằng {user}. Trang này đã được tải lại.',
+  'prefs.syncRejected': 'Máy chủ không nhận tùy chọn của bạn. Tùy chọn chỉ được lưu trong trình duyệt này.',
   'login.forbidden': 'Tài khoản này không được phép dùng ứng dụng.',
   'login.password': 'Mật khẩu',
   'login.sso': 'Đăng nhập một lần (SSO)',

@@ -188,6 +188,7 @@ const messages: Catalog = {
   'views.name': 'Nama tampilan',
   'views.save': 'Simpan',
   'views.remove': 'Hapus tampilan {name}',
+  'views.limit': 'Paling banyak {count} tampilan tersimpan. Hapus satu terlebih dahulu.',
   'incidents.groups.toggle': 'Kelompokkan per penyebab',
   'incidents.groups.title': 'Insiden per penyebab',
   'incidents.groups.problem': 'Masalah',

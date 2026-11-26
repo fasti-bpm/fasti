@@ -97,6 +97,8 @@ const messages: Catalog = {
   'ops.history.legend': '녹색 윤곽선: 통과, 점선: 취소됨. 배지는 실행 중 및 완료된 액티비티 인스턴스 수입니다.',
   'ops.history.notFound': '이력에서 찾을 수 없습니다',
   'ops.history.nothing': '기록된 내용이 없습니다',
+  'ops.history.capped': '처음 {count}개 항목만 표시됩니다.',
+  'ops.history.cappedLatest': '최근 {count}개 항목만 표시됩니다.',
   'ops.history.noUpdates': '기록된 변경 사항이 없습니다',
   'ops.history.openRunning': '실행 중인 인스턴스 열기',
   'ops.history.reason': '사유: {reason}',

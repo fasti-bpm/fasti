@@ -2,7 +2,8 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright Fasti BPM contributors
  */
-import { readPreference, writePreference } from './storage';
+import { useEffect, useState } from 'react';
+import { onPreferencesReplaced, readPreference, writePreference } from './storage';
 
 /** A process variable shown on the task cards of one process, under a name of the business. */
 export interface CardField {
@@ -14,7 +15,8 @@ export interface CardField {
 /** The fields per process, by the key of the process definition. */
 export type ProcessCardFields = Record<string, CardField[]>;
 
-const KEY = 'tasklist.processFields';
+/** outside `tasklist.`, where the entries of other users of the browser lie */
+const KEY = 'tasks.processFields';
 export const MAX_FIELDS = 6;
 
 function valid(value: unknown): value is CardField {
@@ -47,6 +49,17 @@ export function setProcessCardFields(fields: ProcessCardFields): void {
     KEY,
     Object.fromEntries(Object.entries(fields).filter(([, list]) => list.length > 0)),
   );
+}
+
+/** The fields per process and a setter; follows the copy of the server when it arrives late. */
+export function useProcessCardFields(): [ProcessCardFields, (fields: ProcessCardFields) => void] {
+  const [fields, setFields] = useState<ProcessCardFields>(processCardFields);
+  useEffect(() => onPreferencesReplaced(() => setFields(processCardFields())), []);
+  const save = (next: ProcessCardFields) => {
+    setProcessCardFields(next);
+    setFields(processCardFields());
+  };
+  return [fields, save];
 }
 
 /**

@@ -952,6 +952,8 @@ const messages: Catalog = {
 
   'login.engine': 'Engine: {engine}',
   'login.failed': 'Benutzername oder Passwort ist falsch.',
+  'session.switched': 'In einem anderen Tab als {user} angemeldet. Diese Seite wurde neu geladen.',
+  'prefs.syncRejected': 'Der Server hat Ihre Einstellungen nicht angenommen. Sie bleiben nur in diesem Browser.',
   'login.forbidden': 'Dieses Konto darf die Anwendung nicht verwenden.',
   'login.password': 'Passwort',
   'login.submit': 'Anmelden',

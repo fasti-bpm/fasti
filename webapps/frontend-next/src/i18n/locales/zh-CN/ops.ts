@@ -97,6 +97,8 @@ const messages: Catalog = {
   'ops.history.legend': '绿色轮廓：已经过；虚线：已取消。徽标统计运行中和已结束的活动实例数。',
   'ops.history.notFound': '在历史中未找到',
   'ops.history.nothing': '没有任何记录',
+  'ops.history.capped': '仅显示前 {count} 条记录。',
+  'ops.history.cappedLatest': '仅显示最近 {count} 条记录。',
   'ops.history.noUpdates': '没有记录任何变更',
   'ops.history.openRunning': '打开运行中的实例',
   'ops.history.reason': '原因：{reason}',

@@ -344,9 +344,18 @@ export interface HistoricActivity {
   calledProcessInstanceId: string | null;
 }
 
+/**
+ * How much of the history of one instance is read: the first activities and variables, the
+ * latest incidents and job log entries, the first updates of a variable. A list that reaches its
+ * limit may hold more; the page says so.
+ */
+export const HISTORIC_ACTIVITY_LIMIT = 2000;
+export const HISTORIC_VARIABLE_LIMIT = 1000;
+export const HISTORIC_LIST_LIMIT = 500;
+
 export function getHistoricActivities(processInstanceId: string, signal?: AbortSignal): Promise<HistoricActivity[]> {
   return request<HistoricActivity[]>(`${engineApi()}/history/activity-instance`, {
-    query: { processInstanceId, sortBy: 'startTime', sortOrder: 'asc', maxResults: 2000 },
+    query: { processInstanceId, sortBy: 'startTime', sortOrder: 'asc', maxResults: HISTORIC_ACTIVITY_LIMIT },
     signal,
   });
 }
@@ -371,7 +380,7 @@ export function getHistoricVariables(processInstanceId: string, signal?: AbortSi
       deserializeValues: false,
       sortBy: 'variableName',
       sortOrder: 'asc',
-      maxResults: 1000,
+      maxResults: HISTORIC_VARIABLE_LIMIT,
     },
     signal,
   });
@@ -397,7 +406,7 @@ export function getVariableUpdates(variableInstanceId: string): Promise<Variable
       deserializeValues: false,
       sortBy: 'time',
       sortOrder: 'asc',
-      maxResults: 500,
+      maxResults: HISTORIC_LIST_LIMIT,
     },
   });
 }
@@ -417,7 +426,7 @@ export interface HistoricIncident {
 
 export function getHistoricIncidents(processInstanceId: string): Promise<HistoricIncident[]> {
   return request<HistoricIncident[]>(`${engineApi()}/history/incident`, {
-    query: { processInstanceId, sortBy: 'createTime', sortOrder: 'desc', maxResults: 500 },
+    query: { processInstanceId, sortBy: 'createTime', sortOrder: 'desc', maxResults: HISTORIC_LIST_LIMIT },
   });
 }
 
@@ -436,7 +445,7 @@ export interface JobLogEntry {
 
 export function getJobLog(processInstanceId: string): Promise<JobLogEntry[]> {
   return request<JobLogEntry[]>(`${engineApi()}/history/job-log`, {
-    query: { processInstanceId, sortBy: 'timestamp', sortOrder: 'desc', maxResults: 500 },
+    query: { processInstanceId, sortBy: 'timestamp', sortOrder: 'desc', maxResults: HISTORIC_LIST_LIMIT },
   });
 }
 

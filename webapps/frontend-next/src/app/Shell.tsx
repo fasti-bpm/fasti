@@ -27,7 +27,7 @@ import { COCKPIT_GROUPS } from './navigation';
 import { LanguageSwitch, ThemeSwitch } from './preferences';
 import { TenantSwitch } from './TenantSwitch';
 import { startPage, startPath } from '../lib/userPrefs';
-import { useLogout, useSession, useUnauthorizedHandler } from './session';
+import { useLogout, usePreferenceNotices, useSession, useSessionWatch, useUnauthorizedHandler } from './session';
 import { GO_TO, SEQUENCE_TIMEOUT, SHORTCUTS, SHORTCUT_GROUPS, isTyping } from './shortcuts';
 import { OverflowRow } from './OverflowMenu';
 import { MenuContent } from '../ui/menu';
@@ -123,6 +123,9 @@ export function Shell() {
     return () => cancel(handle);
   }, []);
   useUnauthorizedHandler();
+  // another tab may log out and in as someone else: this tab must not act as the user before
+  useSessionWatch();
+  usePreferenceNotices();
 
   const navigate = useNavigate();
   const authorizedApps = session.authorizedApps;

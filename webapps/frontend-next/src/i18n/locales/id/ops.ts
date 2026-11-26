@@ -97,6 +97,8 @@ const messages: Catalog = {
   'ops.history.legend': 'Garis hijau: dilalui; putus-putus: dibatalkan. Lencana menghitung instans aktivitas yang berjalan dan selesai.',
   'ops.history.notFound': 'Tidak ditemukan di riwayat',
   'ops.history.nothing': 'Tidak ada yang tercatat',
+  'ops.history.capped': 'Hanya {count} entri pertama yang ditampilkan.',
+  'ops.history.cappedLatest': 'Hanya {count} entri terbaru yang ditampilkan.',
   'ops.history.noUpdates': 'Tidak ada perubahan yang tercatat',
   'ops.history.openRunning': 'Buka instans yang berjalan',
   'ops.history.reason': 'Alasan: {reason}',

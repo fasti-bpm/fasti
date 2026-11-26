@@ -958,6 +958,8 @@ const messages = {
 
   'login.engine': 'Engine: {engine}',
   'login.failed': 'The user name or password is wrong.',
+  'session.switched': 'Signed in as {user} in another tab. This page was reloaded.',
+  'prefs.syncRejected': 'The server did not accept your preferences. They are kept in this browser only.',
   'login.forbidden': 'This account is not allowed to use the application.',
   'login.password': 'Password',
   'login.sso': 'Sign in with single sign-on',

@@ -236,7 +236,12 @@ export function useTaskActions(): TaskActions {
       failure: string,
     ): Promise<void> => {
       const run = async (): Promise<boolean> => {
-        await queryClient.cancelQueries({ queryKey: ['task', taskId] });
+        // a read under way may have asked the server before the change: its answer would undo
+        // what is shown, in the open task and in the lists alike. They are read again afterwards.
+        await Promise.all([
+          queryClient.cancelQueries({ queryKey: ['task', taskId] }),
+          queryClient.cancelQueries({ queryKey: ['tasks'] }),
+        ]);
         const before = shownValues(queryClient, taskId, patch);
         patchTask(queryClient, taskId, patch);
         try {

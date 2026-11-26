@@ -188,6 +188,7 @@ const messages: Catalog = {
   'views.name': '보기 이름',
   'views.save': '저장',
   'views.remove': '{name} 보기 삭제',
+  'views.limit': '저장된 보기는 최대 {count}개입니다. 먼저 하나를 삭제하세요.',
   'incidents.groups.toggle': '원인별 그룹',
   'incidents.groups.title': '원인별 인시던트',
   'incidents.groups.problem': '문제',

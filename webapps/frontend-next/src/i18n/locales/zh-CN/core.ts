@@ -879,6 +879,8 @@ const messages: Catalog = {
   'history.system': '系统',
   'login.engine': '引擎：{engine}',
   'login.failed': '用户名或密码错误。',
+  'session.switched': '已在另一个标签页中以 {user} 登录。本页已重新加载。',
+  'prefs.syncRejected': '服务器未接受您的偏好设置，仅保存在此浏览器中。',
   'login.forbidden': '此账户无权使用该应用程序。',
   'login.password': '密码',
   'login.submit': '登录',

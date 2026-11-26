@@ -898,6 +898,8 @@ const messages: Catalog = {
 
   'login.engine': '엔진: {engine}',
   'login.failed': '사용자 이름 또는 비밀번호가 잘못되었습니다.',
+  'session.switched': '다른 탭에서 {user}(으)로 로그인했습니다. 이 페이지를 다시 불러왔습니다.',
+  'prefs.syncRejected': '서버가 환경설정을 받아들이지 않았습니다. 이 브라우저에만 저장됩니다.',
   'login.forbidden': '이 계정은 애플리케이션을 사용할 수 없습니다.',
   'login.password': '비밀번호',
   'login.submit': '로그인',

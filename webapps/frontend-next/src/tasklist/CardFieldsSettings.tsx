@@ -7,12 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import { getProcessKeys } from '../api/engine';
 import { useI18n } from '../i18n';
-import {
-  MAX_FIELDS,
-  processCardFields,
-  setProcessCardFields,
-  type ProcessCardFields,
-} from '../lib/cardFields';
+import { MAX_FIELDS, useProcessCardFields } from '../lib/cardFields';
 import { Button, IconButton } from '../ui';
 
 /**
@@ -22,17 +17,13 @@ import { Button, IconButton } from '../ui';
 export function CardFieldsSettings() {
   const { t } = useI18n();
   const id = useId();
-  const [fields, setFields] = useState<ProcessCardFields>(processCardFields);
+  const [fields, save] = useProcessCardFields();
   const [process, setProcess] = useState('');
   const [name, setName] = useState('');
   const [label, setLabel] = useState('');
   const processes = useQuery({ queryKey: ['card-field-processes'], queryFn: ({ signal }) => getProcessKeys(signal), staleTime: 60_000 });
   const processName = (key: string) => processes.data?.find((entry) => entry.key === key)?.name ?? key;
 
-  const save = (next: ProcessCardFields) => {
-    setProcessCardFields(next);
-    setFields(processCardFields());
-  };
   const key = process.trim();
   const variable = name.trim();
   const full = (fields[key]?.length ?? 0) >= MAX_FIELDS;

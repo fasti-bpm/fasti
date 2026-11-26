@@ -3,14 +3,14 @@
  * Copyright Fasti BPM contributors
  */
 // What the monitoring pages share among themselves; what every area shares is in ../ui.
-import { createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
 import { useIsFetching, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, CircleCheck, Pause, Play, RefreshCw } from 'lucide-react';
 import type { IncidentCount } from '../api/cockpit';
 import { useI18n } from '../i18n';
 import { usePacedInterval } from '../lib/activity';
-import { readPreference, writePreference } from '../lib/storage';
+import { onPreferencesReplaced, readPreference, writePreference } from '../lib/storage';
 import { tenantScope } from '../lib/userPrefs';
 import { IconButton, Tooltip, cx } from '../ui';
 import { useToast } from '../ui/toast';
@@ -37,6 +37,8 @@ export function RefreshProvider({ children }: { children: ReactNode }) {
     writePreference('cockpit.refreshPaused', next);
     setPausedState(next);
   }, []);
+  // the copy of the server may arrive after the first look
+  useEffect(() => onPreferencesReplaced(() => setPausedState(readPreference('cockpit.refreshPaused', false))), []);
   const value = useMemo(() => ({ paused, setPaused }), [paused, setPaused]);
   return <RefreshContext.Provider value={value}>{children}</RefreshContext.Provider>;
 }

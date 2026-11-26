@@ -111,6 +111,8 @@ const messages: Catalog = {
   'ops.history.legend': 'Contour vert : parcouru ; pointillé : annulé. Les badges comptent les instances d’activité en cours et terminées.',
   'ops.history.notFound': 'Introuvable dans l’historique',
   'ops.history.nothing': 'Rien d’enregistré',
+  'ops.history.capped': 'Seules les {count} premières entrées sont affichées.',
+  'ops.history.cappedLatest': 'Seules les {count} entrées les plus récentes sont affichées.',
   'ops.history.noUpdates': 'Aucune modification enregistrée',
   'ops.history.openRunning': 'Ouvrir l’instance en cours',
   'ops.history.reason': 'Motif : {reason}',

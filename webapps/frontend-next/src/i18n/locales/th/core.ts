@@ -911,6 +911,8 @@ const messages: Catalog = {
   'history.system': 'ระบบ',
   'login.engine': 'เอนจิน: {engine}',
   'login.failed': 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+  'session.switched': 'ลงชื่อเข้าใช้เป็น {user} ในแท็บอื่นแล้ว หน้านี้จึงถูกโหลดใหม่',
+  'prefs.syncRejected': 'เซิร์ฟเวอร์ไม่รับการตั้งค่าของคุณ การตั้งค่าจะเก็บไว้ในเบราว์เซอร์นี้เท่านั้น',
   'login.forbidden': 'บัญชีนี้ไม่ได้รับอนุญาตให้ใช้แอปพลิเคชัน',
   'login.password': 'รหัสผ่าน',
   'login.submit': 'ลงชื่อเข้าใช้',

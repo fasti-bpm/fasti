@@ -14,7 +14,7 @@ import { afterComplete, tenantScope } from '../lib/userPrefs';
 import { useI18n } from '../i18n';
 import { Button, EmptyState, IconButton, Kbd, cx } from '../ui';
 import { useToast } from '../ui/toast';
-import { refreshTasks, useTaskActions } from './actions';
+import { isTaskCompleted, refreshTasks, useTaskActions } from './actions';
 import { FilterEditor } from './FilterEditor';
 import { FILTER_COUNTS_KEY, useCountedFilters, useTaskFilters } from './filterCounts';
 import { FilterList, FilterSelect } from './FilterList';
@@ -30,7 +30,7 @@ import type { TaskListItem } from '../api/types';
 import { SearchTools } from './SearchTools';
 import { decodeSearch, getCardVariables, searchLink, withCardVariables } from './searchLinks';
 import './tasklist.css';
-import { fieldNames, processCardFields, processKeyOf } from '../lib/cardFields';
+import { fieldNames, processKeyOf, useProcessCardFields } from '../lib/cardFields';
 import { getSubstitutionMarks } from '../api/absence';
 import { AbsenceBanner, useAbsenceEnabled } from '../absence/AbsenceBanner';
 import { withSubstitutionMarks } from '../absence/marks';
@@ -154,7 +154,7 @@ export function TasklistPage() {
   // the process variables a user chose for the cards, read for the shown tasks
   const cardVariables = preferences.cardVariables;
   // and the business fields chosen for the processes of the shown tasks
-  const [processFields] = useState(processCardFields);
+  const [processFields] = useProcessCardFields();
   const cardNames = useMemo(
     () => [
       ...new Set([
@@ -183,11 +183,19 @@ export function TasklistPage() {
       setHeld({ key: listKey, tasks: tasks.data.tasks });
     }
   }, [working, tasks.data, tasks.isPlaceholderData, listKey, held]);
+  // a task completed here is gone, also while a list read before still has it
+  const completed = useCallback((taskId: string) => isTaskCompleted(queryClient, taskId), [queryClient]);
   const stable = useMemo(
-    () => (held && held.key === listKey && tasks.data ? stabilize(held.tasks, tasks.data.tasks, tasks.data.tasks.length >= PAGE_SIZE) : null),
-    [held, listKey, tasks.data],
+    () =>
+      held && held.key === listKey && tasks.data
+        ? stabilize(held.tasks, tasks.data.tasks, tasks.data.tasks.length >= PAGE_SIZE, completed)
+        : null,
+    [held, listKey, tasks.data, completed],
   );
-  const listed = stable?.tasks ?? tasks.data?.tasks;
+  const listed = useMemo(
+    () => stable?.tasks ?? tasks.data?.tasks.filter((task) => !completed(task.id)),
+    [stable, tasks.data, completed],
+  );
   // tasks that went to a substitute carry the absent user they are held for
   const absenceEnabled = useAbsenceEnabled();
   const listedIds = listed?.map((task) => task.id) ?? [];
@@ -341,8 +349,10 @@ export function TasklistPage() {
         void getNext();
         return;
       }
-      const index = taskItems?.findIndex((task) => task.id === taskId) ?? -1;
-      const next = index >= 0 ? (taskItems?.[index + 1] ?? taskItems?.[index - 1]) : undefined;
+      // never a task that is gone, should the list still show one
+      const open = taskItems?.filter((task) => task.id === taskId || !completed(task.id));
+      const index = open?.findIndex((task) => task.id === taskId) ?? -1;
+      const next = index >= 0 ? (open?.[index + 1] ?? open?.[index - 1]) : undefined;
       setHighlightedId(next?.id ?? null);
       if (afterComplete() === 'list' || window.matchMedia(SINGLE_PANE).matches) {
         // the next task is marked in the list, so Enter opens it
@@ -352,7 +362,7 @@ export function TasklistPage() {
       }
       navigate({ taskId: next?.id ?? null, tab: 'form' }, { replace: true });
     },
-    [taskItems, navigate, preferences.completeAndNext, getNext],
+    [taskItems, navigate, preferences.completeAndNext, getNext, completed],
   );
 
   const move = useCallback(

@@ -188,6 +188,7 @@ const messages: Catalog = {
   'views.name': 'ชื่อมุมมอง',
   'views.save': 'บันทึก',
   'views.remove': 'ลบมุมมอง {name}',
+  'views.limit': 'บันทึกมุมมองได้สูงสุด {count} รายการ ลบออกก่อนหนึ่งรายการ',
   'incidents.groups.toggle': 'จัดกลุ่มตามสาเหตุ',
   'incidents.groups.title': 'เหตุขัดข้องตามสาเหตุ',
   'incidents.groups.problem': 'ปัญหา',

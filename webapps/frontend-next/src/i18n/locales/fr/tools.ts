@@ -196,6 +196,7 @@ const messages: Catalog = {
   'views.name': 'Nom de la vue',
   'views.save': 'Enregistrer',
   'views.remove': 'Supprimer la vue {name}',
+  'views.limit': 'Au plus {count} vues enregistrées. Supprimez-en une d’abord.',
   'incidents.groups.toggle': 'Grouper par cause',
   'incidents.groups.title': 'Incidents groupés par cause',
   'incidents.groups.problem': 'Problème',

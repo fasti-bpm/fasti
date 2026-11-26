@@ -16,7 +16,7 @@ describe('business fields of task cards', () => {
 
   it('keeps valid fields only and names them by their label', () => {
     window.localStorage.setItem(
-      'fasti.next.tasklist.processFields',
+      'fasti.next.tasks.processFields',
       JSON.stringify({ invoice: [{ name: 'amount', label: '' }, { name: '', label: 'x' }, 'junk'], other: 'junk' }),
     );
     const fields = processCardFields();

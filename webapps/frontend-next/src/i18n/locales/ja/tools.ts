@@ -188,6 +188,7 @@ const messages: Catalog = {
   'views.name': 'ビュー名',
   'views.save': '保存',
   'views.remove': 'ビュー {name} を削除',
+  'views.limit': '保存できるビューは最大 {count} 件です。先に 1 件削除してください。',
   'incidents.groups.toggle': '原因でグループ化',
   'incidents.groups.title': '原因別のインシデント',
   'incidents.groups.problem': '問題',

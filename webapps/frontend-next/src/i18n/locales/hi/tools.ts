@@ -196,6 +196,7 @@ const messages: Catalog = {
   'views.name': 'व्यू का नाम',
   'views.save': 'सहेजें',
   'views.remove': 'व्यू {name} हटाएँ',
+  'views.limit': 'अधिकतम {count} सहेजे गए व्यू। पहले एक हटाएँ।',
   'incidents.groups.toggle': 'कारण के अनुसार समूह',
   'incidents.groups.title': 'कारण के अनुसार समूहित इंसिडेंट',
   'incidents.groups.problem': 'समस्या',

@@ -109,6 +109,8 @@ const messages = {
   'ops.history.legend': 'Green outline: passed; dashed: canceled. Badges count running and finished activity instances.',
   'ops.history.notFound': 'Not found in history',
   'ops.history.nothing': 'Nothing recorded',
+  'ops.history.capped': 'Only the first {count} entries are shown.',
+  'ops.history.cappedLatest': 'Only the latest {count} entries are shown.',
   'ops.history.noUpdates': 'No changes recorded',
   'ops.history.openRunning': 'Open running instance',
   'ops.history.reason': 'Reason: {reason}',

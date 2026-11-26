@@ -14,6 +14,7 @@ import {
   getAuditEvents,
   getAuditStatus,
   verifyAudit,
+  type AuditChain,
   type AuditEvent,
   type AuditQuery,
   type AuditStatus,
@@ -224,6 +225,40 @@ function intactMessage(result: AuditVerification, t: ReturnType<typeof useI18n>[
   });
 }
 
+/** A chain with a checkpoint or purge record whose signature the engine could not check. */
+function hasUncheckedSignature(chain: AuditChain): boolean {
+  return chain.checkpointsVerified < chain.checkpoints || (chain.purgedThrough > 0 && chain.purgeAttested === false);
+}
+
+/**
+ * An intact chain of a signing engine whose records no checkpoint covers yet: a young chain,
+ * signed with the next checkpoint (the engine writes them every few minutes and at a clean
+ * shutdown). Engines up to 1.3.1 count such a chain as authenticated (none of no checkpoints
+ * failed) and write checkpoints by record count only; for them it is not this case.
+ */
+function awaitsFirstCheckpoint(chain: AuditChain, signed: boolean): boolean {
+  return (
+    signed &&
+    chain.intact &&
+    chain.records > 0 &&
+    chain.checkpoints === 0 &&
+    chain.authenticated === false &&
+    !hasUncheckedSignature(chain)
+  );
+}
+
+/** What an intact trail says about its signatures. */
+function signatureMessage(result: AuditVerification, signed: boolean): { key: MessageKey; calm: boolean } {
+  if (!signed) return { key: 'audit.notSigned', calm: false };
+  if (result.chains.some(hasUncheckedSignature)) return { key: 'audit.notAuthenticated', calm: false };
+  if (result.authenticated) return { key: 'audit.authenticated', calm: true };
+  // nothing failed: what is missing are only the checkpoints of young chains
+  if (result.chains.some((chain) => awaitsFirstCheckpoint(chain, signed))) {
+    return { key: 'audit.awaitingCheckpoint', calm: true };
+  }
+  return { key: 'audit.notAuthenticated', calm: false };
+}
+
 /**
  * The outcome of a verification, for every chain. A break is an alert; an intact trail is
  * announced by the live region of the page, which is there before the result. Intact means that
@@ -234,6 +269,7 @@ function intactMessage(result: AuditVerification, t: ReturnType<typeof useI18n>[
 export function VerificationResult({ result, signed }: { result: AuditVerification; signed: boolean }) {
   const { t, number } = useI18n();
   const found = result.firstBreak;
+  const signatures = signatureMessage(result, signed);
   return (
     <div className="audit-trail__result">
       {found ? (
@@ -245,9 +281,9 @@ export function VerificationResult({ result, signed }: { result: AuditVerificati
           <p>{t('audit.brokenHint')}</p>
         </Notice>
       ) : (
-        <Notice tone={result.authenticated ? 'info' : 'warning'} title={intactMessage(result, t)}>
+        <Notice tone={signatures.calm ? 'info' : 'warning'} title={intactMessage(result, t)}>
           <p>{t('audit.intactHint')}</p>
-          <p>{t(result.authenticated ? 'audit.authenticated' : signed ? 'audit.notAuthenticated' : 'audit.notSigned')}</p>
+          <p>{t(signatures.key)}</p>
         </Notice>
       )}
       <div className="table-wrap">
@@ -274,7 +310,9 @@ export function VerificationResult({ result, signed }: { result: AuditVerificati
                 <td>{number(chain.records)}</td>
                 <td>
                   {t('audit.checkpointsVerified', { verified: chain.checkpointsVerified, total: chain.checkpoints })}
-                  {chain.authenticated && (
+                  {awaitsFirstCheckpoint(chain, signed) ? (
+                    <div className="muted">{t('audit.chainAwaitingCheckpoint')}</div>
+                  ) : chain.authenticated && (
                     <div className="muted">
                       {chain.authenticatedThrough
                         ? t('audit.chainSignedThrough', { sequence: chain.authenticatedThrough })

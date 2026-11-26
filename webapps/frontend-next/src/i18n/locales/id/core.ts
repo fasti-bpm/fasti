@@ -930,6 +930,8 @@ const messages: Catalog = {
 
   'login.engine': 'Engine: {engine}',
   'login.failed': 'Nama pengguna atau kata sandi salah.',
+  'session.switched': 'Masuk sebagai {user} di tab lain. Halaman ini dimuat ulang.',
+  'prefs.syncRejected': 'Server tidak menerima preferensi Anda. Preferensi hanya disimpan di browser ini.',
   'login.forbidden': 'Akun ini tidak diizinkan menggunakan aplikasi.',
   'login.password': 'Kata sandi',
   'login.submit': 'Masuk',

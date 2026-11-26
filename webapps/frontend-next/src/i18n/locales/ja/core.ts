@@ -879,6 +879,8 @@ const messages: Catalog = {
   'history.system': 'システム',
   'login.engine': 'エンジン: {engine}',
   'login.failed': 'ユーザー名またはパスワードが正しくありません。',
+  'session.switched': '別のタブで {user} としてサインインしました。このページを再読み込みしました。',
+  'prefs.syncRejected': 'サーバーが設定を受け付けませんでした。設定はこのブラウザーにのみ保存されます。',
   'login.forbidden': 'このアカウントにはアプリケーションの使用が許可されていません。',
   'login.password': 'パスワード',
   'login.submit': 'サインイン',

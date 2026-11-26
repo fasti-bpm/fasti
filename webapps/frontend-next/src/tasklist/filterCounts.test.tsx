@@ -187,7 +187,7 @@ describe('filters and their task counts', () => {
 
   it('reads the task list at least every minute, also in the background, while notices are on', async () => {
     vi.stubGlobal('Notification', { permission: 'granted' });
-    writePreference('tasklist.notify', true);
+    writePreference('tasks.notify', true);
     backend();
     const queryClient = renderApp('/tasklist?filter=f1');
     await screen.findByText('Task t1');

@@ -12,6 +12,117 @@ các mục dưới đây là khác biệt so với bản đó.
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-11-26
+
+Maintenance release from a full review of the 1.3.1 code (engine features, engine performance,
+REST and web application, new web UI, distributions and CI), with fixes for what it found and
+tuning of defaults that had been left at upstream values. Same database schema as
+1.0.x–1.3.1; replace the image or the bundle and start it. Read **Before you upgrade** below.
+
+### Security
+
+- **Four-eyes rule and user-id spelling.** With an identity store that ignores case (LDAP, or a
+  database collation such as the SQL Server default), a user could complete the checked step as
+  `john` and the approval as `JOHN` over REST Basic or MCP Basic authentication, and the rule
+  saw two people. Both now act as the id the identity service stores, as the web application
+  already did.
+- **Audit trail: unsigned chains no longer verify as authenticated.** A signed trail reported a
+  chain without any checkpoint as authenticated, although nothing in it was signed; chains of
+  fewer than `checkpointInterval` records (default 1000), for example those of a replaced
+  Kubernetes pod, were never signed. Now a chain with records needs a verified checkpoint to be
+  authenticated, the engine signs the ends of its chains at a clean shutdown and every
+  `fasti.audit.checkpoint-interval-seconds` (default 300), and chains another node left behind
+  are signed once their head has been idle for 3 × that interval (at least 15 minutes). A late
+  checkpoint attests the records as they are when it is written.
+- **SSO module of Run ships nimbus-jose-jwt 10.9.1** (was 9.37.4 from a stale pin, while the
+  module is built against 10.9.1) and json-smart 2.6.1.
+- REST and MCP Basic authentication caches no longer keep a check that ran while users, groups
+  or tenants changed.
+
+### Fixed
+
+- User preferences of the web UI could fail with `500` for good after two first saves of the
+  same user at the same moment (two tabs or two nodes). They are now read in one query, checked
+  against a checksum, repaired when rows are duplicated, and written under a per-user lock row
+  (new keys `fasti.prefs.sum` and `fasti.prefs.lock` in `ACT_ID_INFO`; warnings WEBAPP-012 to
+  WEBAPP-014).
+- New web UI:
+  - A tab notices when another tab of the browser signed in as someone else; it reloads and
+    says so, instead of claiming tasks for the previous user under the new session.
+  - Completing a task in a filter with more than 25 tasks no longer leaves a ghost card, and
+    "open next" never opens a completed task.
+  - Claim, assign and other quick changes are no longer undone by a list refresh already
+    under way.
+  - Preferences that arrive late from the server (saved searches, card variables, saved
+    views, columns) are applied instead of being overwritten by defaults; changes are sent
+    2.5 s after the last edit, one upload at a time, and on closing the page; refused
+    preferences are reported once. At most 20 saved views and 20 saved searches per list.
+  - Card fields per process and the new-task notification setting follow the user and are no
+    longer passed to the next user of a shared browser (existing values are migrated).
+  - The historic instance page loads variables, incidents and the job log when their tab is
+    opened and says when a list reached its size limit.
+  - The audit page tells a chain that is not signed yet from one whose signatures cannot be
+    checked.
+- `FASTI_APPCDS=true` wrote no archive and made the JVM exit with status 1 on every stop; the
+  class path order now lets it write and reuse the archive.
+- Docker/Run: the session cookie is `FASTI_SESSION` (was `JSESSIONID` with path `/`), so
+  opening another application on the same host, such as Camunda 7 Run on another port, no
+  longer signs the user out of Fasti.
+- Audit trail with MySQL Connector/J `useAffectedRows=true`: an existing chain head is no
+  longer taken for a missing one.
+
+### Performance
+
+- Process analytics: user-task and incident statements seek the process-key index; analytics
+  statements have their own timeout (`fasti.analytics.statement-timeout`, default 120 s, `503`
+  beyond); calls without `finishedBefore` are no longer cached (they still share an in-flight
+  read) and a full cache evicts expired, then oldest entries instead of emptying itself. New
+  optional index `FASTI_IDX_HI_TI_PDKEY_END`; start hint FASTI-PERF-007 for an unset
+  `jdbcStatementTimeout` or `queryMaxResultsLimit`.
+- Task workload: `distinct` only where a join can repeat tasks, and a 5 s answer cache keyed on
+  the identity and settings (`fasti.workload.cache-ttl`).
+- Audit trail: time-ordered (UUIDv7) record ids, the chain head locked with
+  `select … for update` on H2, PostgreSQL, MySQL, MariaDB and Oracle, and purge and chain
+  listing without scans of the whole event table.
+- MCP Basic authentication caches successful checks for 30 s
+  (`fasti.mcp.basic-auth-cache-ttl`).
+- Versioned static files (`?bust=<release>` under `/lib`, `/assets` and the bundles of the
+  classic applications, including the 4.7 MB `deps.js` of embedded forms) and the hashed assets
+  of the new UI are sent with `Cache-Control: immutable`, now also by the Tomcat and WildFly
+  web applications. The index page remembers for 60 s that an engine has an administrator.
+- Run: HTTP compression for HTML, CSS, JavaScript, SVG, JSON and XML above 2 KB (the image
+  already compressed; it adds the XML types). Image: third-party jars sit in their own layers,
+  so a patch release pulls much less.
+
+### Changed
+
+- Run and image: Tomcat request threads 200 → 100; HikariCP connection timeout 30 s → 10 s.
+- Image: `MaxRAMPercentage` is 60 below a 1.5 GiB memory limit, 75 above (Helm chart: unset
+  `jvm.maxRamPercentage` lets the image choose).
+- Tomcat and WildFly bundles take over the tuning of Run: job executor 10 jobs per acquisition,
+  10 threads, queue 10 (was 3/3/3); pool of 20 with 10 idle, checked before use, 10 s wait;
+  heap `-Xmx1g`.
+
+### Before you upgrade
+
+- Web sessions of Run and the image end once, because of the new cookie name. Scripts that pick
+  the session cookie by name need `FASTI_SESSION`; `SERVER_SERVLET_SESSION_COOKIE_NAME` sets
+  another name.
+- REST and MCP Basic authentication act as the stored user id: with LDAP or a case-insensitive
+  collation, `getAuthenticatedUserId`, the audit actor and the operation log show the stored
+  spelling.
+- Audit trail with a key: chains of 1.3.x without a checkpoint show as "not signed yet" until
+  the first signing round after the upgrade (at most 15 minutes for chains left by other
+  nodes). Expect a few more `checkpoint` records. With `checkpoint-interval-seconds=0` only the
+  shutdown signs, and chains of other nodes are not signed.
+- Analytics reads longer than 120 s now answer `503`; raise
+  `fasti.analytics.statement-timeout` if needed. Analytics of history written without
+  `PROC_DEF_KEY_` (engines before Camunda 7.3) no longer counts user tasks and incidents.
+- Image with `FASTI_APPCDS=true`: loose files in the library directories no longer override
+  resources of the application; put overrides in a jar. Without AppCDS the class path order is
+  unchanged.
+- If more than 100 requests run at once on purpose, set `SERVER_TOMCAT_THREADS_MAX`.
+
 ## [1.3.1] - 2026-11-25
 
 Security release. Before announcing 1.3.0 publicly we ran an internal security test of the

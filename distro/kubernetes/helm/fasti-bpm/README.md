@@ -65,7 +65,7 @@ existing Camunda 7.24 installation leave them out: tables and accounts already e
 | Key | Default | Meaning |
 |---|---|---|
 | `image.repository` | `fastidev/fasti-bpm` | also published as `ghcr.io/fasti-bpm/fasti-bpm` |
-| `image.tag` | `""` (appVersion `1.3.1`) | image tag |
+| `image.tag` | `""` (appVersion `1.3.2`) | image tag |
 | `image.digest` | `""` | `sha256:…`; pins the image (recommended) |
 | `replicaCount` | `1` | pods sharing the database (see Several replicas) |
 | `production` | `true` | `--production` of the image |

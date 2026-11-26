@@ -8,7 +8,7 @@
   <parent>
     <groupId>dev.fasti.platform.spin</groupId>
     <artifactId>fasti-spin-root</artifactId>
-    <version>1.3.1</version>
+    <version>1.3.2</version>
   </parent>
 
   <artifactId>fasti-spin-dataformat-xml-dom</artifactId>

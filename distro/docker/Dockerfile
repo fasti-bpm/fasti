@@ -7,7 +7,7 @@
 # directory. See README.md.
 #
 #   ./mvnw -pl distro/docker -am package -DskipTests
-#   docker build -t fasti-bpm:1.3.1 distro/docker/target/docker
+#   docker build -t fasti-bpm:1.3.2 distro/docker/target/docker
 #
 # Pin the base image by digest for reproducible builds, for example
 #   --build-arg JRE_IMAGE=eclipse-temurin:21-jre-alpine@sha256:<digest>
@@ -71,7 +71,7 @@ RUN mkdir -p /layers/graal/fasti /layers/deps/fasti /layers/app \
  && find /layers/graal /layers/deps -exec touch -d '2000-01-01 00:00:00' {} +
 
 FROM ${JRE_IMAGE}
-ARG VERSION=1.3.1
+ARG VERSION=1.3.2
 ARG REVISION=unknown
 LABEL org.opencontainers.image.title="Fasti BPM" \
       org.opencontainers.image.description="Fasti BPM Run: BPMN/DMN process engine with REST API and web applications" \

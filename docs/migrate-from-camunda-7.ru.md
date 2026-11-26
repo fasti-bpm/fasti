@@ -34,7 +34,7 @@ WildFly), Fasti работает с **той же базой данных без
    (`camunda.bpm.run.auth.enabled`), авторизацию (`camunda.bpm.authorization.enabled`),
    плагины, LDAP/SSO, часовой пояс JVM, хеширование паролей (`passwordEncryptor`, `saltGenerator`),
    префикс таблиц/схему.
-4. **Загрузите образ** `fastidev/fasti-bpm:1.3.1` (или соберите его из исходного кода, как описано в
+4. **Загрузите образ** `fastidev/fasti-bpm:1.3.2` (или соберите его из исходного кода, как описано в
    [distro/docker/README.md](../distro/docker/README.md)).
 5. **Запустите Fasti с теми же переменными `DB_*`** (и тем же значением `TZ`). В отличие от Camunda Run,
    образ Fasti **по умолчанию требует аутентификацию REST и применяет проверки авторизации**: учётные записи

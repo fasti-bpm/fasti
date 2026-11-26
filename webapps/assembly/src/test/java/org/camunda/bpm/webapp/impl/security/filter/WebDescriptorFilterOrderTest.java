@@ -30,19 +30,59 @@ public class WebDescriptorFilterOrderTest {
 
   protected static final String HEADER_SECURITY_FILTER = "HttpHeaderSecurity";
 
+  /** the descriptors of the Tomcat and WildFly distributions, which ship descriptors of their own */
+  public static final List<String> DISTRIBUTION_DESCRIPTOR_FILES = List.of(
+      "../../distro/tomcat/webapp-jakarta/src/main/webapp/WEB-INF/web.xml",
+      "../../distro/wildfly/webapp/src/main/webapp/WEB-INF/web.xml");
+
+  protected static final String STATIC_ASSET_CACHE_FILTER = "StaticAssetCacheFilter";
+
   protected List<String> filterMappings;
 
   @Before
   public void readFilterMappings() throws Exception {
+    filterMappings = new ArrayList<>();
+    for (Element mapping : filterMappings(WEB_DESCRIPTOR_FILE)) {
+      filterMappings.add(filterName(mapping));
+    }
+  }
+
+  protected static List<Element> filterMappings(String file) throws Exception {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setNamespaceAware(true);
-    Document descriptor = factory.newDocumentBuilder().parse(new File(WEB_DESCRIPTOR_FILE));
+    Document descriptor = factory.newDocumentBuilder().parse(new File(file));
 
-    filterMappings = new ArrayList<>();
+    List<Element> result = new ArrayList<>();
     NodeList mappings = descriptor.getElementsByTagNameNS("*", "filter-mapping");
     for (int i = 0; i < mappings.getLength(); i++) {
-      Element mapping = (Element) mappings.item(i);
-      filterMappings.add(mapping.getElementsByTagNameNS("*", "filter-name").item(0).getTextContent().trim());
+      result.add((Element) mappings.item(i));
+    }
+    return result;
+  }
+
+  protected static String filterName(Element mapping) {
+    return mapping.getElementsByTagNameNS("*", "filter-name").item(0).getTextContent().trim();
+  }
+
+  @Test
+  public void shouldSetCacheHeadersOfStaticFilesBeforeTheIndexPageIsWritten() throws Exception {
+    List<String> files = new ArrayList<>(DISTRIBUTION_DESCRIPTOR_FILES);
+    files.add(WEB_DESCRIPTOR_FILE);
+    for (String file : files) {
+      List<String> names = new ArrayList<>();
+      List<String> patterns = new ArrayList<>();
+      for (Element mapping : filterMappings(file)) {
+        names.add(filterName(mapping));
+        if (STATIC_ASSET_CACHE_FILTER.equals(filterName(mapping))) {
+          NodeList urlPatterns = mapping.getElementsByTagNameNS("*", "url-pattern");
+          for (int i = 0; i < urlPatterns.getLength(); i++) {
+            patterns.add(urlPatterns.item(i).getTextContent().trim());
+          }
+        }
+      }
+      assertThat(names).as(file).contains(STATIC_ASSET_CACHE_FILTER, "Engines Filter");
+      assertThat(names.indexOf(STATIC_ASSET_CACHE_FILTER)).as(file).isLessThan(names.indexOf("Engines Filter"));
+      assertThat(patterns).as(file).containsExactlyInAnyOrder("/app/*", "/lib/*", "/assets/*");
     }
   }
 

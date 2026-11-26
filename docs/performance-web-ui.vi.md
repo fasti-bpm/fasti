@@ -137,11 +137,15 @@ Kích thước của `vite build`, đã minify (gzip trong ngoặc):
 | Số file JavaScript | 204 | 164 |
 
 Lượng JavaScript tải trước trang đầu tiên gần như không đổi: React và router chuyển sang một
-chunk riêng, chỉ thay đổi khi nâng cấp thư viện. Fasti Run, Docker image và Spring Boot starter
-phục vụ các tệp có hash dưới `/app/next/assets/` với
+chunk riêng, chỉ thay đổi khi nâng cấp thư viện. Fasti Run, Docker image, Spring Boot starter
+và bundle Tomcat, WildFly phục vụ các tệp có hash dưới `/app/next/assets/` với
 `Cache-Control: public, max-age=31536000, immutable`, nên trình duyệt giữ lại chunk có nội dung
-không đổi qua các bản phát hành; trên Tomcat và WildFly việc này do servlet container quyết
-định. Dòng thời gian của case trong chi tiết task chỉ được tải khi mở tab đó.
+không đổi qua các bản phát hành. Các bundle của ứng dụng cũ và của khung form nhúng được tải
+với `?bust=<phiên bản của bản phát hành này>` (`/lib/deps.js`,
+`/app/forms/fasti-form-frame.js`, các tệp dưới `/assets/`) cũng vậy: bản phát hành mới tải
+chúng với query string khác. Các tệp người vận hành sửa (`scripts/config.js`,
+`styles/user-styles.css`, bản dịch, script tuỳ chỉnh) vẫn được kiểm tra lại mỗi lần. Dòng thời
+gian của case trong chi tiết task chỉ được tải khi mở tab đó.
 
 Trang để mở trong lúc máy chủ được cập nhật vẫn trỏ tới các tệp của bản build cũ đã không còn.
 Phần nào tải sau mà lỗi vì lý do này (tab case hoặc sơ đồ của task đang mở) sẽ báo ngay tại chỗ

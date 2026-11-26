@@ -99,7 +99,13 @@ ordered; across chains the time orders them), and verifying reads every chain.
 
 The **node id** (`fasti.audit.node-id`) defaults to `<engine name>@<host name>`. Give each node
 a stable, unique id; two nodes with the same id share chains, which stays correct (the head lock
-serializes them) but makes them wait for each other. This also holds for a node of this version
+serializes them) but makes them wait for each other. On Kubernetes the host name is the pod name,
+which a Deployment changes on every start: each start begins new chains, and a chain that a pod
+leaves before its first checkpoint is signed only if the pod shut down cleanly (see signed
+checkpoints below). Run the engine as a StatefulSet and set the node id to the pod name
+(`FASTI_AUDIT_NODE_ID` from the field `metadata.name`), so that `fasti-0` stays `fasti-0` across
+restarts and its chains go on; with a Deployment, set a short `checkpoint-interval-seconds` and
+give pods the time to shut down (`terminationGracePeriodSeconds`). This also holds for a node of this version
 and a node of 1.1 with the same id, for example two JVMs on one host during an upgrade or a
 rollback: nodes of 1.0 and 1.1 write only to `<node id>/<slot>`, never to the `end-` chains, so
 the two never wait for each other in a cycle on one chain. During such a mixed period, purge
@@ -139,14 +145,16 @@ guard is per engine, not per cluster.
   are consistent from the first record of the chain to its head. With a key, in addition, every
   checkpoint and every purge record that explains a removed start carries a valid signature (or
   one that the settings list as retired, below), and no checkpoint is missing.
-- **`authenticated`**: intact, a key is set, and every checkpoint and the purge record of a
-  removed start were *checked* with a key the engine holds. Only this rules out that someone
-  with write access to the database rewrote a chain up to its last checkpoint or removed its
-  start. It is `false` without a key, for chains with signatures that are accepted unchecked
-  (retired key ids), and for a chain whose removed start is named by a purge record without
-  checked signature (`purgeAttested: false`). Per chain, `authenticatedThrough` is the last
-  record a checked signature covers (the record before the last checkpoint; `0` before the first
-  checkpoint of a chain): the records after it are protected by the hashes and the head only.
+- **`authenticated`**: intact, a key is set, every checkpoint and the purge record of a removed
+  start were *checked* with a key the engine holds, and a chain with records has at least one such
+  checkpoint. Only this rules out that someone with write access to the database rewrote a chain
+  up to its last checkpoint or removed its start. It is `false` without a key, for chains with
+  signatures that are accepted unchecked (retired key ids), for a chain whose removed start is
+  named by a purge record without checked signature (`purgeAttested: false`), and, from 1.3.2, for
+  a chain with records but no checkpoint yet (no signature covers any of them; up to 1.3.1 such a
+  chain was reported as authenticated). Per chain, `authenticatedThrough` is the last record a
+  checked signature covers (the record before the last checkpoint; `0` for a chain that is not
+  authenticated or empty): the records after it are protected by the hashes and the head only.
 
 So without a key, "intact" means "the hashes are consistent"; the web UI says so, and says when
 an intact trail is not authenticated.
@@ -159,6 +167,18 @@ of at least 32 bytes (`fasti.audit.hmac-key`, best as the environment variable
 HMAC-SHA256 of the chain, the position and hash before it, and the interval it was written
 with. The key never reaches the database; the `keyId` (the start of the SHA-256 of the key)
 tells keys apart.
+
+A chain that does not reach the interval would never be signed. So, with a key, each node also
+signs the end of each of its chains that has records after its last checkpoint: every
+`checkpoint-interval-seconds` (default 300; `0` turns this off) and when the engine shuts down
+cleanly. Such a checkpoint is a record like the others, comes earlier than the interval would
+put one (which verification accepts, also that of earlier versions), and holds the head of its
+chain only for itself, waiting for it at most 5 seconds (a chain held longer is signed the next
+time). Before signing, the node checks that the last record still matches its hash and the
+head. A node that stops without shutting down (killed, out of memory) leaves at most the records
+of the last `checkpoint-interval-seconds` unsigned. So do commands that still run while the engine
+closes (a request being served, a job of a job executor that other engines share): their records
+are signed when the node runs again with the same node id.
 
 With a key set, a signature that is missing is as much a break as one that is wrong, because
 someone who rewrites a chain cannot forge signatures but can remove them:
@@ -324,6 +344,7 @@ Settings (`fasti.audit.*`; plugin properties in camel case for Tomcat and WildFl
 | `retired-hmac-keys` | none | earlier keys, comma separated: what they signed is still checked |
 | `retired-key-ids` | none | key ids of lost earlier keys, and `unsigned`: accepted unchecked, the chain is then not authenticated |
 | `checkpoint-interval` | `1000` | records between two checkpoints; `0` for none |
+| `checkpoint-interval-seconds` | `300` | with a key: seconds after which the end of a chain written since its last checkpoint is signed; `0` to sign the ends only at shutdown |
 | `retention-days` | `365` | records younger than this cannot be purged |
 | `lock-timeout-seconds` | `60` | how long a command waits for its chain before it fails; `0` for the limit of the database |
 | `query-timeout-seconds` | `120` | how long a query or export may run; `0` for no limit |
@@ -423,8 +444,9 @@ Oracle database was at hand.
 - Without a signing key, someone with write access to the database can rewrite a chain from
   some record on together with its head, or remove its start and write a purge record for it;
   verification then still says intact, but never authenticated. With a key, only the records
-  after the last checkpoint can be rewritten. Keep reported last hashes or the checkpoint log
-  lines outside the database.
+  after the last checkpoint can be rewritten: those of the last `checkpoint-interval-seconds`
+  before the next one is written. Keep reported last hashes or the checkpoint log lines outside
+  the database.
 - Deleting every record and the head of a chain is only noticed against such an outside
   anchor.
 - A purge removes the records of a chain before a time in batches, one chain after the other,

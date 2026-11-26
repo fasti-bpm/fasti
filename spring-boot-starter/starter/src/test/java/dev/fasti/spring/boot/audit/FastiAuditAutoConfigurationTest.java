@@ -67,7 +67,8 @@ public class FastiAuditAutoConfigurationTest {
       "fasti.audit.retired-hmac-keys=an-earlier-starter-key-that-is-long-enough-01",
       "fasti.audit.retired-key-ids=unsigned",
       "fasti.audit.lock-timeout-seconds=7",
-      "fasti.audit.query-timeout-seconds=9"
+      "fasti.audit.query-timeout-seconds=9",
+      "fasti.audit.checkpoint-interval-seconds=120"
   })
   public static class Enabled {
 
@@ -91,6 +92,7 @@ public class FastiAuditAutoConfigurationTest {
       assertThat(audit.getStatus().getRetiredKeyIds()).hasSize(2).contains("unsigned");
       assertThat(plugin.getLockTimeoutSeconds()).isEqualTo(7);
       assertThat(plugin.getQueryTimeoutSeconds()).isEqualTo(9);
+      assertThat(plugin.getCheckpointIntervalSeconds()).isEqualTo(120);
 
       RepositoryService repositoryService = processEngine.getRepositoryService();
       Deployment deployment = repositoryService.createDeployment().addModelInstance("audit.bpmn",

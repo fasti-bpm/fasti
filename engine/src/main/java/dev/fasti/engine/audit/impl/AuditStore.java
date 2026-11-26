@@ -37,6 +37,7 @@ import dev.fasti.engine.audit.AuditService;
 import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.interceptor.CommandExecutor;
+import org.camunda.bpm.engine.impl.util.ClockUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -212,6 +213,52 @@ public final class AuditStore {
       update.setString(4, chainId);
       update.executeUpdate();
     }
+  }
+
+  /**
+   * Signs the end of a chain: appends a signed checkpoint after its last record, unless that is a
+   * checkpoint already, in the transaction of the command. Waits for the head at most
+   * {@code lockTimeoutSeconds}. Nothing is written without a key or without checkpoints, for a
+   * missing head or an empty chain, or when the last record does not match the head (verifying
+   * reports that). Returns the checkpoint written, or {@code null}.
+   */
+  public static AuditRecord checkpointTail(CommandContext commandContext, AuditSettings settings, String chainId,
+      int lockTimeoutSeconds) {
+    if (!settings.isSigned() || settings.getCheckpointInterval() <= 0) {
+      return null;
+    }
+    Connection connection = connection(commandContext);
+    try {
+      Head head = lockHead(commandContext, settings, chainId, false, lockTimeoutSeconds);
+      if (head == null || head.sequence <= 0) {
+        return null;
+      }
+      AuditRecord last = find(commandContext, settings, chainId, head.sequence);
+      if (last != null && isCheckpoint(last)) {
+        return null;
+      }
+      if (last == null || !AuditChain.same(head.hash, last.getHash())
+          || !AuditChain.same(AuditChain.hash(last), last.getHash())) {
+        LOG.warn("The last record of audit trail chain {} does not match its head; the chain is not signed. Verify the "
+            + "audit trail.", chainId);
+        return null;
+      }
+      AuditRecord checkpoint = checkpoint(settings, chainId, head.sequence + 1, head.hash,
+          Math.max(last.getTime(), ClockUtil.getCurrentTime().getTime()));
+      insert(connection, settings, List.of(checkpoint));
+      moveHead(connection, settings, chainId, checkpoint.getSequence(), checkpoint.getHash(), checkpoint.getTime());
+      return checkpoint;
+    } catch (SQLException e) {
+      if (isTimeout(e)) {
+        throw new ProcessEngineException("The audit trail could not sign chain " + chainId + ": it is held by another "
+            + "transaction for longer than " + lockTimeoutSeconds + " seconds.");
+      }
+      throw failure("sign the end of a chain", "chain " + chainId, e);
+    }
+  }
+
+  static boolean isCheckpoint(AuditRecord record) {
+    return AuditService.TYPE_AUDIT.equals(record.getType()) && AuditService.ACTION_CHECKPOINT.equals(record.getAction());
   }
 
   /**
@@ -812,6 +859,15 @@ public final class AuditStore {
   static String firstText(PreparedStatement select) throws SQLException {
     try (ResultSet result = select.executeQuery()) {
       return result.next() ? result.getString(1) : null;
+    }
+  }
+
+  /** The heads of every chain. */
+  public static List<Head> heads(CommandContext commandContext, AuditSettings settings) {
+    try {
+      return heads(connection(commandContext), settings);
+    } catch (SQLException e) {
+      throw failure("list chains", e);
     }
   }
 

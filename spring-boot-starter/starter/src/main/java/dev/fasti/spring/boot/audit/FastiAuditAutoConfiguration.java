@@ -48,6 +48,7 @@ public class FastiAuditAutoConfiguration {
     plugin.setHmacKey(properties.getHmacKey());
     plugin.setHmacKeyFile(properties.getHmacKeyFile());
     plugin.setCheckpointInterval(properties.getCheckpointInterval());
+    plugin.setCheckpointIntervalSeconds(properties.getCheckpointIntervalSeconds());
     plugin.setRetentionDays(properties.getRetentionDays());
     plugin.setRetiredHmacKeys(properties.getRetiredHmacKeys());
     plugin.setRetiredKeyIds(properties.getRetiredKeyIds());

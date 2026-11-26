@@ -17,6 +17,7 @@
 package org.camunda.bpm.engine.impl;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.camunda.bpm.engine.AuthorizationService;
 import org.camunda.bpm.engine.CaseService;
@@ -43,6 +44,7 @@ import org.camunda.bpm.engine.impl.interceptor.SessionFactory;
 import org.camunda.bpm.engine.impl.jobexecutor.JobExecutor;
 import org.camunda.bpm.engine.impl.metrics.reporter.DbMetricsReporter;
 import org.camunda.bpm.engine.impl.util.CompositeCondition;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Tom Baeyens
@@ -166,6 +168,15 @@ public class ProcessEngineImpl implements ProcessEngine {
     if ((jobExecutor != null)) {
       // unregister process engine with Job Executor
       jobExecutor.unregisterProcessEngine(this);
+    }
+
+    // Fasti: callbacks of plugins, while the database is still there
+    for (Consumer<ProcessEngine> listener : processEngineConfiguration.getProcessEngineCloseListeners()) {
+      try {
+        listener.accept(this);
+      } catch (RuntimeException e) {
+        LoggerFactory.getLogger(ProcessEngineImpl.class).warn("A close callback of process engine '{}' failed", name, e);
+      }
     }
 
     commandExecutorSchemaOperations.execute(new SchemaOperationProcessEngineClose());

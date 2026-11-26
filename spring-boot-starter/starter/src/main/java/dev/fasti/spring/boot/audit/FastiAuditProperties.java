@@ -79,6 +79,13 @@ public class FastiAuditProperties {
   private int checkpointInterval = AuditSettings.DEFAULT_CHECKPOINT_INTERVAL;
 
   /**
+   * With a key: seconds after which the end of each chain of this node that has records after its
+   * last checkpoint is signed with a checkpoint of its own; 0 to sign the ends only when the engine
+   * shuts down.
+   */
+  private int checkpointIntervalSeconds = AuditSettings.DEFAULT_CHECKPOINT_INTERVAL_SECONDS;
+
+  /**
    * Records younger than this many days cannot be purged.
    */
   private int retentionDays = AuditSettings.DEFAULT_RETENTION_DAYS;
@@ -183,6 +190,14 @@ public class FastiAuditProperties {
 
   public void setCheckpointInterval(int checkpointInterval) {
     this.checkpointInterval = checkpointInterval;
+  }
+
+  public int getCheckpointIntervalSeconds() {
+    return checkpointIntervalSeconds;
+  }
+
+  public void setCheckpointIntervalSeconds(int checkpointIntervalSeconds) {
+    this.checkpointIntervalSeconds = checkpointIntervalSeconds;
   }
 
   public int getRetentionDays() {

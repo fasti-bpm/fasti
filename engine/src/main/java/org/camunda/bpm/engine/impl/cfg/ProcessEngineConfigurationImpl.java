@@ -39,7 +39,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.function.Consumer;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
@@ -1044,6 +1046,14 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
   private int failedJobListenerMaxRetries = DEFAULT_FAILED_JOB_LISTENER_MAX_RETRIES;
 
   protected String failedJobRetryTimeCycle;
+
+  /**
+   * Fasti: callbacks that {@link ProcessEngineImpl#close()} runs once the job executor no longer
+   * acquires jobs for the engine and before the schema is dropped (with {@code create-drop}), so
+   * that plugins can write a last state while the database is still there. A callback that throws
+   * is logged and does not stop the engine from closing.
+   */
+  protected List<Consumer<ProcessEngine>> processEngineCloseListeners = new CopyOnWriteArrayList<>();
 
   // login attempts ///////////////////////////////////////////////////////
   /**
@@ -4469,6 +4479,17 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
 
   public ProcessEngineConfigurationImpl setInvokeCustomVariableListeners(boolean isInvokeCustomVariableListeners) {
     this.isInvokeCustomVariableListeners = isInvokeCustomVariableListeners;
+    return this;
+  }
+
+  /** Fasti: the callbacks run when the process engine closes, see {@link #processEngineCloseListeners}. */
+  public List<Consumer<ProcessEngine>> getProcessEngineCloseListeners() {
+    return processEngineCloseListeners;
+  }
+
+  /** Fasti: adds a callback run when the process engine closes, see {@link #processEngineCloseListeners}. */
+  public ProcessEngineConfigurationImpl addProcessEngineCloseListener(Consumer<ProcessEngine> listener) {
+    processEngineCloseListeners.add(listener);
     return this;
   }
 

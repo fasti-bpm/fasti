@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
+import dev.fasti.engine.audit.impl.AuditCheckpointer;
 import dev.fasti.engine.audit.impl.AuditDeploymentInterceptor;
 import dev.fasti.engine.audit.impl.AuditHistoryEventHandler;
 import dev.fasti.engine.audit.impl.AuditSession;
@@ -79,6 +80,7 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
   protected String hmacKey;
   protected String hmacKeyFile;
   protected int checkpointInterval = AuditSettings.DEFAULT_CHECKPOINT_INTERVAL;
+  protected int checkpointIntervalSeconds = AuditSettings.DEFAULT_CHECKPOINT_INTERVAL_SECONDS;
   protected int retentionDays = AuditSettings.DEFAULT_RETENTION_DAYS;
   protected String retiredHmacKeys;
   protected String retiredKeyIds;
@@ -107,6 +109,7 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
     settings.setLockTimeoutSeconds(lockTimeoutSeconds);
     settings.setQueryTimeoutSeconds(queryTimeoutSeconds);
     settings.setPurgeBatchSize(purgeBatchSize);
+    settings.setCheckpointIntervalSeconds(checkpointIntervalSeconds);
     settings.setTransactionCompletion(transactionCompletion);
     if (configuration.getCustomSessionFactories() == null) {
       configuration.setCustomSessionFactories(new ArrayList<>());
@@ -179,6 +182,10 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
     }
     HistoryLevel historyLevel = configuration.getHistoryLevel();
     settings.setHistoryLevel(historyLevel == null ? null : historyLevel.getName());
+    // the ends of the chains of this node are signed every so many seconds and when the engine closes
+    AuditCheckpointer checkpointer = new AuditCheckpointer(settings, configuration.getCommandExecutorTxRequiresNew());
+    checkpointer.start(settings.getCheckpointIntervalSeconds());
+    configuration.addProcessEngineCloseListener(engine -> checkpointer.close());
     LOG.info("Audit trail is enabled on process engine '{}': node {} with {} chains, recording {}, variable values as {}, "
         + "checkpoints {}", processEngine.getName(), settings.getNodeId(), settings.getChains(), settings.getTypes(),
         settings.getVariableValues(), settings.isSigned() ? "signed (key " + settings.getKeyId() + ")" : "not signed");
@@ -306,6 +313,21 @@ public class AuditTrailPlugin implements ProcessEnginePlugin {
   /** Records between two checkpoints of a chain (default 1000, 0 for none). */
   public void setCheckpointInterval(int checkpointInterval) {
     this.checkpointInterval = checkpointInterval;
+  }
+
+  public int getCheckpointIntervalSeconds() {
+    return checkpointIntervalSeconds;
+  }
+
+  /**
+   * With a key: seconds after which the end of each chain of this node that has records after its
+   * last checkpoint is signed with a checkpoint of its own (default 300); 0 to sign the ends of the
+   * chains only when the engine closes. Without it, a chain that does not reach
+   * {@link #setCheckpointInterval(int) checkpointInterval} records before the node goes away is
+   * never signed.
+   */
+  public void setCheckpointIntervalSeconds(int checkpointIntervalSeconds) {
+    this.checkpointIntervalSeconds = checkpointIntervalSeconds;
   }
 
   public int getRetentionDays() {

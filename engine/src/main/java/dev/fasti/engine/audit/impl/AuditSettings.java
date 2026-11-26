@@ -50,6 +50,8 @@ public class AuditSettings implements AuditStatus {
   public static final String DEFAULT_MASKED = "*password*,*secret*,*token*,*credential*,*apikey*,*api_key*,*privatekey*,*private_key*";
   public static final int DEFAULT_CHAINS = 4;
   public static final int DEFAULT_CHECKPOINT_INTERVAL = 1000;
+  /** Seconds after which the end of a chain written since its last checkpoint is signed (with a key). */
+  public static final int DEFAULT_CHECKPOINT_INTERVAL_SECONDS = 300;
   public static final int DEFAULT_RETENTION_DAYS = 365;
   /** HMAC keys shorter than this are refused. */
   public static final int MIN_KEY_BYTES = 32;
@@ -90,6 +92,7 @@ public class AuditSettings implements AuditStatus {
   protected volatile int queryTimeoutSeconds = DEFAULT_QUERY_TIMEOUT_SECONDS;
   protected volatile boolean separateChains;
   protected volatile int purgeBatchSize = DEFAULT_PURGE_BATCH_SIZE;
+  protected volatile int checkpointIntervalSeconds = DEFAULT_CHECKPOINT_INTERVAL_SECONDS;
   protected volatile Consumer<Runnable> transactionCompletion;
   /** Set while a verification of this engine runs: one at a time. */
   protected final AtomicBoolean verifying = new AtomicBoolean();
@@ -377,6 +380,21 @@ public class AuditSettings implements AuditStatus {
       throw new IllegalArgumentException("purgeBatchSize must be at least 1");
     }
     this.purgeBatchSize = purgeBatchSize;
+  }
+
+  public int getCheckpointIntervalSeconds() {
+    return checkpointIntervalSeconds;
+  }
+
+  /**
+   * Seconds after which the end of each chain of this node that has records after its last
+   * checkpoint gets a checkpoint, with a key; 0 to sign the ends only when the engine closes.
+   */
+  public void setCheckpointIntervalSeconds(int checkpointIntervalSeconds) {
+    if (checkpointIntervalSeconds < 0) {
+      throw new IllegalArgumentException("checkpointIntervalSeconds must not be negative");
+    }
+    this.checkpointIntervalSeconds = checkpointIntervalSeconds;
   }
 
   public Consumer<Runnable> getTransactionCompletion() {

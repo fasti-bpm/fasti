@@ -31,6 +31,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.identity.User;
 
 /**
@@ -160,9 +161,21 @@ public class BasicMcpAuthenticator implements McpAuthenticator {
     if (!identityService.checkPassword(userName, password)) {
       return null;
     }
-    User user = identityService.createUserQuery().userId(userName).singleResult();
-    String userId = user != null && user.getId() != null ? user.getId() : userName;
-    return McpIdentity.resolve(identityService, userId, null, null);
+    return McpIdentity.resolve(identityService, canonicalUserId(identityService, userName), null, null);
+  }
+
+  /**
+   * The id the identity service returns for the name, or the name itself if it returns none or,
+   * as a custom identity provider may, more than one user.
+   */
+  protected String canonicalUserId(IdentityService identityService, String userName) {
+    User user;
+    try {
+      user = identityService.createUserQuery().userId(userName).singleResult();
+    } catch (ProcessEngineException e) {
+      return userName;
+    }
+    return user != null && user.getId() != null ? user.getId() : userName;
   }
 
   protected static String cacheKey(String engineName, String userName, String password) {

@@ -101,8 +101,11 @@ Khác với bản Tomcat/WildFly của Camunda 7.24:
   trên Fasti dùng được trên Camunda 7.
 - REST API `/engine-rest`: cùng endpoint, tham số và payload, chỉ thêm endpoint mới (xác thực và
   một số mã trạng thái khác, xem [Cái gì khác](#what-differs)), external task
-  (`fetchAndLock`, long polling), client Java/JS; cookie `JSESSIONID`, CSRF `XSRF-TOKEN` /
-  `X-XSRF-TOKEN`; thuộc tính `camunda.bpm.*`; namespace BPMN `camunda:`.
+  (`fetchAndLock`, long polling), client Java/JS; CSRF `XSRF-TOKEN` / `X-XSRF-TOKEN`; thuộc tính
+  `camunda.bpm.*`; namespace BPMN `camunda:`. Cookie phiên là `JSESSIONID` trong bản Tomcat và
+  WildFly; Run và container image đặt tên `FASTI_SESSION` từ 1.3.2
+  (`server.servlet.session.cookie.name`) để không đụng Camunda 7 Run trên cùng máy. Script tìm
+  cookie theo tên cần dùng tên mới.
 - Filter của Tasklist cổ điển (`color`, `description`, `priority`, `refresh`, `variables`,
   `showUndefinedVariable`) được Tasklist mới đọc và lưu cùng định dạng.
 

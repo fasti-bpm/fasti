@@ -19,7 +19,6 @@
 
   <properties>
     <version.nimbus-oauth2-oidc-sdk>11.39</version.nimbus-oauth2-oidc-sdk>
-    <version.nimbus-jose-jwt>10.9.1</version.nimbus-jose-jwt>
     <!-- generate a bom of compile time dependencies for the license book -->
     <skip-third-party-bom>false</skip-third-party-bom>
   </properties>

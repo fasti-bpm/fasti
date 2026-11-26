@@ -1362,12 +1362,6 @@ Copyright 2012-2022, Connect2id Ltd.
 Licensed under Apache 2.0
 
 ===========================================================================================
-com.nimbusds:nimbus-jose-jwt:jar:9.37.4
-https://bitbucket.org/connect2id/nimbus-jose-jwt/src/9.37.4/
-Copyright: 2012 - 2025, Connect2id Ltd.
-Licensed under Apache 2.0
-
-===========================================================================================
 com.nimbusds:nimbus-jose-jwt:jar:10.9.1
 https://bitbucket.org/connect2id/nimbus-jose-jwt/src/10.9.1/
 Copyright: 2012 - 2026, Connect2id Ltd.
@@ -2911,19 +2905,7 @@ Joda.org (https://www.joda.org/).
 Licensed under Apache 2.0
 
 ===========================================================================================
-net.minidev:accessors-smart:jar:2.6.0
-https://github.com/netplex/json-smart-v2
-Copyright 2011-2024 JSON-SMART authors
-Licensed under Apache 2.0
-
-===========================================================================================
 net.minidev:accessors-smart:jar:2.6.1
-https://github.com/netplex/json-smart-v2
-Copyright 2011-2024 JSON-SMART authors
-Licensed under Apache 2.0
-
-===========================================================================================
-net.minidev:json-smart:jar:2.6.0
 https://github.com/netplex/json-smart-v2
 Copyright 2011-2024 JSON-SMART authors
 Licensed under Apache 2.0

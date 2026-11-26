@@ -60,10 +60,17 @@
         <version>${version.graal.js}</version>
       </dependency>
 
+      <!-- the versions the SSO module (fasti-webapp-oidc) and Spring Security are built with;
+           the Spring Boot BOM alone would ship an older json-smart -->
       <dependency>
         <groupId>com.nimbusds</groupId>
         <artifactId>nimbus-jose-jwt</artifactId>
-        <version>9.37.4</version>
+        <version>${version.nimbus-jose-jwt}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.minidev</groupId>
+        <artifactId>json-smart</artifactId>
+        <version>${version.json-smart}</version>
       </dependency>
 
     </dependencies>

@@ -37,8 +37,6 @@ updates:
         versions: ["(,3.1.2)"]
       - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
         versions: ["(,3)"]
-      - dependency-name: "com.nimbusds:nimbus-jose-jwt"
-        versions: ["(,10)"]
       - dependency-name: "io.rest-assured:*"
         versions: ["(,6)"]
       - dependency-name: "org.wildfly.core:*"

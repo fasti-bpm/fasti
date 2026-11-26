@@ -31,8 +31,9 @@ docker pull fastidev/fasti-bpm:1.3.1              # Docker Hub
 docker pull ghcr.io/fasti-bpm/fasti-bpm:1.3.1     # GitHub Container Registry
 ```
 
-Tags: `1.3.1` (exactly that release), `1.3` (latest patch release of 1.3) and `latest` (the most
-recently published release). The image is signed with cosign (keyless, GitHub OIDC) and carries
+Tags: `1.3.1` (exactly that release), `1.3` (latest patch release of 1.3) and `latest` (the
+highest release version: a maintenance release of an older line, such as 1.2.4 after 1.3.0, does
+not move it, and pre-releases never get it). The image is signed with cosign (keyless, GitHub OIDC) and carries
 an SBOM and a provenance attestation. From 1.0.1 on the signature is in the Sigstore bundle
 format of cosign 3; the 1.0.0 image carries a signature in the older cosign 2 format.
 
@@ -184,7 +185,11 @@ data). Conditions:
   deployment-aware (`FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE=true` for Fasti). This protects only
   asynchronous jobs: starting instances or completing tasks through Fasti still runs the delegates
   on Fasti, so send those requests to nodes that have the Java classes;
-- load balancer: sticky sessions for the web applications; REST with Basic credentials needs none.
+- load balancer: sticky sessions for the web applications; REST with Basic credentials needs none;
+- on the same host: from 1.3.2 the session cookie is `FASTI_SESSION`, not `JSESSIONID`. Browsers
+  send cookies to every port of a host, so with `JSESSIONID` and `Path=/` (Camunda 7 Run and
+  Fasti up to 1.3.1) opening one application signed the user out of the other. Keep the name
+  distinct when you change it (`SERVER_SERVLET_SESSION_COOKIE_NAME`).
 
 Details: [Mixed operation with Camunda 7 nodes](migrate-from-camunda-7.md#mixed-operation-with-camunda-7-nodes).
 
@@ -202,7 +207,8 @@ Details: [Mixed operation with Camunda 7 nodes](migrate-from-camunda-7.md#mixed-
 | `FASTI_JOB_EXECUTOR_ENABLED`, `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | job executor of this node |
 | `FASTI_EXTRA_LIB` | directory of additional jars (Oracle, DB2 drivers) |
 | `FASTI_DB_CONN_MAXACTIVE` | maximum connection pool size (default 20; an idle node keeps 10 open, `FASTI_DB_CONN_MINIDLE`) |
-| `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | JVM options, percentage of memory for the heap (75) |
+| `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | JVM options, percentage of the container memory for the heap (75; 60 below a 1.5 GiB limit) |
+| `SERVER_SERVLET_SESSION_COOKIE_NAME` | name of the session cookie (default `FASTI_SESSION`; up to 1.3.1 `JSESSIONID`) |
 
 Full table: [distro/docker/README.md](../distro/docker/README.md#environment-variables).
 
@@ -244,7 +250,8 @@ With Docker Compose: change `FASTI_IMAGE` (or the `image:` line), then
 `docker compose -f docker-compose.postgres.yml up -d`. Read the [CHANGELOG](../CHANGELOG.md)
 first, especially the **BREAKING** entries. The `1.x` line keeps the 7.24 schema, so upgrades
 within it do not touch the schema. `docker stop -t 60` lets running requests finish before the
-container is stopped.
+container is stopped. Upgrading from 1.3.1 or older to 1.3.2 or newer signs every web user out
+once: the session cookie is renamed from `JSESSIONID` to `FASTI_SESSION`.
 
 **Rollback:**
 

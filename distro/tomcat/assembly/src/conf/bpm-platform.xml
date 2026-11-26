@@ -2,8 +2,24 @@
 <bpm-platform xmlns="http://www.camunda.org/schema/1.0/BpmPlatform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.camunda.org/schema/1.0/BpmPlatform http://www.camunda.org/schema/1.0/BpmPlatform ">
 
+  <!-- Job executor (docs/tuning-runtime.md), as in Run and the container image: an acquisition
+       locks up to 10 due jobs for lockTimeInMillis (5 minutes, as on Camunda 7.24 nodes), the queue
+       holds one acquisition and 10 threads execute them. Every executing job holds a connection:
+       keep maxActive of jdbc/ProcessEngine in conf/server.xml at the threads plus about ten. The
+       exclusive jobs of one process instance acquired together run one after the other in one
+       thread under that lock: keep maxJobsPerAcquisition x the slowest such job below it. -->
   <job-executor>
-    <job-acquisition name="default" />
+    <job-acquisition name="default">
+      <properties>
+        <property name="maxJobsPerAcquisition">10</property>
+        <property name="lockTimeInMillis">300000</property>
+      </properties>
+    </job-acquisition>
+    <properties>
+      <property name="corePoolSize">10</property>
+      <property name="maxPoolSize">10</property>
+      <property name="queueSize">10</property>
+    </properties>
   </job-executor>
 
   <process-engine name="default">

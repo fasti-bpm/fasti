@@ -142,7 +142,23 @@
                     <connection-url>jdbc:h2:./camunda-h2-dbs/process-engine;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=${wildfly.h2.compatibility.mode:REGULAR}</connection-url>
                     <driver>h2</driver>
                     <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                    <!-- room for the 10 job executor threads plus the requests that use the database
+                         at the same time; a connection is checked (Connection.isValid()) before it
+                         is handed out, so that connections broken by a database restart are
+                         replaced; a request waits at most 10 s for a free connection -->
+                    <pool>
+                        <min-pool-size>10</min-pool-size>
+                        <max-pool-size>20</max-pool-size>
+                    </pool>
                     <security user-name="sa" password="sa"/>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.novendor.JDBC4ValidConnectionChecker"/>
+                        <validate-on-match>true</validate-on-match>
+                        <background-validation>false</background-validation>
+                    </validation>
+                    <timeout>
+                        <blocking-timeout-millis>10000</blocking-timeout-millis>
+                    </timeout>
                 </datasource>
                 <drivers>
                     <driver name="h2" module="com.h2database.h2">
@@ -685,16 +701,19 @@
                     </plugins>
                 </process-engine>
             </process-engines>
+            <!-- as in Run and the container image (docs/tuning-runtime.md): an acquisition locks up
+                 to 10 due jobs, the queue holds one acquisition and 10 threads execute them; every
+                 executing job holds a connection of java:jboss/datasources/ProcessEngine -->
             <job-executor>
-                <core-threads>3</core-threads>
-                <max-threads>5</max-threads>
+                <core-threads>10</core-threads>
+                <max-threads>10</max-threads>
                 <queue-length>10</queue-length>
                 <job-acquisitions>
                     <job-acquisition name="default">
                         <properties>
                             <property name="lockTimeInMillis">300000</property>
                             <property name="waitTimeInMillis">5000</property>
-                            <property name="maxJobsPerAcquisition">3</property>
+                            <property name="maxJobsPerAcquisition">10</property>
                         </properties>
                     </job-acquisition>
                 </job-acquisitions>

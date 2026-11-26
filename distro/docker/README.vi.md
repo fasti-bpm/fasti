@@ -130,7 +130,10 @@ image 1.1.x; các mục ghi **từ 1.3.0** chưa có trong các image 1.2.x.
 | `DEBUG=true` | | remote debug cổng `FASTI_DEBUG_PORT` (8000) |
 | `JMX_PROMETHEUS=true` | | Prometheus JMX exporter cổng `JMX_PROMETHEUS_PORT` (9404), cấu hình `JMX_PROMETHEUS_CONF`, nếu có jar trong `/fasti/javaagent` |
 | `JAVA_OPTS` | | thêm tùy chọn JVM (tách bằng khoảng trắng, không có dấu nháy) |
-| `FASTI_MAX_RAM_PERCENTAGE` | 75 | phần trăm RAM của container cho heap |
+| `FASTI_MAX_RAM_PERCENTAGE` | 75 (60 khi giới hạn dưới 1,5 GiB) | phần trăm RAM của container cho heap. **Từ 1.3.2** mặc định là 60 khi giới hạn bộ nhớ của container (cgroup v2 hoặc v1) dưới 1,5 GiB, vì metaspace, code cache, luồng và GraalJS cần khoảng 400-500 MB ngoài heap |
+| `SERVER_SERVLET_SESSION_COOKIE_NAME` | `FASTI_SESSION` | **Từ 1.3.2** (đến 1.3.1 là `JSESSIONID`). Tên cookie phiên của web app; giữ tên khác với ứng dụng khác trên cùng máy, vì trình duyệt gửi cookie cho mọi cổng của một máy |
+| `SERVER_TOMCAT_THREADS_MAX` | 100 | **Từ 1.3.2** (đến 1.3.1 là 200 của Tomcat). Số luồng xử lý request; xem Tinh chỉnh hiệu năng |
+| `SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT` | 10000 | **Từ 1.3.2** (đến 1.3.1 là 30000 của HikariCP). Số mili giây một request chờ kết nối rảnh |
 | `FASTI_ANALYTICS_CACHE_TTL` | `60s` | **Từ 1.3.0.** Thời gian giữ kết quả phân tích quy trình cho cùng một góc nhìn (`0` để tắt; số không có đơn vị tính là giây); số liệu đang chạy có thể cũ tối đa chừng ấy. Thiết lập `fasti.analytics.cache-ttl` |
 | `FASTI_ANALYTICS_MAX_CONCURRENT` | `2` | **Từ 1.3.0.** Số lượt quét của phân tích quy trình (activities, rework, user task) được đọc lịch sử cùng lúc trên node này, cộng một lượt đọc nhanh (instances, trend, truy vết); các lượt khác chờ đến lượt mà không giữ kết nối CSDL, nên job và danh sách task vẫn có kết nối của chúng. `0`: không giới hạn. Thiết lập `fasti.analytics.max-concurrent` |
 | `FASTI_ANALYTICS_MAX_WAIT` | `60s` | **Từ 1.3.0.** Thời gian chờ lượt lâu nhất; quá thời gian này REST API trả `503` (số không có đơn vị tính là giây). Thiết lập `fasti.analytics.max-wait` |
@@ -176,7 +179,7 @@ image 1.1.x; các mục ghi **từ 1.3.0** chưa có trong các image 1.2.x.
 | `FASTI_AUDIT_HMAC_KEY`, `FASTI_AUDIT_HMAC_KEY_FILE` | | **Từ 1.1.0.** Khóa ký các điểm kiểm tra của nhật ký kiểm toán (ít nhất 32 byte), hoặc đường dẫn tệp chứa khóa (secret của Docker/Kubernetes) |
 | `FASTI_PERFORMANCE_INDEX_CHECK` | `warn` | **Từ 1.2.0.** Một cảnh báo khi khởi động liệt kê các [chỉ mục hiệu năng tùy chọn](../../docs/performance.vi.md) của `/fasti/configuration/sql/optional/<database>_fasti_perf_indexes_create.sql` mà cơ sở dữ liệu chưa có; `off` để tắt |
 | `FASTI_PERFORMANCE_CONFIG_CHECK` | `warn` | **Từ 1.2.0.** Cảnh báo khi khởi động cho các cấu hình tốn hiệu năng khi dữ liệu lớn dần (lịch sử không có khung giờ dọn, connection pool nhỏ hơn mức job executor cần, …); `off` để tắt |
-| `FASTI_APPCDS`, `FASTI_APPCDS_FILE` | `false`, `/fasti/data/fasti-appcds.jsa` | class data sharing để khởi động nhanh hơn (xem Tinh chỉnh hiệu năng) |
+| `FASTI_APPCDS`, `FASTI_APPCDS_FILE` | `false`, `/fasti/data/fasti-appcds.jsa` | class data sharing để khởi động nhanh hơn (xem Tinh chỉnh hiệu năng); chạy được từ 1.3.2 |
 | `FASTI_BASE64_INTRINSICS` | `false` | `false` thêm `-XX:-UseBASE64Intrinsics` để giảm thiểu CVE-2026-114938 ("Java4Shell"); `true` giữ intrinsic Base64 của JVM. Xem [docs/security/CVE-2026-114938.vi.md](../../docs/security/CVE-2026-114938.vi.md) |
 
 Tham số lệnh của image cũ được nhận: `--webapps`, `--rest`, `--example`, `--oauth2`,
@@ -235,7 +238,7 @@ các dòng như vậy; với 1.0.x, hãy kết nối qua MySQL Connector/J
 - **Sau proxy:** `X-Forwarded-*` được tin từ địa chỉ mạng nội bộ (Tomcat `RemoteIpValve`);
   proxy phải ghi đè các header này. Cookie `Secure` với `--production` cần HTTPS ở proxy.
 - **Nhiều node sau load balancer:** bật sticky session cho web app (phiên đăng nhập nằm trong
-  từng node); REST với Basic auth không cần. Mọi node phải dùng cùng mức lịch sử, cùng múi
+  từng node, cookie `FASTI_SESSION`); REST với Basic auth không cần. Mọi node phải dùng cùng mức lịch sử, cùng múi
   giờ, cùng plugin/lớp Java của process, cùng cấu hình mật khẩu.
 
 ## Tinh chỉnh hiệu năng
@@ -249,19 +252,34 @@ Số đo tham khảo (image này, PostgreSQL 16 cùng máy, 16 nhân, container 
 | Tải lần đầu web UI mới (byte truyền) | 960 KB | 330 KB (gzip, bật sẵn) |
 | Khởi động (`Started … in`) | khoảng 6–11 s tùy máy và tải | nhanh hơn một chút với `FASTI_APPCDS=true` (từ lần chạy thứ hai) |
 
-- **JVM:** heap = `FASTI_MAX_RAM_PERCENTAGE` (75) % giới hạn bộ nhớ; luôn đặt giới hạn bộ
-  nhớ cho container. Dưới 2 CPU hoặc dưới ~1,8 GB JVM tự chọn Serial GC; với tải thật nên cấp
+- **JVM:** heap = `FASTI_MAX_RAM_PERCENTAGE` % giới hạn bộ nhớ: 75, hoặc 60 khi giới hạn dưới
+  1,5 GiB (từ 1.3.2; với 75 % container nhỏ như vậy còn quá ít chỗ cho metaspace, code cache,
+  luồng và GraalJS và có thể bị kill vì vượt giới hạn). Luôn đặt giới hạn bộ nhớ cho container. Dưới 2 CPU hoặc dưới ~1,8 GB JVM tự chọn Serial GC; với tải thật nên cấp
   ít nhất 2 CPU và 2 GB, hoặc đặt `JAVA_OPTS=-XX:+UseG1GC`. Thêm cờ qua `JAVA_OPTS`.
 - **Khởi động nhanh hơn:** `FASTI_APPCDS=true` ghi archive class data sharing vào
-  `/fasti/data/fasti-appcds.jsa` khi container dừng êm; các lần chạy sau dùng lại. Cần
-  `/fasti/data` ghi được (gắn volume để giữ qua các lần tạo lại container). Archive không khớp
-  với JDK hoặc classpath thì JVM bỏ qua; khi nâng cấp image nên xóa file này để nó được tạo lại.
+  `/fasti/data/fasti-appcds.jsa` khi container dừng êm; các lần chạy sau dùng lại. Đến 1.3.1
+  tính năng này không chạy: JVM từ chối ghi archive (một thư mục đứng trước các jar trên
+  classpath) và thoát mã 1 mỗi lần dừng. Cần `/fasti/data` ghi được và giữ lại: gắn volume, vì
+  trên Kubernetes `emptyDir` là mới ở mỗi lần pod khởi động và archive lại được ghi từ đầu
+  (`FASTI_APPCDS_FILE` có thể trỏ tới volume khác). Archive không khớp với JDK hoặc classpath
+  (image khác, tham số khởi động khác, thêm jar vào `configuration/userlib`) thì JVM bỏ qua và
+  ghi lại ở lần dừng êm tiếp theo.
 - **Pool kết nối (HikariCP):** mặc định tối đa 20 kết nối (đến 1.1 là 10): mười luồng job
   executor cộng chỗ cho các request REST đồng thời. Node đang rảnh giữ mở 10 kết nối và chỉ mở
   thêm khi có tải. Đổi bằng `FASTI_DB_CONN_MAXACTIVE` (ví dụ 30) và `FASTI_DB_CONN_MINIDLE`. Tổng
   số tối đa của mọi node (kể cả node Camunda 7.24), cộng các client khác và phần dự trữ của cơ sở
   dữ liệu, phải nằm dưới giới hạn kết nối của nó (`max_connections`); tính số node ở mức cao nhất
-  (số bản sao tối đa khi tự co giãn cộng các pod thêm của một lần cập nhật cuốn chiếu).
+  (số bản sao tối đa khi tự co giãn cộng các pod thêm của một lần cập nhật cuốn chiếu). **Từ
+  1.3.2** một request chờ kết nối rảnh tối đa 10 s (`SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT`,
+  mặc định của HikariCP là 30 s), nên pool cạn hiện ra thành lỗi và ở readiness probe thay vì giữ
+  chặt các luồng request.
+- **Luồng request:** **từ 1.3.2** tối đa 100 (`SERVER_TOMCAT_THREADS_MAX`, mặc định của Tomcat
+  là 200). Với 20 kết nối và 10 luồng job, khoảng mười request dùng cơ sở dữ liệu cùng lúc; thêm
+  luồng chỉ xếp hàng chờ kết nối mà vẫn tốn bộ nhớ. Trang, script và endpoint health không cần
+  kết nối nhưng dùng chung các luồng này, liveness probe cũng vậy: khi mọi luồng đang chờ cơ sở
+  dữ liệu thì chúng cũng chờ (mỗi request đang chờ tối đa 10 s như trên). Muốn probe không bao giờ
+  xếp hàng sau request, cho actuator cổng và nhóm luồng riêng: `FASTI_MANAGEMENT_PORT` (Helm
+  chart: `management.port`).
 - **Job executor:** mặc định giống Run: 10 luồng, hàng đợi 10 và 10 job mỗi lần lấy (đến 1.1:
   core 3, max 10, queue 3, 3 job mỗi lần lấy). Khi có nhiều job async/timer, tăng cùng lúc
   `CAMUNDA_BPM_JOB_EXECUTION_MAX_POOL_SIZE`, `..._QUEUE_CAPACITY` và
@@ -275,7 +293,7 @@ Số đo tham khảo (image này, PostgreSQL 16 cùng máy, 16 nhân, container 
 - **Nhiều node:** mỗi node có job executor riêng lấy job từ cùng bảng; thêm node tăng thông
   lượng job nhưng cũng tăng xung đột khóa lạc quan (vô hại, job được thử lại). Giữ
   `max-jobs-per-acquisition` vừa phải (≤ 16) khi có nhiều node. Web UI cần sticky session.
-- **Nén và cache:** gzip bật cho trang, script, style và JSON trên 2 KB
+- **Nén và cache:** gzip bật cho trang, script, style, SVG, JSON và XML trên 2 KB
   (`server.compression.enabled=false` nếu proxy đã nén). File của web UI mới có hash trong tên
   được cache một năm (`immutable`); `index.html` luôn được kiểm tra lại (`no-cache`).
 - **Chỉ mục cơ sở dữ liệu:** image không thêm hay đổi chỉ mục; schema giữ nguyên như 7.24.0.

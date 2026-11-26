@@ -100,8 +100,11 @@ Compared with the Tomcat/WildFly distributions of Camunda 7.24:
   passwords changed on Fasti work on Camunda 7.
 - The REST API at `/engine-rest`: the same endpoints, parameters and payloads, plus additional
   endpoints (authentication and some status codes differ, see [What differs](#what-differs)); external tasks
-  (`fetchAndLock`, long polling), the Java and JS clients, `JSESSIONID`, `XSRF-TOKEN`/`X-XSRF-TOKEN`, `camunda.bpm.*`
-  properties, the `camunda:` BPMN namespace.
+  (`fetchAndLock`, long polling), the Java and JS clients, `XSRF-TOKEN`/`X-XSRF-TOKEN`, `camunda.bpm.*`
+  properties, the `camunda:` BPMN namespace. The session cookie is `JSESSIONID` in the Tomcat and
+  WildFly distributions; Run and the container image name it `FASTI_SESSION` from 1.3.2
+  (`server.servlet.session.cookie.name`), so that it does not clash with Camunda 7 Run on the
+  same host. Scripts that look for the cookie by name need the new name.
 - Filters from the classic Tasklist (`color`, `description`, `priority`, `refresh`, `variables`,
   `showUndefinedVariable`) are read and written in the same format by the new one.
 

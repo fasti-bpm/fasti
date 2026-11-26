@@ -3,10 +3,14 @@
  * Copyright Fasti BPM contributors
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ApiError } from '../api/http';
 import {
+  MAX_DOCUMENT_KEYS,
   connectPreferences,
   disconnectPreferences,
   flushPreferences,
+  localDocument,
+  onPreferencesRejected,
   onPreferencesReplaced,
   readPreference,
   writePreference,
@@ -146,5 +150,169 @@ describe('preferences on the server', () => {
     writePreference('a', 3);
     await flushPreferences();
     expect(remote.save).toHaveBeenCalledTimes(1);
+  });
+
+  it('waits a few seconds for further changes before sending', async () => {
+    vi.useFakeTimers();
+    const remote = remoteWith({ theme: 'light' });
+    await connectPreferences('alice', remote);
+
+    writePreference('theme', 'dark');
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(remote.save).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(remote.save).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not send a refused document again and tells the user once', async () => {
+    vi.useFakeTimers();
+    const remote = { load: vi.fn(async () => ({ a: 1 })), save: vi.fn(async () => Promise.reject(new ApiError('client', 413))) };
+    const rejected = vi.fn();
+    const off = onPreferencesRejected(rejected);
+    await connectPreferences('alice', remote);
+
+    writePreference('a', 2);
+    await flushPreferences();
+    await vi.runAllTimersAsync();
+    expect(remote.save).toHaveBeenCalledTimes(1);
+    writePreference('a', 3);
+    await flushPreferences();
+    await vi.runAllTimersAsync();
+    off();
+
+    expect(remote.save).toHaveBeenCalledTimes(2);
+    expect(rejected).toHaveBeenCalledTimes(1);
+  });
+
+  it('tries again later when the server is unavailable', async () => {
+    vi.useFakeTimers();
+    const save = vi.fn().mockRejectedValueOnce(new ApiError('server', 503)).mockResolvedValue(undefined);
+    await connectPreferences('alice', { load: async () => ({ a: 1 }), save });
+
+    writePreference('a', 2);
+    await flushPreferences();
+    await vi.advanceTimersByTimeAsync(30_000);
+
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(save).toHaveBeenLastCalledWith({ a: 2 });
+  });
+
+  it('does not send a document larger than the server keeps', async () => {
+    const remote = remoteWith({ a: 1 });
+    const rejected = vi.fn();
+    const off = onPreferencesRejected(rejected);
+    await connectPreferences('alice', remote);
+
+    for (let i = 0; i <= MAX_DOCUMENT_KEYS; i++) writePreference(`key${i}`, i);
+    await flushPreferences();
+    off();
+
+    expect(remote.save).not.toHaveBeenCalled();
+    expect(rejected).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends one upload at a time, and then the latest state', async () => {
+    const answers: (() => void)[] = [];
+    let running = 0;
+    let most = 0;
+    const save = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          running++;
+          most = Math.max(most, running);
+          answers.push(() => {
+            running--;
+            resolve();
+          });
+        }),
+    );
+    await connectPreferences('alice', { load: async () => ({ a: 1 }), save });
+
+    writePreference('a', 2);
+    const first = flushPreferences();
+    writePreference('a', 3);
+    void flushPreferences();
+    writePreference('a', 4);
+    const last = flushPreferences();
+    expect(save).toHaveBeenCalledTimes(1);
+    answers.shift()?.();
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+    answers.shift()?.();
+    await Promise.all([first, last]);
+
+    expect(most).toBe(1);
+    expect(save).toHaveBeenLastCalledWith({ a: 4 });
+  });
+
+  it('sends the changes still waiting when the page is closed, with a request that outlives it', async () => {
+    vi.useFakeTimers();
+    const remote = remoteWith({ a: 1 });
+    await connectPreferences('alice', remote);
+
+    writePreference('a', 2);
+    window.dispatchEvent(new Event('pagehide'));
+    await vi.runAllTimersAsync();
+
+    expect(remote.save).toHaveBeenCalledTimes(1);
+    expect(remote.save).toHaveBeenCalledWith({ a: 2 }, { keepalive: true });
+  });
+
+  it('sends nothing when the page is closed without changes', async () => {
+    const remote = remoteWith({ a: 1 });
+    await connectPreferences('alice', remote);
+
+    window.dispatchEvent(new Event('pagehide'));
+
+    expect(remote.save).not.toHaveBeenCalled();
+  });
+});
+
+describe('keys that left the namespace of the per-user Tasklist entries', () => {
+  it('moves them to their new names for the owner of the browser and adds them to the server copy', async () => {
+    vi.useFakeTimers();
+    window.localStorage.setItem('fasti.next.tasklist.processFields', JSON.stringify({ invoice: [{ name: 'amount', label: 'Amount' }] }));
+    window.localStorage.setItem('fasti.next.tasklist.notify', 'true');
+    const remote = remoteWith({ theme: 'dark' });
+
+    await connectPreferences('alice', remote);
+    await vi.runAllTimersAsync();
+
+    expect(window.localStorage.getItem('fasti.next.tasklist.processFields')).toBeNull();
+    expect(window.localStorage.getItem('fasti.next.tasklist.notify')).toBeNull();
+    expect(readPreference('tasks.notify', false)).toBe(true);
+    expect(remote.save).toHaveBeenCalledWith({
+      theme: 'dark',
+      'tasks.notify': true,
+      'tasks.processFields': { invoice: [{ name: 'amount', label: 'Amount' }] },
+    });
+  });
+
+  it('drops them for a new user of a shared browser', async () => {
+    await connectPreferences('bob', remoteWith({ theme: 'light' }));
+    disconnectPreferences();
+    window.localStorage.setItem('fasti.next.tasklist.notify', 'true');
+    const alice = remoteWith({});
+
+    await connectPreferences('alice', alice);
+
+    expect(window.localStorage.getItem('fasti.next.tasklist.notify')).toBeNull();
+    expect(readPreference('tasks.notify', false)).toBe(false);
+    expect(alice.save).not.toHaveBeenCalled();
+  });
+
+  it('keeps the entry of a user of that very name', async () => {
+    writePreference('tasklist.notify', { onlyMine: true });
+
+    await connectPreferences('notify', remoteWith({}));
+
+    expect(readPreference('tasklist.notify', null)).toEqual({ onlyMine: true });
+  });
+
+  it('shares the new names, and never the entries of other users', () => {
+    writePreference('tasks.notify', true);
+    writePreference('tasklist.bob', { onlyMine: true });
+
+    expect(localDocument('alice')).toEqual({ 'tasks.notify': true });
   });
 });

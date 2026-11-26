@@ -111,6 +111,8 @@ const messages: Catalog = {
   'ops.history.legend': 'Contorno verde: recorrida; discontinuo: cancelada. Los distintivos cuentan las instancias de actividad en ejecución y finalizadas.',
   'ops.history.notFound': 'No encontrado en el historial',
   'ops.history.nothing': 'Nada registrado',
+  'ops.history.capped': 'Solo se muestran las primeras {count} entradas.',
+  'ops.history.cappedLatest': 'Solo se muestran las {count} entradas más recientes.',
   'ops.history.noUpdates': 'No hay cambios registrados',
   'ops.history.openRunning': 'Abrir instancia en ejecución',
   'ops.history.reason': 'Motivo: {reason}',

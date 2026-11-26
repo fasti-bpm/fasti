@@ -2,11 +2,11 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright Fasti BPM contributors
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import type { TaskSorting } from '../api/types';
 import type { QueueView } from './queue';
-import { readPreference, writePreference } from '../lib/storage';
+import { onPreferencesReplaced, readPreference, writePreference } from '../lib/storage';
 import type { Criterion } from './search';
 import type { SavedSearch } from './searchLinks';
 
@@ -90,20 +90,39 @@ const DEFAULTS: TasklistPreferences = {
   completeAndNext: false,
 };
 
+function storedPreferences(key: string): TasklistPreferences {
+  return { ...DEFAULTS, ...readPreference<Partial<TasklistPreferences>>(key, {}) };
+}
+
+/**
+ * The Tasklist choices of a user. Only a change is written, never the defaults of the first look:
+ * the copy of the server may still be on its way. Once it is applied it is shown, instead of being
+ * overwritten by the defaults with the next change.
+ */
 export function useTasklistPreferences(
   userId: string,
 ): [TasklistPreferences, (changes: Partial<TasklistPreferences>) => void] {
   const key = `tasklist.${userId}`;
-  const [preferences, setPreferences] = useState<TasklistPreferences>(() => ({
-    ...DEFAULTS,
-    ...readPreference<Partial<TasklistPreferences>>(key, {}),
-  }));
+  const [preferences, setPreferences] = useState<TasklistPreferences>(() => storedPreferences(key));
+  const changed = useRef(false);
 
   useEffect(() => {
+    if (!changed.current) return;
+    changed.current = false;
     writePreference(key, preferences);
   }, [key, preferences]);
 
+  useEffect(
+    () =>
+      onPreferencesReplaced(() => {
+        changed.current = false;
+        setPreferences(storedPreferences(key));
+      }),
+    [key],
+  );
+
   const update = useCallback((changes: Partial<TasklistPreferences>) => {
+    changed.current = true;
     setPreferences((current) => ({ ...current, ...changes }));
   }, []);
 

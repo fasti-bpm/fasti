@@ -437,7 +437,7 @@ describe('shell', () => {
 
     const fields = await within(settings).findByRole('list', { name: 'Fields of Invoice Receipt' });
     expect(within(fields).getByText('Amount')).toBeVisible();
-    expect(JSON.parse(window.localStorage.getItem('fasti.next.tasklist.processFields') ?? '{}')).toEqual({
+    expect(JSON.parse(window.localStorage.getItem('fasti.next.tasks.processFields') ?? '{}')).toEqual({
       invoice: [{ name: 'amount', label: 'Amount' }],
     });
     // the same variable cannot be added twice
@@ -769,7 +769,7 @@ describe('tasklist', () => {
 
   it('shows the business fields chosen for the process of each task first', async () => {
     window.localStorage.setItem(
-      'fasti.next.tasklist.processFields',
+      'fasti.next.tasks.processFields',
       JSON.stringify({ invoice: [{ name: 'creditor', label: 'Supplier' }], other: [{ name: 'secret', label: '' }] }),
     );
     const server = backend();

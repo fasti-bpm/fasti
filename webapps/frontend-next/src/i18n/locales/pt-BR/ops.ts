@@ -111,6 +111,8 @@ const messages: Catalog = {
   'ops.history.legend': 'Contorno verde: percorrida; tracejado: cancelada. Os selos contam instâncias de atividade em execução e finalizadas.',
   'ops.history.notFound': 'Não encontrado no histórico',
   'ops.history.nothing': 'Nada registrado',
+  'ops.history.capped': 'Somente as primeiras {count} entradas são mostradas.',
+  'ops.history.cappedLatest': 'Somente as {count} entradas mais recentes são mostradas.',
   'ops.history.noUpdates': 'Nenhuma alteração registrada',
   'ops.history.openRunning': 'Abrir instância em execução',
   'ops.history.reason': 'Motivo: {reason}',

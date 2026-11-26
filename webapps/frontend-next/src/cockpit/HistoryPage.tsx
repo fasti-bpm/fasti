@@ -18,6 +18,9 @@ import {
   getHistoricVariables,
   getJobLog,
   getVariableUpdates,
+  HISTORIC_ACTIVITY_LIMIT,
+  HISTORIC_LIST_LIMIT,
+  HISTORIC_VARIABLE_LIMIT,
   orNull,
   type HistoricActivity,
   type HistoricIncident,
@@ -33,7 +36,7 @@ import { MoreFilters } from './MoreFilters';
 import { fromDateTimeInput, toDateTimeInput, toEngineDate } from '../lib/dates';
 import { tenantScope } from '../lib/userPrefs';
 import { getLatestDefinitions } from '../api/cockpit';
-import { Button, Dialog, EmptyState, ErrorState, Loading, Skeleton, cx } from '../ui';
+import { Button, Dialog, EmptyState, ErrorState, Loading, Notice, Skeleton, cx } from '../ui';
 import { OperationLogTable } from './AuditPage';
 import { AuditTrailTable, useAuditStatus } from './AuditTrailPage';
 import { VariableColumnsError, VariableColumnsPicker, useColumnValues, useVariableColumns, variableColumnsOf } from './VariableColumns';
@@ -587,15 +590,20 @@ function VariableHistoryDialog({ variable, onClose }: { variable: HistoricVariab
       ) : updates.data.length === 0 ? (
         <EmptyState title={t('ops.history.noUpdates')} />
       ) : (
-        <ol className="timeline">
-          {updates.data.map((update) => (
-            <li key={update.id} className="timeline__item">
-              <Time value={update.time} />
-              <span className="muted"> · {update.variableType ?? '—'}</span>
-              <pre className="value__text">{valueText(update.value)}</pre>
-            </li>
-          ))}
-        </ol>
+        <>
+          {updates.data.length >= HISTORIC_LIST_LIMIT && (
+            <Notice tone="warning">{t('ops.history.capped', { count: HISTORIC_LIST_LIMIT })}</Notice>
+          )}
+          <ol className="timeline">
+            {updates.data.map((update) => (
+              <li key={update.id} className="timeline__item">
+                <Time value={update.time} />
+                <span className="muted"> · {update.variableType ?? '—'}</span>
+                <pre className="value__text">{valueText(update.value)}</pre>
+              </li>
+            ))}
+          </ol>
+        </>
       )}
     </Dialog>
   );
@@ -606,8 +614,9 @@ function valueText(value: unknown): string {
   return typeof value === 'object' ? JSON.stringify(value) : String(value);
 }
 
-function useList<T>(key: string, id: string, load: (id: string) => Promise<T[]>) {
-  return useQuery({ queryKey: [COCKPIT, key, id], queryFn: () => orNull(load(id)) });
+/** A list of the instance, read once its tab is shown. */
+function useList<T>(key: string, id: string, load: (id: string) => Promise<T[]>, shown: boolean) {
+  return useQuery({ queryKey: [COCKPIT, key, id], queryFn: () => orNull(load(id)), enabled: shown });
 }
 
 /** One instance as the history knows it: the path it took and what happened on the way. */
@@ -629,9 +638,13 @@ export function HistoricInstancePage() {
     queryFn: ({ signal }) => getHistoricActivities(id, signal),
     enabled: !!instance.data,
   });
-  const variables = useList('historic-variables', id, (key) => getHistoricVariables(key));
-  const incidents = useList('historic-incidents', id, getHistoricIncidents);
-  const jobLog = useList('job-log', id, getJobLog);
+  const tab = params.get('tab') ?? 'activities';
+  // the lists of the other tabs are read when their tab is first shown, and kept from then on
+  const [shownTabs, setShownTabs] = useState<ReadonlySet<string>>(() => new Set([tab]));
+  if (!shownTabs.has(tab)) setShownTabs(new Set([...shownTabs, tab]));
+  const variables = useList('historic-variables', id, (key) => getHistoricVariables(key), shownTabs.has('variables'));
+  const incidents = useList('historic-incidents', id, getHistoricIncidents, shownTabs.has('incidents'));
+  const jobLog = useList('job-log', id, getJobLog, shownTabs.has('jobs'));
   const names = useMemo(() => elementNames(xml.data), [xml.data]);
   const path = useMemo(() => executedPath(activities.data ?? []), [activities.data]);
   // the activity instances by id, to name the scope of a variable
@@ -646,7 +659,6 @@ export function HistoricInstancePage() {
     [activities.data, names],
   );
   const nodes = useMemo(() => flowNodes(xml.data), [xml.data]);
-  const tab = params.get('tab') ?? 'activities';
   const auditStatus = useAuditStatus();
 
   const activityColumns = useMemo<Column<HistoricActivity>[]>(
@@ -767,19 +779,28 @@ export function HistoricInstancePage() {
     data: { data: T[] | null | undefined; error: unknown; refetch: () => unknown },
     columns: Column<T>[],
     key: (row: T) => string,
+    /** the most that is read, and whether those are the first or the latest entries */
+    cap: { limit: number; latest: boolean },
   ) =>
     data.data === null ? (
       <EmptyState icon={History} title={t('cockpit.history.unavailable')} />
     ) : (
-      <DataTable
-        label={label}
-        columns={columns}
-        rows={data.data}
-        rowKey={key}
-        error={data.error}
-        onRetry={() => void data.refetch()}
-        empty={<EmptyState title={t('ops.history.nothing')} />}
-      />
+      <>
+        {(data.data?.length ?? 0) >= cap.limit && (
+          <Notice tone="warning">
+            {t(cap.latest ? 'ops.history.cappedLatest' : 'ops.history.capped', { count: cap.limit })}
+          </Notice>
+        )}
+        <DataTable
+          label={label}
+          columns={columns}
+          rows={data.data}
+          rowKey={key}
+          error={data.error}
+          onRetry={() => void data.refetch()}
+          empty={<EmptyState title={t('ops.history.nothing')} />}
+        />
+      </>
     );
 
   return (
@@ -863,20 +884,25 @@ export function HistoricInstancePage() {
             {activities.isError ? (
               <ErrorState error={activities.error} onRetry={() => void activities.refetch()} />
             ) : (
-              <DataTable
-                label={t('ops.history.activities')}
-                columns={activityColumns}
-                rows={activities.data}
-                rowKey={(row) => row.id}
-                empty={<EmptyState title={t('ops.history.nothing')} />}
-              />
+              <>
+                {(activities.data?.length ?? 0) >= HISTORIC_ACTIVITY_LIMIT && (
+                  <Notice tone="warning">{t('timeline.capped', { count: HISTORIC_ACTIVITY_LIMIT })}</Notice>
+                )}
+                <DataTable
+                  label={t('ops.history.activities')}
+                  columns={activityColumns}
+                  rows={activities.data}
+                  rowKey={(row) => row.id}
+                  empty={<EmptyState title={t('ops.history.nothing')} />}
+                />
+              </>
             )}
           </Tabs.Content>
           <Tabs.Content className="ctabs__content" value="timeline">
             <InstanceTimeline instanceId={id} names={names} />
           </Tabs.Content>
           <Tabs.Content className="ctabs__content" value="variables">
-            {list(t('cockpit.instance.tab.variables'), variables, variableColumns, (row) => row.id)}
+            {list(t('cockpit.instance.tab.variables'), variables, variableColumns, (row) => row.id, { limit: HISTORIC_VARIABLE_LIMIT, latest: false })}
           </Tabs.Content>
           <Tabs.Content className="ctabs__content" value="log">
             <OperationLogTable query={{ processInstanceId: id }} />
@@ -887,10 +913,10 @@ export function HistoricInstancePage() {
             </Tabs.Content>
           )}
           <Tabs.Content className="ctabs__content" value="incidents">
-            {list(t('cockpit.incidents.title'), incidents, incidentColumns, (row) => row.id)}
+            {list(t('cockpit.incidents.title'), incidents, incidentColumns, (row) => row.id, { limit: HISTORIC_LIST_LIMIT, latest: true })}
           </Tabs.Content>
           <Tabs.Content className="ctabs__content" value="jobs">
-            {list(t('ops.history.jobLog'), jobLog, jobColumns, (row) => row.id)}
+            {list(t('ops.history.jobLog'), jobLog, jobColumns, (row) => row.id, { limit: HISTORIC_LIST_LIMIT, latest: true })}
           </Tabs.Content>
         </Tabs.Root>
       </Card>

@@ -7,6 +7,7 @@ import { BookmarkPlus, X } from 'lucide-react';
 import { useI18n } from '../i18n';
 import { Button, cx } from '../ui';
 import { useRemembered } from '../ui/hooks';
+import { MAX_SAVED_VIEWS } from '../lib/storage';
 
 /** A named set of filters of a list, kept with the preferences of the user. */
 export interface SavedView {
@@ -65,9 +66,11 @@ export function SavedViews({
   const filters = currentFilters(params, keys);
   const views = Array.isArray(saved) ? saved : [];
 
+  // the views are kept with the preferences, which the server keeps up to a size
+  const full = views.length >= MAX_SAVED_VIEWS && !views.some((view) => view.name === name.trim());
   const save = () => {
     const trimmed = name.trim();
-    if (!trimmed) return;
+    if (!trimmed || full) return;
     setSaved([...views.filter((view) => view.name !== trimmed), { name: trimmed, params: filters }]);
     onApply({ [VIEW_PARAM]: `saved:${trimmed}` });
     setNaming(false);
@@ -135,9 +138,14 @@ export function SavedViews({
           <Button size="sm" onClick={() => setNaming(false)}>
             {t('action.cancel')}
           </Button>
-          <Button size="sm" variant="primary" type="submit" disabled={!name.trim()}>
+          <Button size="sm" variant="primary" type="submit" disabled={!name.trim() || full}>
             {t('views.save')}
           </Button>
+          {full && (
+            <span className="muted" role="status">
+              {t('views.limit', { count: MAX_SAVED_VIEWS })}
+            </span>
+          )}
         </form>
       ) : (
         <Button size="sm" icon={BookmarkPlus} disabled={Object.keys(filters).length === 0} onClick={() => setNaming(true)}>

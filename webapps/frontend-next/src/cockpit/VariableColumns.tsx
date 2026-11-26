@@ -2,14 +2,14 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright Fasti BPM contributors
  */
-import { useId, useState, type FormEvent } from 'react';
+import { useEffect, useId, useState, type FormEvent } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Columns3, Plus, X } from 'lucide-react';
 import { getColumnValues, getVariableNames, type ColumnValue } from '../api/cockpit';
 import { isApiError } from '../api/http';
 import { useI18n } from '../i18n';
 import { parseEngineDate } from '../lib/dates';
-import { readPreference, writePreference } from '../lib/storage';
+import { onPreferencesReplaced, readPreference, writePreference } from '../lib/storage';
 import { Button, cx } from '../ui';
 import { COCKPIT } from './common';
 import { type Column } from '../ui/table';
@@ -51,6 +51,11 @@ export function useVariableColumns(processKey: string | null | undefined): [stri
   // another process: read its own choice
   const current = state.key === processKey ? state : { key: processKey, names: processKey ? readVariableColumns(processKey) : [] };
   if (current !== state) setState(current);
+  // the copy of the server may arrive after the first look
+  useEffect(
+    () => onPreferencesReplaced(() => setState({ key: processKey, names: processKey ? readVariableColumns(processKey) : [] })),
+    [processKey],
+  );
   return [
     current.names,
     (names: string[]) => {

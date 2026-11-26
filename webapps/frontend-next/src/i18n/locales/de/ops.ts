@@ -111,6 +111,8 @@ const messages: Catalog = {
   'ops.history.legend': 'Grüner Rahmen: durchlaufen; gestrichelt: abgebrochen. Plaketten zählen laufende und beendete Aktivitätsinstanzen.',
   'ops.history.notFound': 'Nicht in der Historie gefunden',
   'ops.history.nothing': 'Nichts aufgezeichnet',
+  'ops.history.capped': 'Nur die ersten {count} Einträge werden gezeigt.',
+  'ops.history.cappedLatest': 'Nur die neuesten {count} Einträge werden gezeigt.',
   'ops.history.noUpdates': 'Keine Änderungen aufgezeichnet',
   'ops.history.openRunning': 'Laufende Instanz öffnen',
   'ops.history.reason': 'Grund: {reason}',

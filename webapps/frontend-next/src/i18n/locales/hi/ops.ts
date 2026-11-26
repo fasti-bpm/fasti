@@ -111,6 +111,8 @@ const messages: Catalog = {
   'ops.history.legend': 'हरी रूपरेखा: पार किया गया; धराशायी: रद्द। बैज चल रहे और समाप्त गतिविधि इंस्टेंस गिनते हैं।',
   'ops.history.notFound': 'इतिहास में नहीं मिला',
   'ops.history.nothing': 'कुछ भी दर्ज नहीं',
+  'ops.history.capped': 'केवल पहली {count} प्रविष्टियाँ दिखाई गई हैं।',
+  'ops.history.cappedLatest': 'केवल नवीनतम {count} प्रविष्टियाँ दिखाई गई हैं।',
   'ops.history.noUpdates': 'कोई परिवर्तन दर्ज नहीं',
   'ops.history.openRunning': 'चल रहा इंस्टेंस खोलें',
   'ops.history.reason': 'कारण: {reason}',

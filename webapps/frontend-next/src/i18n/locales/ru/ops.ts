@@ -139,6 +139,8 @@ const messages: Catalog = {
   'ops.history.legend': 'Зелёный контур: пройдено; пунктир: отменено. Значки показывают число выполняющихся и завершённых экземпляров действий.',
   'ops.history.notFound': 'Не найдено в истории',
   'ops.history.nothing': 'Ничего не записано',
+  'ops.history.capped': 'Показаны только первые {count} записей.',
+  'ops.history.cappedLatest': 'Показаны только последние {count} записей.',
   'ops.history.noUpdates': 'Изменения не записаны',
   'ops.history.openRunning': 'Открыть выполняющийся экземпляр',
   'ops.history.reason': 'Причина: {reason}',

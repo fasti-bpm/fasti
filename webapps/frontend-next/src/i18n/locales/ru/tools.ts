@@ -212,6 +212,7 @@ const messages: Catalog = {
   'views.name': 'Название представления',
   'views.save': 'Сохранить',
   'views.remove': 'Удалить представление {name}',
+  'views.limit': 'Не более {count} сохранённых представлений. Сначала удалите одно.',
   'incidents.groups.toggle': 'Группировать по причине',
   'incidents.groups.title': 'Инциденты по причинам',
   'incidents.groups.problem': 'Проблема',

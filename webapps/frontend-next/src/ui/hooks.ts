@@ -4,7 +4,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { readPreference, writePreference } from '../lib/storage';
+import { onPreferencesReplaced, readPreference, writePreference } from '../lib/storage';
 
 // State of list pages: filters and pages in the address, remembered choices, debounced input.
 
@@ -46,6 +46,15 @@ export function pageOf(params: URLSearchParams, name = 'page'): number {
  */
 export function useRemembered<T>(key: string, fallback: T): [T, (value: T) => void] {
   const [value, setValue] = useState<T>(() => readPreference(`cockpit.${key}`, fallback));
+  const fallbackRef = useRef(fallback);
+  useEffect(() => {
+    fallbackRef.current = fallback;
+  });
+  // the copy of the server arrived after the first look: shown, so that the next change builds on it
+  useEffect(
+    () => onPreferencesReplaced(() => setValue(readPreference(`cockpit.${key}`, fallbackRef.current))),
+    [key],
+  );
   const update = useCallback(
     (next: T) => {
       writePreference(`cockpit.${key}`, next);

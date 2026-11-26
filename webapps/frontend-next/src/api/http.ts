@@ -57,6 +57,8 @@ export interface RequestOptions {
   search?: string;
   /** further request headers, e.g. the setup token of the initial setup */
   headers?: Record<string, string>;
+  /** the request outlives the page, e.g. the last preferences sent when it is closed */
+  keepalive?: boolean;
 }
 
 const CSRF_HEADER = 'X-XSRF-TOKEN';
@@ -201,6 +203,7 @@ async function send(path: string, options: RequestOptions): Promise<Response> {
       credentials: 'same-origin',
       redirect: 'error',
       signal: options.signal,
+      ...(options.keepalive ? { keepalive: true } : {}),
     });
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {

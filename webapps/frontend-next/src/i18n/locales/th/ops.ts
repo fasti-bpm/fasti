@@ -97,6 +97,8 @@ const messages: Catalog = {
   'ops.history.legend': 'เส้นขอบสีเขียว: ผ่านแล้ว; เส้นประ: ถูกยกเลิก ป้ายแสดงจำนวนอินสแตนซ์กิจกรรมที่กำลังทำงานและเสร็จสิ้น',
   'ops.history.notFound': 'ไม่พบในประวัติ',
   'ops.history.nothing': 'ไม่มีการบันทึก',
+  'ops.history.capped': 'แสดงเฉพาะ {count} รายการแรก',
+  'ops.history.cappedLatest': 'แสดงเฉพาะ {count} รายการล่าสุด',
   'ops.history.noUpdates': 'ไม่มีการเปลี่ยนแปลงที่บันทึกไว้',
   'ops.history.openRunning': 'เปิดอินสแตนซ์ที่กำลังทำงาน',
   'ops.history.reason': 'เหตุผล: {reason}',

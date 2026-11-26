@@ -12,6 +12,7 @@ import { useToast } from '../ui/toast';
 import type { Criterion } from './search';
 import { normaliseCardVariables, type SavedSearch } from './searchLinks';
 import { MenuContent } from '../ui/menu';
+import { MAX_SAVED_VIEWS } from '../lib/storage';
 
 /**
  * The menu of the search: copy a link to it, save it under a name, apply
@@ -49,10 +50,12 @@ export function SearchTools({
       .catch(() => toast.show({ tone: 'error', title: t('searchTools.copyFailed') }));
   };
 
+  // the saved searches are kept with the preferences, which the server keeps up to a size
+  const full = saved.length >= MAX_SAVED_VIEWS && !saved.some((search) => search.name === name.trim());
   const save = (event: FormEvent) => {
     event.preventDefault();
     const trimmed = name.trim();
-    if (!trimmed) return;
+    if (!trimmed || full) return;
     onSaved([...saved.filter((search) => search.name !== trimmed), { name: trimmed, criteria, onlyMine }]);
     toast.show({ title: t('searchTools.savedAs', { name: trimmed }) });
     setDialog(null);
@@ -113,7 +116,7 @@ export function SearchTools({
           <p className="confirm__text">
             {criteria.length || onlyMine ? t('searchTools.saveText') : t('searchTools.saveEmpty')}
           </p>
-          <Field label={t('searchTools.name')}>
+          <Field label={t('searchTools.name')} error={full ? t('views.limit', { count: MAX_SAVED_VIEWS }) : null}>
             {(props) => (
               <input
                 {...props}
@@ -126,7 +129,7 @@ export function SearchTools({
           </Field>
           <div className="confirm__actions">
             <Button onClick={() => setDialog(null)}>{t('action.cancel')}</Button>
-            <Button type="submit" variant="primary" disabled={!name.trim()}>
+            <Button type="submit" variant="primary" disabled={!name.trim() || full}>
               {t('action.save')}
             </Button>
           </div>

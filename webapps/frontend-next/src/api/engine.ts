@@ -63,11 +63,15 @@ export function getPreferences(): Promise<Record<string, unknown>> {
   return request<Record<string, unknown>>(`${authApi()}/preferences`, { silentUnauthorized: true });
 }
 
-export function savePreferences(preferences: Record<string, unknown>): Promise<void> {
+export function savePreferences(
+  preferences: Record<string, unknown>,
+  options?: { keepalive?: boolean },
+): Promise<void> {
   return request<void>(`${authApi()}/preferences`, {
     method: 'PUT',
     json: preferences,
     silentUnauthorized: true,
+    keepalive: options?.keepalive,
   });
 }
 

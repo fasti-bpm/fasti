@@ -97,6 +97,8 @@ const messages: Catalog = {
   'ops.history.legend': 'Viền xanh: đã đi qua; nét đứt: bị hủy. Nhãn số đếm hoạt động đang chạy và đã xong.',
   'ops.history.notFound': 'Không có trong lịch sử',
   'ops.history.nothing': 'Chưa ghi nhận gì',
+  'ops.history.capped': 'Chỉ hiển thị {count} mục đầu tiên.',
+  'ops.history.cappedLatest': 'Chỉ hiển thị {count} mục mới nhất.',
   'ops.history.noUpdates': 'Chưa ghi nhận thay đổi nào',
   'ops.history.openRunning': 'Mở lượt chạy đang chạy',
   'ops.history.reason': 'Lý do: {reason}',

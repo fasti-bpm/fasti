@@ -188,6 +188,7 @@ const messages: Catalog = {
   'views.name': '视图名称',
   'views.save': '保存',
   'views.remove': '删除视图 {name}',
+  'views.limit': '最多保存 {count} 个视图。请先删除一个。',
   'incidents.groups.toggle': '按原因分组',
   'incidents.groups.title': '按原因分组的事件',
   'incidents.groups.problem': '问题',

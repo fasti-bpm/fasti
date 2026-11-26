@@ -901,6 +901,8 @@ const messages: Catalog = {
   'history.system': 'Système',
   'login.engine': 'Moteur : {engine}',
   'login.failed': 'Le nom d’utilisateur ou le mot de passe est incorrect.',
+  'session.switched': 'Connexion en tant que {user} dans un autre onglet. Cette page a été rechargée.',
+  'prefs.syncRejected': 'Le serveur n’a pas accepté vos préférences. Elles restent uniquement dans ce navigateur.',
   'login.forbidden': 'Ce compte n’est pas autorisé à utiliser l’application.',
   'login.password': 'Mot de passe',
   'login.submit': 'Se connecter',

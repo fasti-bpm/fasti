@@ -70,9 +70,13 @@ public class TaskWorkloadQueryTest {
   protected TaskService taskService;
   protected AuthorizationService authorizationService;
   protected List<String> taskIds = new ArrayList<>();
+  protected Duration cacheTimeToLive;
 
   @Before
   public void setUp() {
+    // each test changes the tasks between reads: answers are kept only where a test says so
+    cacheTimeToLive = TaskWorkloads.getCacheTimeToLive();
+    TaskWorkloads.setCacheTimeToLive(Duration.ZERO);
     configuration = engineRule.getProcessEngineConfiguration();
     identityService = engineRule.getIdentityService();
     runtimeService = engineRule.getRuntimeService();
@@ -92,6 +96,7 @@ public class TaskWorkloadQueryTest {
       authorizationService.deleteAuthorization(authorization.getId());
     }
     ClockUtil.reset();
+    TaskWorkloads.setCacheTimeToLive(cacheTimeToLive);
   }
 
   static Date at(Duration offset) {
@@ -353,6 +358,32 @@ public class TaskWorkloadQueryTest {
   }
 
   @Test
+  public void shouldCountATaskThatSeveralGrantsCoverOnce() {
+    someTasks();
+    // the task, all tasks and the group of the caller: three rows of the authorization join per task
+    grant("mary", Resources.TASK, taskIds.get(1), Permissions.READ);
+    grant("mary", Resources.TASK, Authorization.ANY, Permissions.READ);
+    Authorization byGroup = authorizationService.createNewAuthorization(Authorization.AUTH_TYPE_GRANT);
+    byGroup.setGroupId("clerks");
+    byGroup.setResource(Resources.TASK);
+    byGroup.setResourceId(taskIds.get(1));
+    byGroup.addPermission(Permissions.READ);
+    authorizationService.saveAuthorization(byGroup);
+    configuration.setAuthorizationEnabled(true);
+    identityService.setAuthentication("mary", Arrays.asList("clerks"));
+
+    TaskWorkload workload = read(Arrays.asList("sales", "support"), Arrays.asList("alice", "bob"));
+
+    assertThat(workload.getTotals().getOpen()).isEqualTo(7);
+    assertThat(workload.getTotals().getUnassigned()).isEqualTo(4);
+    assertThat(workload.getTotals().getOverdue()).isEqualTo(4);
+    assertThat(workload.getGroups().get(0).getOpen()).isEqualTo(3);
+    assertThat(workload.getUsers().get(0).getOpen()).isEqualTo(2);
+    assertThat(workload.getUsers().get(0).getOverdue()).isEqualTo(1);
+    assertMatchesTaskQueries(workload);
+  }
+
+  @Test
   public void shouldHonourRevokedPermissions() {
     someTasks();
     grant("mary", Resources.TASK, Authorization.ANY, Permissions.READ);
@@ -537,6 +568,78 @@ public class TaskWorkloadQueryTest {
 
     assertThat(workload.getTotals().getOpen()).isEqualTo(1);
     assertThat(workload.getGroups().get(0).getOpen()).isEqualTo(1);
+  }
+
+  // cache /////////////////////////////////////////////////////////////////
+
+  @Test
+  public void shouldAnswerTheSameQuestionOfTheSameUserFromTheCache() {
+    TaskWorkloads.setCacheTimeToLive(Duration.ofMinutes(1));
+    someTasks();
+    TaskWorkload first = read(Arrays.asList("sales"), Arrays.asList("alice"));
+    task(Duration.ofHours(-1), null, "alice", "sales");
+
+    assertThat(read(Arrays.asList("sales"), Arrays.asList("alice"))).isSameAs(first);
+    // another question, another moment for overdue, another caller: read again
+    TaskWorkload other = read(Arrays.asList("sales", "support"), Arrays.asList("alice"));
+    assertThat(other).isNotSameAs(first);
+    assertThat(other.getTotals().getOpen()).isEqualTo(8);
+    assertThat(TaskWorkloads.query(engineRule.getProcessEngine()).groupIdIn(Arrays.asList("sales"))
+        .userIdIn(Arrays.asList("alice")).overdueBefore(at(Duration.ofDays(1))).read()).isNotSameAs(first);
+    identityService.setAuthentication("mary", null);
+    assertThat(read(Arrays.asList("sales"), Arrays.asList("alice"))).isNotSameAs(first);
+
+    TaskWorkloads.setCacheTimeToLive(Duration.ZERO);
+    identityService.clearAuthentication();
+    assertThat(read(Arrays.asList("sales"), Arrays.asList("alice")).getTotals().getOpen()).isEqualTo(8);
+  }
+
+  @Test
+  public void shouldNotShareAnAnswerBetweenCallersOfDifferentPermissions() {
+    TaskWorkloads.setCacheTimeToLive(Duration.ofMinutes(1));
+    someTasks();
+    grant("mary", Resources.TASK, taskIds.get(0), Permissions.READ);
+    Authorization byGroup = authorizationService.createNewAuthorization(Authorization.AUTH_TYPE_GRANT);
+    byGroup.setGroupId("clerks");
+    byGroup.setResource(Resources.TASK);
+    byGroup.setResourceId(Authorization.ANY);
+    byGroup.addPermission(Permissions.READ);
+    authorizationService.saveAuthorization(byGroup);
+    configuration.setAuthorizationEnabled(true);
+
+    identityService.setAuthentication("mary", null);
+    assertThat(read(null, null).getTotals().getOpen()).isEqualTo(1);
+    // the same user with a group that may read everything
+    identityService.setAuthentication("mary", Arrays.asList("clerks"));
+    assertThat(read(null, null).getTotals().getOpen()).isEqualTo(7);
+    identityService.setAuthentication("john", null);
+    assertThat(read(null, null).getTotals().getOpen()).isZero();
+    // tenants of the caller
+    configuration.setAuthorizationEnabled(false);
+    identityService.clearAuthentication();
+    task("tenant1", Duration.ofDays(-1), null, null);
+    identityService.setAuthentication("mary", null, Arrays.asList("tenant1"));
+    assertThat(read(null, null).getTotals().getOpen()).isEqualTo(8);
+    identityService.setAuthentication("mary", null, Arrays.asList("tenant2"));
+    assertThat(read(null, null).getTotals().getOpen()).isEqualTo(7);
+    // without authentication the tenant check is off; an authentication without a user is not
+    identityService.clearAuthentication();
+    assertThat(read(null, null).getTotals().getOpen()).isEqualTo(8);
+    identityService.setAuthenticatedUserId(null);
+    assertThat(read(null, null).getTotals().getOpen()).isEqualTo(7);
+  }
+
+  @Test
+  public void shouldGiveAnAnswerThatCannotBeChanged() {
+    TaskWorkloads.setCacheTimeToLive(Duration.ofMinutes(1));
+    someTasks();
+    TaskWorkload first = read(Arrays.asList("sales"), Arrays.asList("alice"));
+    assertThatThrownBy(() -> first.getGroups().clear()).isInstanceOf(UnsupportedOperationException.class);
+    first.getTotals().getOldest().setTime(0);
+
+    TaskWorkload again = read(Arrays.asList("sales"), Arrays.asList("alice"));
+    assertThat(again).isSameAs(first);
+    assertThat(again.getTotals().getOldest()).isEqualTo(at(Duration.ofDays(-5)));
   }
 
   @Test

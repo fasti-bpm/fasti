@@ -152,6 +152,11 @@ là thời điểm hiện tại).
   `GET /task?candidateGroup=sales`; mục trả về mang id đúng như khi được hỏi. Trên cơ sở dữ liệu
   như vậy, hai id chỉ khác nhau về hoa thường là cùng một nhóm: chỉ nên hỏi một trong hai (nếu
   một id viết đúng như giá trị đã lưu thì chỉ id đó nhận các task).
+- Kết quả được giữ 5 giây cho cùng một câu hỏi của cùng một người gọi (cùng người dùng, nhóm và
+  tenant, cùng thiết lập phân quyền), và các lời gọi hỏi cùng một điều cùng lúc dùng chung một lần
+  đọc (`fasti.workload.cache-ttl`, trên image là `FASTI_WORKLOAD_CACHE_TTL`, `0` để tắt việc giữ;
+  Java: `TaskWorkloads.setCacheTimeToLive`). Vì vậy số đếm có thể cũ hơn task tối đa chừng ấy, kể
+  cả sau khi một quyền bị thu hồi.
 - `501` nghĩa là cấu hình MyBatis của engine thiếu các câu lệnh workload: ứng dụng nào thay
   `mappings.xml` mặc định bằng bản riêng phải thêm
   `<mapper resource="dev/fasti/engine/workload/TaskWorkload.xml" />` vào đó. Khi đó giao diện web

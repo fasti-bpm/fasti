@@ -32,11 +32,37 @@
     <result property="oldest" column="OLDEST_" jdbcType="TIMESTAMP" />
   </resultMap>
 
-  <!-- every task once, although the joins of the task query may repeat it -->
+  <!-- The tasks the task query selects, each once. Of the joins of selectTaskByQueryCriteriaSql,
+    two can repeat a task: the authorization join (AUTH: one row per grant that matches the task,
+    for example one on the task and one on its process definition, or grants of several groups)
+    and the identity link join (I: candidate criteria, one row per matching link). The others join
+    on the primary key of the joined table (ACT_RE_PROCDEF D, ACT_RU_EXECUTION E and E1,
+    ACT_RE_CASE_DEF CD, ACT_RU_CASE_EXECUTION CE) or are not used here (ordering relations); the
+    tenant check and the revoke-aware authorization check are conditions, not joins. -->
+  <sql id="taskColumns">
+    RES.ID_, RES.ASSIGNEE_, RES.DUE_DATE_, RES.CREATE_TIME_
+    <include refid="org.camunda.bpm.engine.impl.persistence.entity.TaskEntity.selectTaskByQueryCriteriaSql" />
+  </sql>
+
+  <!-- the totals and the users: their task queries have no candidate criteria, so only the
+    authorization join can repeat a task, and distinct is needed only with it (the condition under
+    which selectTaskByQueryCriteriaSql adds that join) -->
   <sql id="selectedTasks">
     (
-      select distinct RES.ID_, RES.ASSIGNEE_, RES.DUE_DATE_, RES.CREATE_TIME_
-      <include refid="org.camunda.bpm.engine.impl.persistence.entity.TaskEntity.selectTaskByQueryCriteriaSql" />
+      select
+      <if test="authCheck.shouldPerformAuthorizatioCheck &amp;&amp; authCheck.authUserId != null &amp;&amp; !authCheck.revokeAuthorizationCheckEnabled">
+        distinct
+      </if>
+      <include refid="taskColumns" />
+    ) T
+  </sql>
+
+  <!-- the groups: the candidate criteria join the identity links, which repeat a task offered to
+    several of the groups -->
+  <sql id="distinctTasks">
+    (
+      select distinct
+      <include refid="taskColumns" />
     ) T
   </sql>
 
@@ -72,7 +98,7 @@
       count(distinct case when T.DUE_DATE_ &lt; #{loadOverdueBefore} then T.ID_ end) as OVERDUE_,
       min(T.CREATE_TIME_) as OLDEST_
     from
-    <include refid="selectedTasks" />
+    <include refid="distinctTasks" />
     inner join ${prefix}ACT_RU_IDENTITYLINK L on L.TASK_ID_ = T.ID_
     where L.TYPE_ = 'candidate'
       and L.GROUP_ID_ in

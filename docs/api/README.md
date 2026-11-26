@@ -154,6 +154,11 @@ curl -s -u "$AUTH" "$BASE/task/workload?groupIdIn=accounting,sales&userIdIn=demo
   exactly as `GET /task?candidateGroup=sales` does; the entry carries the id as it was asked for.
   There, two ids that differ only in case name the same group: ask for one of them (if one is
   spelled as stored, only that one gets the tasks).
+- The answer is kept for 5 seconds for the same question of the same caller (the same user,
+  groups and tenants, under the same authorization settings), and callers that ask the same at
+  the same time share one read (`fasti.workload.cache-ttl`, image `FASTI_WORKLOAD_CACHE_TTL`,
+  `0` turns keeping off; Java: `TaskWorkloads.setCacheTimeToLive`). So a count can be up to that
+  much older than the tasks, also after a grant is revoked.
 - `501` means that the MyBatis mappings of the engine lack the workload statements: an
   application that replaced the default `mappings.xml` with a copy of its own must add
   `<mapper resource="dev/fasti/engine/workload/TaskWorkload.xml" />` to it. The web UI then

@@ -74,7 +74,8 @@ public class TaskLoadEntity implements TaskLoad {
 
   @Override
   public Date getOldest() {
-    return oldest;
+    // a copy: the answer is shared between callers (TaskWorkloadQueryImpl#CACHE)
+    return oldest == null ? null : new Date(oldest.getTime());
   }
 
   public void setOldest(Date oldest) {

@@ -16,11 +16,14 @@
  */
 package dev.fasti.engine.workload.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import dev.fasti.engine.workload.TaskLoad;
 import dev.fasti.engine.workload.TaskWorkload;
 
+/** An answer, which the workload cache shares between callers: its lists cannot be changed. */
 public class TaskWorkloadImpl implements TaskWorkload {
 
   protected final TaskLoad totals;
@@ -31,8 +34,8 @@ public class TaskWorkloadImpl implements TaskWorkload {
   public TaskWorkloadImpl(TaskLoad totals, long orphaned, List<TaskLoad> groups, List<TaskLoad> users) {
     this.totals = totals;
     this.orphaned = orphaned;
-    this.groups = groups;
-    this.users = users;
+    this.groups = Collections.unmodifiableList(new ArrayList<>(groups));
+    this.users = Collections.unmodifiableList(new ArrayList<>(users));
   }
 
   @Override

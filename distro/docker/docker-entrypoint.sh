@@ -330,7 +330,36 @@ fi
 
 # --- JVM --------------------------------------------------------------------------------------
 
-JVM_OPTS="-XX:MaxRAMPercentage=${FASTI_MAX_RAM_PERCENTAGE:-75} -XX:+ExitOnOutOfMemoryError -Djava.security.egd=file:/dev/./urandom"
+# memory limit of the container in bytes (cgroup v2, then v1); empty when there is none or it
+# cannot be read
+memory_limit() {
+  for file in /sys/fs/cgroup/memory.max /sys/fs/cgroup/memory/memory.limit_in_bytes; do
+    [ -r "$file" ] || continue
+    value=$(cat "$file" 2>/dev/null || true)
+    case "$value" in ''|*[!0-9]*) continue ;; esac   # "max": no limit
+    # cgroup v1 reports "no limit" as a number close to 2^63; more than 15 digits is no limit
+    [ "${#value}" -le 15 ] || continue
+    printf '%s' "$value"
+    return 0
+  done
+  return 0
+}
+
+# Heap share of the container memory. Metaspace, code cache, thread stacks, direct buffers and
+# the GraalJS compiler need about 400-500 MB besides the heap, so 75 % leaves too little below
+# 1.5 GiB and the container is killed for exceeding its limit: 60 % there, 75 % above.
+# FASTI_MAX_RAM_PERCENTAGE overrides it.
+max_ram_percentage=${FASTI_MAX_RAM_PERCENTAGE:-}
+if [ -z "$max_ram_percentage" ]; then
+  max_ram_percentage=75
+  limit=$(memory_limit)
+  if [ -n "$limit" ] && [ "$((limit / 1048576))" -lt 1536 ]; then
+    max_ram_percentage=60
+    log "container memory limit $((limit / 1048576)) MiB: heap at most ${max_ram_percentage} % of it (FASTI_MAX_RAM_PERCENTAGE)"
+  fi
+  unset limit
+fi
+JVM_OPTS="-XX:MaxRAMPercentage=$max_ram_percentage -XX:+ExitOnOutOfMemoryError -Djava.security.egd=file:/dev/./urandom"
 # CVE-2026-114938 ("Java4Shell"): defence in depth on top of the fixed JRE. Turns off the HotSpot
 # Base64 intrinsic that contains the flaw; Base64 then runs on the plain Java code, which is slower
 # but correct. FASTI_BASE64_INTRINSICS=true keeps the intrinsic.
@@ -405,17 +434,22 @@ fi
 
 APP_JAR="$FASTI_HOME/internal/app/fasti-bpm-run-core.jar"
 if [ -f "$APP_JAR" ]; then
-  # the extracted application (see the Dockerfile): the directories of LOADER_PATH and their jars
-  # come first, as with loader.path, then the application jar, whose manifest lists its lib/
+  # the extracted application (see the Dockerfile): the jars of the LOADER_PATH directories come
+  # first, as with loader.path, then the application jar, whose manifest lists its lib/, then the
+  # directories themselves for the plain files in them (configuration/keystore/). HotSpot writes
+  # no class data sharing archive (FASTI_APPCDS) when a non-empty directory comes before a jar it
+  # loaded classes from, and the JVM then exits with 1 on every shutdown.
   CLASS_PATH=""
+  DIRS=""
   old_ifs=$IFS
   IFS=,
   for dir in $LOADER_PATH; do
     dir=${dir%/}
-    CLASS_PATH="$CLASS_PATH$dir:$dir/*:"
+    CLASS_PATH="$CLASS_PATH$dir/*:"
+    DIRS="$DIRS:$dir"
   done
   IFS=$old_ifs
-  LAUNCH="-cp $(quote "$CLASS_PATH$APP_JAR") org.camunda.bpm.run.CamundaBpmRun"
+  LAUNCH="-cp $(quote "$CLASS_PATH$APP_JAR$DIRS") org.camunda.bpm.run.CamundaBpmRun"
 else
   LAUNCH="-Dloader.path=$(quote "$LOADER_PATH") -jar $(quote "$FASTI_HOME/internal/fasti-bpm-run-core.jar")"
 fi

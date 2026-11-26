@@ -102,8 +102,8 @@ Em comparação com as distribuições Tomcat/WildFly do Camunda 7.24:
   as senhas alteradas no Fasti funcionam no Camunda 7.
 - A API REST em `/engine-rest`: os mesmos endpoints, parâmetros e payloads, além de endpoints
   adicionais (a autenticação e alguns códigos de status diferem, consulte [O que muda](#what-differs)); as tarefas externas
-  (`fetchAndLock`, long polling), os clientes Java e JS, `JSESSIONID`, `XSRF-TOKEN`/`X-XSRF-TOKEN`, as propriedades `camunda.bpm.*`
-  e o namespace BPMN `camunda:`.
+  (`fetchAndLock`, long polling), os clientes Java e JS, `XSRF-TOKEN`/`X-XSRF-TOKEN`, as propriedades `camunda.bpm.*`
+  e o namespace BPMN `camunda:`. O cookie de sessão se chama `JSESSIONID` nas distribuições Tomcat e WildFly; o Run e a imagem de contêiner o chamam de `FASTI_SESSION` a partir da 1.3.2 (`server.servlet.session.cookie.name`), para não conflitar com o Camunda 7 Run no mesmo host. Scripts que procuram o cookie pelo nome precisam do nome novo.
 - Os filtros da Tasklist clássica (`color`, `description`, `priority`, `refresh`, `variables`,
   `showUndefinedVariable`) são lidos e gravados no mesmo formato pela nova Tasklist.
 

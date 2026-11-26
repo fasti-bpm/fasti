@@ -102,8 +102,8 @@ Spring Boot starter / Tomcat / WildFly: แทนที่อาร์ติแ�
   รหัสผ่านที่เปลี่ยนบน Fasti สามารถใช้บน Camunda 7 ได้
 - REST API ที่ `/engine-rest`: เอนด์พอยต์ พารามิเตอร์ และเพย์โหลดเดิม พร้อมเอนด์พอยต์เพิ่มเติม
   (การยืนยันตัวตนและรหัสสถานะบางรายการแตกต่างออกไป ดู[สิ่งที่แตกต่าง](#what-differs)), งานภายนอก
-  (`fetchAndLock`, long polling), ไคลเอนต์ Java และ JS, `JSESSIONID`, `XSRF-TOKEN`/`X-XSRF-TOKEN`, พร็อพเพอร์ตี `camunda.bpm.*`
-  และเนมสเปซ BPMN `camunda:`
+  (`fetchAndLock`, long polling), ไคลเอนต์ Java และ JS, `XSRF-TOKEN`/`X-XSRF-TOKEN`, พร็อพเพอร์ตี `camunda.bpm.*`
+  และเนมสเปซ BPMN `camunda:` คุกกี้เซสชันในดิสทริบิวชัน Tomcat และ WildFly ชื่อ `JSESSIONID` ส่วน Run และคอนเทนเนอร์อิมเมจใช้ชื่อ `FASTI_SESSION` ตั้งแต่ 1.3.2 (`server.servlet.session.cookie.name`) เพื่อไม่ให้ชนกับ Camunda 7 Run บนโฮสต์เดียวกัน สคริปต์ที่ค้นหาคุกกี้ตามชื่อต้องเปลี่ยนไปใช้ชื่อใหม่
 - ตัวกรองจาก Tasklist แบบคลาสสิก (`color`, `description`, `priority`, `refresh`, `variables`,
   `showUndefinedVariable`) จะถูกอ่านและเขียนในรูปแบบเดิมโดย Tasklist ใหม่
 

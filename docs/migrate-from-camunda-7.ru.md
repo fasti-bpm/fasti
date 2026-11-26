@@ -102,8 +102,8 @@ WildFly), Fasti работает с **той же базой данных без
   пароли, изменённые в Fasti, работают в Camunda 7.
 - REST API по адресу `/engine-rest`: те же конечные точки, параметры и полезные данные плюс
   дополнительные конечные точки (аутентификация и некоторые коды состояния отличаются, см. [Что отличается](#what-differs)), внешние задачи
-  (`fetchAndLock`, длительный опрос), клиенты Java и JS, `JSESSIONID`, `XSRF-TOKEN`/`X-XSRF-TOKEN`, свойства `camunda.bpm.*`,
-  пространство имён BPMN `camunda:`.
+  (`fetchAndLock`, длительный опрос), клиенты Java и JS, `XSRF-TOKEN`/`X-XSRF-TOKEN`, свойства `camunda.bpm.*`,
+  пространство имён BPMN `camunda:`. Cookie сессии в дистрибутивах Tomcat и WildFly называется `JSESSIONID`; в Run и контейнерном образе начиная с 1.3.2 он называется `FASTI_SESSION` (`server.servlet.session.cookie.name`), чтобы не конфликтовать с Camunda 7 Run на том же хосте. Скриптам, которые ищут cookie по имени, нужно новое имя.
 - Фильтры классического Tasklist (`color`, `description`, `priority`, `refresh`, `variables`,
   `showUndefinedVariable`) читаются и записываются новым Tasklist в том же формате.
 

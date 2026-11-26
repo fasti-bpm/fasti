@@ -103,8 +103,8 @@ Par rapport aux distributions Tomcat/WildFly de Camunda 7.24 :
 - L’API REST à l’adresse `/engine-rest` : les mêmes points de terminaison, paramètres et contenus,
   plus des points de terminaison supplémentaires (l’authentification et certains codes de statut
   diffèrent, voir [Ce qui diffère](#what-differs)) ; les tâches externes
-  (`fetchAndLock`, interrogation longue), les clients Java et JS, `JSESSIONID`, `XSRF-TOKEN`/`X-XSRF-TOKEN`, les propriétés
-  `camunda.bpm.*`, l’espace de noms BPMN `camunda:`.
+  (`fetchAndLock`, interrogation longue), les clients Java et JS, `XSRF-TOKEN`/`X-XSRF-TOKEN`, les propriétés
+  `camunda.bpm.*`, l’espace de noms BPMN `camunda:`. Le cookie de session s’appelle `JSESSIONID` dans les distributions Tomcat et WildFly ; Run et l’image de conteneur le nomment `FASTI_SESSION` depuis la 1.3.2 (`server.servlet.session.cookie.name`), pour qu’il n’entre pas en conflit avec Camunda 7 Run sur le même hôte. Les scripts qui cherchent le cookie par son nom doivent utiliser le nouveau nom.
 - Les filtres de la Tasklist classique (`color`, `description`, `priority`, `refresh`, `variables`,
   `showUndefinedVariable`) sont lus et écrits au même format par la nouvelle Tasklist.
 

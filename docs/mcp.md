@@ -80,7 +80,14 @@ response and refuses `GET` (no server-to-client event stream) with 405.
 - **Authentication on every request.** HTTP basic against the users of the engine (with the
   engine's lockout after failed logins), or bearer tokens. There is no anonymous access, also
   when the REST API of Run runs without authentication. `fasti.mcp.basic-auth-enabled=false`
-  leaves bearer tokens only.
+  leaves bearer tokens only. A tool call acts as the user id the engine returns for the typed
+  name, so `JOHN` and `john` are one user also where the database or LDAP ignores case (for
+  example in four-eyes checks). A successful basic check is remembered for
+  `fasti.mcp.basic-auth-cache-ttl` (30 s) with the groups and tenants of the user, so a client's
+  tool calls do not read them each time. The cache keeps a salted SHA-256 hash, never the
+  password; a new password takes effect at once, and changes of users, groups, tenants and
+  memberships on this node clear it. Changes on another node or in LDAP, and a lockout, take
+  effect within the time to live; `0` turns the cache off.
 - **Bearer tokens (OIDC).** With the Spring Security module (`--oauth2` in Run) and
   `fasti.security.oidc.rest.bearer-enabled=true`, the MCP server accepts the same access tokens
   as the REST API, checked the same way (signature, issuer, audience, expiry) and mapped to the
@@ -164,6 +171,7 @@ Resources (templates): `fasti://process-definitions/{id}/bpmn` and
 | `fasti.mcp.write-tools.enabled` | `false` | offers the tools that change data |
 | `fasti.mcp.path` | `/mcp` | path of the endpoint |
 | `fasti.mcp.basic-auth-enabled` | `true` | accepts HTTP basic credentials of engine users |
+| `fasti.mcp.basic-auth-cache-ttl` | `30s` | how long a successful basic check is remembered; `0` turns it off |
 | `fasti.mcp.allowed-origins` | (none) | origins allowed to call from a browser, e.g. `http://localhost:*` |
 | `fasti.mcp.allowed-hosts` | (not checked) | accepted `Host` headers, e.g. `localhost:*,bpm.example.com` |
 | `fasti.mcp.max-request-size` | `256KB` | largest request body |

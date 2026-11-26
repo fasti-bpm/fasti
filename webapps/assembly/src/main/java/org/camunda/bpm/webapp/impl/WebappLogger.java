@@ -93,5 +93,10 @@ public class WebappLogger extends BaseLogger {
         path, property, path);
   }
 
+  public void warnUserPreferencesNotRepaired(String userId, Exception cause) {
+    logWarn("012", "Could not remove duplicated preference rows of user '{}'; the next save removes them: {}",
+        userId, cause.getMessage(), cause);
+  }
+
 
 }

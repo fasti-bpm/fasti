@@ -78,7 +78,8 @@ public class UserPreferencesResourceTest {
 
     assertThat(resource.get(ENGINE).getEntity()).isEqualTo("{\"a\":1}");
     assertThat(identityService.getUserInfoKeys("alice"))
-        .containsExactlyInAnyOrder(UserPreferencesStore.KEY_PREFIX + "0", UserPreferencesStore.COUNT_KEY);
+        .containsExactlyInAnyOrder(UserPreferencesStore.KEY_PREFIX + "0", UserPreferencesStore.COUNT_KEY,
+            UserPreferencesStore.CHECKSUM_KEY, UserPreferencesStore.LOCK_KEY);
   }
 
   @Test

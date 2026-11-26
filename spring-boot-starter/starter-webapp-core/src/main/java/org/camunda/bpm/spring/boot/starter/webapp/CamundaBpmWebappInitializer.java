@@ -258,7 +258,8 @@ public class CamundaBpmWebappInitializer implements ServletContextInitializer {
 
     // before the engines filter, which writes the index page of the new web UI
     registerFilter("HashedAssetCacheFilter", HashedAssetCacheFilter.class,
-        applicationPath + "/app/next/*");
+        singletonMap(HashedAssetCacheFilter.APPLICATION_PATH_PARAM, applicationPath),
+        applicationPath + "/app/*", applicationPath + "/lib/*", applicationPath + "/assets/*");
 
     registerFilter("Engines Filter", LazyProcessEnginesFilter.class,
         applicationPath + "/api/*",

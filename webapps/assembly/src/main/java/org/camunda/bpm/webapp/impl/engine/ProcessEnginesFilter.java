@@ -21,8 +21,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -132,6 +135,17 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
   public static final String CSP_NONCE_PLACEHOLDER = "$CSP_NONCE";
 
   public static Pattern APP_PREFIX_PATTERN = Pattern.compile("/app/(?:([\\w-]+?)/(?:(index\\.html|[\\w-]+)?/?([^?]*)?)?)?");
+
+  /**
+   * How long the filter trusts that an engine has an administrator before it
+   * checks again. Only that answer is kept: as long as there is none, every
+   * request checks, so the setup page closes as soon as an administrator is
+   * created. The setup resource always checks on its own.
+   */
+  protected long adminSeenTtlMillis = TimeUnit.SECONDS.toMillis(60);
+
+  /** per engine name: when an administrator was last seen, and in which engine */
+  protected final Map<String, AdminSeen> adminSeen = new ConcurrentHashMap<>();
 
   protected final CockpitRuntimeDelegate cockpitRuntimeDelegate;
   protected final AdminRuntimeDelegate adminRuntimeDelegate;
@@ -364,14 +378,38 @@ public class ProcessEnginesFilter extends AbstractTemplateFilter {
       return false;
     }
 
+    AdminSeen seen = adminSeen.get(engineName);
+    long now = System.nanoTime();
+    if (seen != null && seen.engine == processEngine
+        && now - seen.at < TimeUnit.MILLISECONDS.toNanos(adminSeenTtlMillis)) {
+      return false;
+    }
+
     // the setup page is only offered if the setup resource would accept the
     // request, i.e. no administrator is defined for the engine
-    return SecurityActions.runWithoutAuthentication(new SecurityAction<Boolean>() {
+    boolean available = SecurityActions.runWithoutAuthentication(new SecurityAction<Boolean>() {
       public Boolean execute() {
         return InitialAdminSetup.isAvailable(processEngine);
       }
     }, processEngine);
 
+    if (available) {
+      adminSeen.remove(engineName);
+    } else {
+      adminSeen.put(engineName, new AdminSeen(processEngine, now));
+    }
+    return available;
+  }
+
+  /** That an engine had an administrator at a point in time ({@link System#nanoTime()}). */
+  protected static final class AdminSeen {
+    protected final ProcessEngine engine;
+    protected final long at;
+
+    protected AdminSeen(ProcessEngine engine, long at) {
+      this.engine = engine;
+      this.at = at;
+    }
   }
 
   protected void serveIndexPage(String appName,

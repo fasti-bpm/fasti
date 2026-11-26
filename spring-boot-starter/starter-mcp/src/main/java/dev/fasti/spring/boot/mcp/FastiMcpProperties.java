@@ -16,6 +16,7 @@
  */
 package dev.fasti.spring.boot.mcp;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +43,13 @@ public class FastiMcpProperties {
 
   /** Whether HTTP basic authentication against the users of the engine is accepted. */
   private boolean basicAuthEnabled = true;
+
+  /**
+   * How long a successful basic authentication is remembered, with the groups and tenants of the
+   * user, so that repeated calls with the same credentials do not read them again. Changes of
+   * users, groups and tenants on this node clear it. {@code 0} turns it off.
+   */
+  private Duration basicAuthCacheTtl = Duration.ofSeconds(30);
 
   /**
    * Origins (scheme://host[:port], a port may be {@code *}) that may call the endpoint from a
@@ -117,6 +125,14 @@ public class FastiMcpProperties {
 
   public void setBasicAuthEnabled(boolean basicAuthEnabled) {
     this.basicAuthEnabled = basicAuthEnabled;
+  }
+
+  public Duration getBasicAuthCacheTtl() {
+    return basicAuthCacheTtl;
+  }
+
+  public void setBasicAuthCacheTtl(Duration basicAuthCacheTtl) {
+    this.basicAuthCacheTtl = basicAuthCacheTtl;
   }
 
   public List<String> getAllowedOrigins() {

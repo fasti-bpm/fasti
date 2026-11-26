@@ -80,7 +80,14 @@ phản hồi JSON và từ chối `GET` (không có luồng sự kiện từ má
 - **Xác thực ở mọi yêu cầu.** HTTP basic với người dùng của engine (kèm cơ chế khóa tạm sau
   nhiều lần đăng nhập sai của engine), hoặc bearer token. Không có truy cập ẩn danh, kể cả khi
   REST API của Run chạy không xác thực. `fasti.mcp.basic-auth-enabled=false` chỉ để lại bearer
-  token.
+  token. Lệnh gọi tool chạy với user id mà engine trả về cho tên đã gõ, nên `JOHN` và `john` là
+  một người dùng cả khi database hoặc LDAP không phân biệt hoa thường (ví dụ trong kiểm tra bốn
+  mắt). Một lần kiểm tra basic thành công được ghi nhớ trong `fasti.mcp.basic-auth-cache-ttl`
+  (30 giây) cùng nhóm và tenant của người dùng, để các lệnh gọi tool của một client không phải
+  đọc lại mỗi lần. Cache chỉ giữ hash SHA-256 có salt, không bao giờ giữ mật khẩu; mật khẩu mới
+  có hiệu lực ngay, và thay đổi người dùng, nhóm, tenant, thành viên trên node này xoá cache.
+  Thay đổi trên node khác hoặc trong LDAP, và việc khoá tài khoản, có hiệu lực trong thời gian
+  sống của cache; `0` tắt cache.
 - **Bearer token (OIDC).** Với module Spring Security (`--oauth2` trong Run) và
   `fasti.security.oidc.rest.bearer-enabled=true`, máy chủ MCP nhận cùng access token như REST
   API, kiểm tra cùng cách (chữ ký, issuer, audience, hạn dùng) và ánh xạ ra cùng người dùng, nhóm
@@ -165,6 +172,7 @@ Tài nguyên (template): `fasti://process-definitions/{id}/bpmn` và
 | `fasti.mcp.write-tools.enabled` | `false` | cung cấp các công cụ thay đổi dữ liệu |
 | `fasti.mcp.path` | `/mcp` | đường dẫn của endpoint |
 | `fasti.mcp.basic-auth-enabled` | `true` | nhận thông tin HTTP basic của người dùng engine |
+| `fasti.mcp.basic-auth-cache-ttl` | `30s` | thời gian ghi nhớ một lần kiểm tra basic thành công; `0` để tắt |
 | `fasti.mcp.allowed-origins` | (không có) | origin được gọi từ trình duyệt, ví dụ `http://localhost:*` |
 | `fasti.mcp.allowed-hosts` | (không kiểm tra) | giá trị header `Host` được chấp nhận, ví dụ `localhost:*,bpm.example.com` |
 | `fasti.mcp.max-request-size` | `256KB` | kích thước thân yêu cầu tối đa |

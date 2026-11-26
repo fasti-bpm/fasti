@@ -137,10 +137,14 @@ Sizes of `vite build`, minified (gzip in brackets):
 
 The JavaScript loaded before the first page is about the same size: React and the router
 moved to a chunk of their own, which changes only with a dependency update. Fasti Run, the
-Docker image and the Spring Boot starter serve the hashed files below `/app/next/assets/` with
-`Cache-Control: public, max-age=31536000, immutable`, so browsers keep a chunk whose content did
-not change across releases; on Tomcat and WildFly the servlet container decides. The case
-timeline of the task detail is loaded when its tab is opened.
+Docker image, the Spring Boot starter and the Tomcat and WildFly bundles serve the hashed files
+below `/app/next/assets/` with `Cache-Control: public, max-age=31536000, immutable`, so browsers
+keep a chunk whose content did not change across releases. The same holds for the bundles of
+the classic applications and of the embedded-form frame that are requested with
+`?bust=<version of this release>` (`/lib/deps.js`, `/app/forms/fasti-form-frame.js`, files
+below `/assets/`): a new release asks for them with another query string. Files that operators
+edit (`scripts/config.js`, `styles/user-styles.css`, translations, custom scripts) keep being
+revalidated. The case timeline of the task detail is loaded when its tab is opened.
 
 A page left open across an update of the server names files of the old build that are gone. A
 part loaded later that fails for this reason (the case tab or a diagram of the open task) says

@@ -214,18 +214,16 @@ public class AuditServiceImpl implements AuditService {
     // transaction holding a head of one kind of chain may wait for engine rows, see AuditSession),
     // and the writers of the chain wait for one batch at most
     for (String chainId : chainIds) {
-      long[] progress = {-1, 0, 0};
+      long[] progress = {0, 0};
       try {
         while (true) {
-          long boundary = progress[0];
-          long[] batch = requiresNew.execute(commandContext -> purgeBatch(commandContext, settings, before, chainId, boundary));
+          long[] batch = requiresNew.execute(commandContext -> purgeBatch(commandContext, settings, before, chainId));
           if (batch == null) {
             break;
           }
           progress[0] = batch[0];
-          progress[1] = batch[1];
-          progress[2] += batch[2];
-          if (batch[1] >= batch[0]) {
+          progress[1] += batch[1];
+          if (batch[2] != 0) {
             break;
           }
         }
@@ -237,9 +235,9 @@ public class AuditServiceImpl implements AuditService {
             chainId, e);
         failed.add(chainId);
       }
-      if (progress[1] > 0) {
-        purgedThrough.put(chainId, progress[1]);
-        removed += progress[2];
+      if (progress[0] > 0) {
+        purgedThrough.put(chainId, progress[0]);
+        removed += progress[1];
       }
     }
     return new AuditPurgeResult(before, purgedThrough, removed, failed);
@@ -247,13 +245,11 @@ public class AuditServiceImpl implements AuditService {
 
   /**
    * Purges one batch of the records of a chain before the date: from its first record, at most
-   * {@code purgeBatchSize} records, not beyond the boundary of the purge. The boundary (the last
-   * record before the date) is found in the first batch ({@code boundary} below 0) and kept for
-   * the following ones. Returns the boundary, the position purged through and the number of
-   * records removed, or {@code null} when nothing is left to purge.
+   * {@code purgeBatchSize} records, up to the first record at or after the date. Returns the
+   * position purged through, the number of records removed and whether the purge of the chain is
+   * complete (1) or not (0), or {@code null} when nothing is left to purge.
    */
-  protected long[] purgeBatch(CommandContext commandContext, AuditSettings settings, Date before, String chainId,
-      long boundary) {
+  protected long[] purgeBatch(CommandContext commandContext, AuditSettings settings, Date before, String chainId) {
     AuditAuthorization.checkPurge(commandContext);
     AuditStore.Head head;
     try {
@@ -267,18 +263,13 @@ public class AuditServiceImpl implements AuditService {
       LOG.warn("Audit trail chain {} has records but no head; it is not purged. Verify the audit trail.", chainId);
       throw new ProcessEngineException("The audit trail chain " + chainId + " has no head; verify the audit trail.");
     }
-    long end = boundary >= 0 ? boundary : AuditStore.purgeBoundary(commandContext, settings, chainId, before.getTime());
-    List<AuditRecord> first = AuditStore.readChain(commandContext, settings, chainId, 0, 1);
-    if (end <= 0 || first.isEmpty() || end < first.get(0).getSequence()) {
+    AuditStore.PurgeRange range = AuditStore.purgeRange(commandContext, settings, chainId, before.getTime(),
+        settings.getPurgeBatchSize());
+    if (range == null) {
       return null;
     }
-    long from = first.get(0).getSequence();
-    long through = Math.min(end, from + settings.getPurgeBatchSize() - 1);
-    AuditRecord last = AuditStore.find(commandContext, settings, chainId, through);
-    if (last == null) {
-      LOG.warn("Audit trail chain {} has no record {}; it is not purged. Verify the audit trail.", chainId, through);
-      return null;
-    }
+    long from = range.from;
+    long through = range.through;
     long count = through - from + 1;
     AuditRecord purge = new AuditRecord(AuditService.TYPE_AUDIT, AuditService.ACTION_PURGE);
     purge.setTime(ClockUtil.getCurrentTime().getTime());
@@ -286,14 +277,14 @@ public class AuditServiceImpl implements AuditService {
     purge.setActor(commandContext.getAuthenticatedUserId());
     purge.setEntityType("chain");
     purge.setEntityName(chainId);
-    purge.setPurge(through, last.getHash(), AuditJson.object()
+    purge.setPurge(through, range.throughHash, AuditJson.object()
         .put("before", before.toInstant().toString())
         .put("purgedFromSeq", from)
         .put("removed", count));
     // the purge record first, then the records it attests
     AuditStore.append(commandContext, settings, chainId, List.of(purge));
     long deleted = AuditStore.deleteThrough(commandContext, settings, chainId, through);
-    LOG.info("Audit trail chain {}: purged records {} to {} (last hash {})", chainId, from, through, last.getHash());
-    return new long[] { end, through, deleted };
+    LOG.info("Audit trail chain {}: purged records {} to {} (last hash {})", chainId, from, through, range.throughHash);
+    return new long[] { through, deleted, range.complete ? 1 : 0 };
   }
 }

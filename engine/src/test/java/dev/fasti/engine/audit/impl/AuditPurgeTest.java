@@ -25,6 +25,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import dev.fasti.engine.audit.AuditEvent;
 import dev.fasti.engine.audit.AuditPurgeResult;
@@ -121,6 +122,34 @@ public class AuditPurgeTest {
   }
 
   @Test
+  public void shouldPurgeUpToTheFirstRecordThatIsNotOldEnough() {
+    start("boundary", plugin -> {
+      plugin.setChains(1);
+      plugin.setPurgeBatchSize(2);
+    });
+    writeOldRecords(() -> {
+      engine.getRepositoryService().createDeployment().addModelInstance("o.bpmn", userTaskProcess("o")).deploy();
+      engine.getRuntimeService().startProcessInstanceByKey("o", "old");
+    });
+    String chainId = "node-boundary/end-0";
+    Date cut = new Date(System.currentTimeMillis() - 1_800_000);
+    long old = audit.createQuery().chainId(chainId).to(cut).count();
+    assertThat(old).isGreaterThan(4);
+    engine.getRuntimeService().startProcessInstanceByKey("o", "new");
+    List<String> young = audit.createQuery().chainId(chainId).from(cut).list().stream().map(AuditEvent::getId)
+        .collect(Collectors.toList());
+    assertThat(young).isNotEmpty();
+
+    AuditPurgeResult result = audit.purge(cut);
+    assertThat(result.isComplete()).isTrue();
+    assertThat(result.getRemoved()).isEqualTo(old);
+    // nothing old is left, and the young records are all there
+    assertThat(audit.createQuery().chainId(chainId).to(cut).count()).isZero();
+    assertThat(audit.createQuery().chainId(chainId).list().stream().map(AuditEvent::getId)).containsAll(young);
+    assertThat(audit.verify(chainId).isIntact()).isTrue();
+  }
+
+  @Test
   public void shouldVerifyAChainWhileABatchedPurgeRemovesItsStart() {
     start("verifying", plugin -> {
       plugin.setChains(1);
@@ -148,7 +177,7 @@ public class AuditPurgeTest {
       protected List<AuditRecord> read(String chain, long after) {
         if (after > 0) {
           long[] batch = configuration.getCommandExecutorTxRequiresNew()
-              .execute(context -> service.purgeBatch(context, settings, before, chain, -1));
+              .execute(context -> service.purgeBatch(context, settings, before, chain));
           if (batch != null) {
             batches[0]++;
           }

@@ -17,11 +17,18 @@
 package dev.fasti.engine.audit.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.camunda.bpm.engine.ProcessEngineException;
 import org.junit.Test;
@@ -136,5 +143,79 @@ public class AuditStoreSqlTest {
     assertThat(AuditStore.isTimeout(new SQLException("canceling statement due to user request", "57014"))).isTrue();
     assertThat(AuditStore.isTimeout(new SQLException("Lock wait timeout exceeded", "HY000", 1205))).isTrue();
     assertThat(AuditStore.isTimeout(new SQLException("duplicate key", "23505"))).isFalse();
+  }
+
+  // locking the head
+
+  static Connection connection(int updatedRows, boolean headThere, List<String> statements) throws SQLException {
+    Connection connection = mock(Connection.class);
+    when(connection.prepareStatement(anyString())).thenAnswer(invocation -> {
+      String sql = invocation.getArgument(0);
+      statements.add(sql);
+      PreparedStatement statement = mock(PreparedStatement.class);
+      when(statement.executeUpdate()).thenReturn(updatedRows);
+      ResultSet result = mock(ResultSet.class);
+      when(result.next()).thenReturn(headThere, false);
+      when(result.getLong(1)).thenReturn(7L);
+      when(result.getString(2)).thenReturn("h".repeat(64));
+      when(statement.executeQuery()).thenReturn(result);
+      return statement;
+    });
+    return connection;
+  }
+
+  @Test
+  public void shouldLockAndReadTheHeadInOneStatementWhereTheDatabaseCan() throws SQLException {
+    for (String type : List.of("postgres", "mysql", "mariadb", "oracle")) {
+      List<String> statements = new ArrayList<>();
+      AuditStore.Head head = AuditStore.lockAndReadHead(connection(0, true, statements), settings(type), "node/0", 60);
+      assertThat(head.sequence).as(type).isEqualTo(7);
+      assertThat(statements).as(type)
+          .containsExactly("select SEQ_, HASH_ from FASTI_AUDIT_HEAD where CHAIN_ID_ = ? for update");
+    }
+  }
+
+  @Test
+  public void shouldLockTheHeadWithAnUpdateElsewhere() throws SQLException {
+    for (String type : List.of("mssql", "db2")) {
+      List<String> statements = new ArrayList<>();
+      AuditStore.Head head = AuditStore.lockAndReadHead(connection(1, true, statements), settings(type), "node/0", 60);
+      assertThat(head.sequence).as(type).isEqualTo(7);
+      assertThat(statements).as(type).containsExactly("update FASTI_AUDIT_HEAD set SEQ_ = SEQ_ where CHAIN_ID_ = ?",
+          "select SEQ_, HASH_ from FASTI_AUDIT_HEAD where CHAIN_ID_ = ?");
+    }
+  }
+
+  @Test
+  public void shouldReadTheHeadAlsoWhenTheUpdateCountsNoRow() throws SQLException {
+    // MySQL Connector/J with useAffectedRows=true counts changed rows: none for set SEQ_ = SEQ_
+    AuditStore.Head head = AuditStore.lockAndReadHead(connection(0, true, new ArrayList<>()), settings("mssql"), "node/0", 60);
+    assertThat(head).isNotNull();
+    assertThat(head.hash).isEqualTo("h".repeat(64));
+    assertThat(AuditStore.lockAndReadHead(connection(0, false, new ArrayList<>()), settings("mssql"), "node/0", 60)).isNull();
+  }
+
+  // record ids
+
+  @Test
+  public void shouldMakeTimeOrderedIds() {
+    long before = System.currentTimeMillis();
+    List<String> ids = new ArrayList<>();
+    for (int i = 0; i < 20_000; i++) {
+      ids.add(AuditStore.newId());
+    }
+    long after = System.currentTimeMillis();
+    List<String> sorted = new ArrayList<>(ids);
+    sorted.sort(null);
+    assertThat(ids).isEqualTo(sorted).doesNotHaveDuplicates();
+    for (String id : List.of(ids.get(0), ids.get(ids.size() - 1))) {
+      UUID uuid = UUID.fromString(id);
+      assertThat(uuid.toString()).isEqualTo(id);
+      assertThat(uuid.version()).isEqualTo(7);
+      assertThat(uuid.variant()).isEqualTo(2);
+      long millis = uuid.getMostSignificantBits() >>> 16;
+      // 20,000 ids in one millisecond would run 4 milliseconds ahead of the clock at most
+      assertThat(millis).isBetween(before, after + 5);
+    }
   }
 }

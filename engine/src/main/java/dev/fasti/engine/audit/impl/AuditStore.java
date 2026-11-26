@@ -17,6 +17,7 @@
 package dev.fasti.engine.audit.impl;
 
 import java.io.StringReader;
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,7 +28,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.TreeSet;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import dev.fasti.engine.audit.AuditService;
@@ -42,12 +45,18 @@ import org.slf4j.LoggerFactory;
  * command, so that records are written in the transaction of what they record: if that rolls
  * back, so do they, and if they cannot be written, the command fails.
  *
- * <p>Appending to a chain first locks the row of the chain in {@code FASTI_AUDIT_HEAD} with an
- * update (which every database supports the same way), reads the last position and hash, inserts
- * the records and moves the head. The lock is held until the transaction ends, so appends to one
- * chain are serialized while other chains (other slots, other nodes) are not affected. The wait
- * for the lock is limited ({@code lockTimeoutSeconds}), so that a transaction that cannot get the
- * head fails instead of hanging.</p>
+ * <p>Appending to a chain first locks the row of the chain in {@code FASTI_AUDIT_HEAD} and reads
+ * the last position and hash (with {@code select ... for update} where the database holds that
+ * lock until the transaction ends, otherwise with an update of the row and a read), inserts the
+ * records and moves the head. The lock is held until the transaction ends, so appends to one chain
+ * are serialized while other chains (other slots, other nodes) are not affected. The wait for the
+ * lock is limited ({@code lockTimeoutSeconds}), so that a transaction that cannot get the head
+ * fails instead of hanging.</p>
+ *
+ * <p>Record ids are time-ordered (the layout of a version 7 UUID), so that new rows go to the end
+ * of the primary key, which is the clustered index on MySQL, MariaDB and SQL Server. An id is
+ * hashed as the text it is stored as, so records with random ids written before verify as they
+ * did.</p>
  *
  * <p>Queries page in the database and exports read one forward-only cursor, so that neither holds
  * more than a page of records in memory. Messages of the database never reach the caller: they are
@@ -120,6 +129,29 @@ public final class AuditStore {
     }
   }
 
+  // ids //////////////////////////////////////////////////////////////////////////////////////
+
+  private static final SecureRandom ID_RANDOM = new SecureRandom();
+
+  /** The millisecond (48 bits) and counter (12 bits) of the last id, so that the ids of this node only grow. */
+  private static final AtomicLong ID_CLOCK = new AtomicLong();
+
+  /**
+   * A new record id: a version 7 UUID (RFC 9562) as lowercase text, made of the milliseconds of the
+   * system clock, a counter within the millisecond and 62 random bits. The ids of this node grow (a
+   * counter that runs over moves on to the next millisecond), and ids of several nodes sort by
+   * time, so that inserts go to the end of the primary key.
+   */
+  public static String newId() {
+    long now = System.currentTimeMillis() & 0xFFFF_FFFF_FFFFL;
+    long clock = ID_CLOCK.updateAndGet(previous -> Math.max(previous + 1, now << 12));
+    long millis = (clock >>> 12) & 0xFFFF_FFFF_FFFFL;
+    long counter = clock & 0xFFF;
+    long high = (millis << 16) | 0x7000L | counter;
+    long low = (ID_RANDOM.nextLong() & 0x3FFF_FFFF_FFFF_FFFFL) | 0x8000_0000_0000_0000L;
+    return new UUID(high, low).toString();
+  }
+
   // writing //////////////////////////////////////////////////////////////////////////////////
 
   /**
@@ -156,14 +188,7 @@ public final class AuditStore {
         }
       }
       insert(connection, settings, written);
-      try (PreparedStatement update = connection.prepareStatement(
-          "update " + heads(settings) + " set SEQ_ = ?, HASH_ = ?, TIME_ = ? where CHAIN_ID_ = ?")) {
-        update.setLong(1, sequence);
-        update.setString(2, previous);
-        update.setLong(3, written.get(written.size() - 1).getTime());
-        update.setString(4, chainId);
-        update.executeUpdate();
-      }
+      moveHead(connection, settings, chainId, sequence, previous, written.get(written.size() - 1).getTime());
     } catch (SQLException e) {
       if (isTimeout(e)) {
         LOG.error("The audit trail could not lock chain {} within {} seconds: {}", chainId, settings.getLockTimeoutSeconds(),
@@ -177,12 +202,24 @@ public final class AuditStore {
     return checkpoints;
   }
 
+  static void moveHead(Connection connection, AuditSettings settings, String chainId, long sequence, String hash,
+      long time) throws SQLException {
+    try (PreparedStatement update = connection.prepareStatement(
+        "update " + heads(settings) + " set SEQ_ = ?, HASH_ = ?, TIME_ = ? where CHAIN_ID_ = ?")) {
+      update.setLong(1, sequence);
+      update.setString(2, hash);
+      update.setLong(3, time);
+      update.setString(4, chainId);
+      update.executeUpdate();
+    }
+  }
+
   /**
    * Completes the details of a purge record once its position is known: what was removed and, with
    * a key, the signature over it, the chain and the id and position of the record.
    */
   static void attestPurge(AuditSettings settings, AuditRecord purge, String chainId, long sequence) {
-    purge.setId(UUID.randomUUID().toString());
+    purge.setId(newId());
     AuditJson details = purge.getPurgeDetails()
         .put("purgedThroughSeq", purge.getPurgedThroughSequence())
         .put("purgedThroughHash", purge.getPurgedThroughHash());
@@ -196,7 +233,7 @@ public final class AuditStore {
 
   static void seal(AuditRecord record, String chainId, long sequence, String previous) {
     if (record.getId() == null) {
-      record.setId(UUID.randomUUID().toString());
+      record.setId(newId());
     }
     record.setChainId(chainId);
     record.setSequence(sequence);
@@ -240,21 +277,27 @@ public final class AuditStore {
    */
   static Head lockHead(CommandContext commandContext, AuditSettings settings, String chainId, boolean create)
       throws SQLException {
+    return lockHead(commandContext, settings, chainId, create, settings.getLockTimeoutSeconds());
+  }
+
+  /** {@link #lockHead(CommandContext, AuditSettings, String, boolean)}, waiting at most the seconds given (0: as the database does). */
+  static Head lockHead(CommandContext commandContext, AuditSettings settings, String chainId, boolean create,
+      int lockTimeoutSeconds) throws SQLException {
     Connection connection = connection(commandContext);
-    if (lockHeadRow(connection, settings, chainId) == 0) {
+    Head head = lockAndReadHead(connection, settings, chainId, lockTimeoutSeconds);
+    if (head == null) {
       if (!create) {
         return null;
       }
-      // Under REPEATABLE READ or stricter, the update of a missing row can leave a lock on the gap
+      // Under REPEATABLE READ or stricter, locking a missing row can leave a lock on the gap
       // (MySQL, MariaDB), which an insert in a transaction of its own on another connection would
       // wait for until the lock wait timeout: then the head is created in this transaction. The
       // engine asks for READ COMMITTED.
       if (connection.getTransactionIsolation() < Connection.TRANSACTION_REPEATABLE_READ
           && createHead(commandContext, settings, chainId)) {
-        lockHeadRow(connection, settings, chainId);
+        head = lockAndReadHead(connection, settings, chainId, lockTimeoutSeconds);
       }
     }
-    Head head = readHead(connection, settings, chainId);
     if (head == null) {
       if (!create) {
         return null;
@@ -267,21 +310,48 @@ public final class AuditStore {
     return head;
   }
 
-  /** Locks the head row of the chain with an update; the number of rows it found. */
-  static int lockHeadRow(Connection connection, AuditSettings settings, String chainId) throws SQLException {
-    // the statement waits for the transaction that holds the head; not for ever. H2 does not end a
-    // wait for a row when the statement times out, only when the lock timeout of the session is
-    // over, so that is set for this statement.
+  /**
+   * The databases on which {@code select ... for update} locks the row until the transaction ends
+   * and waits for it as an update does: the same lock, the same timeouts and the same errors. At
+   * its default isolation DB2 holds such a lock only while the cursor is on the row, and SQL Server
+   * has no such clause: there the row is locked with an update.
+   */
+  static final Set<String> SELECT_FOR_UPDATE = Set.of("h2", "postgres", "mysql", "mariadb", "oracle");
+
+  /**
+   * Locks the head row of the chain until the end of the transaction and reads it; {@code null} if
+   * there is no head. The statement waits for the transaction that holds the head; not for ever. H2
+   * does not end a wait for a row when the statement times out, only when the lock timeout of the
+   * session is over, so that is set for the statement.
+   */
+  static Head lockAndReadHead(Connection connection, AuditSettings settings, String chainId, int lockTimeoutSeconds)
+      throws SQLException {
     Integer sessionLockTimeout = null;
-    if (settings.getLockTimeoutSeconds() > 0 && "h2".equals(settings.getDatabaseType())) {
+    if (lockTimeoutSeconds > 0 && "h2".equals(settings.getDatabaseType())) {
       sessionLockTimeout = h2LockTimeout(connection, null);
-      h2LockTimeout(connection, settings.getLockTimeoutSeconds() * 1000);
+      h2LockTimeout(connection, lockTimeoutSeconds * 1000);
     }
-    try (PreparedStatement lock = connection.prepareStatement(
-        "update " + heads(settings) + " set SEQ_ = SEQ_ where CHAIN_ID_ = ?")) {
-      lock.setString(1, chainId);
-      timeout(lock, settings.getLockTimeoutSeconds());
-      return lock.executeUpdate();
+    try {
+      if (settings.getDatabaseType() != null && SELECT_FOR_UPDATE.contains(settings.getDatabaseType())) {
+        try (PreparedStatement select = connection.prepareStatement(
+            "select SEQ_, HASH_ from " + heads(settings) + " where CHAIN_ID_ = ? for update")) {
+          select.setString(1, chainId);
+          timeout(select, lockTimeoutSeconds);
+          try (ResultSet result = select.executeQuery()) {
+            return result.next() ? new Head(chainId, result.getLong(1), result.getString(2)) : null;
+          }
+        }
+      }
+      try (PreparedStatement lock = connection.prepareStatement(
+          "update " + heads(settings) + " set SEQ_ = SEQ_ where CHAIN_ID_ = ?")) {
+        lock.setString(1, chainId);
+        timeout(lock, lockTimeoutSeconds);
+        lock.executeUpdate();
+      }
+      // read also when the update counted no row: a driver that counts changed rows rather than
+      // matched ones (MySQL Connector/J with useAffectedRows=true) counts none here, although the
+      // row is there and locked
+      return readHead(connection, settings, chainId);
     } finally {
       if (sessionLockTimeout != null) {
         h2LockTimeout(connection, sessionLockTimeout);
@@ -709,27 +779,51 @@ public final class AuditStore {
     }
   }
 
-  /** Every chain with a head or with records, sorted. */
+  /**
+   * Every chain with a head or with records, sorted. The chains of the records are found one after
+   * the other in the index {@code FASTI_IDX_AUDIT_CHAIN} ({@code min(CHAIN_ID_)} after the one
+   * before), so that each takes one look into the index instead of a read of every record.
+   */
   public static List<String> chainIds(CommandContext commandContext, AuditSettings settings) {
     TreeSet<String> ids = new TreeSet<>();
     Connection connection = connection(commandContext);
     try {
-      try (PreparedStatement select = connection.prepareStatement("select CHAIN_ID_ from " + heads(settings));
-          ResultSet result = select.executeQuery()) {
-        while (result.next()) {
-          ids.add(result.getString(1));
-        }
+      for (Head head : heads(connection, settings)) {
+        ids.add(head.chainId);
       }
-      try (PreparedStatement select = connection.prepareStatement("select distinct CHAIN_ID_ from " + events(settings));
-          ResultSet result = select.executeQuery()) {
-        while (result.next()) {
-          ids.add(result.getString(1));
+      try (PreparedStatement first = connection.prepareStatement("select min(CHAIN_ID_) from " + events(settings));
+          PreparedStatement next = connection.prepareStatement(
+              "select min(CHAIN_ID_) from " + events(settings) + " where CHAIN_ID_ > ?")) {
+        timeout(first, settings.getQueryTimeoutSeconds());
+        timeout(next, settings.getQueryTimeoutSeconds());
+        String chainId = firstText(first);
+        while (chainId != null) {
+          ids.add(chainId);
+          next.setString(1, chainId);
+          chainId = firstText(next);
         }
       }
     } catch (SQLException e) {
       throw failure("list chains", e);
     }
     return new ArrayList<>(ids);
+  }
+
+  static String firstText(PreparedStatement select) throws SQLException {
+    try (ResultSet result = select.executeQuery()) {
+      return result.next() ? result.getString(1) : null;
+    }
+  }
+
+  static List<Head> heads(Connection connection, AuditSettings settings) throws SQLException {
+    List<Head> heads = new ArrayList<>();
+    try (PreparedStatement select = connection.prepareStatement("select CHAIN_ID_, SEQ_, HASH_ from " + heads(settings));
+        ResultSet result = select.executeQuery()) {
+      while (result.next()) {
+        heads.add(new Head(result.getString(1), result.getLong(2), result.getString(3)));
+      }
+    }
+    return heads;
   }
 
   public static Head head(CommandContext commandContext, AuditSettings settings, String chainId) {
@@ -780,35 +874,63 @@ public final class AuditStore {
     return records;
   }
 
+  /** The records at the start of a chain that one batch of a purge removes. */
+  public static final class PurgeRange {
+    public final long from;
+    public final long through;
+    /** The hash of the record at {@link #through}. */
+    public final String throughHash;
+    /** Whether the record after it is not old enough to be purged: the purge of the chain is complete. */
+    public final boolean complete;
+
+    PurgeRange(long from, long through, String throughHash, boolean complete) {
+      this.from = from;
+      this.through = through;
+      this.throughHash = throughHash;
+      this.complete = complete;
+    }
+  }
+
   /**
-   * The position of the last record of the chain that a purge before the time removes: the records
-   * from the start of the chain up to the first one at or after the time. {@code 0} if none.
+   * The records that one batch of a purge before the time removes: from the first record of the
+   * chain, at most {@code limit} of them, up to the first one at or after the time. Only the start
+   * of the chain is read, in the order of the index of the chain, so that a purge reads the records
+   * it removes and the next one, not the whole chain. {@code null} if nothing is to be purged: the
+   * chain is empty or starts with a record at or after the time, or a record is missing among the
+   * first ones (verifying reports that).
    */
-  public static long purgeBoundary(CommandContext commandContext, AuditSettings settings, String chainId, long before) {
-    Connection connection = connection(commandContext);
-    try {
-      Long firstKept = null;
-      try (PreparedStatement select = connection.prepareStatement(
-          "select min(SEQ_) from " + events(settings) + " where CHAIN_ID_ = ? and TIME_ >= ?")) {
-        select.setString(1, chainId);
-        select.setLong(2, before);
-        try (ResultSet result = select.executeQuery()) {
-          if (result.next()) {
-            long value = result.getLong(1);
-            firstKept = result.wasNull() ? null : value;
+  public static PurgeRange purgeRange(CommandContext commandContext, AuditSettings settings, String chainId, long before,
+      int limit) {
+    try (PreparedStatement select = connection(commandContext).prepareStatement(
+        "select SEQ_, TIME_, HASH_ from " + events(settings) + " where CHAIN_ID_ = ? order by SEQ_ asc")) {
+      select.setString(1, chainId);
+      select.setMaxRows(limit + 1);
+      select.setFetchSize(Math.min(limit + 1, FETCH_SIZE));
+      long from = 0;
+      long through = 0;
+      String throughHash = null;
+      try (ResultSet result = select.executeQuery()) {
+        while (result.next()) {
+          long sequence = result.getLong(1);
+          if (from == 0) {
+            from = sequence;
+          } else if (sequence != through + 1) {
+            LOG.warn("Audit trail chain {} has no record {}; it is not purged. Verify the audit trail.", chainId,
+                through + 1);
+            return null;
           }
+          if (result.getLong(2) >= before) {
+            return through == 0 ? null : new PurgeRange(from, through, throughHash, true);
+          }
+          if (sequence - from >= limit) {
+            // the record after the batch is old as well
+            break;
+          }
+          through = sequence;
+          throughHash = result.getString(3);
         }
       }
-      if (firstKept != null) {
-        return firstKept - 1;
-      }
-      try (PreparedStatement select = connection.prepareStatement(
-          "select max(SEQ_) from " + events(settings) + " where CHAIN_ID_ = ?")) {
-        select.setString(1, chainId);
-        try (ResultSet result = select.executeQuery()) {
-          return result.next() ? result.getLong(1) : 0;
-        }
-      }
+      return through == 0 ? null : new PurgeRange(from, through, throughHash, false);
     } catch (SQLException e) {
       throw failure("find what to purge", "chain " + chainId, e);
     }

@@ -66,6 +66,9 @@ camunda.bpm:
     csrf:
       enable-same-site-cookie: true
       same-site-cookie-option: LAX
+    # the filter that adds SameSite to the session cookie finds it by this name (server below)
+    session-cookie:
+      cookie-name: ${server.servlet.session.cookie.name:FASTI_SESSION}
 
 # refuse to start if the effective configuration (any file, variable or argument) turns REST
 # authentication or authorization off; only FASTI_INSECURE_DEMO=true lifts this
@@ -139,12 +142,21 @@ server:
   compression:
     enabled: true
     min-response-size: 2KB
-    mime-types: text/html,text/css,text/javascript,application/javascript,image/svg+xml,application/json,application/hal+json
+    mime-types: text/html,text/css,text/javascript,application/javascript,image/svg+xml,application/json,application/hal+json,application/xml,text/xml
+  # a session cookie name of its own: browsers send cookies to every port of a host, so with the
+  # usual JSESSIONID and Path=/ another application on the same host (for example Camunda 7 Run
+  # on another port) would replace it and sign the user out. SERVER_SERVLET_SESSION_COOKIE_NAME
+  # changes it.
+  servlet.session.cookie.name: FASTI_SESSION
   shutdown: graceful
   forward-headers-strategy: native
   # redirects carry a path only, never a host taken from the Host or X-Forwarded-Host header
   tomcat:
     use-relative-redirects: true
+    # up to 100 request threads (Tomcat's default is 200): the connection pool has room for about
+    # ten requests that use the database next to the job executor; more threads would only wait
+    # for a connection. SERVER_TOMCAT_THREADS_MAX changes it.
+    threads.max: 100
 
 spring:
   # room for every job executor thread plus the requests that use the database at the same time
@@ -157,6 +169,10 @@ spring:
     hikari:
       maximum-pool-size: 20
       minimum-idle: 10
+      # a request waits at most 10 s for a free connection (HikariCP's default is 30 s), so that
+      # an exhausted pool or a database that does not answer shows as an error and in the
+      # readiness probe instead of tying up request threads
+      connection-timeout: 10000
   lifecycle:
     timeout-per-shutdown-phase: 30s
   web.resources:

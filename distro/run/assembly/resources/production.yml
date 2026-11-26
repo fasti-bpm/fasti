@@ -6,6 +6,9 @@ camunda.bpm:
 # https://docs.camunda.org/manual/latest/user-guide/security/#http-header-security-in-webapps
 # https://docs.camunda.org/manual/latest/webapps/shared-options/header-security/
   webapp:
+# the filter that adds SameSite to the session cookie finds it by this name
+    session-cookie:
+      cookie-name: ${server.servlet.session.cookie.name:FASTI_SESSION}
 # The web applications are served below /fasti; /camunda is redirected there.
 # Uncomment to serve them below /camunda again, without redirect:
 #    application-path: /camunda
@@ -82,6 +85,22 @@ server:
   servlet.session.cookie:
     secure: true
     http-only: true
+    # a name of its own: browsers send cookies to every port of a host, so with the usual
+    # JSESSIONID and Path=/ another application on the same host (for example Camunda 7 Run on
+    # another port) would replace it and sign the user out
+    name: FASTI_SESSION
+
+# Responses above 2 KB (web UI scripts, styles, pages, JSON of the REST API) are compressed;
+# set server.compression.enabled: false when a reverse proxy already compresses.
+  compression:
+    enabled: true
+    min-response-size: 2KB
+    mime-types: text/html,text/css,text/javascript,application/javascript,image/svg+xml,application/json,application/hal+json,application/xml,text/xml
+
+# Up to 100 request threads (Tomcat's default is 200): the connection pool has room for about ten
+# requests that use the database next to the job executor; more threads would only wait for a
+# connection (docs/tuning-runtime.md)
+  tomcat.threads.max: 100
 
 # https://docs.camunda.org/manual/latest/user-guide/camunda-bpm-run/#logging
 # https://docs.camunda.org/manual/latest/user-guide/logging/#process-engine
@@ -165,6 +184,10 @@ spring.datasource:
   hikari:
     maximum-pool-size: 20
     minimum-idle: 10
+    # a request waits at most 10 s for a free connection (HikariCP's default is 30 s), so that an
+    # exhausted pool or a database that does not answer shows as an error and in the readiness
+    # check instead of tying up request threads
+    connection-timeout: 10000
 
 # Job executor and connection pool (docs/tuning-runtime.md). An acquisition fetches up to
 # max-jobs-per-acquisition due jobs, the queue holds one acquisition, and max-pool-size threads
@@ -183,6 +206,21 @@ camunda.bpm.job-execution:
   queue-capacity: 10
   max-jobs-per-acquisition: 10
   lock-time-in-millis: 300000
+
+# Limits worth setting on a large database or a cluster (docs/tuning-runtime.md); uncomment and
+# adjust. Each line is a key of its own, so that they do not clash with the blocks above.
+# Seconds after which the database cancels a statement: one runaway query cannot hold a
+# connection and a request thread for good. Keep it above the slowest legitimate statement
+# (reports, history cleanup, large deployments).
+#camunda.bpm.generic-properties.properties.jdbc-statement-timeout: 60
+# Most results one query of a signed-in user (REST API, web UI) may return. A list request
+# without paging (no maxResults) then fails with "An unbound number of results is forbidden!":
+# try the web UI and every REST client before turning it on.
+#camunda.bpm.generic-properties.properties.query-max-results-limit: 10000
+# Several nodes on one database: a node whose acquisition lost jobs to another one waits
+# 50 ms before it acquires again, doubling up to 5 s while it keeps losing.
+#camunda.bpm.job-execution.backoff-time-in-millis: 50
+#camunda.bpm.job-execution.max-backoff: 5000
 
 # By default, Spring Boot serves static content from any directories called /static or /public or /resources or
 # /META-INF/resources in the classpath. To prevent users from accidentally sharing files, this is disabled here by setting static locations to NULL.

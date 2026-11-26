@@ -112,6 +112,10 @@ spring.datasource:
   hikari:
     maximum-pool-size: 20
     minimum-idle: 10
+    # a request waits at most 10 s for a free connection (HikariCP's default is 30 s), so that an
+    # exhausted pool or a database that does not answer shows as an error and in the readiness
+    # check instead of tying up request threads
+    connection-timeout: 10000
 
 # Job executor and connection pool (docs/tuning-runtime.md). An acquisition fetches up to
 # max-jobs-per-acquisition due jobs, the queue holds one acquisition, and max-pool-size threads
@@ -130,6 +134,23 @@ camunda.bpm.job-execution:
   queue-capacity: 10
   max-jobs-per-acquisition: 10
   lock-time-in-millis: 300000
+
+# HTTP server (docs/tuning-runtime.md). The session cookie has a name of its own: browsers send
+# cookies to every port of a host, so with the usual JSESSIONID and Path=/ another application on
+# the same host (for example Camunda 7 Run on another port) would replace it and sign the user
+# out. The filter that adds SameSite to the session cookie finds it by the same name.
+# Responses above 2 KB (web UI scripts, styles, pages, JSON of the REST API) are compressed;
+# set server.compression.enabled: false when a reverse proxy already compresses. Up to 100
+# request threads (Tomcat's default is 200): the connection pool has room for about ten requests
+# that use the database next to the job executor, more threads would only wait for a connection.
+server:
+  servlet.session.cookie.name: FASTI_SESSION
+  compression:
+    enabled: true
+    min-response-size: 2KB
+    mime-types: text/html,text/css,text/javascript,application/javascript,image/svg+xml,application/json,application/hal+json,application/xml,text/xml
+  tomcat.threads.max: 100
+camunda.bpm.webapp.session-cookie.cookie-name: ${server.servlet.session.cookie.name:FASTI_SESSION}
 
 # By default, Spring Boot serves static content from any directories called /static or /public or /resources or
 # /META-INF/resources in the classpath. To prevent users from accidentally sharing files, this is disabled here by setting static locations to NULL.

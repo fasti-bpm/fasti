@@ -16,6 +16,7 @@
  */
 package dev.fasti.spring.boot.mcp;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
 import dev.fasti.spring.boot.mcp.auth.BasicMcpAuthenticator;
+import dev.fasti.spring.boot.mcp.auth.IdentityChangePlugin;
 import dev.fasti.spring.boot.mcp.auth.McpAuthenticator;
 import dev.fasti.spring.boot.mcp.auth.McpIdentity;
 import dev.fasti.spring.boot.mcp.auth.McpRequestFilter;
@@ -185,8 +187,19 @@ public class FastiMcpAutoConfiguration {
   @Bean
   @Order(Ordered.LOWEST_PRECEDENCE)
   @ConditionalOnBooleanProperty(prefix = FastiMcpProperties.PREFIX, name = "basic-auth-enabled", matchIfMissing = true)
-  public BasicMcpAuthenticator fastiMcpBasicAuthenticator() {
-    return new BasicMcpAuthenticator();
+  public BasicMcpAuthenticator fastiMcpBasicAuthenticator(FastiMcpProperties properties) {
+    Duration cacheTtl = properties.getBasicAuthCacheTtl() == null ? Duration.ZERO : properties.getBasicAuthCacheTtl();
+    if (cacheTtl.isNegative()) {
+      throw new IllegalStateException(FastiMcpProperties.PREFIX + ".basic-auth-cache-ttl must not be negative");
+    }
+    return new BasicMcpAuthenticator(cacheTtl);
+  }
+
+  /** Clears the cache of the basic authenticator when users, groups or tenants change. */
+  @Bean
+  @ConditionalOnBooleanProperty(prefix = FastiMcpProperties.PREFIX, name = "basic-auth-enabled", matchIfMissing = true)
+  public static IdentityChangePlugin fastiMcpIdentityChangePlugin(ObjectProvider<BasicMcpAuthenticator> authenticator) {
+    return new IdentityChangePlugin(() -> authenticator.ifAvailable(BasicMcpAuthenticator::clearCache));
   }
 
   @Bean

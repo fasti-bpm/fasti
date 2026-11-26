@@ -44,6 +44,8 @@ import org.camunda.bpm.engine.identity.Group;
 import org.camunda.bpm.engine.identity.GroupQuery;
 import org.camunda.bpm.engine.identity.Tenant;
 import org.camunda.bpm.engine.identity.TenantQuery;
+import org.camunda.bpm.engine.identity.User;
+import org.camunda.bpm.engine.identity.UserQuery;
 import org.camunda.bpm.engine.rest.security.auth.impl.HttpBasicAuthenticationProvider;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,6 +58,8 @@ public class HttpBasicAuthenticationCacheTest {
   protected ProcessEngine engine;
   protected IdentityService identityService;
   protected HttpBasicAuthenticationProvider provider;
+  protected GroupQuery groupQuery;
+  protected TenantQuery tenantQuery;
 
   @Before
   public void setUp() {
@@ -65,13 +69,25 @@ public class HttpBasicAuthenticationCacheTest {
     when(engine.getName()).thenReturn("default");
     when(identityService.checkPassword("kermit", "secret")).thenReturn(true);
 
-    GroupQuery groupQuery = mock(GroupQuery.class, RETURNS_SELF);
+    // a user query that, like LDAP or a case-insensitive collation, ignores the case of the id
+    User kermit = mock(User.class);
+    when(kermit.getId()).thenReturn("kermit");
+    when(identityService.createUserQuery()).thenAnswer(invocation -> {
+      UserQuery userQuery = mock(UserQuery.class, RETURNS_SELF);
+      when(userQuery.userId(anyString())).thenAnswer(call -> {
+        when(userQuery.singleResult()).thenReturn("kermit".equalsIgnoreCase(call.getArgument(0)) ? kermit : null);
+        return userQuery;
+      });
+      return userQuery;
+    });
+
+    groupQuery = mock(GroupQuery.class, RETURNS_SELF);
     Group group = mock(Group.class);
     when(group.getId()).thenReturn("sales");
     when(groupQuery.list()).thenReturn(Collections.singletonList(group));
     when(identityService.createGroupQuery()).thenReturn(groupQuery);
 
-    TenantQuery tenantQuery = mock(TenantQuery.class, RETURNS_SELF);
+    tenantQuery = mock(TenantQuery.class, RETURNS_SELF);
     Tenant tenant = mock(Tenant.class);
     when(tenant.getId()).thenReturn("tenant-1");
     when(tenantQuery.list()).thenReturn(Collections.singletonList(tenant));
@@ -157,6 +173,63 @@ public class HttpBasicAuthenticationCacheTest {
     provider.extractAuthenticatedUser(request("kermit", "secret"), engine);
 
     verify(identityService, times(2)).checkPassword("kermit", "secret");
+  }
+
+  // the stored user id instead of the name as typed
+
+  @Test
+  public void shouldAuthenticateACaseVariantAsTheStoredUserId() {
+    when(identityService.checkPassword("KERMIT", "secret")).thenReturn(true);
+
+    AuthenticationResult result = provider.extractAuthenticatedUser(request("KERMIT", "secret"), engine);
+
+    assertThat(result.isAuthenticated()).isTrue();
+    assertThat(result.getAuthenticatedUser()).isEqualTo("kermit");
+  }
+
+  @Test
+  public void shouldAuthenticateCaseVariantsAsTheStoredUserIdThroughTheCache() {
+    when(identityService.checkPassword("KERMIT", "secret")).thenReturn(true);
+    when(identityService.checkPassword("Kermit", "secret")).thenReturn(true);
+    provider.setCacheTimeToLiveMillis(60_000);
+
+    AuthenticationResult first = provider.extractAuthenticatedUser(request("kermit", "secret"), engine);
+    AuthenticationResult upper = provider.extractAuthenticatedUser(request("KERMIT", "secret"), engine);
+    AuthenticationResult upperCached = provider.extractAuthenticatedUser(request("KERMIT", "secret"), engine);
+    AuthenticationResult mixed = provider.extractAuthenticatedUser(request("Kermit", "secret"), engine);
+
+    assertThat(first.getAuthenticatedUser()).isEqualTo("kermit");
+    assertThat(upper.getAuthenticatedUser()).isEqualTo("kermit");
+    assertThat(upperCached.getAuthenticatedUser()).isEqualTo("kermit");
+    assertThat(mixed.getAuthenticatedUser()).isEqualTo("kermit");
+    assertThat(upperCached.getGroups()).containsExactly("sales");
+    // each spelling is checked once; memberships are always read for the stored id
+    verify(identityService, times(1)).checkPassword("KERMIT", "secret");
+    verify(identityService, times(1)).checkPassword("Kermit", "secret");
+    verify(groupQuery, times(3)).groupMember("kermit");
+    verify(groupQuery, never()).groupMember("KERMIT");
+    verify(tenantQuery, times(3)).userMember("kermit");
+  }
+
+  @Test
+  public void shouldNotCacheAFailedCheckOfACaseVariant() {
+    provider.setCacheTimeToLiveMillis(60_000);
+    provider.extractAuthenticatedUser(request("kermit", "secret"), engine);
+
+    AuthenticationResult result = provider.extractAuthenticatedUser(request("KERMIT", "secret"), engine);
+
+    assertThat(result.isAuthenticated()).isFalse();
+    verify(identityService).checkPassword("KERMIT", "secret");
+  }
+
+  @Test
+  public void shouldKeepTheTypedNameIfTheUserCannotBeRead() {
+    when(identityService.checkPassword("gonzo", "secret")).thenReturn(true);
+
+    AuthenticationResult result = provider.extractAuthenticatedUser(request("gonzo", "secret"), engine);
+
+    assertThat(result.isAuthenticated()).isTrue();
+    assertThat(result.getAuthenticatedUser()).isEqualTo("gonzo");
   }
 
   @Test

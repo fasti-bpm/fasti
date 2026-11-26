@@ -20,6 +20,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -46,6 +47,7 @@ import org.camunda.bpm.engine.identity.GroupQuery;
 import org.camunda.bpm.engine.identity.Tenant;
 import org.camunda.bpm.engine.identity.TenantQuery;
 import org.camunda.bpm.engine.identity.User;
+import org.camunda.bpm.engine.identity.UserQuery;
 import org.camunda.bpm.engine.impl.AuthorizationServiceImpl;
 import org.camunda.bpm.engine.impl.IdentityServiceImpl;
 import org.camunda.bpm.engine.impl.digest._apacheCommonsCodec.Base64;
@@ -139,6 +141,9 @@ public class AuthenticationFilterPathMatchingTest extends AbstractRestServiceTes
 
     // for authentication
     userMock = MockProvider.createMockUser();
+    UserQuery mockUserQuery = mock(UserQuery.class, RETURNS_SELF);
+    when(mockUserQuery.singleResult()).thenReturn(userMock);
+    when(identityServiceMock.createUserQuery()).thenReturn(mockUserQuery);
 
     List<Group> groupMocks = MockProvider.createMockGroups();
     groupIds = setupGroupQueryMock(groupMocks);

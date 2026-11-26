@@ -12,6 +12,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,6 +30,8 @@ import org.camunda.bpm.engine.identity.Group;
 import org.camunda.bpm.engine.identity.GroupQuery;
 import org.camunda.bpm.engine.identity.Tenant;
 import org.camunda.bpm.engine.identity.TenantQuery;
+import org.camunda.bpm.engine.identity.User;
+import org.camunda.bpm.engine.identity.UserQuery;
 import org.camunda.bpm.engine.impl.IdentityServiceImpl;
 import org.camunda.bpm.engine.impl.util.ClockUtil;
 import org.camunda.bpm.engine.rest.AbstractRestServiceTest;
@@ -84,6 +87,10 @@ public class FetchAndLockAuthenticationFilterTest extends AbstractRestServiceTes
 
     // authentication
     when(identityServiceMock.checkPassword(MockProvider.EXAMPLE_USER_ID, MockProvider.EXAMPLE_USER_PASSWORD)).thenReturn(true);
+    User user = MockProvider.createMockUser();
+    UserQuery userQuery = mock(UserQuery.class, RETURNS_SELF);
+    when(userQuery.singleResult()).thenReturn(user);
+    when(identityServiceMock.createUserQuery()).thenReturn(userQuery);
 
     List<Group> groups = MockProvider.createMockGroups();
     GroupQuery groupQuery = mock(GroupQuery.class);

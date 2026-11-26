@@ -50,6 +50,10 @@ A person did a step when they **completed** it, as
 Both count, which is the stricter reading. A step that ended otherwise (cancelled by a
 boundary event, deleted with its instance, ended with a BPMN error) was not done.
 
+User ids are compared exactly, after the login has replaced the name as typed with the id the
+identity service stores (the webapp login and, from 1.3.2, REST Basic authentication), so `john`
+and `JOHN` are one person even where the identity provider ignores case (LDAP, SQL Server with its default collation).
+
 With [substitutes during absence](absence.md), the substitute who held and completed a step
 is the one who did it, not the absent user.
 

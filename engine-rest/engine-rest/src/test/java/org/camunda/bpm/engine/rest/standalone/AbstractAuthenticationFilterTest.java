@@ -20,6 +20,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,6 +42,7 @@ import org.camunda.bpm.engine.identity.GroupQuery;
 import org.camunda.bpm.engine.identity.Tenant;
 import org.camunda.bpm.engine.identity.TenantQuery;
 import org.camunda.bpm.engine.identity.User;
+import org.camunda.bpm.engine.identity.UserQuery;
 import org.camunda.bpm.engine.impl.AuthorizationServiceImpl;
 import org.camunda.bpm.engine.impl.IdentityServiceImpl;
 import org.camunda.bpm.engine.impl.digest._apacheCommonsCodec.Base64;
@@ -81,6 +83,9 @@ public abstract class AbstractAuthenticationFilterTest extends AbstractRestServi
 
     // for authentication
     userMock = MockProvider.createMockUser();
+    UserQuery mockUserQuery = mock(UserQuery.class, RETURNS_SELF);
+    when(mockUserQuery.singleResult()).thenReturn(userMock);
+    when(identityServiceMock.createUserQuery()).thenReturn(mockUserQuery);
 
     List<Group> groupMocks = MockProvider.createMockGroups();
     groupIds = setupGroupQueryMock(groupMocks);

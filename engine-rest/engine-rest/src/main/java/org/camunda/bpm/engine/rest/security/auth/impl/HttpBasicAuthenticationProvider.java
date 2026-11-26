@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.identity.Group;
 import org.camunda.bpm.engine.identity.Tenant;
+import org.camunda.bpm.engine.identity.User;
 import org.camunda.bpm.engine.impl.digest._apacheCommonsCodec.Base64;
 import org.camunda.bpm.engine.rest.security.auth.AuthenticationProvider;
 import org.camunda.bpm.engine.rest.security.auth.AuthenticationResult;
@@ -50,6 +51,13 @@ import javax.ws.rs.core.HttpHeaders;
  * the password. A new password takes effect at once (it is another key); a deleted or locked
  * user, changed memberships and the old password after a change stop working after the time to
  * live at the latest. Failed checks are never cached. Off by default (time to live 0).
+ * </p>
+ * <p>
+ * Fasti: after a successful check the user name as typed is replaced by the id the identity
+ * service stores for the user, as the webapp login does. An identity provider that matches user
+ * names without regard to case (LDAP, a database with a case-insensitive collation) accepts
+ * {@code john} and {@code JOHN} alike; both now authenticate as the same user, so that checks
+ * comparing user ids, such as the four-eyes control, see one person.
  * </p>
  *
  * @author Thorben Lindhauer
@@ -130,7 +138,7 @@ public class HttpBasicAuthenticationProvider implements AuthenticationProvider {
           return authenticateCached(engine, userName, password);
         }
         if (isAuthenticated(engine, userName, password)) {
-          return AuthenticationResult.successful(userName);
+          return AuthenticationResult.successful(canonicalUserId(engine, userName));
         } else {
           return AuthenticationResult.unsuccessful(userName);
         }
@@ -142,6 +150,18 @@ public class HttpBasicAuthenticationProvider implements AuthenticationProvider {
 
   protected boolean isAuthenticated(ProcessEngine engine, String userName, String password) {
     return engine.getIdentityService().checkPassword(userName, password);
+  }
+
+  /**
+   * Fasti: the id the identity service stores for the user whose password was just checked
+   * under the given name, or the name itself if the user cannot be read.
+   */
+  protected String canonicalUserId(ProcessEngine engine, String userName) {
+    User user = engine.getIdentityService().createUserQuery().userId(userName).singleResult();
+    if (user != null && user.getId() != null && !user.getId().isEmpty()) {
+      return user.getId();
+    }
+    return userName;
   }
 
   /** Fasti: the check through the cache, see the class comment. */
@@ -158,8 +178,10 @@ public class HttpBasicAuthenticationProvider implements AuthenticationProvider {
     if (!isAuthenticated(engine, userName, password)) {
       return AuthenticationResult.unsuccessful(userName);
     }
-    CachedIdentity identity = new CachedIdentity(userName, groupsOfUser(engine, userName),
-        tenantsOfUser(engine, userName), now + cacheTimeToLiveMillis * 1_000_000L);
+    // the key stays the name as typed (each spelling is checked once), the entry the stored id
+    String userId = canonicalUserId(engine, userName);
+    CachedIdentity identity = new CachedIdentity(userId, groupsOfUser(engine, userId),
+        tenantsOfUser(engine, userId), now + cacheTimeToLiveMillis * 1_000_000L);
     if (cache.size() >= CACHE_MAX_ENTRIES) {
       cache.values().removeIf(entry -> entry.isExpired(now));
       if (cache.size() >= CACHE_MAX_ENTRIES) {

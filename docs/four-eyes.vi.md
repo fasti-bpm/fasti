@@ -53,6 +53,10 @@ Một người đã làm một bước khi họ **hoàn thành** bước đó, v
 Cả hai đều được tính, đây là cách hiểu chặt hơn. Một bước kết thúc theo cách khác (bị hủy bởi
 boundary event, bị xóa cùng instance, kết thúc bằng BPMN error) thì không tính là đã làm.
 
+User id được so sánh chính xác, sau khi bước đăng nhập đã đổi tên gõ vào thành id mà identity
+service lưu (đăng nhập webapp và, từ 1.3.2, xác thực REST Basic), nên `john` và `JOHN` là một người
+kể cả khi identity provider không phân biệt hoa thường (LDAP, SQL Server với collation mặc định).
+
 Với [người thay thế khi vắng mặt](absence.vi.md), người thay thế đã giữ và hoàn thành bước là
 người đã làm bước đó, không phải người vắng mặt.
 

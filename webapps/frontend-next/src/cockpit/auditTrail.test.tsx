@@ -245,6 +245,48 @@ describe('the audit trail page', () => {
     expect(screen.getByText('Purged up to record 40; no checked signature attests it')).toBeInTheDocument();
   });
 
+  async function verifyWith(result: AuditVerification) {
+    fakeServer({
+      [`GET ${ENGINE}/audit`]: () => json(STATUS),
+      [`GET ${ENGINE}/audit/event`]: () => json([]),
+      [`GET ${ENGINE}/audit/event/count`]: () => json({ count: 0 }),
+      [`POST ${ENGINE}/audit/verify`]: () => json(result),
+    });
+    wrap(<AuditTrailPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Verify integrity' }));
+    await screen.findByRole('note');
+  }
+
+  const young = { chainId: 'node-1/1', intact: true, authenticated: false, authenticatedThrough: 0, records: 3, firstSequence: 1, lastSequence: 3, lastHash: 'd'.repeat(64), checkpoints: 0, checkpointsVerified: 0, purgedThrough: 0, purgeAttested: false, firstBreak: null };
+  const signedChain = { chainId: 'node-1/0', intact: true, authenticated: true, authenticatedThrough: 10, records: 12, firstSequence: 1, lastSequence: 12, lastHash: 'c'.repeat(64), checkpoints: 1, checkpointsVerified: 1, purgedThrough: 0, purgeAttested: false, firstBreak: null };
+
+  it('calls a young chain without a checkpoint intact but not signed yet, not unverifiable', async () => {
+    await verifyWith({ intact: true, authenticated: false, verifiedAt: '2026-11-21T08:00:00.000+0000', records: 15, firstBreak: null, chains: [young, signedChain] });
+
+    expect(screen.getByText(/^Not signed yet: the records are intact, but no checkpoint has signed them so far/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Not authenticated:/)).not.toBeInTheDocument();
+    expect(screen.getByText('intact, not signed yet: signed at the next checkpoint (every few minutes or at shutdown)')).toBeInTheDocument();
+    expect(screen.getByText('signatures cover records up to 10')).toBeInTheDocument();
+  });
+
+  it('still says a signature cannot be checked when a checkpoint was not verified', async () => {
+    const unchecked = { ...signedChain, authenticated: false, authenticatedThrough: 0, checkpoints: 2, checkpointsVerified: 1 };
+    await verifyWith({ intact: true, authenticated: false, verifiedAt: '2026-11-21T08:00:00.000+0000', records: 15, firstBreak: null, chains: [young, unchecked] });
+
+    expect(screen.getByText(/^Not authenticated: some checkpoints or purge records carry a signature the engine cannot check/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Not signed yet:/)).not.toBeInTheDocument();
+    // the young chain is still told apart
+    expect(screen.getByText(/^intact, not signed yet/)).toBeInTheDocument();
+  });
+
+  it('keeps the answer of a 1.3.1 engine, which counts a young chain as authenticated', async () => {
+    await verifyWith({ intact: true, authenticated: true, verifiedAt: '2026-11-21T08:00:00.000+0000', records: 15, firstBreak: null, chains: [{ ...young, authenticated: true }, signedChain] });
+
+    expect(screen.getByText(/^Authenticated: every checkpoint and purge record was checked/)).toBeInTheDocument();
+    expect(screen.getByText('no checkpoint yet: hashes only')).toBeInTheDocument();
+    expect(screen.queryByText(/not signed yet/)).not.toBeInTheDocument();
+  });
+
   it('says that hashes alone do not rule out a rewrite when the trail is not signed', async () => {
     const chain = { chainId: 'node-1/0', intact: true, authenticated: false, records: 3, firstSequence: 1, lastSequence: 3, lastHash: 'c'.repeat(64), checkpoints: 0, checkpointsVerified: 0, purgedThrough: 0, purgeAttested: false, firstBreak: null };
     fakeServer({

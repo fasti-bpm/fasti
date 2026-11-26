@@ -177,8 +177,10 @@ spec:
             - name: FASTI_MANAGEMENT_PORT
               value: {{ $managementPort | quote }}
             {{- end }}
+            {{- with .Values.jvm.maxRamPercentage }}
             - name: FASTI_MAX_RAM_PERCENTAGE
-              value: {{ .Values.jvm.maxRamPercentage | quote }}
+              value: {{ . | quote }}
+            {{- end }}
             {{- with .Values.jvm.javaOpts }}
             - name: JAVA_OPTS
               value: {{ . | quote }}

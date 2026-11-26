@@ -340,7 +340,7 @@
       "type": "object",
       "properties": {
         "maxRamPercentage": {
-          "type": "integer",
+          "type": ["integer", "null"],
           "minimum": 10,
           "maximum": 95
         },

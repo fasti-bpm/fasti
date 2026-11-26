@@ -12,6 +12,9 @@ database:
     minIdle: 0
 updateStrategy:
   type: Recreate
+# set explicitly; unset, the chart passes nothing and the image chooses
+jvm:
+  maxRamPercentage: 70
 pdb:
   maxUnavailable: 0
 # the actuator on a port of its own: probes, helm test, Service and NetworkPolicy follow it

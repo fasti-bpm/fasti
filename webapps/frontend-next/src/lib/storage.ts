@@ -206,28 +206,31 @@ export function flushPreferences(): Promise<void> {
   if (!dirty) {
     return Promise.resolve();
   }
+  const generation = connection;
   const run = async () => {
     try {
       let stored: boolean;
       do {
         again = false;
         stored = await uploadOnce();
-      } while (stored && again && dirty && remote);
+      } while (stored && again && dirty && generation === connection);
     } finally {
-      inFlight = null;
+      // a later connection may have started its own meanwhile
+      if (inFlight === current) inFlight = null;
     }
   };
-  inFlight = run();
-  return inFlight;
+  const current = run();
+  inFlight = current;
+  return current;
 }
 
 /**
  * The page is closed or left: the changes that wait for the delay go out with
  * a request that outlives the page. An upload under way cannot be waited for
- * any more; this one carries the latest state.
+ * any more and may be cancelled with the page; this one carries the latest state.
  */
 function flushOnExit(): void {
-  if (!remote || !dirty || ownerChanged()) {
+  if (!remote || (!dirty && !inFlight) || ownerChanged()) {
     return;
   }
   window.clearTimeout(uploadTimer);
@@ -270,33 +273,48 @@ export function onOwnerChanged(listener: () => void): () => void {
   return () => window.removeEventListener('storage', handler);
 }
 
+/** The keys of earlier versions found in this browser, old name → new name. */
+function renamedKeys(userId: string): [string, string][] {
+  // a user of that very name: `tasklist.<user>` is the own entry
+  return Object.entries(RENAMED).filter(([legacy]) => legacy !== `tasklist.${userId}`);
+}
+
 /**
- * Moves the keys of earlier versions to their new names. They belonged to
- * whoever used the browser: kept for its owner (or if it had none), dropped
- * for a new user. Answers the values kept, by their new names.
+ * The keys of earlier versions belonged to whoever used the browser: for its
+ * owner (or if it had none) their values are used under the new names at once,
+ * for a new user they are dropped. The old keys stay until the server copy
+ * took them in (see {@link takeRenamedKeys}), so a failed first load loses nothing.
  */
-function moveRenamedKeys(userId: string, sameOwner: boolean): PreferenceDocument {
-  const moved: PreferenceDocument = {};
+function adoptRenamedKeys(userId: string, sameOwner: boolean): void {
   try {
-    for (const [legacy, next] of Object.entries(RENAMED)) {
-      if (legacy === `tasklist.${userId}`) continue; // a user of that very name
+    for (const [legacy, next] of renamedKeys(userId)) {
       const raw = window.localStorage.getItem(PREFIX + legacy);
       if (raw === null) continue;
-      window.localStorage.removeItem(PREFIX + legacy);
-      if (!sameOwner) continue;
-      if (window.localStorage.getItem(PREFIX + next) === null) {
+      if (!sameOwner) {
+        window.localStorage.removeItem(PREFIX + legacy);
+      } else if (window.localStorage.getItem(PREFIX + next) === null) {
         window.localStorage.setItem(PREFIX + next, raw);
-      }
-      try {
-        moved[next] = JSON.parse(window.localStorage.getItem(PREFIX + next) ?? raw);
-      } catch {
-        // not readable: left out
       }
     }
   } catch {
     // no storage
   }
-  return moved;
+}
+
+/** Removes the keys of earlier versions; answers the values adopted for them, by their new names. */
+function takeRenamedKeys(userId: string): PreferenceDocument {
+  const adopted: PreferenceDocument = {};
+  try {
+    for (const [legacy, next] of renamedKeys(userId)) {
+      if (window.localStorage.getItem(PREFIX + legacy) === null) continue;
+      window.localStorage.removeItem(PREFIX + legacy);
+      const value = readPreference<unknown>(next, undefined);
+      if (value !== undefined) adopted[next] = value;
+    }
+  } catch {
+    // no storage
+  }
+  return adopted;
 }
 
 /**
@@ -322,7 +340,7 @@ export async function connectPreferences(
   const ownerId = `${scope}/${userId}`;
   const owner = readOwner();
   const sameOwner = owner === null || owner === ownerId;
-  const moved = moveRenamedKeys(userId, sameOwner);
+  adoptRenamedKeys(userId, sameOwner);
   let stored: PreferenceDocument | null = null;
   try {
     const loaded = await target.load();
@@ -347,6 +365,8 @@ export async function connectPreferences(
   remote = target;
   remoteUser = userId;
   remoteOwner = ownerId;
+  // the server copy is known now: the values of the old keys go into it below
+  const adopted = takeRenamedKeys(userId);
   if (Object.keys(stored).length === 0 && sameOwner) {
     // first use: the preferences of this browser become the server copy
     if (Object.keys(localDocument(userId)).length > 0) {
@@ -356,9 +376,9 @@ export async function connectPreferences(
     return;
   }
   // otherwise the server copy wins; for a new user of a shared browser that
-  // is an empty one, so the previous user's choices are dropped. Values moved
-  // from their old names were never on the server: they are added to it.
-  const kept = Object.fromEntries(Object.entries(moved).filter(([key]) => !(key in stored)));
+  // is an empty one, so the previous user's choices are dropped. Values taken
+  // over from their old names were never on the server: they are added to it.
+  const kept = Object.fromEntries(Object.entries(adopted).filter(([key]) => !(key in stored)));
   replaceLocal(userId, { ...kept, ...stored });
   if (Object.keys(kept).length > 0) {
     dirty = true;
@@ -415,5 +435,7 @@ export function disconnectPreferences(): void {
   remoteOwner = null;
   dirty = false;
   again = false;
+  // an upload still under way belongs to the user before and is not waited for
+  inFlight = null;
   connection++;
 }

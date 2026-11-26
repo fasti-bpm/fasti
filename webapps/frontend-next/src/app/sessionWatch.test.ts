@@ -79,6 +79,19 @@ describe('the session shared with other tabs', () => {
     expect(onSwitched).not.toHaveBeenCalled();
   });
 
+  it('asks again for a login elsewhere while a check was under way', async () => {
+    const answers: ((value: { userId: string }) => void)[] = [];
+    const { check, onSwitched } = watch(() => new Promise((resolve) => answers.push(resolve)));
+
+    loginInOtherTab('default/alice');
+    loginInOtherTab('default/bob');
+    answers.shift()?.({ userId: 'alice' });
+    await vi.waitFor(() => expect(check).toHaveBeenCalledTimes(2));
+    answers.shift()?.({ userId: 'bob' });
+
+    await vi.waitFor(() => expect(onSwitched).toHaveBeenCalledTimes(1));
+  });
+
   it('keeps the session when the server cannot be asked', async () => {
     const { check, onEnded, onSwitched } = watch(async () => Promise.reject(new Error('down')));
 

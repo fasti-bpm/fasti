@@ -14,6 +14,7 @@ import {
   onPreferencesReplaced,
   readPreference,
   writePreference,
+  type PreferenceRemote,
 } from './storage';
 
 afterEach(() => {
@@ -258,6 +259,35 @@ describe('preferences on the server', () => {
     expect(remote.save).toHaveBeenCalledWith({ a: 2 }, { keepalive: true });
   });
 
+  it('sends the latest state again when the page is closed during an upload', async () => {
+    const answers: (() => void)[] = [];
+    const save = vi.fn<PreferenceRemote['save']>(() => new Promise<void>((resolve) => answers.push(resolve)));
+    await connectPreferences('alice', { load: async () => ({ a: 1 }), save });
+
+    writePreference('a', 2);
+    const uploading = flushPreferences();
+    window.dispatchEvent(new Event('pagehide'));
+    answers.forEach((answer) => answer());
+    await uploading;
+
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(save).toHaveBeenLastCalledWith({ a: 2 }, { keepalive: true });
+  });
+
+  it('does not let an upload that hangs hold up the next user', async () => {
+    const hanging = vi.fn<PreferenceRemote['save']>(() => new Promise<void>(() => undefined));
+    await connectPreferences('alice', { load: async () => ({ a: 1 }), save: hanging });
+    writePreference('a', 2);
+    void flushPreferences();
+    const bob = remoteWith({ a: 5 });
+
+    await connectPreferences('alice', bob);
+    writePreference('a', 6);
+    await flushPreferences();
+
+    expect(bob.save).toHaveBeenCalledWith({ a: 6 });
+  });
+
   it('sends nothing when the page is closed without changes', async () => {
     const remote = remoteWith({ a: 1 });
     await connectPreferences('alice', remote);
@@ -286,6 +316,21 @@ describe('keys that left the namespace of the per-user Tasklist entries', () => 
       'tasks.notify': true,
       'tasks.processFields': { invoice: [{ name: 'amount', label: 'Amount' }] },
     });
+  });
+
+  it('keeps them until the server copy could take them in', async () => {
+    vi.useFakeTimers();
+    window.localStorage.setItem('fasti.next.tasklist.notify', 'true');
+
+    await connectPreferences('alice', { load: () => Promise.reject(new Error('down')), save: vi.fn() });
+    expect(readPreference('tasks.notify', false)).toBe(true);
+    const remote = remoteWith({ theme: 'dark' });
+    await connectPreferences('alice', remote);
+    await vi.runAllTimersAsync();
+
+    expect(readPreference('tasks.notify', false)).toBe(true);
+    expect(window.localStorage.getItem('fasti.next.tasklist.notify')).toBeNull();
+    expect(remote.save).toHaveBeenCalledWith({ theme: 'dark', 'tasks.notify': true });
   });
 
   it('drops them for a new user of a shared browser', async () => {

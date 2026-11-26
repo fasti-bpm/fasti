@@ -133,9 +133,15 @@ export interface SessionWatch {
 export function watchSession({ userId, current, onEnded, onSwitched }: SessionWatch): () => void {
   let stopped = false;
   let checking = false;
+  /** a login elsewhere while a check was under way: that check may have asked before it */
+  let recheck = false;
   let checkedAt = Date.now();
-  const check = async (force: boolean) => {
-    if (stopped || checking || (!force && Date.now() - checkedAt < FOCUS_CHECK_INTERVAL)) return;
+  const check = async (force: boolean): Promise<void> => {
+    if (checking) {
+      recheck ||= force;
+      return;
+    }
+    if (stopped || (!force && Date.now() - checkedAt < FOCUS_CHECK_INTERVAL)) return;
     checking = true;
     checkedAt = Date.now();
     try {
@@ -152,6 +158,10 @@ export function watchSession({ userId, current, onEnded, onSwitched }: SessionWa
       // not reachable now: checked again with the next occasion
     } finally {
       checking = false;
+    }
+    if (recheck) {
+      recheck = false;
+      await check(true);
     }
   };
   const onFocus = () => void check(false);

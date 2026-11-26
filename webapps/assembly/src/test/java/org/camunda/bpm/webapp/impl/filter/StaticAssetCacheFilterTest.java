@@ -138,6 +138,37 @@ public class StaticAssetCacheFilterTest {
   }
 
   @Test
+  public void shouldNotCacheRedirects() throws Exception {
+    MockFilterChain redirect = new MockFilterChain() {
+      @Override
+      public void doFilter(javax.servlet.ServletRequest request, javax.servlet.ServletResponse response) {
+        try {
+          ((HttpServletResponse) response).sendRedirect("/lib/other.js");
+        } catch (java.io.IOException e) {
+          throw new IllegalStateException(e);
+        }
+      }
+    };
+    MockFilterChain movedPermanently = new MockFilterChain() {
+      @Override
+      public void doFilter(javax.servlet.ServletRequest request, javax.servlet.ServletResponse response) {
+        ((HttpServletResponse) response).setStatus(301);
+      }
+    };
+    MockFilterChain notModified = new MockFilterChain() {
+      @Override
+      public void doFilter(javax.servlet.ServletRequest request, javax.servlet.ServletResponse response) {
+        ((HttpServletResponse) response).setStatus(304);
+      }
+    };
+
+    assertThat(get("/lib/deps.js", "bust=1.3.1", redirect).getHeader("Cache-Control")).isEqualTo("no-cache");
+    assertThat(get("/lib/deps.js", "bust=1.3.1", movedPermanently).getHeader("Cache-Control")).isEqualTo("no-cache");
+    assertThat(get("/lib/deps.js", "bust=1.3.1", notModified).getHeader("Cache-Control"))
+        .isEqualTo(StaticAssetCacheFilter.IMMUTABLE);
+  }
+
+  @Test
   public void shouldLeavePostAlone() throws Exception {
     MockHttpServletRequest request = new MockHttpServletRequest("POST", "/lib/deps.js");
     request.setServletPath("/lib/deps.js");

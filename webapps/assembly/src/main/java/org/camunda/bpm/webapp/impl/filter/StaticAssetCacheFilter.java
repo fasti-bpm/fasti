@@ -170,6 +170,12 @@ public class StaticAssetCacheFilter implements Filter {
       super.sendError(sc, msg);
     }
 
+    @Override
+    public void sendRedirect(String location) throws IOException {
+      uncacheIfError(HttpServletResponse.SC_FOUND);
+      super.sendRedirect(location);
+    }
+
     protected void uncacheIfError(int sc) {
       if (sc >= 300 && sc != HttpServletResponse.SC_NOT_MODIFIED && !isCommitted()) {
         error = true;

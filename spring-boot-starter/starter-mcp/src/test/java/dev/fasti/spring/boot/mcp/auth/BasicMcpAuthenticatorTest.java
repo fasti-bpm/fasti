@@ -32,6 +32,7 @@ import java.util.List;
 
 import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.identity.Group;
 import org.camunda.bpm.engine.identity.Tenant;
 import org.camunda.bpm.engine.identity.User;
@@ -68,6 +69,17 @@ class BasicMcpAuthenticatorTest {
   @Test
   void actsAsTheUserTheIdentityServiceKnowsWhateverCaseWasTyped() {
     McpIdentity identity = new BasicMcpAuthenticator().authenticate(basic("JOHN", "secret"), engine);
+
+    assertThat(identity.userId()).isEqualTo("john");
+    assertThat(identity.groups()).containsExactly("staff");
+  }
+
+  @Test
+  void keepsTheTypedNameWhenTheIdentityServiceReturnsSeveralUsers() {
+    when(identityService.createUserQuery().userId("john").singleResult())
+        .thenThrow(new ProcessEngineException("Query return 2 results instead of max 1"));
+
+    McpIdentity identity = new BasicMcpAuthenticator().authenticate(basic("john", "secret"), engine);
 
     assertThat(identity.userId()).isEqualTo("john");
     assertThat(identity.groups()).containsExactly("staff");

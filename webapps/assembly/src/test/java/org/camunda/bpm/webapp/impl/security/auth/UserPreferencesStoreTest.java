@@ -6,7 +6,13 @@ package org.camunda.bpm.webapp.impl.security.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -20,6 +26,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.persistence.entity.IdentityInfoEntity;
@@ -28,6 +35,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
+
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 
 public class UserPreferencesStoreTest {
 
@@ -38,6 +50,7 @@ public class UserPreferencesStoreTest {
 
   protected ProcessEngine processEngine;
   protected UserPreferencesStore store;
+  protected List<ListAppender<ILoggingEvent>> appenders = new ArrayList<>();
 
   @Before
   public void setUp() {
@@ -47,6 +60,9 @@ public class UserPreferencesStoreTest {
 
   @After
   public void tearDown() {
+    for (ListAppender<ILoggingEvent> appender : appenders) {
+      webappLogger().detachAppender(appender);
+    }
     execute(commandContext -> {
       for (IdentityInfoEntity row : allRows(commandContext)) {
         commandContext.getIdentityInfoManager().deleteIdentityInfo(row);
@@ -156,6 +172,66 @@ public class UserPreferencesStoreTest {
     });
   }
 
+  @Test
+  public void shouldTakeTheLockWhenTheDriverCountsChangedRowsOnly() {
+    store.save(USER, "{\"a\":1}");
+    int[] created = { 0 };
+    UserPreferencesStore quirky = new UserPreferencesStore(processEngine) {
+      @Override
+      protected Connection connection(CommandContext commandContext) {
+        return reportingNoChangedRows(super.connection(commandContext));
+      }
+
+      @Override
+      protected void createLockRow(String userId) {
+        created[0]++;
+        super.createLockRow(userId);
+      }
+    };
+
+    quirky.save(USER, "{\"a\":2}");
+
+    assertThat(created[0]).isZero();
+    assertThat(store.load(USER)).isEqualTo("{\"a\":2}");
+  }
+
+  @Test
+  public void shouldWarnWhenTheLockRowCannotBeCreated() {
+    ListAppender<ILoggingEvent> log = captureLog();
+    UserPreferencesStore failing = new UserPreferencesStore(processEngine) {
+      @Override
+      protected void insertLockRow(CommandContext commandContext, String userId) {
+        throw new ProcessEngineException("connection lost");
+      }
+    };
+
+    failing.save(USER, "{\"a\":1}");
+
+    assertThat(store.load(USER)).isEqualTo("{\"a\":1}");
+    assertThat(messages(log)).anyMatch(message -> message.contains("Could not create the lock row"))
+        .anyMatch(message -> message.contains("without database lock"));
+  }
+
+  @Test
+  public void shouldNotWarnWhenAnotherWriterCreatedTheLockRow() {
+    store.save(USER, "{\"a\":1}");
+    ListAppender<ILoggingEvent> log = captureLog();
+
+    // the row exists: the insert fails on the primary key
+    store.createLockRow(USER);
+
+    assertThat(messages(log)).noneMatch(message -> message.contains("lock row"));
+  }
+
+  @Test
+  public void shouldTellDuplicateKeysFromOtherFailures() {
+    assertThat(UserPreferencesStore.isDuplicateKey(
+        new ProcessEngineException("flush", new RuntimeException(new SQLException("unique", "23505"))))).isTrue();
+    assertThat(UserPreferencesStore.isDuplicateKey(
+        new ProcessEngineException("flush", new SQLException("gone", "08006")))).isFalse();
+    assertThat(UserPreferencesStore.isDuplicateKey(new ProcessEngineException("flush"))).isFalse();
+  }
+
   protected void saveConcurrently(java.util.function.Supplier<UserPreferencesStore> stores) throws Exception {
     int writers = 6;
     CyclicBarrier start = new CyclicBarrier(writers);
@@ -190,6 +266,47 @@ public class UserPreferencesStoreTest {
   }
 
   // helpers ////////////////////////////////////////////////////////////////////////////////
+
+  /** A connection whose updates report no changed rows, as MySQL Connector/J with useAffectedRows=true does. */
+  protected static Connection reportingNoChangedRows(Connection connection) {
+    return (Connection) Proxy.newProxyInstance(Connection.class.getClassLoader(), new Class<?>[] { Connection.class },
+        (proxy, method, args) -> {
+          Object result = invoke(connection, method, args);
+          if ("prepareStatement".equals(method.getName()) && ((String) args[0]).startsWith("update")) {
+            PreparedStatement statement = (PreparedStatement) result;
+            return Proxy.newProxyInstance(PreparedStatement.class.getClassLoader(),
+                new Class<?>[] { PreparedStatement.class }, (innerProxy, innerMethod, innerArgs) -> {
+                  Object innerResult = invoke(statement, innerMethod, innerArgs);
+                  return "executeUpdate".equals(innerMethod.getName()) ? Integer.valueOf(0) : innerResult;
+                });
+          }
+          return result;
+        });
+  }
+
+  protected static Object invoke(Object target, Method method, Object[] args) throws Throwable {
+    try {
+      return method.invoke(target, args);
+    } catch (InvocationTargetException e) {
+      throw e.getCause();
+    }
+  }
+
+  protected ListAppender<ILoggingEvent> captureLog() {
+    ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    appender.start();
+    webappLogger().addAppender(appender);
+    appenders.add(appender);
+    return appender;
+  }
+
+  protected static Logger webappLogger() {
+    return (Logger) LoggerFactory.getLogger("org.camunda.bpm.webapp");
+  }
+
+  protected static List<String> messages(ListAppender<ILoggingEvent> appender) {
+    return appender.list.stream().map(ILoggingEvent::getFormattedMessage).collect(Collectors.toList());
+  }
 
   /** The rows 1.3.1 wrote for a document: the chunks and their number. */
   protected static List<String[]> legacyRows(String document) {

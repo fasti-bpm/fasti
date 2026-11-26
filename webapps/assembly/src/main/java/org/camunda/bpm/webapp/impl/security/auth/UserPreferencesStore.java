@@ -10,7 +10,9 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -153,8 +155,10 @@ public class UserPreferencesStore {
       if (!done) {
         createLockRow(userId);
         execute(commandContext -> {
-          // should the row still be missing, the lock in the JVM is all there is
-          lockRow(commandContext, userId);
+          if (!lockRow(commandContext, userId)) {
+            // the lock in the JVM is all there is: writers on other nodes are not held off
+            LOGGER.warnUserPreferencesNotLocked(userId);
+          }
           body.accept(commandContext, readRows(commandContext, userId));
           return null;
         });
@@ -170,33 +174,71 @@ public class UserPreferencesStore {
 
   /** Locks the lock row of the user until the transaction ends; false if there is none. */
   protected boolean lockRow(CommandContext commandContext, String userId) {
-    String sql = "update " + tablePrefix() + "ACT_ID_INFO set VALUE_ = VALUE_ where ID_ = ?";
-    try (PreparedStatement statement = commandContext.getDbSqlSession().getSqlSession().getConnection()
-        .prepareStatement(sql)) {
-      statement.setString(1, lockRowId(userId));
-      return statement.executeUpdate() > 0;
+    String id = lockRowId(userId);
+    Connection connection = connection(commandContext);
+    try {
+      try (PreparedStatement update = connection.prepareStatement(
+          "update " + tablePrefix() + "ACT_ID_INFO set VALUE_ = VALUE_ where ID_ = ?")) {
+        update.setString(1, id);
+        if (update.executeUpdate() > 0) {
+          return true;
+        }
+      }
+      // a driver that reports changed instead of matched rows (MySQL Connector/J with
+      // useAffectedRows=true) counts 0 for this update, although it locked the row
+      try (PreparedStatement select = connection.prepareStatement(
+          "select ID_ from " + tablePrefix() + "ACT_ID_INFO where ID_ = ?")) {
+        select.setString(1, id);
+        try (ResultSet result = select.executeQuery()) {
+          return result.next();
+        }
+      }
     } catch (SQLException e) {
       throw new ProcessEngineException("Could not lock the preferences of user '" + userId + "'", e);
     }
+  }
+
+  protected Connection connection(CommandContext commandContext) {
+    return commandContext.getDbSqlSession().getSqlSession().getConnection();
   }
 
   /** Creates the lock row of the user in a transaction of its own. */
   protected void createLockRow(String userId) {
     try {
       configuration().getCommandExecutorTxRequiresNew().execute(commandContext -> {
-        IdentityInfoEntity row = new IdentityInfoEntity();
-        row.setId(lockRowId(userId));
-        row.setUserId(userId);
-        row.setType(IdentityInfoEntity.TYPE_USERINFO);
-        row.setKey(LOCK_KEY);
-        row.setValue("1");
-        commandContext.getDbEntityManager().insert(row);
+        insertLockRow(commandContext, userId);
         return null;
       });
     } catch (RuntimeException e) {
-      // most likely another writer created it at the same time, as the primary
-      // key admits only one; any other failure shows again in the next step
+      if (!isDuplicateKey(e)) {
+        LOGGER.warnUserPreferencesLockRowNotCreated(userId, e);
+      }
+      // else another writer created it at the same time: the primary key admits only one
     }
+  }
+
+  protected void insertLockRow(CommandContext commandContext, String userId) {
+    IdentityInfoEntity row = new IdentityInfoEntity();
+    row.setId(lockRowId(userId));
+    row.setUserId(userId);
+    row.setType(IdentityInfoEntity.TYPE_USERINFO);
+    row.setKey(LOCK_KEY);
+    row.setValue("1");
+    commandContext.getDbEntityManager().insert(row);
+  }
+
+  /** Whether the failure is a violated integrity constraint (SQL state class 23). */
+  static boolean isDuplicateKey(Throwable failure) {
+    for (Throwable cause = failure; cause != null; cause = cause.getCause() == cause ? null : cause.getCause()) {
+      if (cause instanceof SQLException) {
+        for (SQLException each = (SQLException) cause; each != null; each = each.getNextException()) {
+          if (each.getSQLState() != null && each.getSQLState().startsWith("23")) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   /** The id of the lock row: derived from the user id, it is the same on every node. */

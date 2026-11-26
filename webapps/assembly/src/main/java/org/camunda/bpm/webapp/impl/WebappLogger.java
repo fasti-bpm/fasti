@@ -98,5 +98,15 @@ public class WebappLogger extends BaseLogger {
         userId, cause.getMessage(), cause);
   }
 
+  public void warnUserPreferencesLockRowNotCreated(String userId, Exception cause) {
+    logWarn("013", "Could not create the lock row of the preferences of user '{}': {}",
+        userId, cause.getMessage(), cause);
+  }
+
+  public void warnUserPreferencesNotLocked(String userId) {
+    logWarn("014", "The preferences of user '{}' are saved without database lock; concurrent saves "
+        + "on other nodes can leave duplicated rows, which the next read removes", userId);
+  }
+
 
 }

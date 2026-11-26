@@ -148,6 +148,59 @@ public class ProcessEnginesFilterSetupTest {
   }
 
   @Test
+  public void shouldTrustThatAnAdministratorExistsForAWhile() throws Exception {
+    // given
+    processEngineConfiguration.getAdminUsers().add("alice");
+    assertThat(filter.needsInitialUser(ENGINE_NAME)).isFalse();
+
+    // when the administrator goes away
+    processEngineConfiguration.getAdminUsers().remove("alice");
+
+    // then the filter does not check again yet
+    assertThat(filter.needsInitialUser(ENGINE_NAME)).isFalse();
+  }
+
+  @Test
+  public void shouldCheckAgainWhenTheAnswerExpired() throws Exception {
+    // given
+    filter.adminSeenTtlMillis = 0;
+    processEngineConfiguration.getAdminUsers().add("alice");
+    assertThat(filter.needsInitialUser(ENGINE_NAME)).isFalse();
+
+    // when
+    processEngineConfiguration.getAdminUsers().remove("alice");
+
+    // then
+    assertThat(filter.needsInitialUser(ENGINE_NAME)).isTrue();
+  }
+
+  @Test
+  public void shouldNotKeepTheAnswerThatNoAdministratorExists() throws Exception {
+    // given
+    assertThat(filter.needsInitialUser(ENGINE_NAME)).isTrue();
+
+    // when
+    processEngineConfiguration.getAdminUsers().add("alice");
+
+    // then the setup page closes at once
+    assertThat(filter.needsInitialUser(ENGINE_NAME)).isFalse();
+  }
+
+  @Test
+  public void shouldNotTrustTheAnswerForAnotherEngineOfTheSameName() throws Exception {
+    // given
+    processEngineConfiguration.getAdminUsers().add("alice");
+    assertThat(filter.needsInitialUser(ENGINE_NAME)).isFalse();
+
+    // when the engine is replaced by one without administrator
+    processEngineConfiguration.getAdminUsers().remove("alice");
+    lookedUpEngine = spy(processEngine);
+
+    // then
+    assertThat(filter.needsInitialUser(ENGINE_NAME)).isTrue();
+  }
+
+  @Test
   public void shouldNotNeedInitialUserWhenAdminGroupHasMember() throws Exception {
     // given
     createUser("admin");

@@ -241,8 +241,10 @@ about 50k process instances, 360k history rows, 10k open tasks):
 
 - **JVM:** heap is `FASTI_MAX_RAM_PERCENTAGE` % of the memory limit: 75, or 60 when the limit
   is below 1.5 GiB (from 1.3.2; at 75 % such a container left too little for metaspace, code
-  cache, threads and GraalJS and could be killed for exceeding its limit). Always set a memory
-  limit. Below 2 CPUs or ~1.8 GB the JVM picks Serial GC; give real workloads at least 2 CPUs
+  cache, threads and GraalJS and could be killed for exceeding its limit). The entrypoint reads
+  the limit from the container's own cgroup (v2 `memory.max`, v1 `memory.limit_in_bytes`); with
+  `--cgroupns=host`, or a limit set only on a parent cgroup, it finds none and uses 75: set
+  `FASTI_MAX_RAM_PERCENTAGE` there. Always set a memory limit. Below 2 CPUs or ~1.8 GB the JVM picks Serial GC; give real workloads at least 2 CPUs
   and 2 GB, or set `JAVA_OPTS=-XX:+UseG1GC`. Extra flags go into `JAVA_OPTS`.
 - **Faster startup:** `FASTI_APPCDS=true` writes a class data sharing archive to
   `/fasti/data/fasti-appcds.jsa` on a clean shutdown and reuses it on later starts. Up to 1.3.1
@@ -251,7 +253,11 @@ about 50k process instances, 360k history rows, 10k open tasks):
   mount a volume, as on Kubernetes an `emptyDir` is new on every pod start and the archive is
   then written again each time (`FASTI_APPCDS_FILE` can point to another volume). An archive
   that does not match the JDK or class path (other image, other start arguments, a jar added to
-  `configuration/userlib`) is ignored and written again on the next clean shutdown.
+  `configuration/userlib`) is ignored and written again on the next clean shutdown. With class
+  data sharing on, the library directories (`configuration/userlib`, `configuration/drivers`,
+  `FASTI_EXTRA_LIB`, ...) come after the application on the class path, as HotSpot requires: their
+  jars keep their place, but plain files in them (a `banner.txt`, a replaced mapping, loose
+  `.class` files) no longer override resources of the application. Put such overrides into a jar.
 - **Connection pool (HikariCP):** up to 20 connections by default (10 up to 1.1): the ten job
   executor threads plus room for concurrent REST requests. An idle node keeps 10 open and opens
   the others under load. Change them with `FASTI_DB_CONN_MAXACTIVE` (for example 30) and

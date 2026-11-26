@@ -25,6 +25,7 @@ import java.util.Base64;
 import java.util.HexFormat;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -64,6 +65,8 @@ public class BasicMcpAuthenticator implements McpAuthenticator {
 
   protected final long cacheTimeToLiveNanos;
   protected final Map<String, CachedIdentity> cache = new ConcurrentHashMap<>();
+  /** Counts the clearings, so that a check that ran across one does not refill the cache. */
+  protected final AtomicLong generation = new AtomicLong();
 
   /** A successful check, with the identity it resolved to. */
   protected record CachedIdentity(McpIdentity identity, long expiresAtNanos) {
@@ -88,6 +91,7 @@ public class BasicMcpAuthenticator implements McpAuthenticator {
 
   /** Forgets every cached check, for example after users, groups or tenants changed. */
   public void clearCache() {
+    generation.incrementAndGet();
     cache.clear();
   }
 
@@ -128,6 +132,7 @@ public class BasicMcpAuthenticator implements McpAuthenticator {
     if (cached != null) {
       cache.remove(key, cached);
     }
+    long checkedGeneration = generation.get();
     McpIdentity identity = check(engine, userName, password);
     if (identity == null) {
       return null;
@@ -138,7 +143,14 @@ public class BasicMcpAuthenticator implements McpAuthenticator {
         cache.clear();
       }
     }
-    cache.put(key, new CachedIdentity(identity, now + cacheTimeToLiveNanos));
+    CachedIdentity entry = new CachedIdentity(identity, now + cacheTimeToLiveNanos);
+    if (generation.get() == checkedGeneration) {
+      cache.put(key, entry);
+      // identities changed while the entry was added: it may be stale
+      if (generation.get() != checkedGeneration) {
+        cache.remove(key, entry);
+      }
+    }
     return identity;
   }
 

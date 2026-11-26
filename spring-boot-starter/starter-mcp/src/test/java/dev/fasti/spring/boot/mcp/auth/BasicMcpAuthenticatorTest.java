@@ -120,6 +120,20 @@ class BasicMcpAuthenticatorTest {
   }
 
   @Test
+  void doesNotKeepACheckThatRanWhileIdentitiesChanged() {
+    BasicMcpAuthenticator authenticator = new BasicMcpAuthenticator(Duration.ofSeconds(30));
+    when(identityService.checkPassword("john", "secret")).thenAnswer(call -> {
+      // a membership change commits while this check runs
+      authenticator.clearCache();
+      return true;
+    });
+
+    assertThat(authenticator.authenticate(basic("john", "secret"), engine)).isNotNull();
+
+    assertThat(authenticator.cache).isEmpty();
+  }
+
+  @Test
   void checksAgainAfterTheTimeToLive() {
     BasicMcpAuthenticator authenticator = new BasicMcpAuthenticator(Duration.ofNanos(1));
     authenticator.authenticate(basic("john", "secret"), engine);

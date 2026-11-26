@@ -39,6 +39,9 @@
     <version.json-path>2.10.0</version.json-path>
     <version.json-smart>2.6.1</version.json-smart>
     <version.accessors-smart>2.6.1</version.accessors-smart>
+    <!-- Nimbus JOSE + JWT: one version for the SSO module of the servlet bundles and for the
+         Run distribution; keep it at the version Spring Security is built against -->
+    <version.nimbus-jose-jwt>10.9.1</version.nimbus-jose-jwt>
     <version.gson>2.15.0</version.gson>
     <version.openjpa>2.4.3</version.openjpa>
     <version.hibernate>5.6.15.Final</version.hibernate>

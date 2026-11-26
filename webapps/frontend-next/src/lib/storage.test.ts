@@ -274,18 +274,39 @@ describe('preferences on the server', () => {
     expect(save).toHaveBeenLastCalledWith({ a: 2 }, { keepalive: true });
   });
 
-  it('does not let an upload that hangs hold up the next user', async () => {
+  it('does not let an upload that hangs hold up the next connection for long', async () => {
+    vi.useFakeTimers();
     const hanging = vi.fn<PreferenceRemote['save']>(() => new Promise<void>(() => undefined));
     await connectPreferences('alice', { load: async () => ({ a: 1 }), save: hanging });
     writePreference('a', 2);
     void flushPreferences();
-    const bob = remoteWith({ a: 5 });
+    const next = remoteWith({ a: 5 });
 
-    await connectPreferences('alice', bob);
+    const connecting = connectPreferences('alice', next);
+    await vi.advanceTimersByTimeAsync(5000);
+    await connecting;
     writePreference('a', 6);
     await flushPreferences();
 
-    expect(bob.save).toHaveBeenCalledWith({ a: 6 });
+    expect(next.save).toHaveBeenCalledWith({ a: 6 });
+  });
+
+  it('loads anew only after the upload of the connection before arrived', async () => {
+    const answers: (() => void)[] = [];
+    const save = vi.fn<PreferenceRemote['save']>(() => new Promise<void>((resolve) => answers.push(resolve)));
+    await connectPreferences('alice', { load: async () => ({ a: 1 }), save });
+    writePreference('a', 2);
+    void flushPreferences();
+    const again = remoteWith({ a: 2 });
+
+    // the session is read again, e.g. after the user changed the own name
+    const connecting = connectPreferences('alice', again);
+    await Promise.resolve();
+    expect(again.load).not.toHaveBeenCalled();
+    answers.forEach((answer) => answer());
+    await connecting;
+
+    expect(again.load).toHaveBeenCalledTimes(1);
   });
 
   it('sends nothing when the page is closed without changes', async () => {

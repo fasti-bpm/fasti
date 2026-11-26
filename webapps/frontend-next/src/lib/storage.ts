@@ -25,6 +25,8 @@ const OWNER_KEY = 'fasti.next-owner';
 const UPLOAD_DELAY = 2500;
 /** after a failed upload */
 const RETRY_DELAY = 30_000;
+/** how long a new connection waits for an upload of the one before, which may hang */
+const PREVIOUS_UPLOAD_WAIT = 5000;
 
 /** What the server keeps at most (see `UserPreferencesResource`); a larger document is refused. */
 export const MAX_DOCUMENT_BYTES = 32 * 1024;
@@ -62,6 +64,8 @@ let dirty = false;
 let inFlight: Promise<void> | null = null;
 /** a change arrived while an upload was under way: the latest state is sent after it */
 let again = false;
+/** an upload of a connection that ended meanwhile, still under way */
+let previousUpload: Promise<void> | null = null;
 let rejectionReported = false;
 let exitListening = false;
 const replacedListeners = new Set<() => void>();
@@ -341,6 +345,13 @@ export async function connectPreferences(
   const owner = readOwner();
   const sameOwner = owner === null || owner === ownerId;
   adoptRenamedKeys(userId, sameOwner);
+  const before = previousUpload;
+  if (before) {
+    // e.g. the session was read again: an older upload must neither arrive after a newer one
+    // nor be missing from the copy that is loaded now. One that hangs is not waited for long.
+    await Promise.race([before.catch(() => undefined), new Promise<void>((resolve) => window.setTimeout(resolve, PREVIOUS_UPLOAD_WAIT))]);
+    if (generation !== connection) return;
+  }
   let stored: PreferenceDocument | null = null;
   try {
     const loaded = await target.load();
@@ -435,7 +446,15 @@ export function disconnectPreferences(): void {
   remoteOwner = null;
   dirty = false;
   again = false;
-  // an upload still under way belongs to the user before and is not waited for
+  if (inFlight) {
+    // still under way: the next connection waits for it a moment (see connectPreferences)
+    const before = inFlight;
+    previousUpload = before;
+    const settle = () => {
+      if (previousUpload === before) previousUpload = null;
+    };
+    before.then(settle, settle);
+  }
   inFlight = null;
   connection++;
 }

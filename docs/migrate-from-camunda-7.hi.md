@@ -102,8 +102,8 @@ Camunda 7.24 के Tomcat/WildFly वितरणों की तुलना 
   Fasti पर बदले गए पासवर्ड Camunda 7 पर काम करते हैं।
 - `/engine-rest` पर REST API: वही एंडपॉइंट, पैरामीटर और पेलोड, साथ में अतिरिक्त एंडपॉइंट
   (प्रमाणीकरण और कुछ स्टेटस कोड अलग हैं, देखें [क्या अलग है](#what-differs)), एक्सटर्नल टास्क
-  (`fetchAndLock`, लॉन्ग पोलिंग), Java और JS क्लाइंट, `JSESSIONID`, `XSRF-TOKEN`/`X-XSRF-TOKEN`, `camunda.bpm.*`
-  प्रॉपर्टी, `camunda:` BPMN नेमस्पेस।
+  (`fetchAndLock`, लॉन्ग पोलिंग), Java और JS क्लाइंट, `XSRF-TOKEN`/`X-XSRF-TOKEN`, `camunda.bpm.*`
+  प्रॉपर्टी, `camunda:` BPMN नेमस्पेस। सेशन कुकी का नाम Tomcat और WildFly डिस्ट्रीब्यूशन में `JSESSIONID` है; Run और कंटेनर इमेज में 1.3.2 से यह `FASTI_SESSION` है (`server.servlet.session.cookie.name`), ताकि यह उसी होस्ट पर चल रहे Camunda 7 Run से न टकराए। जो स्क्रिप्ट कुकी को नाम से ढूँढती हैं, उन्हें नया नाम इस्तेमाल करना होगा।
 - क्लासिक Tasklist के फ़िल्टर (`color`, `description`, `priority`, `refresh`, `variables`,
   `showUndefinedVariable`) नई Tasklist द्वारा उसी प्रारूप में पढ़े और लिखे जाते हैं।
 

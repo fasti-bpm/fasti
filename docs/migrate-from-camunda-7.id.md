@@ -102,8 +102,8 @@ Dibandingkan dengan distribusi Tomcat/WildFly Camunda 7.24:
   kata sandi yang diubah pada Fasti berfungsi pada Camunda 7.
 - REST API di `/engine-rest`: endpoint, parameter, dan payload yang sama, dengan tambahan endpoint
   (autentikasi dan beberapa kode status berbeda, lihat [Apa yang berbeda](#what-differs)), tugas eksternal
-  (`fetchAndLock`, long polling), klien Java dan JS, `JSESSIONID`, `XSRF-TOKEN`/`X-XSRF-TOKEN`, properti `camunda.bpm.*`
-  , namespace BPMN `camunda:`.
+  (`fetchAndLock`, long polling), klien Java dan JS, `XSRF-TOKEN`/`X-XSRF-TOKEN`, properti `camunda.bpm.*`
+  , namespace BPMN `camunda:`. Cookie sesi bernama `JSESSIONID` di distribusi Tomcat dan WildFly; Run dan image kontainer menamainya `FASTI_SESSION` sejak 1.3.2 (`server.servlet.session.cookie.name`) agar tidak bentrok dengan Camunda 7 Run di host yang sama. Skrip yang mencari cookie berdasarkan nama perlu memakai nama baru.
 - Filter dari Tasklist klasik (`color`, `description`, `priority`, `refresh`, `variables`,
   `showUndefinedVariable`) dibaca dan ditulis dalam format yang sama oleh Tasklist baru.
 

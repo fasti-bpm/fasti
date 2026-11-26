@@ -105,7 +105,8 @@ spec:
             preStop:
               exec:
                 command: ["sleep", "10"]
-          # at least 2 CPUs and 2 GiB for real workloads; the heap is 75 % of the limit
+          # at least 2 CPUs and 2 GiB for real workloads; the heap is 75 % of the limit (60 % below
+          # 1.5 GiB; FASTI_MAX_RAM_PERCENTAGE overrides it)
           resources:
             requests:
               cpu: "1"

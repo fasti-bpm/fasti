@@ -102,8 +102,8 @@ Spring Boot starter / Tomcat / WildFly：将 `org.camunda.bpm:camunda-*` 构件�
   在 Fasti 上更改的密码也可用于 Camunda 7。
 - `/engine-rest` 下的 REST API：端点、参数和负载相同，并增加了额外端点（身份验证和部分状态码不同，
   参见[有哪些不同](#what-differs)）；外部任务
-  （`fetchAndLock`、长轮询）、Java 和 JS 客户端、`JSESSIONID`、`XSRF-TOKEN`/`X-XSRF-TOKEN`、`camunda.bpm.*`
-  属性、`camunda:` BPMN 命名空间。
+  （`fetchAndLock`、长轮询）、Java 和 JS 客户端、`XSRF-TOKEN`/`X-XSRF-TOKEN`、`camunda.bpm.*`
+  属性、`camunda:` BPMN 命名空间。会话 Cookie 在 Tomcat 和 WildFly 发行版中名为 `JSESSIONID`；Run 和容器镜像自 1.3.2 起改名为 `FASTI_SESSION`（`server.servlet.session.cookie.name`），以免与同一主机上的 Camunda 7 Run 冲突。按名称查找该 Cookie 的脚本需要改用新名称。
 - 新版 Tasklist 以相同格式读写经典版 Tasklist 的过滤器（`color`、`description`、`priority`、`refresh`、`variables`、
   `showUndefinedVariable`）。
 

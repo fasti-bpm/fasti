@@ -149,8 +149,9 @@ config: {}
 #      max-pool-size: 16
 
 jvm:
-  # percentage of the container memory limit used for the heap
-  maxRamPercentage: 75
+  # percentage of the container memory limit used for the heap; unset, the image chooses 75, or
+  # 60 below a 1.5 GiB limit
+  maxRamPercentage: null
   # additional JVM options (JAVA_OPTS)
   javaOpts: ""
 

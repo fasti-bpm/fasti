@@ -436,19 +436,30 @@ fi
 
 APP_JAR="$FASTI_HOME/internal/app/fasti-bpm-run-core.jar"
 if [ -f "$APP_JAR" ]; then
-  # the extracted application (see the Dockerfile): the jars of the LOADER_PATH directories come
-  # first, as with loader.path, then the application jar, whose manifest lists its lib/, then the
-  # directories themselves for the plain files in them (configuration/keystore/). HotSpot writes
-  # no class data sharing archive (FASTI_APPCDS) when a non-empty directory comes before a jar it
-  # loaded classes from, and the JVM then exits with 1 on every shutdown.
+  # the extracted application (see the Dockerfile): each LOADER_PATH directory and its jars come
+  # first, as with loader.path, so that plain files in them (configuration/userlib/,
+  # FASTI_EXTRA_LIB) override resources of the application; then the application jar, whose
+  # manifest lists its lib/.
+  # With class data sharing the directories go last instead: HotSpot writes no archive when a
+  # non-empty directory comes before a jar it loaded classes from, and the JVM then exits with 1
+  # on every shutdown. The jars keep their order; plain files no longer override (README).
+  appcds=false
+  is_true "${FASTI_APPCDS:-}" && appcds=true
+  case " ${JAVA_OPTS:-} ${JAVA_TOOL_OPTIONS:-} ${JDK_JAVA_OPTIONS:-} " in
+    *AutoCreateSharedArchive*|*ArchiveClassesAtExit*) appcds=true ;;
+  esac
   CLASS_PATH=""
   DIRS=""
   old_ifs=$IFS
   IFS=,
   for dir in $LOADER_PATH; do
     dir=${dir%/}
-    CLASS_PATH="$CLASS_PATH$dir/*:"
-    DIRS="$DIRS:$dir"
+    if [ "$appcds" = true ]; then
+      CLASS_PATH="$CLASS_PATH$dir/*:"
+      DIRS="$DIRS:$dir"
+    else
+      CLASS_PATH="$CLASS_PATH$dir:$dir/*:"
+    fi
   done
   IFS=$old_ifs
   LAUNCH="-cp $(quote "$CLASS_PATH$APP_JAR$DIRS") org.camunda.bpm.run.CamundaBpmRun"

@@ -102,8 +102,8 @@ Camunda 7.24의 Tomcat/WildFly 배포판과 비교하면 다음과 같습니다:
   Fasti에서 변경한 비밀번호는 Camunda 7에서도 사용할 수 있습니다.
 - `/engine-rest`의 REST API: 엔드포인트, 매개변수 및 페이로드는 같고 엔드포인트가 추가됨(인증과 일부
   상태 코드는 다름, [달라지는 점](#what-differs) 참조), 외부 작업
-  (`fetchAndLock`, 롱 폴링), Java 및 JS 클라이언트, `JSESSIONID`, `XSRF-TOKEN`/`X-XSRF-TOKEN`, `camunda.bpm.*`
-  속성, `camunda:` BPMN 네임스페이스.
+  (`fetchAndLock`, 롱 폴링), Java 및 JS 클라이언트, `XSRF-TOKEN`/`X-XSRF-TOKEN`, `camunda.bpm.*`
+  속성, `camunda:` BPMN 네임스페이스. 세션 쿠키 이름은 Tomcat 및 WildFly 배포판에서는 `JSESSIONID`입니다. Run과 컨테이너 이미지는 1.3.2부터 `FASTI_SESSION`(`server.servlet.session.cookie.name`)을 사용하므로 같은 호스트의 Camunda 7 Run과 충돌하지 않습니다. 쿠키를 이름으로 찾는 스크립트는 새 이름을 사용해야 합니다.
 - 새 Tasklist는 클래식 Tasklist의 필터(`color`, `description`, `priority`, `refresh`, `variables`,
   `showUndefinedVariable`)를 동일한 형식으로 읽고 씁니다.
 

@@ -254,7 +254,10 @@ Số đo tham khảo (image này, PostgreSQL 16 cùng máy, 16 nhân, container 
 
 - **JVM:** heap = `FASTI_MAX_RAM_PERCENTAGE` % giới hạn bộ nhớ: 75, hoặc 60 khi giới hạn dưới
   1,5 GiB (từ 1.3.2; với 75 % container nhỏ như vậy còn quá ít chỗ cho metaspace, code cache,
-  luồng và GraalJS và có thể bị kill vì vượt giới hạn). Luôn đặt giới hạn bộ nhớ cho container. Dưới 2 CPU hoặc dưới ~1,8 GB JVM tự chọn Serial GC; với tải thật nên cấp
+  luồng và GraalJS và có thể bị kill vì vượt giới hạn). Entrypoint đọc giới hạn từ cgroup của chính
+  container (v2 `memory.max`, v1 `memory.limit_in_bytes`); với `--cgroupns=host`, hoặc khi giới
+  hạn chỉ đặt ở cgroup cha, nó không thấy giới hạn và dùng 75: khi đó hãy đặt
+  `FASTI_MAX_RAM_PERCENTAGE`. Luôn đặt giới hạn bộ nhớ cho container. Dưới 2 CPU hoặc dưới ~1,8 GB JVM tự chọn Serial GC; với tải thật nên cấp
   ít nhất 2 CPU và 2 GB, hoặc đặt `JAVA_OPTS=-XX:+UseG1GC`. Thêm cờ qua `JAVA_OPTS`.
 - **Khởi động nhanh hơn:** `FASTI_APPCDS=true` ghi archive class data sharing vào
   `/fasti/data/fasti-appcds.jsa` khi container dừng êm; các lần chạy sau dùng lại. Đến 1.3.1
@@ -263,7 +266,11 @@ Số đo tham khảo (image này, PostgreSQL 16 cùng máy, 16 nhân, container 
   trên Kubernetes `emptyDir` là mới ở mỗi lần pod khởi động và archive lại được ghi từ đầu
   (`FASTI_APPCDS_FILE` có thể trỏ tới volume khác). Archive không khớp với JDK hoặc classpath
   (image khác, tham số khởi động khác, thêm jar vào `configuration/userlib`) thì JVM bỏ qua và
-  ghi lại ở lần dừng êm tiếp theo.
+  ghi lại ở lần dừng êm tiếp theo. Khi bật class data sharing, các thư mục thư viện
+  (`configuration/userlib`, `configuration/drivers`, `FASTI_EXTRA_LIB`, ...) đứng sau ứng dụng trên
+  classpath, vì HotSpot đòi như vậy: jar trong đó giữ nguyên vị trí, nhưng file rời trong đó (một
+  `banner.txt`, một mapping thay thế, file `.class` rời) không còn đè được tài nguyên của ứng
+  dụng. Hãy đóng gói những file đè như vậy vào một jar.
 - **Pool kết nối (HikariCP):** mặc định tối đa 20 kết nối (đến 1.1 là 10): mười luồng job
   executor cộng chỗ cho các request REST đồng thời. Node đang rảnh giữ mở 10 kết nối và chỉ mở
   thêm khi có tải. Đổi bằng `FASTI_DB_CONN_MAXACTIVE` (ví dụ 30) và `FASTI_DB_CONN_MINIDLE`. Tổng

@@ -133,6 +133,17 @@ expect "management port of the Service" '^      targetPort: management$'
 expect "management port admitted by the NetworkPolicy" '^        - port: management$'
 expect "helm test calls the management port" ':9464/actuator/health/readiness'
 expect "ServiceMonitor on the management port" '^    - port: "management"$'
+if grep -A1 'name: FASTI_MAX_RAM_PERCENTAGE' "$out/rendered/edge.yaml" | grep -q 'value: "70"'; then
+  echo "ok: heap share passed when set"
+else
+  echo "FAIL: heap share passed when set"; fail=1
+fi
+# unset (the default), the image chooses 75, or 60 below a 1.5 GiB limit
+if grep -q 'name: FASTI_MAX_RAM_PERCENTAGE' "$out/rendered/minimal.yaml"; then
+  echo "FAIL: no FASTI_MAX_RAM_PERCENTAGE by default"; fail=1
+else
+  echo "ok: no FASTI_MAX_RAM_PERCENTAGE by default"
+fi
 
 manifests=()
 for file in "$here"/manifests/*.yaml; do

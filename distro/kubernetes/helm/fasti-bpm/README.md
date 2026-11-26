@@ -88,7 +88,7 @@ existing Camunda 7.24 installation leave them out: tables and accounts already e
 | `webapp.corsAllowedOrigins` | `""` | CORS for REST from other origins |
 | `oidc.*` | off | single sign-on, see below |
 | `config` | `{}` | additional Spring Boot configuration (YAML), mounted and named in `FASTI_CONFIG` |
-| `jvm.maxRamPercentage`, `jvm.javaOpts` | `75`, `""` | heap share of the memory limit, `JAVA_OPTS` |
+| `jvm.maxRamPercentage`, `jvm.javaOpts` | unset, `""` | heap share of the memory limit (unset: the image uses 75, or 60 below a 1.5 GiB limit), `JAVA_OPTS` |
 | `extraArgs`, `extraEnv`, `extraEnvFrom` | `[]` | more arguments and environment variables |
 | `extraVolumes`, `extraVolumeMounts`, `initContainers`, `extraContainers` | `[]` | for example a driver directory with `FASTI_EXTRA_LIB` |
 | `resources` | requests 1 CPU / 2Gi, limit 2Gi | at least 2 CPUs and 2 GiB for real workloads |

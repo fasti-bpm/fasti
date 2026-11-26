@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.identity.Group;
 import org.camunda.bpm.engine.identity.Tenant;
 import org.camunda.bpm.engine.identity.User;
@@ -161,10 +162,17 @@ public class HttpBasicAuthenticationProvider implements AuthenticationProvider {
 
   /**
    * Fasti: the id the identity service stores for the user whose password was just checked
-   * under the given name, or the name itself if the user cannot be read.
+   * under the given name, or the name itself if the user cannot be read or the name matches more
+   * than one user.
    */
   protected String canonicalUserId(ProcessEngine engine, String userName) {
-    User user = engine.getIdentityService().createUserQuery().userId(userName).singleResult();
+    User user;
+    try {
+      user = engine.getIdentityService().createUserQuery().userId(userName).singleResult();
+    } catch (ProcessEngineException e) {
+      // an identity provider that finds more than one user for the id: no stored id to choose
+      return userName;
+    }
     if (user != null && user.getId() != null && !user.getId().isEmpty()) {
       return user.getId();
     }

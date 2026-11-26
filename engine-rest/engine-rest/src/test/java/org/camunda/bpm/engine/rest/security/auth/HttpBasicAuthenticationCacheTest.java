@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.identity.Group;
 import org.camunda.bpm.engine.identity.GroupQuery;
 import org.camunda.bpm.engine.identity.Tenant;
@@ -248,6 +249,23 @@ public class HttpBasicAuthenticationCacheTest {
 
     assertThat(result.isAuthenticated()).isTrue();
     assertThat(result.getAuthenticatedUser()).isEqualTo("gonzo");
+  }
+
+  @Test
+  public void shouldKeepTheTypedNameIfTheNameMatchesSeveralUsers() {
+    when(identityService.checkPassword("piggy", "secret")).thenReturn(true);
+    UserQuery ambiguous = mock(UserQuery.class, RETURNS_SELF);
+    when(ambiguous.singleResult()).thenThrow(new ProcessEngineException("Query return 2 results instead of max 1"));
+    when(identityService.createUserQuery()).thenReturn(ambiguous);
+
+    AuthenticationResult result = provider.extractAuthenticatedUser(request("piggy", "secret"), engine);
+    provider.setCacheTimeToLiveMillis(60_000);
+    AuthenticationResult cached = provider.extractAuthenticatedUser(request("piggy", "secret"), engine);
+
+    assertThat(result.isAuthenticated()).isTrue();
+    assertThat(result.getAuthenticatedUser()).isEqualTo("piggy");
+    assertThat(cached.isAuthenticated()).isTrue();
+    assertThat(cached.getAuthenticatedUser()).isEqualTo("piggy");
   }
 
   @Test

@@ -175,6 +175,24 @@ public class HttpBasicAuthenticationCacheTest {
     verify(identityService, times(2)).checkPassword("kermit", "secret");
   }
 
+  @Test
+  public void shouldNotKeepACheckThatRanWhileTheCacheWasCleared() {
+    provider.setCacheTimeToLiveMillis(60_000);
+    // the groups change (and the cache is cleared) while the check reads them
+    when(groupQuery.list()).thenAnswer(invocation -> {
+      provider.clearCache();
+      Group group = mock(Group.class);
+      when(group.getId()).thenReturn("sales");
+      return Collections.singletonList(group);
+    });
+
+    AuthenticationResult first = provider.extractAuthenticatedUser(request("kermit", "secret"), engine);
+    provider.extractAuthenticatedUser(request("kermit", "secret"), engine);
+
+    assertThat(first.isAuthenticated()).isTrue();
+    verify(identityService, times(2)).checkPassword("kermit", "secret");
+  }
+
   // the stored user id instead of the name as typed
 
   @Test

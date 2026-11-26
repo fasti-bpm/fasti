@@ -26,6 +26,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.identity.Group;
@@ -76,6 +77,11 @@ public class HttpBasicAuthenticationProvider implements AuthenticationProvider {
 
   protected volatile long cacheTimeToLiveMillis = 0;
   protected final Map<String, CachedIdentity> cache = new ConcurrentHashMap<>();
+  /**
+   * Fasti: counts the times the cache was emptied, so that a check that ran while it was emptied
+   * (users, groups or tenants changed meanwhile) does not store what it read before the change.
+   */
+  protected final AtomicLong cacheGeneration = new AtomicLong();
 
   /** Fasti: a successful check of a user name and password, with the user's groups and tenants. */
   protected static final class CachedIdentity {
@@ -106,7 +112,7 @@ public class HttpBasicAuthenticationProvider implements AuthenticationProvider {
     }
     this.cacheTimeToLiveMillis = cacheTimeToLiveMillis;
     if (cacheTimeToLiveMillis == 0) {
-      cache.clear();
+      clearCache();
     }
   }
 
@@ -116,6 +122,7 @@ public class HttpBasicAuthenticationProvider implements AuthenticationProvider {
 
   /** Fasti: forgets every cached check, for example after users, groups or tenants changed. */
   public void clearCache() {
+    cacheGeneration.incrementAndGet();
     cache.clear();
   }
 
@@ -175,6 +182,7 @@ public class HttpBasicAuthenticationProvider implements AuthenticationProvider {
     if (cached != null) {
       cache.remove(key, cached);
     }
+    long generation = cacheGeneration.get();
     if (!isAuthenticated(engine, userName, password)) {
       return AuthenticationResult.unsuccessful(userName);
     }
@@ -189,6 +197,10 @@ public class HttpBasicAuthenticationProvider implements AuthenticationProvider {
       }
     }
     cache.put(key, identity);
+    if (cacheGeneration.get() != generation) {
+      // emptied while this check ran: what was read may already be stale, answer without keeping it
+      cache.remove(key, identity);
+    }
     return successful(identity);
   }
 

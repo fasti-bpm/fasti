@@ -263,6 +263,8 @@ fi
 [ -n "${FASTI_ANALYTICS_CACHE_TTL:-}" ] && add_arg "--fasti.analytics.cache-ttl=$FASTI_ANALYTICS_CACHE_TTL"
 [ -n "${FASTI_ANALYTICS_MAX_CONCURRENT:-}" ] && add_arg "--fasti.analytics.max-concurrent=$FASTI_ANALYTICS_MAX_CONCURRENT"
 [ -n "${FASTI_ANALYTICS_MAX_WAIT:-}" ] && add_arg "--fasti.analytics.max-wait=$FASTI_ANALYTICS_MAX_WAIT"
+[ -n "${FASTI_ANALYTICS_STATEMENT_TIMEOUT:-}" ] && add_arg "--fasti.analytics.statement-timeout=$FASTI_ANALYTICS_STATEMENT_TIMEOUT"
+[ -n "${FASTI_WORKLOAD_CACHE_TTL:-}" ] && add_arg "--fasti.workload.cache-ttl=$FASTI_WORKLOAD_CACHE_TTL"
 # the classic web applications (AngularJS 1.8.2, end of life) are off in the image (docker.yml);
 # the application logs a deprecation warning when they are turned back on
 if [ -n "${FASTI_CLASSIC_WEBAPPS:-}" ]; then

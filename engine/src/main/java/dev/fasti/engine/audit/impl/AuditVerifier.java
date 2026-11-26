@@ -48,7 +48,8 @@ import org.camunda.bpm.engine.impl.interceptor.CommandExecutor;
  *
  * <p>Not covered by a signature: the records after the last checkpoint of a chain
  * ({@link AuditVerification.Chain#getAuthenticatedThrough()}), which only the hash chain and the
- * head protect until the next checkpoint.</p>
+ * head protect until the next checkpoint. A chain with records but no checked checkpoint has no
+ * signature at all, so it is not authenticated (an empty chain has nothing to sign).</p>
  */
 public class AuditVerifier {
 
@@ -259,8 +260,9 @@ public class AuditVerifier {
       // verify what is left
       return null;
     }
+    // with records, at least one checked checkpoint: otherwise no signature covers any of them
     boolean authenticated = found == null && settings.isSigned() && checkpointsVerified == checkpoints && !gap
-        && (purgedThrough == 0 || purgeAttested);
+        && (purgedThrough == 0 || purgeAttested) && (records == 0 || checkpointsVerified > 0);
     return new AuditVerification.Chain(chainId, records, firstSequence, last, lastHash, checkpoints, checkpointsVerified,
         purgedThrough, purgeAttested, authenticated, authenticated ? authenticatedThrough : 0, found);
   }

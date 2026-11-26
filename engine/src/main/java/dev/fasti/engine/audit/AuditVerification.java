@@ -29,15 +29,18 @@ import java.util.List;
  * hashes of the records are consistent from the first record to the head of the chain; with a
  * signing key, every checkpoint and every purge record that explains a removed start carries a
  * valid signature (or one that the configuration lists as retired), and no checkpoint is missing.</li>
- * <li><b>authenticated</b>: intact, a key is configured, and every checkpoint and the purge record
- * of a removed start were checked with a key the engine holds. Only this verdict rules out that
- * someone with write access to the database rewrote the chain or removed its start. It is
- * {@code false} without a key, and while signatures are accepted unchecked (retired key ids).</li>
+ * <li><b>authenticated</b>: intact, a key is configured, every checkpoint and the purge record of a
+ * removed start were checked with a key the engine holds, and a chain with records has at least
+ * one such checkpoint. Only this verdict rules out that someone with write access to the database
+ * rewrote the chain up to its last checkpoint or removed its start. It is {@code false} without a
+ * key, while signatures are accepted unchecked (retired key ids), and for a chain whose records no
+ * checkpoint signs yet.</li>
  * </ul>
  * <p>A signature covers the records before its checkpoint. The records after the last checkpoint
  * of a chain ({@link Chain#getAuthenticatedThrough()}) are protected by the hash chain and the head
- * only, until the next checkpoint is written; a chain shorter than the checkpoint interval has no
- * checkpoint yet. Keep the reported last hashes outside the database to cover them.</p>
+ * only, until the next checkpoint is written (every {@code checkpointInterval} records, every
+ * {@code checkpointIntervalSeconds} and when the engine closes). Keep the reported last hashes
+ * outside the database to cover them.</p>
  */
 public class AuditVerification {
 
@@ -182,8 +185,9 @@ public class AuditVerification {
     }
 
     /**
-     * Whether the chain is intact and every signature it needs was checked with a key of the engine.
-     * What the signatures cover ends at {@link #getAuthenticatedThrough()}.
+     * Whether the chain is intact, every signature it needs was checked with a key of the engine,
+     * and, if it has records, at least one checkpoint signs them. What the signatures cover ends at
+     * {@link #getAuthenticatedThrough()}.
      */
     public boolean isAuthenticated() {
       return authenticated;
@@ -191,8 +195,9 @@ public class AuditVerification {
 
     /**
      * The position of the last record that a checked signature covers: the record before the last
-     * checkpoint of an authenticated chain. 0 if the chain is not authenticated or has no checkpoint
-     * yet. The records after it are protected by the hash chain and the head only.
+     * checkpoint of an authenticated chain. 0 if the chain is not authenticated (a chain with records
+     * but no checkpoint is not) or is empty. The records after it are protected by the hash chain and
+     * the head only.
      */
     public long getAuthenticatedThrough() {
       return authenticatedThrough;

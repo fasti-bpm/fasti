@@ -407,9 +407,11 @@ public class AuditTamperTest {
 
   @Test
   public void shouldNotAuthenticateAChainWithoutCheckpointsWhereTheyAreDue() {
-    // signed, but checkpoints were off
+    // signed, but checkpoints were off: intact, but no signature covers the records
     start(0, KEY);
-    assertThat(audit.verify().isAuthenticated()).isTrue();
+    AuditVerification unsigned = audit.verify();
+    assertThat(unsigned.isIntact()).isTrue();
+    assertThat(unsigned.isAuthenticated()).isFalse();
     restart(5, KEY, plugin -> { });
     assertThat(firstBreak().getReason()).isEqualTo(Break.CHECKPOINT_MISSING);
 
@@ -449,8 +451,8 @@ public class AuditTamperTest {
     start(500, KEY);
     AuditVerification verification = audit.verify();
     assertThat(verification.isIntact()).isTrue();
-    // nothing is missing, but nothing is signed yet either
-    assertThat(verification.isAuthenticated()).isTrue();
+    // nothing is missing, but nothing is signed yet either: not authenticated
+    assertThat(verification.isAuthenticated()).isFalse();
     assertThat(verification.getChains().get(0).getCheckpoints()).isZero();
     assertThat(verification.getChains().get(0).getAuthenticatedThrough()).isZero();
   }
@@ -722,7 +724,8 @@ public class AuditTamperTest {
     AuditVerification signed = audit.verify();
     assertThat(signed.isIntact()).isTrue();
     assertThat(signed.getChains().get(0).isPurgeAttested()).isTrue();
-    assertThat(signed.isAuthenticated()).isTrue();
+    // without checkpoints (interval 0) no signature covers the records after the purge
+    assertThat(signed.isAuthenticated()).isFalse();
   }
 
   @Test

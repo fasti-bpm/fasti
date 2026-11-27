@@ -281,7 +281,7 @@ docker run -d --name fasti ... fastidev/fasti-bpm:1.3.2 --production   # same op
 ## 12. การใช้งานโดยไม่ใช้ Docker
 
 ชุด Tomcat 1.3.1 พร้อมใช้งาน (หน้าดาวน์โหลด: https://fasti.dev/download):
-- [fasti-bpm-tomcat-1.3.1.zip](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.zip.sha256))
-- [fasti-bpm-tomcat-1.3.1.tar.gz](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.tar.gz.sha256))
+- [fasti-bpm-tomcat-1.3.2.zip](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.zip.sha256))
+- [fasti-bpm-tomcat-1.3.2.tar.gz](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.tar.gz.sha256))
 
-ตรวจสอบเช็กซัมก่อนแตกไฟล์ เช่น `sha256sum -c fasti-bpm-tomcat-1.3.1.zip.sha256`
+ตรวจสอบเช็กซัมก่อนแตกไฟล์ เช่น `sha256sum -c fasti-bpm-tomcat-1.3.2.zip.sha256`

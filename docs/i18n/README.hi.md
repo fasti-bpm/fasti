@@ -67,10 +67,10 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
   निर्देश [docs/install-docker.hi.md](../install-docker.hi.md) में, सभी वेरिएबल
   [distro/docker/README.md](../../distro/docker/README.md#environment-variables) में।
 - <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Tomcat बंडल**, Docker के बिना: <https://fasti.dev/download>। तैयार Tomcat 1.3.1 बंडल:
-  - [fasti-bpm-tomcat-1.3.1.zip](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.zip.sha256))
-  - [fasti-bpm-tomcat-1.3.1.tar.gz](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.tar.gz.sha256))
+  - [fasti-bpm-tomcat-1.3.2.zip](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.zip.sha256))
+  - [fasti-bpm-tomcat-1.3.2.tar.gz](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.tar.gz.sha256))
 
-  एक्सट्रैक्ट करने से पहले चेकसम सत्यापित करें, उदाहरण के लिए `sha256sum -c fasti-bpm-tomcat-1.3.1.zip.sha256`,
+  एक्सट्रैक्ट करने से पहले चेकसम सत्यापित करें, उदाहरण के लिए `sha256sum -c fasti-bpm-tomcat-1.3.2.zip.sha256`,
   और शुरू करने से पहले बंडल में `README.txt` पढ़ें।
 - **एम्बेडेड**, Spring Boot या किसी अन्य Java एप्लिकेशन में: नए Maven निर्देशांक
   (`dev.fasti.platform:fasti-*`), वही `org.camunda.bpm.*` पैकेज;

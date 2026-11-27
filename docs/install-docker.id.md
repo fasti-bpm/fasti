@@ -282,7 +282,7 @@ Masih mengalami kendala? Buat issue GitHub dengan menyertakan log (hapus kata sa
 ## 12. Tanpa Docker
 
 Paket Tomcat 1.3.1 siap pakai (halaman unduhan: https://fasti.dev/download):
-- [fasti-bpm-tomcat-1.3.1.zip](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.zip.sha256))
-- [fasti-bpm-tomcat-1.3.1.tar.gz](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.tar.gz.sha256))
+- [fasti-bpm-tomcat-1.3.2.zip](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.zip.sha256))
+- [fasti-bpm-tomcat-1.3.2.tar.gz](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.tar.gz.sha256))
 
-Verifikasi checksum sebelum mengekstrak, misalnya `sha256sum -c fasti-bpm-tomcat-1.3.1.zip.sha256`.
+Verifikasi checksum sebelum mengekstrak, misalnya `sha256sum -c fasti-bpm-tomcat-1.3.2.zip.sha256`.

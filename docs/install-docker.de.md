@@ -282,7 +282,7 @@ Kommen Sie weiterhin nicht weiter? Erstellen Sie ein GitHub-Issue mit dem Protok
 ## 12. Ohne Docker
 
 Fertig zusammengestelltes Tomcat 1.3.1-Paket (Downloadseite: https://fasti.dev/download):
-- [fasti-bpm-tomcat-1.3.1.zip](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.zip.sha256))
-- [fasti-bpm-tomcat-1.3.1.tar.gz](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.tar.gz.sha256))
+- [fasti-bpm-tomcat-1.3.2.zip](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.zip.sha256))
+- [fasti-bpm-tomcat-1.3.2.tar.gz](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.tar.gz.sha256))
 
-Überprüfen Sie die Prüfsumme vor dem Entpacken, zum Beispiel mit `sha256sum -c fasti-bpm-tomcat-1.3.1.zip.sha256`.
+Überprüfen Sie die Prüfsumme vor dem Entpacken, zum Beispiel mit `sha256sum -c fasti-bpm-tomcat-1.3.2.zip.sha256`.

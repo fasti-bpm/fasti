@@ -68,11 +68,11 @@ Vollständige Anleitung, auch mit Ihrer eigenen Datenbank: <https://fasti.dev/in
   Schritt für Schritt in [docs/install-docker.de.md](../install-docker.de.md), alle Variablen in
   [distro/docker/README.md](../../distro/docker/README.md#environment-variables).
 - <a id="without-docker-tomcat-bundle-download-from-fastidev"></a>**Tomcat-Bundle**, ohne Docker: <https://fasti.dev/download>. Fertiges Tomcat 1.3.1-Bundle:
-  - [fasti-bpm-tomcat-1.3.1.zip](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.zip.sha256))
-  - [fasti-bpm-tomcat-1.3.1.tar.gz](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.1/fasti-bpm-tomcat-1.3.1.tar.gz.sha256))
+  - [fasti-bpm-tomcat-1.3.2.zip](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.zip) ([SHA-256](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.zip.sha256))
+  - [fasti-bpm-tomcat-1.3.2.tar.gz](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.tar.gz) ([SHA-256](https://assets.fasti.dev/releases/1.3.2/fasti-bpm-tomcat-1.3.2.tar.gz.sha256))
 
   Prüfen Sie vor dem Entpacken die Prüfsumme, beispielsweise mit
-  `sha256sum -c fasti-bpm-tomcat-1.3.1.zip.sha256`, und lesen Sie vor dem Start die `README.txt`
+  `sha256sum -c fasti-bpm-tomcat-1.3.2.zip.sha256`, und lesen Sie vor dem Start die `README.txt`
   im Bundle.
 - **Eingebettet** in Spring Boot oder eine andere Java-Anwendung: neue Maven-Koordinaten
   (`dev.fasti.platform:fasti-*`), dieselben Pakete `org.camunda.bpm.*`; siehe

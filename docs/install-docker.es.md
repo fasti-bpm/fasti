@@ -203,7 +203,7 @@ Detalles: [Funcionamiento mixto con nodos de Camunda 7](migrate-from-camunda-7.e
 | `FASTI_JOB_EXECUTOR_ENABLED`, `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | ejecutor de trabajos de este nodo |
 | `FASTI_EXTRA_LIB` | directorio de archivos jar adicionales (controladores de Oracle y DB2) |
 | `FASTI_DB_CONN_MAXACTIVE` | tamaño máximo del grupo de conexiones (valor predeterminado: 20; en reposo se mantienen 10 abiertas, `FASTI_DB_CONN_MINIDLE`) |
-| `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | opciones de la JVM, porcentaje de memoria para el heap (75) |
+| `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | opciones de la JVM, porcentaje de memoria para el heap (75; < 1.5 GiB: 60) |
 
 Tabla completa: [distro/docker/README.md](../distro/docker/README.md#environment-variables).
 

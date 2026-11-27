@@ -286,7 +286,7 @@ changed Secret needs `kubectl -n fasti rollout restart deployment/fasti-bpm`.
 | Readiness stays down, log shows `ENGINE-03111` | the schema is older than 7.24: run the upgrade scripts (see the Docker guide) |
 | Startup probe fails on a slow database | raise `startupProbe.failureThreshold` |
 | Web login does not keep the session | no HTTPS in front (Secure cookie), or several pods without session affinity |
-| `OOMKilled` or `OutOfMemoryError` | raise `resources.limits.memory`; the heap is 75 % of the limit |
+| `OOMKilled` or `OutOfMemoryError` | raise `resources.limits.memory`; the heap is 75 % of the limit (60 % below 1.5 GiB) |
 | `Insecure configuration refused` | a setting in `config` or `extraEnv` turns REST authentication or authorizations off |
 
 More causes: [Docker guide, troubleshooting](install-docker.md#11-troubleshooting).

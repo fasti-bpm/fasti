@@ -282,7 +282,7 @@ hoặc `oidc` tự động khởi động lại pod (annotation checksum); Secre
 | Readiness không lên, log có `ENGINE-03111` | schema cũ hơn 7.24: chạy script nâng cấp (xem hướng dẫn Docker) |
 | Startup probe lỗi khi cơ sở dữ liệu chậm | tăng `startupProbe.failureThreshold` |
 | Đăng nhập web không giữ được phiên | không có HTTPS phía trước (cookie Secure), hoặc nhiều pod mà không có session affinity |
-| `OOMKilled` hoặc `OutOfMemoryError` | tăng `resources.limits.memory`; heap bằng 75 % giới hạn |
+| `OOMKilled` hoặc `OutOfMemoryError` | tăng `resources.limits.memory`; heap bằng 75 % giới hạn (60 % nếu dưới 1,5 GiB) |
 | `Insecure configuration refused` | một thiết lập trong `config` hoặc `extraEnv` tắt xác thực REST hoặc phân quyền |
 
 Nguyên nhân khác: [hướng dẫn Docker, xử lý sự cố](install-docker.vi.md#11-troubleshooting).

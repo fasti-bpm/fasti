@@ -138,7 +138,7 @@ Sizes of `vite build`, minified (gzip in brackets):
 The JavaScript loaded before the first page is about the same size: React and the router
 moved to a chunk of their own, which changes only with a dependency update. Fasti Run, the
 Docker image, the Spring Boot starter and the Tomcat and WildFly bundles serve the hashed files
-below `/app/next/assets/` with `Cache-Control: public, max-age=31536000, immutable`, so browsers
+below `/app/next/assets/` with `Cache-Control: private, max-age=31536000, immutable`, so browsers
 keep a chunk whose content did not change across releases. The same holds for the bundles of
 the classic applications and of the embedded-form frame that are requested with
 `?bust=<version of this release>` (`/lib/deps.js`, `/app/forms/fasti-form-frame.js`, files

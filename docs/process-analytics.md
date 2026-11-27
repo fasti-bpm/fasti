@@ -105,7 +105,11 @@ lower `jdbcStatementTimeout` of the engine applies either way. A call whose stat
 answers 503 with a message that asks for a shorter range (Java: `AnalyticsTimeoutException`, a
 kind of `AnalyticsBusyException`). The timeout is set on each statement through JDBC, so it works
 on every supported database. Java: `ProcessAnalytics.setMaxConcurrent(int)`,
-`setMaxWait(Duration)` and `setStatementTimeout(Duration)`.
+`setMaxWait(Duration)`, `setStatementTimeout(Duration)` and `setCacheTimeToLive(Duration)`.
+
+The `fasti.analytics.*` properties (and `fasti.workload.cache-ttl`) are read by Fasti Run and the
+container image. An embedded Spring Boot application, Tomcat or WildFly keeps the defaults above
+unless it calls these Java methods at startup.
 
 ## Java
 

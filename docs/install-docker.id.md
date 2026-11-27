@@ -203,7 +203,7 @@ Detail: [Operasi gabungan dengan node Camunda 7](migrate-from-camunda-7.id.md#mi
 | `FASTI_JOB_EXECUTOR_ENABLED`, `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | eksekutor pekerjaan pada node ini |
 | `FASTI_EXTRA_LIB` | direktori JAR tambahan (driver Oracle, DB2) |
 | `FASTI_DB_CONN_MAXACTIVE` | ukuran maksimum kumpulan koneksi (nilai bawaan 20; saat idle 10 tetap terbuka, `FASTI_DB_CONN_MINIDLE`) |
-| `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | opsi JVM, persentase memori untuk heap (75) |
+| `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | opsi JVM, persentase memori untuk heap (75; < 1.5 GiB: 60) |
 
 Tabel lengkap: [distro/docker/README.md](../distro/docker/README.md#environment-variables).
 

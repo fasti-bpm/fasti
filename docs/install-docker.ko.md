@@ -202,7 +202,7 @@ Fasti와 Camunda 7.24는 하나의 데이터베이스에서 동시에 실행할 
 | `FASTI_JOB_EXECUTOR_ENABLED`, `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | 이 노드의 작업 실행기 |
 | `FASTI_EXTRA_LIB` | 추가 jar 파일 디렉터리(Oracle, DB2 드라이버) |
 | `FASTI_DB_CONN_MAXACTIVE` | 연결 풀 최대 크기(기본값 20, 유휴 시 10개 유지, `FASTI_DB_CONN_MINIDLE`) |
-| `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | JVM 옵션, 힙에 사용할 메모리 비율(75) |
+| `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | JVM 옵션, 힙에 사용할 메모리 비율(75; < 1.5 GiB: 60) |
 
 전체 표: [distro/docker/README.md](../distro/docker/README.md#environment-variables).
 

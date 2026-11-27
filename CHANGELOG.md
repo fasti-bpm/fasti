@@ -24,16 +24,19 @@ tuning of defaults that had been left at upstream values. Same database schema a
 - **Four-eyes rule and user-id spelling.** With an identity store that ignores case (LDAP, or a
   database collation such as the SQL Server default), a user could complete the checked step as
   `john` and the approval as `JOHN` over REST Basic or MCP Basic authentication, and the rule
-  saw two people. Both now act as the id the identity service stores, as the web application
-  already did.
+  saw two people. Both now act as the id the identity service stores, as the web login with
+  user name and password already did. Bearer tokens (REST, MCP, SSO) still name the user by the
+  token claim as it is: a warning at startup says when the REST API and the web login use
+  different claims, which gives one person two ids.
 - **Audit trail: unsigned chains no longer verify as authenticated.** A signed trail reported a
   chain without any checkpoint as authenticated, although nothing in it was signed; chains of
   fewer than `checkpointInterval` records (default 1000), for example those of a replaced
   Kubernetes pod, were never signed. Now a chain with records needs a verified checkpoint to be
   authenticated, the engine signs the ends of its chains at a clean shutdown and every
-  `fasti.audit.checkpoint-interval-seconds` (default 300), and chains another node left behind
-  are signed once their head has been idle for 3 × that interval (at least 15 minutes). A late
-  checkpoint attests the records as they are when it is written.
+  `fasti.audit.checkpoint-interval-seconds` (default 300). A node signs only its own chains: a
+  node that stops without shutting down leaves its last records unsigned, and its chain is not
+  authenticated if it never had a checkpoint. A purge that leaves only purge records in a chain
+  signs them. A late checkpoint attests the records as they are when it is written.
 - **SSO module of Run ships nimbus-jose-jwt 10.9.1** (was 9.37.4 from a stale pin, while the
   module is built against 10.9.1) and json-smart 2.6.1.
 - REST and MCP Basic authentication caches no longer keep a check that ran while users, groups
@@ -46,6 +49,9 @@ tuning of defaults that had been left at upstream values. Same database schema a
   against a checksum, repaired when rows are duplicated, and written under a per-user lock row
   (new keys `fasti.prefs.sum` and `fasti.prefs.lock` in `ACT_ID_INFO`; warnings WEBAPP-012 to
   WEBAPP-014).
+- Four-eyes rule: `resolveTask` (REST `POST /task/{id}/resolve`) of a delegated task was refused
+  for a person who did a checked step, although resolving hands the task back to its owner and
+  is not a completion (submitting its form was already allowed).
 - New web UI:
   - A tab notices when another tab of the browser signed in as someone else; it reloads and
     says so, instead of claiming tasks for the previous user under the new session.
@@ -88,11 +94,14 @@ tuning of defaults that had been left at upstream values. Same database schema a
   (`fasti.mcp.basic-auth-cache-ttl`).
 - Versioned static files (`?bust=<release>` under `/lib`, `/assets` and the bundles of the
   classic applications, including the 4.7 MB `deps.js` of embedded forms) and the hashed assets
-  of the new UI are sent with `Cache-Control: immutable`, now also by the Tomcat and WildFly
-  web applications. The index page remembers for 60 s that an engine has an administrator.
+  of the new UI are cached by browsers for a year (`Cache-Control: private, max-age=31536000,
+  immutable`), now also by the Tomcat and WildFly web applications. `private` (was `public`
+  for the hashed assets): the first response to a browser without a session can carry its
+  session cookie, which a shared cache must not hand to others. Snapshot builds are not marked
+  immutable. The index page remembers for 60 s that an engine has an administrator.
 - Run: HTTP compression for HTML, CSS, JavaScript, SVG, JSON and XML above 2 KB (the image
-  already compressed; it adds the XML types). Image: third-party jars sit in their own layers,
-  so a patch release pulls much less.
+  already compressed; it adds the XML types). Image: the GraalVM scripting jars and the other
+  third-party jars sit in layers of their own, apart from the Fasti jars.
 
 ### Changed
 
@@ -100,21 +109,27 @@ tuning of defaults that had been left at upstream values. Same database schema a
 - Image: `MaxRAMPercentage` is 60 below a 1.5 GiB memory limit, 75 above (Helm chart: unset
   `jvm.maxRamPercentage` lets the image choose).
 - Tomcat and WildFly bundles take over the tuning of Run: job executor 10 jobs per acquisition,
-  10 threads, queue 10 (was 3/3/3); pool of 20 with 10 idle, checked before use, 10 s wait;
+  10 threads, queue 10 (was 3 jobs, 3–10 threads, queue 3 on Tomcat; 3 jobs, 3–5 threads, queue 10 on WildFly); pool of 20 with 10 idle, checked before use, 10 s wait;
   heap `-Xmx1g`.
 
 ### Before you upgrade
 
 - Web sessions of Run and the image end once, because of the new cookie name. Scripts that pick
   the session cookie by name need `FASTI_SESSION`; `SERVER_SERVLET_SESSION_COOKIE_NAME` sets
-  another name.
+  another name. A load balancer that keeps a user on one node by the `JSESSIONID` cookie
+  (HAProxy `cookie JSESSIONID prefix`, Apache `stickysession=JSESSIONID`, an application cookie
+  of a cloud load balancer) must name `FASTI_SESSION`, or set the old name back with
+  `SERVER_SERVLET_SESSION_COOKIE_NAME=JSESSIONID`; otherwise users of several nodes are signed
+  out again and again.
 - REST and MCP Basic authentication act as the stored user id: with LDAP or a case-insensitive
   collation, `getAuthenticatedUserId`, the audit actor and the operation log show the stored
   spelling.
-- Audit trail with a key: chains of 1.3.x without a checkpoint show as "not signed yet" until
-  the first signing round after the upgrade (at most 15 minutes for chains left by other
-  nodes). Expect a few more `checkpoint` records. With `checkpoint-interval-seconds=0` only the
-  shutdown signs, and chains of other nodes are not signed.
+- Audit trail with a key: a chain without any checkpoint is now reported as not authenticated.
+  Chains of the running nodes are signed by the first round after the upgrade (every
+  `checkpoint-interval-seconds`, and at shutdown); chains of node ids that no longer run (for
+  example replaced pods of 1.3.x) stay unsigned until a purge removes their records, so the
+  trail as a whole may show "not authenticated" with those chains named. Expect a few more
+  `checkpoint` records. With `checkpoint-interval-seconds=0` only the shutdown signs.
 - Analytics reads longer than 120 s now answer `503`; raise
   `fasti.analytics.statement-timeout` if needed. Analytics of history written without
   `PROC_DEF_KEY_` (engines before Camunda 7.3) no longer counts user tasks and incidents.

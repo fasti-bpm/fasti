@@ -181,19 +181,19 @@ shutting down (killed, out of memory) leaves at most the records of the last
 `checkpoint-interval-seconds` unsigned. So do commands that still run while the engine closes (a
 request being served, a job of a job executor that other engines share).
 
-**Chains that a node left behind.** A chain whose node id does not come back (a pod that was
-killed, a node id that changed, a node of an earlier version) would stay unsigned. So in each
-round every node also signs chains of other node ids whose head has not moved for three
-`checkpoint-interval-seconds`, and at least 15 minutes, up to 100 chains per round (the others
-follow in the next rounds). It uses the same head lock and the same checks, and signs only if the
-head is still where it was found idle and the last record is not a checkpoint: two nodes that do
-this at the same time write one checkpoint, the second finds it at the end. With
-`checkpoint-interval-seconds` set to `0` there are no rounds and such chains are not signed. Be
-aware what a late checkpoint means: it attests the records as they are when it is written. A
-record changed in the database before that, by someone who also fixed the hashes and the head,
-is signed as it is then; only a checkpoint written with the record (every `checkpoint-interval`
-records), the checkpoint log lines and the last hashes kept outside the database speak about the
-time before.
+**Chains that a node left behind.** A node signs only its own chains, never those of another
+node id: it cannot tell a chain that a node left behind from one that somebody wrote into the
+database, and its signature would attest records it never wrote. A chain whose node id does not
+come back (a pod that was killed, a node id that changed, a node of 1.3.1 or older) therefore keeps
+the records after its last checkpoint unsigned, and if it never had a checkpoint it is reported as
+not authenticated, which makes the trail as a whole not authenticated; the report names the chain.
+Give nodes a stable node id (`fasti.audit.node-id`) where you can, and shut them down cleanly. A
+purge that removes every record of such a chain but its purge records signs those, so the chain is
+authenticated again once its records have expired. Be aware what a late checkpoint means: it
+attests the records as they are when it is written. A record changed in the database before that,
+by someone who also fixed the hashes and the head, is signed as it is then; only a checkpoint
+written with the record (every `checkpoint-interval` records), the checkpoint log lines and the
+last hashes kept outside the database speak about the time before.
 
 With a key set, a signature that is missing is as much a break as one that is wrong, because
 someone who rewrites a chain cannot forge signatures but can remove them:
@@ -452,9 +452,10 @@ Oracle database was at hand.
   position), commands that produce history fail rather than run unrecorded.
 - **Upgrading from 1.3.x with a key**: verification now calls a chain with records but no
   checkpoint "not authenticated" (the web UI: not signed yet). Chains that 1.3.x nodes wrote
-  without reaching a checkpoint show so until the first round after the upgrade signs them: the
-  chains of a node that runs again with the same node id after `checkpoint-interval-seconds` or
-  when it shuts down, the chains left behind once they have been idle for the time above.
+  without reaching a checkpoint show so until a round after the upgrade signs them: the chains of
+  a node that runs again with the same node id after `checkpoint-interval-seconds` or when it
+  shuts down. Chains of node ids that no longer run stay so until a purge removes their records
+  (see "Chains that a node left behind").
 
 ## Limits
 

@@ -202,7 +202,7 @@ Fasti と Camunda 7.24 は、1 つのデータベース上で同時に稼働で�
 | `FASTI_JOB_EXECUTOR_ENABLED`, `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | このノードのジョブエグゼキューター |
 | `FASTI_EXTRA_LIB` | 追加の jar（Oracle、DB2 ドライバー）を配置するディレクトリ |
 | `FASTI_DB_CONN_MAXACTIVE` | 接続プールの最大サイズ（既定値 20。アイドル時は 10 接続を保持、`FASTI_DB_CONN_MINIDLE`） |
-| `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | JVM オプション、ヒープに割り当てるメモリの割合（75） |
+| `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | JVM オプション、ヒープに割り当てるメモリの割合（75；< 1.5 GiB：60） |
 
 完全な一覧：[distro/docker/README.md](../distro/docker/README.md#environment-variables)。
 

@@ -175,18 +175,19 @@ không ký kịp trong thời gian đó (đang bị một giao dịch giữ) đ�
 giây cuối. Các lệnh còn chạy trong lúc engine tắt (một request đang được phục vụ, một job của job
 executor dùng chung với engine khác) cũng vậy.
 
-**Chuỗi mà một node bỏ lại.** Chuỗi có node id không quay lại nữa (pod bị kill, node id đã đổi,
-node của bản trước) sẽ mãi chưa được ký. Vì vậy ở mỗi lượt, mọi node còn ký các chuỗi của node id
-khác có head không đổi trong ba lần `checkpoint-interval-seconds` và ít nhất 15 phút, tối đa 100
-chuỗi mỗi lượt (các chuỗi còn lại ở lượt sau). Node dùng cùng khóa head và cùng các phép kiểm tra,
-và chỉ ký nếu head vẫn ở chỗ lúc thấy nó đứng yên và bản ghi cuối không phải điểm kiểm tra: hai node
-làm việc này cùng lúc chỉ ghi một điểm kiểm tra, node thứ hai thấy nó ở cuối chuỗi. Khi
-`checkpoint-interval-seconds` là `0` thì không có lượt nào và các chuỗi như vậy không được ký. Cần
-hiểu đúng ý nghĩa của điểm kiểm tra ghi muộn: nó chứng thực các bản ghi như chúng đang có lúc ký.
-Một bản ghi bị sửa trong cơ sở dữ liệu trước đó, bởi người đã sửa cả mã băm và head, sẽ được ký
-đúng như lúc ấy; chỉ điểm kiểm tra ghi cùng bản ghi (mỗi `checkpoint-interval` bản ghi), các dòng
-log điểm kiểm tra và các mã băm cuối lưu ngoài cơ sở dữ liệu mới nói được về khoảng thời gian trước
-đó.
+**Chuỗi mà một node bỏ lại.** Node chỉ ký chuỗi của chính nó, không bao giờ ký chuỗi của node id
+khác: node không phân biệt được chuỗi do một node bỏ lại với chuỗi do ai đó ghi thẳng vào cơ sở dữ
+liệu, và chữ ký của nó sẽ chứng thực những bản ghi nó không hề ghi. Vì vậy chuỗi có node id không
+quay lại nữa (pod bị kill, node id đã đổi, node của bản 1.3.1 trở về trước) giữ nguyên các bản ghi
+sau điểm kiểm tra cuối ở trạng thái chưa ký; nếu chuỗi chưa từng có điểm kiểm tra nào thì nó bị báo
+là chưa xác thực, và cả audit trail cũng vậy (báo cáo nêu tên chuỗi đó). Khi có thể, hãy đặt node id
+cố định (`fasti.audit.node-id`) và tắt node êm. Lệnh dọn xóa hết bản ghi của một chuỗi như vậy, chỉ
+còn lại các bản ghi dọn, sẽ ký các bản ghi dọn đó, nên chuỗi lại được xác thực khi bản ghi của nó đã
+hết hạn. Cần hiểu đúng ý nghĩa của điểm kiểm tra ghi muộn: nó chứng thực các bản ghi như chúng đang
+có lúc ký. Một bản ghi bị sửa trong cơ sở dữ liệu trước đó, bởi người đã sửa cả mã băm và head, sẽ
+được ký đúng như lúc ấy; chỉ điểm kiểm tra ghi cùng bản ghi (mỗi `checkpoint-interval` bản ghi), các
+dòng log điểm kiểm tra và các mã băm cuối lưu ngoài cơ sở dữ liệu mới nói được về khoảng thời gian
+trước đó.
 
 Khi đã đặt khóa, thiếu chữ ký cũng là một chỗ đứt như chữ ký sai, vì người viết lại chuỗi không
 giả được chữ ký nhưng xóa được chúng:
@@ -434,9 +435,10 @@ dữ liệu Oracle để thử.
   lệnh tạo lịch sử sẽ thất bại thay vì chạy mà không được ghi.
 - **Nâng cấp từ 1.3.x khi có khóa**: việc kiểm tra nay coi chuỗi có bản ghi nhưng chưa có điểm kiểm
   tra là "chưa xác thực" (giao diện web: chưa được ký). Các chuỗi mà node 1.3.x đã ghi nhưng chưa
-  tới điểm kiểm tra nào hiện như vậy cho đến lượt ký đầu tiên sau khi nâng cấp: chuỗi của node chạy
-  lại với cùng node id sau `checkpoint-interval-seconds` giây hoặc khi node tắt, chuỗi bị bỏ lại
-  khi chúng đã đứng yên đủ thời gian nói trên.
+  tới điểm kiểm tra nào hiện như vậy cho đến khi một lượt ký sau nâng cấp ký chúng: chuỗi của node
+  chạy lại với cùng node id sau `checkpoint-interval-seconds` giây hoặc khi node tắt. Chuỗi của node
+  id không còn chạy giữ như vậy cho đến khi lệnh dọn xóa hết bản ghi của chúng (xem "Chuỗi mà một
+  node bỏ lại").
 
 ## Giới hạn
 

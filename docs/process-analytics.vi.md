@@ -106,8 +106,12 @@ giây), để hai lượt quét chậm không giữ mãi cả hai lượt và k�
 thấp hơn của engine vẫn áp dụng. Lần gọi có câu lệnh chạy lâu hơn nhận 503 kèm thông báo đề nghị
 chọn khoảng thời gian ngắn hơn (Java: `AnalyticsTimeoutException`, một loại
 `AnalyticsBusyException`). Giới hạn được đặt cho từng câu lệnh qua JDBC nên dùng được trên mọi cơ
-sở dữ liệu được hỗ trợ. Java: `ProcessAnalytics.setMaxConcurrent(int)`, `setMaxWait(Duration)` và
-`setStatementTimeout(Duration)`.
+sở dữ liệu được hỗ trợ. Java: `ProcessAnalytics.setMaxConcurrent(int)`, `setMaxWait(Duration)`,
+`setStatementTimeout(Duration)` và `setCacheTimeToLive(Duration)`.
+
+Các thuộc tính `fasti.analytics.*` (và `fasti.workload.cache-ttl`) chỉ được Fasti Run và image
+container đọc. Ứng dụng Spring Boot nhúng, Tomcat hay WildFly giữ các giá trị mặc định nêu trên,
+trừ khi gọi các phương thức Java này lúc khởi động.
 
 ## Java
 

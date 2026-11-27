@@ -204,7 +204,7 @@ Détails : [Fonctionnement mixte avec des nœuds Camunda 7](migrate-from-camunda
 | `FASTI_JOB_EXECUTOR_ENABLED`, `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | exécuteur de tâches de ce nœud |
 | `FASTI_EXTRA_LIB` | répertoire des fichiers jar supplémentaires (pilotes Oracle, DB2) |
 | `FASTI_DB_CONN_MAXACTIVE` | taille maximale du pool de connexions (20 par défaut ; 10 restent ouvertes au repos, `FASTI_DB_CONN_MINIDLE`) |
-| `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | options de la JVM, pourcentage de mémoire destiné au tas (75) |
+| `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | options de la JVM, pourcentage de mémoire destiné au tas (75; < 1.5 GiB: 60) |
 
 Tableau complet : [distro/docker/README.md](../distro/docker/README.md#environment-variables).
 

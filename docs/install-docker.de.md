@@ -203,7 +203,7 @@ Details: [Mischbetrieb mit Camunda 7-Knoten](migrate-from-camunda-7.de.md#mixed-
 | `FASTI_JOB_EXECUTOR_ENABLED`, `FASTI_JOB_EXECUTOR_DEPLOYMENT_AWARE` | Job-Executor dieses Knotens |
 | `FASTI_EXTRA_LIB` | Verzeichnis mit zusätzlichen JAR-Dateien (Oracle-, DB2-Treiber) |
 | `FASTI_DB_CONN_MAXACTIVE` | höchste Größe des Verbindungspools (Standard: 20; im Leerlauf bleiben 10 offen, `FASTI_DB_CONN_MINIDLE`) |
-| `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | JVM-Optionen, prozentualer Speicheranteil für den Heap (75) |
+| `JAVA_OPTS`, `FASTI_MAX_RAM_PERCENTAGE` | JVM-Optionen, prozentualer Speicheranteil für den Heap (75; < 1.5 GiB: 60) |
 
 Vollständige Tabelle: [distro/docker/README.md](../distro/docker/README.md#environment-variables).
 

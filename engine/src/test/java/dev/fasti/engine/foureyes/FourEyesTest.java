@@ -489,6 +489,11 @@ public class FourEyesTest {
     taskService.delegateTask(approve.getId(), "alice");
     identityService.setAuthenticatedUserId("alice");
     formService.submitTaskForm(approve.getId(), Variables.createVariables());
+    // and so does resolve
+    identityService.setAuthenticatedUserId("bob");
+    taskService.delegateTask(approve.getId(), "alice");
+    identityService.setAuthenticatedUserId("alice");
+    taskService.resolveTask(approve.getId());
     identityService.setAuthenticatedUserId("bob");
     taskService.complete(approve.getId());
     identityService.clearAuthentication();

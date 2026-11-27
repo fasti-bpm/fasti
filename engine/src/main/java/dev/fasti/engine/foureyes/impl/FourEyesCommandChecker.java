@@ -24,6 +24,7 @@ import org.camunda.bpm.engine.impl.cfg.CommandChecker;
 import org.camunda.bpm.engine.impl.cmd.CompleteTaskCmd;
 import org.camunda.bpm.engine.impl.cmd.HandleTaskBpmnErrorCmd;
 import org.camunda.bpm.engine.impl.cmd.HandleTaskEscalationCmd;
+import org.camunda.bpm.engine.impl.cmd.ResolveTaskCmd;
 import org.camunda.bpm.engine.impl.cmd.SubmitTaskFormCmd;
 import org.camunda.bpm.engine.impl.context.Context;
 import org.camunda.bpm.engine.impl.interceptor.Command;
@@ -89,6 +90,10 @@ public final class FourEyesCommandChecker implements InvocationHandler {
     if (command instanceof SubmitTaskFormCmd) {
       // the form of a delegated task resolves it (back to its owner), it does not complete it
       return task.getDelegationState() != DelegationState.PENDING;
+    }
+    if (command instanceof ResolveTaskCmd) {
+      // a CompleteTaskCmd that hands the task back to its owner: not a completion
+      return false;
     }
     return command instanceof CompleteTaskCmd
         || command instanceof HandleTaskBpmnErrorCmd

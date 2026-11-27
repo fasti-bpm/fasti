@@ -39,21 +39,21 @@
     <version.feel-scala>1.19.6</version.feel-scala>
 
     <!-- Plugin versions formerly defined by camunda-release-parent / camunda-bpm-release-parent -->
-    <plugin.version.clean>2.6</plugin.version.clean>
-    <plugin.version.compiler>3.6.2</plugin.version.compiler>
-    <plugin.version.jar>2.5</plugin.version.jar>
+    <plugin.version.clean>2.6.1</plugin.version.clean>
+    <plugin.version.compiler>3.16.0</plugin.version.compiler>
+    <plugin.version.jar>2.6</plugin.version.jar>
     <plugin.version.maven-bundle>4.1.0</plugin.version.maven-bundle>
-    <plugin.version.assembly>2.4.1</plugin.version.assembly>
-    <plugin.version.ejb>2.4</plugin.version.ejb>
-    <plugin.version.war>2.4</plugin.version.war>
-    <plugin.version.ear>2.9.1</plugin.version.ear>
+    <plugin.version.assembly>2.6</plugin.version.assembly>
+    <plugin.version.ejb>2.5.1</plugin.version.ejb>
+    <plugin.version.war>2.6</plugin.version.war>
+    <plugin.version.ear>2.10.1</plugin.version.ear>
     <plugin.version.rar>2.4</plugin.version.rar>
     <plugin.version.license>3.0</plugin.version.license>
     <!-- Plugins of the Maven Central release (profile "central") -->
-    <plugin.version.source>3.3.1</plugin.version.source>
+    <plugin.version.source>3.4.0</plugin.version.source>
     <plugin.version.javadoc>3.12.0</plugin.version.javadoc>
     <plugin.version.gpg>3.2.8</plugin.version.gpg>
-    <plugin.version.deploy>3.1.4</plugin.version.deploy>
+    <plugin.version.deploy>3.2.0</plugin.version.deploy>
     <plugin.version.central-publishing>0.12.0</plugin.version.central-publishing>
 
     <!-- Maven Central release (profile "central"):
@@ -117,7 +117,7 @@ limitations under the License.</license.inlineHeader>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
-          <version>3.4.1</version>
+          <version>3.7.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -278,7 +278,7 @@ limitations under the License.</license.inlineHeader>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.2.4</version>
+          <version>3.6.2</version>
           <configuration>
             <!-- Whenever we shade dependencies, concatenate their NOTICE files -->
             <transformers combine.children="append">

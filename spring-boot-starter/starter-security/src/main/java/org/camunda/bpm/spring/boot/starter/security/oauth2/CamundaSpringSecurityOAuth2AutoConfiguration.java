@@ -59,6 +59,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.oauth2.client.OidcBackChannelLogoutHandler;
+import org.springframework.security.oauth2.client.oidc.session.InMemoryOidcSessionRegistry;
+import org.springframework.security.oauth2.client.oidc.session.OidcSessionRegistry;
+import org.springframework.context.ApplicationContext;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -248,7 +252,9 @@ public class CamundaSpringSecurityOAuth2AutoConfiguration {
     authorizationRequestResolver.setAuthorizationRequestCustomizer(OAuth2AuthorizationRequestCustomizers.withPkce());
     // only the registration of the login page signs users in: the user id is the bare value of a
     // claim, so another registration (another issuer) could otherwise sign in as any user
-    String loginRegistrationId = loginRegistration(clientRegistrationRepository).getRegistrationId();
+    ClientRegistration loginRegistration = loginRegistration(clientRegistrationRepository);
+    String loginRegistrationId = loginRegistration.getRegistrationId();
+    warnOnDifferentUserIdClaims(loginRegistration, fastiOidcProperties);
     OAuth2AuthorizationRequestResolver loginOnlyResolver = new LoginRegistrationOnlyResolver(
         authorizationRequestResolver, loginRegistrationId);
 
@@ -260,6 +266,12 @@ public class CamundaSpringSecurityOAuth2AutoConfiguration {
       logoutSuccessHandler = simpleHandler;
     }
     LogoutSuccessHandler finalLogoutSuccessHandler = logoutSuccessHandler;
+
+    // the handler of a back-channel logout ends the session by calling the logout with the session
+    // cookie: under its configured name (Fasti Run and the image rename it), not JSESSIONID
+    var backChannelLogoutHandler = new OidcBackChannelLogoutHandler(oidcSessionRegistry(http));
+    backChannelLogoutHandler.setLogoutUri(internalLogoutUri(environment, fastiOidcProperties.getBackChannelLogoutUri()));
+    backChannelLogoutHandler.setSessionCookieName(sessionCookieName(environment));
 
     // @formatter:off
     http.authorizeHttpRequests(c -> c
@@ -275,8 +287,7 @@ public class CamundaSpringSecurityOAuth2AutoConfiguration {
             PathPatternRequestMatcher.withDefaults().matcher(webappPath + "/api/**")))
         .addFilterAfter(authorizeTokenFilter, OAuth2AuthorizationRequestRedirectFilter.class)
         .anonymous(AbstractHttpConfigurer::disable)
-        .oidcLogout(c -> c.backChannel(b -> b.logoutUri(internalLogoutUri(environment,
-            fastiOidcProperties.getBackChannelLogoutUri()))))
+        .oidcLogout(c -> c.backChannel(b -> b.logoutHandler(backChannelLogoutHandler)))
         .oauth2Login(c -> c
             .authorizationEndpoint(a -> a.authorizationRequestResolver(loginOnlyResolver))
             // a second line of defence: a login that comes back from another registration
@@ -306,6 +317,44 @@ public class CamundaSpringSecurityOAuth2AutoConfiguration {
    * base URL of the incoming logout request, which a container often cannot reach (published
    * port, name of the proxy in front); the local connector is always reachable.
    */
+  /**
+   * Warns when bearer tokens of the REST API name users by another claim than the web login: one
+   * person then has two user ids, which rules such as four-eyes compare as two people.
+   */
+  protected static void warnOnDifferentUserIdClaims(ClientRegistration login, FastiOidcProperties properties) {
+    if (properties.getRest() == null || !properties.getRest().isBearerEnabled()) {
+      return;
+    }
+    String web = login.getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
+    String rest = properties.getRest().getUserIdClaim();
+    if (web != null && !web.isBlank() && rest != null && !rest.isBlank() && !web.trim().equals(rest.trim())) {
+      logger.warn("The web login names users by claim '{}', bearer tokens of the REST API by claim '{}' "
+          + "(fasti.security.oidc.rest.user-id-claim): one person gets two user ids, which the four-eyes rule "
+          + "and authorizations treat as two users. Use the same claim for both.", web.trim(), rest.trim());
+    }
+  }
+
+  /** The name of the session cookie of the servlet container: {@code server.servlet.session.cookie.name}, or JSESSIONID. */
+  protected static String sessionCookieName(Environment environment) {
+    String name = environment.getProperty("server.servlet.session.cookie.name", "").trim();
+    return name.isEmpty() ? "JSESSIONID" : name;
+  }
+
+  /**
+   * The registry of OIDC sessions that the login fills and the back-channel logout reads, found the
+   * way Spring Security finds it (shared object, bean, or a new one that becomes the shared object).
+   */
+  protected static OidcSessionRegistry oidcSessionRegistry(HttpSecurity http) {
+    OidcSessionRegistry registry = http.getSharedObject(OidcSessionRegistry.class);
+    if (registry == null) {
+      ApplicationContext context = http.getSharedObject(ApplicationContext.class);
+      registry = context != null && context.getBeanNamesForType(OidcSessionRegistry.class).length == 1
+          ? context.getBean(OidcSessionRegistry.class) : new InMemoryOidcSessionRegistry();
+      http.setSharedObject(OidcSessionRegistry.class, registry);
+    }
+    return registry;
+  }
+
   protected static String internalLogoutUri(Environment environment, String configured) {
     if (configured != null && !configured.isBlank()) {
       return configured.trim();

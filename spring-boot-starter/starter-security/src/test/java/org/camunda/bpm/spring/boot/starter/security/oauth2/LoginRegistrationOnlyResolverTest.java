@@ -83,6 +83,13 @@ class LoginRegistrationOnlyResolverTest {
         " https://fasti.internal/logout ")).isEqualTo("https://fasti.internal/logout");
   }
 
+  @Test
+  void shouldCallTheLogoutWithTheConfiguredSessionCookie() {
+    assertThat(CamundaSpringSecurityOAuth2AutoConfiguration.sessionCookieName(new MockEnvironment())).isEqualTo("JSESSIONID");
+    assertThat(CamundaSpringSecurityOAuth2AutoConfiguration.sessionCookieName(new MockEnvironment()
+        .withProperty("server.servlet.session.cookie.name", "FASTI_SESSION"))).isEqualTo("FASTI_SESSION");
+  }
+
   private static String uri(MockEnvironment environment) {
     return CamundaSpringSecurityOAuth2AutoConfiguration.internalLogoutUri(environment, null);
   }

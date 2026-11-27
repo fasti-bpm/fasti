@@ -47,7 +47,7 @@ test.describe('Team work and incident help', () => {
     const row = main(app).getByRole('row').filter({ hasText: `${PREFIX}-columns` });
     await expect(row).toContainText('4711');
     // remembered for the process; preferences reach the server shortly after a change
-    await app.waitForTimeout(1500);
+    await expect.poll(async () => JSON.stringify(await api.preferences())).toContain('e2eAmount');
     await app.reload();
     await expect(main(app).getByRole('button', { name: 'Variable columns (1)' })).toBeVisible();
     await api.delete(`process-instance/${instance.id}?skipCustomListeners=true`);

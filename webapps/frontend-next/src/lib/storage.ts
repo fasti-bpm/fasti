@@ -364,17 +364,32 @@ export async function connectPreferences(
   target: PreferenceRemote,
   scope = '',
 ): Promise<void> {
+  // the owner names the engine too: the same name on another engine is
+  // another user
+  const ownerId = `${scope}/${userId}`;
+  // the same user connects again (e.g. the session was read again): a change still waiting for
+  // its upload is sent first, after any upload under way, so that the copy loaded below has it
+  const pendingTarget = remote;
+  const pending = pendingTarget && dirty && remoteOwner === ownerId && !ownerChanged() ? localDocument() : null;
   disconnectPreferences();
+  if (pendingTarget && pending && fits(pending)) {
+    const before = previousUpload ?? Promise.resolve();
+    const upload = before.catch(() => undefined).then(() => pendingTarget.save(pending)).then(() => undefined);
+    previousUpload = upload;
+    const settle = () => {
+      if (previousUpload === upload) previousUpload = null;
+    };
+    upload.then(settle, settle);
+  }
   const generation = connection;
   if (!exitListening) {
     exitListening = true;
     window.addEventListener('pagehide', flushOnExit);
   }
-  // the owner names the engine too: the same name on another engine is
-  // another user
-  const ownerId = `${scope}/${userId}`;
   const owner = readOwner();
   const sameOwner = owner === null || owner === ownerId;
+  // at once: a tab still connected as another user stops sending before this session is used
+  writeOwner(ownerId);
   adoptRenamedKeys(userId, sameOwner);
   const before = previousUpload;
   if (before) {

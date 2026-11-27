@@ -446,7 +446,7 @@ if [ -f "$APP_JAR" ]; then
   appcds=false
   is_true "${FASTI_APPCDS:-}" && appcds=true
   case " ${JAVA_OPTS:-} ${JAVA_TOOL_OPTIONS:-} ${JDK_JAVA_OPTIONS:-} " in
-    *AutoCreateSharedArchive*|*ArchiveClassesAtExit*) appcds=true ;;
+    *AutoCreateSharedArchive*|*ArchiveClassesAtExit*|*SharedArchiveFile*) appcds=true ;;
   esac
   CLASS_PATH=""
   DIRS=""

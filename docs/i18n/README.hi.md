@@ -84,7 +84,9 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 nodes को बदल सकते हैं, Fasti को उनके साथ चला सकते हैं, और किसी भी समय Camunda 7.24 पर वापस जा सकते
 हैं। Fasti image को PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022 और Oracle Database 23ai
 पर Camunda Run 7.24 द्वारा बनाए गए databases को take over करते हुए test किया गया है; Camunda Run
-पर वापस जाना MySQL को छोड़कर इन्हीं databases पर test किया गया है। DB2 अभी test नहीं हुआ है। हर REST client को, external task workers सहित, अब Basic credentials या bearer token
+पर वापस जाना MySQL को छोड़कर इन्हीं databases पर test किया गया है। Db2 12.1 को भी इसी तरह test किया गया
+है और उसके लिए Db2 के तीन registry variables चाहिए
+([सीमाएँ](../migrate-from-camunda-7.hi.md#limits))। हर REST client को, external task workers सहित, अब Basic credentials या bearer token
 भेजना होगा।
 
 Embedded Spring Boot applications भी Spring Boot 4.1 और Java 17 पर जाती हैं; पुराने schemas को पहले
@@ -127,7 +129,7 @@ workload endpoint, वैकल्पिक डेटाबेस इंडे�
 और तेज़ वेब इंटरफ़ेस। `1.1.0` में जारी: Helm chart और Kubernetes manifests, Prometheus metrics,
 OpenTelemetry tracing, structured JSON logs, अनुपस्थिति में substitute, approvals के लिए four-eyes
 control, immutable audit trail, AI assistants के लिए MCP server, और नए इंटरफ़ेस में केस (CMMN)।
-`1.x` में आगे: Maven आर्टिफ़ैक्ट को Maven Central पर प्रकाशित करना, DB2 पर सत्यापन, मूल भाषियों
+`1.x` में आगे: Maven आर्टिफ़ैक्ट को Maven Central पर प्रकाशित करना, मूल भाषियों
 द्वारा अनुवादों की समीक्षा, और AngularJS एप्लिकेशन को हटाना। Camunda 7 CE के अंत से 2027 के
 लक्ष्यों तक की टाइमलाइन:
 <https://fasti.dev/#timeline>।

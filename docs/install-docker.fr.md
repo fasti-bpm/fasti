@@ -17,8 +17,9 @@ d’état, mise à niveau, retour arrière et dépannage. Documentation complèt
 - Docker Engine avec Docker Compose v2 (`docker compose`).
 - Pour des charges de travail réelles : au moins 2 processeurs et 2 Go de mémoire pour le conteneur Fasti (en dessous de ce seuil, la
   JVM choisit le Serial GC).
-- Base de données de production : PostgreSQL, MariaDB, MySQL, SQL Server ou Oracle (voir la
-  [matrice des configurations testées](migrate-from-camunda-7.fr.md#limits)). DB2 n’a pas été vérifié. H2 est réservé à l’évaluation.
+- Base de données de production : PostgreSQL, MariaDB, MySQL, SQL Server, Oracle ou Db2 12.1 (voir la
+  [matrice des configurations testées](migrate-from-camunda-7.fr.md#limits) ; Db2 nécessite trois
+  variables de registre). H2 est réservé à l’évaluation.
 
 <a id="2-pull-the-image"></a>
 

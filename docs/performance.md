@@ -79,7 +79,7 @@ A second group is in the scripts as comments. Create those only for the usage na
 Run the create script as the owner of the engine tables, then refresh the statistics. All scripts
 can be run again, the commented second group included once its `-- ` is removed (MySQL/MariaDB,
 PostgreSQL, SQL Server, Oracle and H2 skip an index that exists; on Db2 the command line processor
-reports `SQL0601N` for it and goes on).
+reports the warning `SQL0605W` for it and goes on).
 
 - The scripts name the tables without schema. On PostgreSQL run them with the schema of the
   engine tables first in the `search_path` (`set search_path to <schema>;`) when it is not
@@ -119,14 +119,16 @@ Prefer a quiet period for the first run on a large production database.
 **Verified**: PostgreSQL 16 and MariaDB 11.4 (both scripts run twice each, plans and write cost
 measured below; this was done with the first version of the scripts, before the lock timeouts,
 the job index without partial index support and the re-runnable second group were added, which
-so far ran on H2 only). **Not verified**: MySQL (only MariaDB was run), Oracle, SQL Server and Db2.
-Those scripts were reviewed for syntax only and say so in their header; run them on a test system
-first. On Oracle and Db2 check in particular that job acquisition with
+so far ran on H2 only). Db2 12.1: both scripts ran (created, dropped and created again), and with
+`FASTI_IDX_JOB_DUEDATE` job acquisition read 0 to 38 rows instead of 200,000. **Not verified**:
+MySQL (only MariaDB was run), Oracle and SQL Server. Those scripts were reviewed for syntax only
+and say so in their header; run them on a test system first. On Oracle check in particular that job acquisition with
 `jobExecutorAcquireByDueDate=true` does not scan the whole new index when nothing is due (see
 [Job acquisition](#job-acquisition)). The startup check (below) runs against H2 in the automated
 tests; its first version was also run against PostgreSQL 16 and MariaDB 11.4 (the current catalog
 queries of those two, with access method, null order and the predicate without functions, not
-yet). Its catalog queries for MySQL 8, Oracle, SQL Server and Db2 have not been run.
+yet). Its Db2 catalog query ran on Db2 12.1 (the hint about missing indexes went away once the
+script had run); those for MySQL 8, Oracle and SQL Server have not been run.
 
 ## Hints at engine start
 
@@ -293,7 +295,7 @@ backlog rather than the steady state. With `ensureJobDueDateNotNull=true` both o
 buffers when nothing is due (156 ms per acquisition without index); the API medians measured for
 the two variants (33 and 7.5 ms) came from two sessions of different speed and do not compare.
 MySQL, MariaDB, SQL Server and H2 sort NULL first anyway; Oracle and Db2 sort NULL last like
-PostgreSQL and are not verified (see the script headers). The partial index serves acquisition
+PostgreSQL (Db2 12.1 measured as above; Oracle not verified, see the script header). The partial index serves acquisition
 only: the job lists by due date of Cockpit and REST carry neither of its conditions.
 
 The priority index `(PRIORITY_ DESC, DUEDATE_)` that the Camunda documentation suggests for

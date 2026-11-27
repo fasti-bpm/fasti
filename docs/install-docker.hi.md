@@ -17,8 +17,9 @@
 - Docker Compose v2 (`docker compose`) के साथ Docker Engine।
 - वास्तविक कार्यभार के लिए: Fasti कंटेनर के लिए कम से कम 2 CPU और 2 GB मेमोरी (इससे कम होने पर
   JVM, Serial GC चुनता है)।
-- प्रोडक्शन डेटाबेस: PostgreSQL, MariaDB, MySQL, SQL Server या Oracle (
-  [परीक्षित संगतता तालिका](migrate-from-camunda-7.hi.md#limits) देखें)। DB2 सत्यापित नहीं है। H2 केवल मूल्यांकन के लिए है।
+- प्रोडक्शन डेटाबेस: PostgreSQL, MariaDB, MySQL, SQL Server, Oracle या Db2 12.1 (
+  [परीक्षित संगतता तालिका](migrate-from-camunda-7.hi.md#limits) देखें; Db2 के लिए तीन registry
+  variables चाहिए)। H2 केवल मूल्यांकन के लिए है।
 
 <a id="2-pull-the-image"></a>
 

@@ -176,7 +176,8 @@ jobs per second than alone) and the task list answered in about 40 ms.
 Compared with exact SQL over the same rows, every count matched, activity percentiles were within
 4.7 %, instance percentiles within 0.3 % and the trend within 3.7 %; user task times were exact.
 MariaDB 11.4 and SQL Server 2022 answered every call with the same results on a smaller history.
-Oracle and Db2 were not run.
+On Db2 12.1 the calls ran on a database taken over from Camunda Run (no comparison with exact
+SQL there). Oracle was not run.
 
 For long ranges on large histories:
 

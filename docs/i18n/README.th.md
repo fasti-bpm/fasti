@@ -82,7 +82,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 
 หากคุณใช้ Camunda 7.24 อยู่ Fasti ทำงานบนฐานข้อมูลเดียวกันนั้นได้โดยไม่เปลี่ยน schema คุณสามารถ
 แทนที่ node เดิม รัน Fasti คู่กับ node เดิม และย้อนกลับไปใช้ Camunda 7.24 ได้ทุกเมื่อ
-image ของ Fasti ผ่านการทดสอบการรับช่วงต่อฐานข้อมูลที่ Camunda Run 7.24 สร้างไว้บน PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022 และ Oracle Database 23ai แล้ว และทดสอบการย้อนกลับไปใช้ Camunda Run บนฐานข้อมูลเดียวกันนี้แล้ว ยกเว้น MySQL ส่วน DB2 ยังไม่ได้ทดสอบ ทุก REST client รวมถึง
+image ของ Fasti ผ่านการทดสอบการรับช่วงต่อฐานข้อมูลที่ Camunda Run 7.24 สร้างไว้บน PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022 และ Oracle Database 23ai แล้ว และทดสอบการย้อนกลับไปใช้ Camunda Run บนฐานข้อมูลเดียวกันนี้แล้ว ยกเว้น MySQL ส่วน Db2 12.1 ผ่านการทดสอบแบบเดียวกันแล้ว และต้องตั้งค่าตัวแปร registry ของ Db2 สามตัว ([ข้อจำกัด](../migrate-from-camunda-7.th.md#limits)) ทุก REST client รวมถึง
 external task worker ต้องส่งข้อมูลรับรองแบบ Basic หรือ bearer token
 
 แอปพลิเคชัน Spring Boot แบบ embedded ต้องย้ายไปใช้ Spring Boot 4.1 และ Java 17 ด้วย ส่วน schema รุ่นเก่าต้องอัปเกรดด้วยสคริปต์มาตรฐานก่อน plugin และ process application ที่สร้างสำหรับ Camunda 7 ต้อง build ใหม่กับ artifact ของ Fasti จึงจะทำงานภายใน Fasti ได้ การทำงานคู่กันและการย้อนกลับมีข้อจำกัด (การตั้งค่าเดียวกันทุกโหนด โหนดใดรัน job และ process ที่ใช้ฟีเจอร์เฉพาะของ Fasti) ดู [การทำงานแบบผสม](../migrate-from-camunda-7.th.md#mixed-operation-with-camunda-7-nodes) และ [การย้อนกลับ](../migrate-from-camunda-7.th.md#rollback-to-camunda-724)
@@ -120,7 +120,7 @@ external task worker ต้องส่งข้อมูลรับรอง�
 metrics ของ Prometheus, tracing ของ OpenTelemetry, log แบบมีโครงสร้างในรูปแบบ JSON,
 ผู้ปฏิบัติงานแทนระหว่างที่ไม่อยู่, การควบคุมแบบ four-eyes สำหรับการอนุมัติ, audit trail ที่แก้ไขไม่ได้,
 MCP server สำหรับผู้ช่วย AI และเคส (CMMN) ในอินเทอร์เฟซใหม่ ลำดับถัดไปใน `1.x`: การเผยแพร่อาร์ติแฟกต์
-Maven บน Maven Central, การตรวจสอบกับ DB2, การตรวจทานคำแปลโดยเจ้าของภาษา และการเลิกใช้แอปพลิเคชัน
+Maven บน Maven Central, การตรวจทานคำแปลโดยเจ้าของภาษา และการเลิกใช้แอปพลิเคชัน
 AngularJS ไทม์ไลน์ตั้งแต่การสิ้นสุดของ Camunda 7 CE ไปจนถึงเป้าหมายปี 2027:
 <https://fasti.dev/#timeline>
 

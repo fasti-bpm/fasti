@@ -76,7 +76,7 @@ Nhóm thứ hai nằm trong script dưới dạng chú thích. Chỉ tạo khi c
 
 Chạy script tạo bằng tài khoản sở hữu các bảng của engine, sau đó cập nhật thống kê. Mọi script đều
 chạy lại được, kể cả nhóm thứ hai sau khi bỏ dấu `-- ` (MySQL/MariaDB, PostgreSQL, SQL Server,
-Oracle và H2 bỏ qua chỉ mục đã có; trên Db2 trình dòng lệnh báo `SQL0601N` rồi chạy tiếp).
+Oracle và H2 bỏ qua chỉ mục đã có; trên Db2 trình dòng lệnh báo cảnh báo `SQL0605W` rồi chạy tiếp).
 
 - Script gọi tên bảng không kèm schema. Trên PostgreSQL, chạy script với schema chứa bảng engine
   đứng đầu `search_path` (`set search_path to <schema>;`) khi đó không phải `public`; trên
@@ -116,14 +116,16 @@ liệu production lớn, nên chạy lần đầu vào lúc vắng tải.
 **Đã kiểm chứng**: PostgreSQL 16 và MariaDB 11.4 (mỗi script chạy hai lần, kế hoạch truy vấn và chi
 phí ghi đo ở dưới; việc này làm với phiên bản đầu của script, trước khi thêm timeout chờ khóa, chỉ mục
 job cho cơ sở dữ liệu không có partial index và nhóm hai chạy lại được, những phần mà đến nay mới chạy
-trên H2). **Chưa kiểm chứng**: MySQL (mới chỉ chạy trên MariaDB), Oracle, SQL Server và
-Db2. Các script đó mới chỉ được rà cú pháp và ghi rõ điều này ở phần đầu; hãy chạy thử trên hệ thống
-kiểm thử trước. Riêng Oracle và Db2, kiểm tra rằng việc lấy job với
+trên H2). Db2 12.1: cả hai script đã chạy (tạo, xóa rồi tạo lại), và với `FASTI_IDX_JOB_DUEDATE`
+việc lấy job đọc 0 đến 38 dòng thay vì 200.000. **Chưa kiểm chứng**: MySQL (mới chỉ chạy trên
+MariaDB), Oracle và SQL Server. Các script đó mới chỉ được rà cú pháp và ghi rõ điều này ở phần đầu;
+hãy chạy thử trên hệ thống kiểm thử trước. Riêng Oracle, kiểm tra rằng việc lấy job với
 `jobExecutorAcquireByDueDate=true` không quét toàn bộ chỉ mục mới khi không có job nào đến hạn (xem
 [Lấy job](#lay-job)). Phần kiểm tra khi khởi động (bên dưới) chạy trên H2 trong các test tự động; phiên
 bản đầu của nó cũng đã chạy trên PostgreSQL 16 và MariaDB 11.4 (các truy vấn danh mục hiện tại của hai
-hệ này, có phương thức truy cập, thứ tự NULL và điều kiện không bọc hàm, thì chưa). Các truy vấn danh
-mục của nó cho MySQL 8, Oracle, SQL Server và Db2 chưa từng được chạy.
+hệ này, có phương thức truy cập, thứ tự NULL và điều kiện không bọc hàm, thì chưa). Truy vấn danh
+mục cho Db2 đã chạy trên Db2 12.1 (cảnh báo thiếu chỉ mục biến mất sau khi chạy script); các truy vấn
+cho MySQL 8, Oracle và SQL Server chưa từng được chạy.
 
 ## Cảnh báo khi engine khởi động
 
@@ -285,8 +287,8 @@ rồi sắp xếp (15 ms). Khi có 100.000 job đến hạn, phép sắp xếp �
 thường. Với `ensureJobDueDateNotNull=true`, cả hai thứ tự đều đọc 3 buffer khi không có job đến hạn
 (156 ms mỗi lần khi không có chỉ mục); trung vị API đo cho hai phiên bản (33 và 7,5 ms) đến từ hai
 phiên đo có tốc độ khác nhau và không so sánh được với nhau. MySQL, MariaDB, SQL Server và H2 vốn xếp
-NULL lên đầu; Oracle và Db2 xếp NULL xuống cuối giống PostgreSQL và chưa được kiểm chứng (xem phần đầu
-script). Partial index chỉ phục vụ việc lấy job: danh sách job theo hạn của Cockpit và REST không có
+NULL lên đầu; Oracle và Db2 xếp NULL xuống cuối giống PostgreSQL (Db2 12.1 đã đo như trên; Oracle chưa được kiểm
+chứng, xem phần đầu script). Partial index chỉ phục vụ việc lấy job: danh sách job theo hạn của Cockpit và REST không có
 điều kiện nào của nó.
 
 Chỉ mục ưu tiên `(PRIORITY_ DESC, DUEDATE_)` mà tài liệu Camunda gợi ý cho

@@ -17,8 +17,9 @@ kesehatan, peningkatan versi, pengembalian versi, dan pemecahan masalah. Referen
 - Docker Engine dengan Docker Compose v2 (`docker compose`).
 - Untuk beban kerja nyata: setidaknya 2 CPU dan memori 2 GB untuk kontainer Fasti (di bawah itu,
   JVM memilih Serial GC).
-- Basis data produksi: PostgreSQL, MariaDB, MySQL, SQL Server, atau Oracle (lihat
-  [matriks pengujian](migrate-from-camunda-7.id.md#limits)). DB2 belum diverifikasi. H2 hanya untuk evaluasi.
+- Basis data produksi: PostgreSQL, MariaDB, MySQL, SQL Server, Oracle, atau Db2 12.1 (lihat
+  [matriks pengujian](migrate-from-camunda-7.id.md#limits); Db2 memerlukan tiga variabel registri).
+  H2 hanya untuk evaluasi.
 
 <a id="2-pull-the-image"></a>
 

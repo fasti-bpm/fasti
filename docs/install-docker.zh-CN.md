@@ -17,8 +17,8 @@
 - Docker Engine 和 Docker Compose v2（`docker compose`）。
 - 对于实际工作负载：为 Fasti 容器至少分配 2 个 CPU 和 2 GB 内存（低于此配置时，
   JVM 会选择 Serial GC）。
-- 生产数据库：PostgreSQL、MariaDB、MySQL、SQL Server 或 Oracle（参见
-  [已测试的兼容性矩阵](migrate-from-camunda-7.zh-CN.md#limits)）。DB2 尚未验证。H2 仅供评估使用。
+- 生产数据库：PostgreSQL、MariaDB、MySQL、SQL Server、Oracle 或 Db2 12.1（参见
+  [已测试的兼容性矩阵](migrate-from-camunda-7.zh-CN.md#limits)；Db2 需要三个注册表变量）。H2 仅供评估使用。
 
 <a id="2-pull-the-image"></a>
 

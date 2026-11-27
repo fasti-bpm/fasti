@@ -85,7 +85,9 @@ Se você roda o Camunda 7.24, o Fasti roda nesse mesmo banco de dados sem altera
 substituir os nós antigos, rodar o Fasti ao lado deles e voltar para o Camunda 7.24 a qualquer
 momento. A imagem do Fasti foi testada assumindo bancos de dados criados pelo Camunda Run 7.24 em
 PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022 e Oracle Database 23ai; a volta para o
-Camunda Run foi testada nos mesmos bancos de dados, exceto MySQL. O DB2 ainda não foi testado. Todo cliente REST, inclusive os workers de external tasks, agora precisa enviar credenciais
+Camunda Run foi testada nos mesmos bancos de dados, exceto MySQL. O Db2 12.1 foi testado da mesma forma
+e precisa de três variáveis de registro do Db2
+([Limitações](../migrate-from-camunda-7.pt-BR.md#limits)). Todo cliente REST, inclusive os workers de external tasks, agora precisa enviar credenciais
 Basic ou um bearer token.
 
 Aplicações Spring Boot embarcadas também passam para Spring Boot 4.1 e Java 17; schemas mais antigos
@@ -130,8 +132,8 @@ inicialização, ajustes na trilha de auditoria e uma interface web mais rápida
 um Helm chart e manifestos Kubernetes, métricas Prometheus, tracing com OpenTelemetry, logs
 estruturados em JSON, um substituto durante ausências, controle de quatro olhos para aprovações, uma
 trilha de auditoria imutável, um servidor MCP para assistentes de IA e casos (CMMN) na nova
-interface. A seguir na linha `1.x`: a publicação dos artefatos Maven no Maven Central, a verificação
-com DB2, a revisão das traduções por falantes nativos e a retirada das aplicações AngularJS. A linha
+interface. A seguir na linha `1.x`: a publicação dos artefatos Maven no Maven Central,
+a revisão das traduções por falantes nativos e a retirada das aplicações AngularJS. A linha
 do tempo, do fim do Camunda 7 CE às metas para 2027: <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>

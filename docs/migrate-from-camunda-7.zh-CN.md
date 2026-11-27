@@ -213,7 +213,16 @@ Fasti 和 Camunda 7.24 可以同时使用同一个数据库（已测试：双方
   | MySQL 8.4 | 内置 | 通过 | — | 通过 | 通过 |
   | SQL Server 2022 (Developer) | 内置（`encrypt=false`） | 通过 | 通过 | 通过 | 未测试 |
   | Oracle Database 23ai Free | 通过 `FASTI_EXTRA_LIB` 加载 `ojdbc11` | 通过 | 通过 | 通过 | 未测试 |
-  | DB2 | — | 未测试 | | | |
+  | Db2 12.1 (Community Edition) | 通过 `FASTI_EXTRA_LIB` 加载 `com.ibm.db2:jcc` 12.1.2.0 | 通过 | 通过 | 通过 | 通过（仅 schema） |
+
+  Db2：请运行 `db2set DB2_EVALUNCOMMITTED=ON DB2_SKIPINSERTED=ON DB2_SKIPDELETED=ON` 并重启
+  实例。缺少这些变量时，并发命令会在引擎的一条语句
+  （`update ACT_HI_TASKINST set REMOVAL_TIME_ … where ROOT_PROC_INST_ID_ = ?`）上发生死锁
+  （`SQL0911N`），在 Camunda 7.24 节点上同样如此，并且在新建的、仍为空的数据库上最为严重（测试中，那里大多数并发的任务完成操作都失败了）。
+  已在 Db2 12.1 Community Edition 上测试，使用 4 K 页、代码集 UTF-8、隔离级别 CS 和 `CUR_COMMIT=ON`；
+  同时还运行了 Fasti 的引擎测试以及引擎测试套件的 15 个包。`LOCKTIMEOUT` 默认为 -1（锁等待永不结束）：请设置一个值。
+  驱动（`com.ibm.db2:jcc`）未内置；请通过 `FASTI_EXTRA_LIB` 添加。未测试：Db2 11.5、Db2 for z/OS 或 IBM i、
+  其他页大小、对含有数据的 7.23 数据库进行升级。
 
   另外：在 MariaDB（MariaDB Connector/J）上，两个 Fasti 节点并行完成相同任务并获取外部任务时，未发生任何丢失或重复；竞争失败的事务收到了乐观锁错误。MySQL/MariaDB 需要 `transaction-isolation=READ-COMMITTED`。在 MySQL 上，
   请为每个引擎分配独立的数据库：引擎（Camunda Run 和 Fasti 均如此）会在

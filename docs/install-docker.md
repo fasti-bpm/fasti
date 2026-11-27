@@ -16,8 +16,9 @@ tracing; since 1.1.0). Full image reference:
 - Docker Engine with Docker Compose v2 (`docker compose`).
 - For real workloads: at least 2 CPUs and 2 GB of memory for the Fasti container (below that the
   JVM picks the Serial GC).
-- Production database: PostgreSQL, MariaDB, MySQL, SQL Server or Oracle (see the
-  [tested matrix](migrate-from-camunda-7.md#limits)). DB2 is not verified. H2 is for evaluation only.
+- Production database: PostgreSQL, MariaDB, MySQL, SQL Server, Oracle or Db2 12.1 (see the
+  [tested matrix](migrate-from-camunda-7.md#limits); Db2 needs three registry variables). H2 is for
+  evaluation only.
 
 <a id="2-pull-the-image"></a>
 

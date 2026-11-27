@@ -17,8 +17,8 @@
 - Docker Engine พร้อม Docker Compose v2 (`docker compose`)
 - สำหรับภาระงานจริง: จัดสรรอย่างน้อย 2 CPU และหน่วยความจำ 2 GB ให้คอนเทนเนอร์ Fasti (หากต่ำกว่านี้
   JVM จะเลือกใช้ Serial GC)
-- ฐานข้อมูลสำหรับใช้งานจริง: PostgreSQL, MariaDB, MySQL, SQL Server หรือ Oracle (ดู
-  [ตารางระบบที่ผ่านการทดสอบ](migrate-from-camunda-7.th.md#limits)) ยังไม่ได้ตรวจสอบ DB2 ส่วน H2 ใช้สำหรับการประเมินเท่านั้น
+- ฐานข้อมูลสำหรับใช้งานจริง: PostgreSQL, MariaDB, MySQL, SQL Server, Oracle หรือ Db2 12.1 (ดู
+  [ตารางระบบที่ผ่านการทดสอบ](migrate-from-camunda-7.th.md#limits); Db2 ต้องตั้งค่าตัวแปร registry สามตัว) ส่วน H2 ใช้สำหรับการประเมินเท่านั้น
 
 <a id="2-pull-the-image"></a>
 

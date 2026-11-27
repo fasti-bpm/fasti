@@ -84,7 +84,9 @@ Jika Anda menjalankan Camunda 7.24, Fasti berjalan di database yang sama tanpa m
 Anda dapat mengganti node lama, menjalankan Fasti berdampingan dengannya, dan kembali ke Camunda
 7.24 kapan saja. Image Fasti telah diuji saat mengambil alih database yang dibuat oleh Camunda Run
 7.24 di PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022, dan Oracle Database 23ai; kembali
-ke Camunda Run telah diuji pada basis data yang sama kecuali MySQL. DB2 belum diuji. Setiap client REST, termasuk external task worker, kini harus mengirim kredensial Basic atau
+ke Camunda Run telah diuji pada basis data yang sama kecuali MySQL. Db2 12.1 telah diuji dengan cara
+yang sama dan memerlukan tiga variabel registri Db2
+([Batasan](../migrate-from-camunda-7.id.md#limits)). Setiap client REST, termasuk external task worker, kini harus mengirim kredensial Basic atau
 bearer token.
 
 Aplikasi Spring Boot embedded juga pindah ke Spring Boot 4.1 dan Java 17; skema yang lebih lama
@@ -129,7 +131,7 @@ antarmuka web yang lebih cepat. Dirilis di `1.1.0`: Helm chart dan manifest Kube
 Prometheus, tracing OpenTelemetry, log JSON terstruktur, pengganti selama berhalangan, kontrol empat
 mata untuk persetujuan, jejak audit yang tidak dapat diubah, server MCP untuk asisten AI, serta
 kasus (CMMN) di antarmuka baru. Berikutnya di `1.x`: penerbitan artefak Maven di Maven Central,
-verifikasi pada DB2, peninjauan terjemahan oleh penutur asli, dan penghentian aplikasi AngularJS.
+peninjauan terjemahan oleh penutur asli, dan penghentian aplikasi AngularJS.
 Lini masa, dari berakhirnya Camunda 7 CE hingga sasaran 2027: <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>

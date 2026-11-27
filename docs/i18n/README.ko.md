@@ -81,7 +81,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 
 Camunda 7.24를 운영 중이라면 Fasti는 스키마를 변경하지 않고 같은 데이터베이스에서 실행됩니다. 기존 노드를
 교체할 수도, Fasti를 함께 실행할 수도, 언제든 Camunda 7.24로 되돌아갈 수도 있습니다.
-Fasti 이미지는 PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022, Oracle Database 23ai에서 Camunda Run 7.24가 만든 데이터베이스를 인계받는 테스트를 거쳤습니다. Camunda Run으로 되돌아가는 것은 MySQL을 제외한 같은 데이터베이스에서 테스트했습니다. DB2는 아직 테스트되지 않았습니다. 외부 태스크
+Fasti 이미지는 PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022, Oracle Database 23ai에서 Camunda Run 7.24가 만든 데이터베이스를 인계받는 테스트를 거쳤습니다. Camunda Run으로 되돌아가는 것은 MySQL을 제외한 같은 데이터베이스에서 테스트했습니다. Db2 12.1도 같은 방식으로 테스트했으며 Db2 레지스트리 변수 세 개가 필요합니다([제한 사항](../migrate-from-camunda-7.ko.md#limits)). 외부 태스크
 워커를 포함한 모든 REST 클라이언트는 이제 Basic 자격 증명 또는 bearer token을 보내야 합니다.
 
 임베디드 Spring Boot 애플리케이션은 Spring Boot 4.1과 Java 17로도 옮겨야 합니다. 이전 스키마는 먼저 표준 스크립트로 업그레이드합니다. Camunda 7용으로 만든 플러그인과 프로세스 애플리케이션을 Fasti 안에서 실행하려면 Fasti 아티팩트를 대상으로 다시 빌드해야 합니다. 병행 운영과 되돌리기에는 제약이 있습니다(모든 노드의 동일한 설정, 어느 노드가 잡을 실행하는지, Fasti 전용 기능을 사용하는 프로세스). [혼합 운영](../migrate-from-camunda-7.ko.md#mixed-operation-with-camunda-7-nodes) 및 [롤백](../migrate-from-camunda-7.ko.md#rollback-to-camunda-724)을 참조하십시오.
@@ -117,7 +117,7 @@ Camunda 7을 이어 가는 좋은 프로젝트가 여럿 있습니다. Fasti는 
 릴리스된 항목: Helm 차트와 Kubernetes 매니페스트, Prometheus 메트릭, OpenTelemetry 트레이싱, 구조화된
 JSON 로그, 부재 중 대리인 지정, 승인에 대한 4-eyes 통제, 변경 불가능한 감사 추적, AI 어시스턴트용 MCP
 서버, 새로운 인터페이스의 케이스(CMMN) 지원. `1.x`의 다음 항목: Maven 아티팩트의 Maven Central 게시,
-DB2 검증, 원어민의 번역 검토, AngularJS 애플리케이션 폐기. Camunda 7 CE 종료부터 2027년 목표까지의
+원어민의 번역 검토, AngularJS 애플리케이션 폐기. Camunda 7 CE 종료부터 2027년 목표까지의
 타임라인: <https://fasti.dev/#timeline>.
 
 <a id="documentation"></a>

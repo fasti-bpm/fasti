@@ -77,7 +77,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 ## 从 Camunda 7 迁移
 
 如果你运行的是 Camunda 7.24，Fasti 可以在同一个数据库上运行，且不改动其 schema。你可以替换旧节点，
-让 Fasti 与它们并行运行，也可以随时回退到 Camunda 7.24。Fasti 镜像已在 PostgreSQL 16、MariaDB 11.8、MySQL 8.4、SQL Server 2022 和 Oracle Database 23ai 上测试过接管由 Camunda Run 7.24 创建的数据库；回退到 Camunda Run 已在除 MySQL 外的相同数据库上测试。DB2 尚未测试。
+让 Fasti 与它们并行运行，也可以随时回退到 Camunda 7.24。Fasti 镜像已在 PostgreSQL 16、MariaDB 11.8、MySQL 8.4、SQL Server 2022 和 Oracle Database 23ai 上测试过接管由 Camunda Run 7.24 创建的数据库；回退到 Camunda Run 已在除 MySQL 外的相同数据库上测试。Db2 12.1 已用同样的方式测试，并且需要设置三个 Db2 注册表变量（[限制](../migrate-from-camunda-7.zh-CN.md#limits)）。
 每个 REST 客户端（包括外部任务 worker）现在都必须发送 Basic 凭据或 bearer token。
 
 嵌入式 Spring Boot 应用还需迁移到 Spring Boot 4.1 和 Java 17；更早的 schema 需先用标准脚本升级。为 Camunda 7 构建的插件和流程应用必须基于 Fasti 制品重新构建，才能在 Fasti 内运行。并行运行和回退都有限制（所有节点配置相同、由哪个节点运行作业、使用 Fasti 独有功能的流程）：参见[混合运行](../migrate-from-camunda-7.zh-CN.md#mixed-operation-with-camunda-7-nodes)和[回退](../migrate-from-camunda-7.zh-CN.md#rollback-to-camunda-724)。
@@ -111,7 +111,7 @@ curl -u admin:'change-me' http://localhost:8080/engine-rest/task
 索引、启动时的性能诊断、审计轨迹调优，以及更快的 Web 界面。已随 `1.1.0` 发布的内容：Helm chart 和
 Kubernetes 清单、Prometheus 指标、OpenTelemetry 链路追踪、结构化 JSON 日志、缺勤期间的代理人、审批的
 四眼原则控制、不可篡改的审计轨迹、面向 AI 助手的 MCP 服务器，以及新界面中的案例 (CMMN)。`1.x` 的后续
-计划：将 Maven 构件发布到 Maven Central、在 DB2 上验证、由母语者审校译文，以及停用 AngularJS 应用。从
+计划：将 Maven 构件发布到 Maven Central、由母语者审校译文，以及停用 AngularJS 应用。从
 Camunda 7 CE 终止到 2027 年目标的时间线：
 <https://fasti.dev/#timeline>。
 

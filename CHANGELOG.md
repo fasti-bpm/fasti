@@ -105,6 +105,11 @@ tuning of defaults that had been left at upstream values. Same database schema a
 
 ### Changed
 
+- Db2 12.1 is tested: the engine tests of Fasti and 15 packages of the engine test suite, and
+  takeover, rollback and mixed operation with Camunda Run 7.24.0 (driver `com.ibm.db2:jcc`
+  12.1.2.0, added with `FASTI_EXTRA_LIB`). Db2 needs the registry variables
+  `DB2_EVALUNCOMMITTED`, `DB2_SKIPINSERTED` and `DB2_SKIPDELETED` set to `ON`, or concurrent
+  commands deadlock in a statement of the engine (Camunda 7.24 alike); see the migration guide.
 - Run and image: Tomcat request threads 200 → 100; HikariCP connection timeout 30 s → 10 s.
 - Image: `MaxRAMPercentage` is 60 below a 1.5 GiB memory limit, 75 above (Helm chart: unset
   `jvm.maxRamPercentage` lets the image choose).

@@ -474,5 +474,6 @@ Oracle database was at hand.
   each batch in a transaction of its own with its own purge record: it holds one head at a time,
   for one batch. If a batch fails, the batches done so far stay purged, each with its purge
   record, and the other chains are still purged; the result lists the chains that failed.
-- Oracle, SQL Server and DB2 scripts are written in the style of the engine scripts but are
-  not tested here; H2, PostgreSQL 16 and MariaDB 11.4 are.
+- Oracle and SQL Server scripts are written in the style of the engine scripts but are not
+  tested here; H2, PostgreSQL 16, MariaDB 11.4 and Db2 12.1 are (on Db2: create, drop, the
+  upgrade after 1.1, two engines on one database, tampering detected).

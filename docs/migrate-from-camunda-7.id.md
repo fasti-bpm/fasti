@@ -228,7 +228,19 @@ besar, Fasti menyediakan indeks opsional berupa skrip yang dijalankan administra
   | MySQL 8.4 | disertakan | lulus | — | lulus | lulus |
   | SQL Server 2022 (Developer) | disertakan (`encrypt=false`) | lulus | lulus | lulus | belum diuji |
   | Oracle Database 23ai Free | `ojdbc11` melalui `FASTI_EXTRA_LIB` | lulus | lulus | lulus | belum diuji |
-  | DB2 | — | belum diuji | | | |
+  | Db2 12.1 (Community Edition) | `com.ibm.db2:jcc` 12.1.2.0 melalui `FASTI_EXTRA_LIB` | lulus | lulus | lulus | lulus (hanya skema) |
+
+  Db2: jalankan `db2set DB2_EVALUNCOMMITTED=ON DB2_SKIPINSERTED=ON DB2_SKIPDELETED=ON` lalu mulai
+  ulang instance. Tanpa variabel tersebut, perintah yang berjalan bersamaan mengalami deadlock
+  (`SQL0911N`) pada sebuah pernyataan engine
+  (`update ACT_HI_TASKINST set REMOVAL_TIME_ … where ROOT_PROC_INST_ID_ = ?`), juga pada node
+  Camunda 7.24, dan paling sering pada basis data baru yang masih kosong (dalam pengujian, sebagian
+  besar penyelesaian tugas secara bersamaan gagal di sana). Diuji pada Db2 12.1 Community Edition
+  dengan halaman 4 K, code set UTF-8, isolasi CS, dan `CUR_COMMIT=ON`; juga pengujian engine Fasti
+  dan 15 paket dari rangkaian pengujian engine. `LOCKTIMEOUT` secara default bernilai -1 (penantian
+  kunci tidak pernah berakhir): tetapkan sebuah nilai. Driver (`com.ibm.db2:jcc`) tidak disertakan;
+  tambahkan dengan `FASTI_EXTRA_LIB`. Belum diuji: Db2 11.5, Db2 untuk z/OS atau IBM i, ukuran
+  halaman lain, upgrade basis data 7.23 yang berisi data.
 
   Selain itu: dua node Fasti pada MariaDB (MariaDB Connector/J) yang menyelesaikan tugas yang sama dan mengambil tugas eksternal secara paralel tidak kehilangan atau menduplikasi apa pun; transaksi yang kalah menerima kesalahan penguncian optimistis. MySQL/MariaDB memerlukan `transaction-isolation=READ-COMMITTED`. Pada MySQL,
   berikan basis data tersendiri untuk setiap engine: engine (baik Camunda Run maupun Fasti) mencari tabel

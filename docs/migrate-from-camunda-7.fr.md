@@ -232,7 +232,20 @@ administrateur exécute
   | MySQL 8.4 | fourni | réussi | — | réussi | réussi |
   | SQL Server 2022 (Developer) | fourni (`encrypt=false`) | réussi | réussi | réussi | non testé |
   | Oracle Database 23ai Free | `ojdbc11` via `FASTI_EXTRA_LIB` | réussi | réussi | réussi | non testé |
-  | DB2 | — | non testé | | | |
+  | Db2 12.1 (Community Edition) | `com.ibm.db2:jcc` 12.1.2.0 via `FASTI_EXTRA_LIB` | réussi | réussi | réussi | réussi (schéma uniquement) |
+
+  Db2 : exécutez `db2set DB2_EVALUNCOMMITTED=ON DB2_SKIPINSERTED=ON DB2_SKIPDELETED=ON` puis
+  redémarrez l’instance. Sans elles, des commandes concurrentes se bloquent mutuellement
+  (`SQL0911N`) dans une instruction du moteur
+  (`update ACT_HI_TASKINST set REMOVAL_TIME_ … where ROOT_PROC_INST_ID_ = ?`), y compris sur les nœuds
+  Camunda 7.24, et surtout sur une base de données neuve, encore vide (lors du test, la plupart des
+  terminaisons concurrentes de tâches y ont échoué). Testé sur Db2 12.1 Community Edition avec des
+  pages de 4 K, le jeu de codes UTF-8, l’isolation CS et `CUR_COMMIT=ON` ; ainsi que les tests du
+  moteur de Fasti et 15 paquets de la suite de tests du moteur. `LOCKTIMEOUT` vaut -1 par défaut
+  (l’attente d’un verrou ne se termine jamais) : définissez une valeur. Le pilote
+  (`com.ibm.db2:jcc`) n’est pas fourni ; ajoutez-le avec `FASTI_EXTRA_LIB`. Non testé : Db2 11.5,
+  Db2 pour z/OS ou IBM i, d’autres tailles de page, une mise à niveau d’une base de données 7.23
+  contenant des données.
 
   Également : deux nœuds Fasti sur MariaDB (MariaDB Connector/J), terminant les mêmes tâches et récupérant des tâches externes en parallèle, n’ont rien perdu ni dupliqué ; la transaction perdante a reçu une erreur de verrouillage optimiste. MySQL/MariaDB nécessitent `transaction-isolation=READ-COMMITTED`. Sur MySQL,
   attribuez à chaque moteur sa propre base de données : le moteur (Camunda Run comme Fasti) recherche les tables

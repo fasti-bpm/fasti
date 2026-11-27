@@ -17,8 +17,8 @@ H2 での簡単な試用、PostgreSQL を使用した本番運用（`docker run`
 - Docker Compose v2（`docker compose`）を備えた Docker Engine。
 - 実際のワークロードでは、Fasti コンテナーに少なくとも CPU 2 コアとメモリ 2 GB を割り当ててください（これを下回ると
   JVM は Serial GC を選択します）。
-- 本番用データベース：PostgreSQL、MariaDB、MySQL、SQL Server、Oracle（
-  [検証済みの組み合わせ](migrate-from-camunda-7.ja.md#limits)を参照）。DB2 は未検証です。H2 は評価専用です。
+- 本番用データベース：PostgreSQL、MariaDB、MySQL、SQL Server、Oracle、Db2 12.1（
+  [検証済みの組み合わせ](migrate-from-camunda-7.ja.md#limits)を参照。Db2 にはレジストリ変数が 3 つ必要です）。H2 は評価専用です。
 
 <a id="2-pull-the-image"></a>
 

@@ -230,7 +230,19 @@ grandes incluye índices opcionales como scripts que ejecuta un administrador
   | MySQL 8.4 | incluido | correcto | — | correcto | correcto |
   | SQL Server 2022 (Developer) | incluido (`encrypt=false`) | correcto | correcto | correcto | sin probar |
   | Oracle Database 23ai Free | `ojdbc11` mediante `FASTI_EXTRA_LIB` | correcto | correcto | correcto | sin probar |
-  | DB2 | — | sin probar | | | |
+  | Db2 12.1 (Community Edition) | `com.ibm.db2:jcc` 12.1.2.0 mediante `FASTI_EXTRA_LIB` | correcto | correcto | correcto | correcto (solo el esquema) |
+
+  Db2: ejecute `db2set DB2_EVALUNCOMMITTED=ON DB2_SKIPINSERTED=ON DB2_SKIPDELETED=ON` y reinicie
+  la instancia. Sin ellas, los comandos concurrentes entran en interbloqueo (`SQL0911N`) en una
+  sentencia del motor (`update ACT_HI_TASKINST set REMOVAL_TIME_ … where ROOT_PROC_INST_ID_ = ?`),
+  también en los nodos de Camunda 7.24, y sobre todo en una base de datos nueva, todavía vacía (en
+  la prueba, la mayoría de las finalizaciones concurrentes de tareas fallaron allí). Probado en
+  Db2 12.1 Community Edition con páginas de 4 K, juego de códigos UTF-8, aislamiento CS y
+  `CUR_COMMIT=ON`; también las pruebas del motor de Fasti y 15 paquetes del conjunto de pruebas del
+  motor. `LOCKTIMEOUT` es -1 de forma predeterminada (la espera de un bloqueo no termina nunca):
+  establezca un valor. El controlador (`com.ibm.db2:jcc`) no se incluye; añádalo con
+  `FASTI_EXTRA_LIB`. Sin probar: Db2 11.5, Db2 para z/OS o IBM i, otros tamaños de página, una
+  actualización de una base de datos 7.23 que contiene datos.
 
   Además: dos nodos de Fasti en MariaDB (MariaDB Connector/J) que completaban las mismas tareas y obtenían tareas externas en paralelo no perdieron ni duplicaron nada; la transacción que no pudo completarse recibió un error de bloqueo optimista. MySQL/MariaDB necesitan `transaction-isolation=READ-COMMITTED`. En MySQL,
   asigne a cada motor su propia base de datos: el motor (tanto Camunda Run como Fasti) busca tablas

@@ -14,8 +14,8 @@ Services GmbH.
 
 - Docker Engine có Docker Compose v2 (`docker compose`).
 - Với tải thật: ít nhất 2 CPU và 2 GB bộ nhớ cho container Fasti (dưới mức đó JVM tự chọn Serial GC).
-- Cơ sở dữ liệu production: PostgreSQL, MariaDB, MySQL, SQL Server hoặc Oracle (xem
-  [bảng đã thử](migrate-from-camunda-7.vi.md#giới-hạn)). DB2 chưa được kiểm chứng. H2 chỉ để thử.
+- Cơ sở dữ liệu production: PostgreSQL, MariaDB, MySQL, SQL Server, Oracle hoặc Db2 12.1 (xem
+  [bảng đã thử](migrate-from-camunda-7.vi.md#giới-hạn); Db2 cần ba biến registry). H2 chỉ để thử.
 
 <a id="2-pull-the-image"></a>
 

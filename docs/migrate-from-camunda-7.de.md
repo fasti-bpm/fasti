@@ -230,7 +230,18 @@ passenden `_drop.sql` wieder entfernt.
   | MySQL 8.4 | enthalten | bestanden | — | bestanden | bestanden |
   | SQL Server 2022 (Developer) | enthalten (`encrypt=false`) | bestanden | bestanden | bestanden | nicht getestet |
   | Oracle Database 23ai Free | `ojdbc11` über `FASTI_EXTRA_LIB` | bestanden | bestanden | bestanden | nicht getestet |
-  | DB2 | — | nicht getestet | | | |
+  | Db2 12.1 (Community Edition) | `com.ibm.db2:jcc` 12.1.2.0 über `FASTI_EXTRA_LIB` | bestanden | bestanden | bestanden | bestanden (nur Schema) |
+
+  Db2: Führen Sie `db2set DB2_EVALUNCOMMITTED=ON DB2_SKIPINSERTED=ON DB2_SKIPDELETED=ON` aus und starten Sie
+  die Instanz neu. Ohne sie geraten gleichzeitige Befehle in einen Deadlock (`SQL0911N`) in einer
+  Anweisung der Engine (`update ACT_HI_TASKINST set REMOVAL_TIME_ … where ROOT_PROC_INST_ID_ = ?`), auch
+  auf Camunda-7.24-Knoten, und am häufigsten auf einer neuen, noch leeren Datenbank (im Test schlugen
+  dort die meisten gleichzeitigen Aufgabenabschlüsse fehl). Getestet auf Db2 12.1 Community Edition
+  mit 4-K-Seiten, Codeset UTF-8, Isolation CS und `CUR_COMMIT=ON`; außerdem die Engine-Tests von
+  Fasti und 15 Pakete der Engine-Testsuite. `LOCKTIMEOUT` ist standardmäßig -1 (das Warten auf eine
+  Sperre endet nie): Setzen Sie einen Wert. Der Treiber (`com.ibm.db2:jcc`) ist nicht enthalten;
+  fügen Sie ihn mit `FASTI_EXTRA_LIB` hinzu. Nicht getestet: Db2 11.5, Db2 für z/OS oder IBM i,
+  andere Seitengrößen, ein Upgrade einer 7.23-Datenbank, die Daten enthält.
 
   Außerdem: Zwei Fasti-Knoten auf MariaDB (MariaDB Connector/J), die parallel dieselben Aufgaben abschlossen und externe Aufgaben abriefen, verursachten weder Verluste noch Duplikate; die unterlegene Transaktion erhielt einen Fehler wegen optimistischer Sperrung. MySQL/MariaDB benötigen `transaction-isolation=READ-COMMITTED`. Geben Sie unter MySQL
   jeder Engine eine eigene Datenbank: Die Engine (sowohl Camunda Run als auch Fasti) sucht nach Tabellen

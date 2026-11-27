@@ -17,8 +17,9 @@ integridade, atualização, reversão e solução de problemas. Referência comp
 - Docker Engine com Docker Compose v2 (`docker compose`).
 - Para cargas de trabalho reais: pelo menos 2 CPUs e 2 GB de memória para o contêiner Fasti (abaixo disso, a
   JVM seleciona o Serial GC).
-- Banco de dados de produção: PostgreSQL, MariaDB, MySQL, SQL Server ou Oracle (consulte a
-  [matriz de testes](migrate-from-camunda-7.pt-BR.md#limits)). O DB2 não foi verificado. O H2 é apenas para avaliação.
+- Banco de dados de produção: PostgreSQL, MariaDB, MySQL, SQL Server, Oracle ou Db2 12.1 (consulte
+  a [matriz de testes](migrate-from-camunda-7.pt-BR.md#limits); o Db2 precisa de três variáveis de
+  registro). O H2 é apenas para avaliação.
 
 <a id="2-pull-the-image"></a>
 

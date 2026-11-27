@@ -229,7 +229,17 @@ by itself; for large databases it ships optional indexes as scripts an administr
   | MySQL 8.4 | bundled | pass | — | pass | pass |
   | SQL Server 2022 (Developer) | bundled (`encrypt=false`) | pass | pass | pass | not tested |
   | Oracle Database 23ai Free | `ojdbc11` via `FASTI_EXTRA_LIB` | pass | pass | pass | not tested |
-  | DB2 | — | not tested | | | |
+  | Db2 12.1 (Community Edition) | `com.ibm.db2:jcc` 12.1.2.0 via `FASTI_EXTRA_LIB` | pass | pass | pass | pass (schema only) |
+
+  Db2: run `db2set DB2_EVALUNCOMMITTED=ON DB2_SKIPINSERTED=ON DB2_SKIPDELETED=ON` and restart
+  the instance. Without them concurrent commands deadlock (`SQL0911N`) in a statement of the
+  engine (`update ACT_HI_TASKINST set REMOVAL_TIME_ … where ROOT_PROC_INST_ID_ = ?`), on Camunda
+  7.24 nodes as well, and most on a new, still empty database (in the test most concurrent task
+  completions failed there). Tested on Db2 12.1 Community Edition with 4 K pages, code set
+  UTF-8, isolation CS and `CUR_COMMIT=ON`; also the engine tests of Fasti and 15 packages of the
+  engine test suite. `LOCKTIMEOUT` is -1 by default (a lock wait never ends): set a value. The
+  driver (`com.ibm.db2:jcc`) is not shipped; add it with `FASTI_EXTRA_LIB`. Not tested: Db2 11.5,
+  Db2 for z/OS or IBM i, other page sizes, an upgrade of a 7.23 database that holds data.
 
   Also: two Fasti nodes on MariaDB (MariaDB Connector/J) completing the same tasks and fetching external tasks in parallel lost or duplicated nothing; the losing transaction received an optimistic locking error. MySQL/MariaDB need `transaction-isolation=READ-COMMITTED`. On MySQL
   give each engine its own database: the engine (Camunda Run and Fasti alike) looks for tables

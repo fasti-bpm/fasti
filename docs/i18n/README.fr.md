@@ -86,8 +86,9 @@ Si vous utilisez Camunda 7.24, Fasti fonctionne sur cette même base de données
 schéma. Vous pouvez remplacer les anciens nœuds, exécuter Fasti à côté d’eux et revenir à Camunda
 7.24 à tout moment. L’image Fasti a été testée en reprenant des bases de données créées par Camunda
 Run 7.24 sous PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022 et Oracle Database 23ai ; le
-retour à Camunda Run a été testé sur les mêmes bases de données, sauf MySQL. DB2 n’est pas encore
-testé. Chaque client REST, workers de tâches externes compris, doit désormais
+retour à Camunda Run a été testé sur les mêmes bases de données, sauf MySQL. Db2 12.1 a été testé de
+la même manière et nécessite trois variables de registre Db2
+([Limites](../migrate-from-camunda-7.fr.md#limits)). Chaque client REST, workers de tâches externes compris, doit désormais
 envoyer des identifiants Basic ou un bearer token.
 
 Les applications Spring Boot embarquées passent aussi à Spring Boot 4.1 et Java 17 ; les schémas
@@ -134,7 +135,7 @@ dans `1.1.0` : un chart Helm et des manifestes Kubernetes, des métriques Promet
 OpenTelemetry, des logs structurés en JSON, un suppléant pendant les absences, un contrôle à quatre
 yeux pour les approbations, une piste d’audit immuable, un serveur MCP pour les assistants d’IA et
 les dossiers (CMMN) dans la nouvelle interface. Ensuite dans `1.x` : la publication des artefacts
-Maven sur Maven Central, la vérification avec DB2, la relecture des traductions par des locuteurs
+Maven sur Maven Central, la relecture des traductions par des locuteurs
 natifs et le retrait des applications AngularJS. La chronologie, de la fin de Camunda 7 CE aux
 objectifs pour 2027 : <https://fasti.dev/#timeline>.
 

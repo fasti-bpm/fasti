@@ -176,7 +176,8 @@ danh sách task trả lời trong khoảng 40 ms.
 
 So với SQL chính xác trên cùng dữ liệu, mọi số đếm đều khớp, phân vị của bước lệch tối đa 4,7 %,
 phân vị instance 0,3 %, xu hướng 3,7 %; thời gian user task là chính xác. MariaDB 11.4 và SQL
-Server 2022 trả đúng mọi lệnh gọi trên một lịch sử nhỏ hơn. Chưa chạy trên Oracle và Db2.
+Server 2022 trả đúng mọi lệnh gọi trên một lịch sử nhỏ hơn. Trên Db2 12.1 các lệnh gọi đã chạy trên một cơ sở dữ liệu tiếp quản từ Camunda Run (không
+so với SQL chính xác ở đó). Chưa chạy trên Oracle.
 
 Với khoảng thời gian dài trên lịch sử lớn:
 

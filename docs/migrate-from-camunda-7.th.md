@@ -215,7 +215,16 @@ Fasti และ Camunda 7.24 สามารถทำงานบนฐานข
   | MySQL 8.4 | รวมมาให้ | ผ่าน | — | ผ่าน | ผ่าน |
   | SQL Server 2022 (Developer) | รวมมาให้ (`encrypt=false`) | ผ่าน | ผ่าน | ผ่าน | ยังไม่ได้ทดสอบ |
   | Oracle Database 23ai Free | `ojdbc11` ผ่าน `FASTI_EXTRA_LIB` | ผ่าน | ผ่าน | ผ่าน | ยังไม่ได้ทดสอบ |
-  | DB2 | — | ยังไม่ได้ทดสอบ | | | |
+  | Db2 12.1 (Community Edition) | `com.ibm.db2:jcc` 12.1.2.0 ผ่าน `FASTI_EXTRA_LIB` | ผ่าน | ผ่าน | ผ่าน | ผ่าน (เฉพาะ schema) |
+
+  Db2: รัน `db2set DB2_EVALUNCOMMITTED=ON DB2_SKIPINSERTED=ON DB2_SKIPDELETED=ON` แล้วรีสตาร์ต
+  instance หากไม่ตั้งค่าตัวแปรเหล่านี้ คำสั่งที่ทำงานพร้อมกันจะเกิด deadlock (`SQL0911N`) ในคำสั่ง SQL หนึ่งของเอนจิน
+  (`update ACT_HI_TASKINST set REMOVAL_TIME_ … where ROOT_PROC_INST_ID_ = ?`) ซึ่งเกิดบนโหนด
+  Camunda 7.24 ด้วยเช่นกัน และเกิดมากที่สุดบนฐานข้อมูลใหม่ที่ยังว่างอยู่ (ในการทดสอบ การทำงานให้เสร็จพร้อมกันส่วนใหญ่ล้มเหลวที่นั่น)
+  ทดสอบบน Db2 12.1 Community Edition ด้วยเพจขนาด 4 K, code set UTF-8, isolation CS และ `CUR_COMMIT=ON`
+  รวมถึงชุดทดสอบเอนจินของ Fasti และ 15 แพ็กเกจของชุดทดสอบของเอนจิน ค่าเริ่มต้นของ `LOCKTIMEOUT` คือ -1
+  (การรอล็อกไม่มีวันสิ้นสุด): ให้กำหนดค่า ไดรเวอร์ (`com.ibm.db2:jcc`) ไม่ได้รวมมาให้ ให้เพิ่มด้วย `FASTI_EXTRA_LIB`
+  ยังไม่ได้ทดสอบ: Db2 11.5, Db2 สำหรับ z/OS หรือ IBM i, ขนาดเพจอื่น และการอัปเกรดฐานข้อมูล 7.23 ที่มีข้อมูลอยู่
 
   นอกจากนี้: โหนด Fasti สองโหนดบน MariaDB (MariaDB Connector/J) ที่ทำงานเดียวกันให้เสร็จและดึงงานภายนอกพร้อมกัน ไม่ทำให้ข้อมูลสูญหายหรือซ้ำกัน ธุรกรรมที่ไม่สำเร็จได้รับข้อผิดพลาด optimistic locking โดย MySQL/MariaDB ต้องใช้ `transaction-isolation=READ-COMMITTED` บน MySQL
   ให้แต่ละเอนจินมีฐานข้อมูลของตนเอง: เอนจิน (ทั้ง Camunda Run และ Fasti) จะค้นหาตาราง

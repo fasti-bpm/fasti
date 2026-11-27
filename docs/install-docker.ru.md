@@ -17,8 +17,9 @@
 - Docker Engine с Docker Compose v2 (`docker compose`).
 - Для реальных рабочих нагрузок: не менее 2 процессорных ядер и 2 ГБ памяти для контейнера Fasti (при меньших ресурсах
   JVM выбирает Serial GC).
-- База данных для промышленной эксплуатации: PostgreSQL, MariaDB, MySQL, SQL Server или Oracle (см.
-  [матрицу протестированных конфигураций](migrate-from-camunda-7.ru.md#limits)). DB2 не проверена. H2 предназначена только для ознакомления.
+- База данных для промышленной эксплуатации: PostgreSQL, MariaDB, MySQL, SQL Server, Oracle или
+  Db2 12.1 (см. [матрицу протестированных конфигураций](migrate-from-camunda-7.ru.md#limits);
+  Db2 требует трёх переменных реестра). H2 предназначена только для ознакомления.
 
 <a id="2-pull-the-image"></a>
 

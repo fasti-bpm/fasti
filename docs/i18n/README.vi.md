@@ -137,7 +137,8 @@ Nếu bạn đang chạy Camunda 7.24, Fasti chạy trên chính cơ sở dữ l
 có thể thay các nút cũ, chạy Fasti bên cạnh chúng, và quay lại Camunda 7.24 bất cứ lúc nào. Image
 Fasti đã được kiểm thử khi tiếp quản cơ sở dữ liệu do Camunda Run 7.24 tạo ra trên PostgreSQL 16,
 MariaDB 11.8, MySQL 8.4, SQL Server 2022 và Oracle Database 23ai; việc quay lại Camunda Run đã
-được kiểm thử trên các cơ sở dữ liệu đó, trừ MySQL. DB2 chưa được kiểm thử. Mọi REST client, kể cả
+được kiểm thử trên các cơ sở dữ liệu đó, trừ MySQL. Db2 12.1 cũng đã được kiểm thử như vậy và cần đặt ba biến registry của Db2
+([Giới hạn](../migrate-from-camunda-7.vi.md#giới-hạn)). Mọi REST client, kể cả
 external task worker, từ nay phải gửi thông tin đăng nhập Basic hoặc bearer token.
 
 Ứng dụng Spring Boot nhúng engine cũng chuyển lên Spring Boot 4.1 và Java 17; schema cũ hơn cần được
@@ -209,7 +210,7 @@ endpoint đếm khối lượng công việc, các chỉ mục cơ sở dữ li�
 chart và manifest Kubernetes, metrics cho Prometheus, tracing bằng OpenTelemetry, log có cấu trúc
 dạng JSON, người thay thế khi vắng mặt, nguyên tắc bốn mắt khi phê duyệt, nhật ký kiểm toán không
 thể sửa đổi, MCP server cho trợ lý AI, và hồ sơ (CMMN) trong giao diện mới. Tiếp theo trong `1.x`:
-phát hành artifact Maven lên Maven Central, kiểm chứng trên DB2, người bản ngữ rà soát các bản dịch,
+phát hành artifact Maven lên Maven Central, người bản ngữ rà soát các bản dịch,
 và ngừng dùng các ứng dụng AngularJS. Dòng thời gian, từ khi Camunda 7 CE kết thúc tới các mục tiêu
 năm 2027: <https://fasti.dev/#timeline>.
 

@@ -216,7 +216,18 @@ Camunda のローリングアップデートのルールに従う場合を除き
   | MySQL 8.4 | 同梱 | 成功 | — | 成功 | 成功 |
   | SQL Server 2022 (Developer) | 同梱（`encrypt=false`） | 成功 | 成功 | 成功 | 未検証 |
   | Oracle Database 23ai Free | `FASTI_EXTRA_LIB` 経由の `ojdbc11` | 成功 | 成功 | 成功 | 未検証 |
-  | DB2 | — | 未検証 | | | |
+  | Db2 12.1 (Community Edition) | `FASTI_EXTRA_LIB` 経由の `com.ibm.db2:jcc` 12.1.2.0 | 成功 | 成功 | 成功 | 成功（スキーマのみ） |
+
+  Db2：`db2set DB2_EVALUNCOMMITTED=ON DB2_SKIPINSERTED=ON DB2_SKIPDELETED=ON` を実行し、
+  インスタンスを再起動してください。これらがないと、同時に実行されるコマンドがエンジンのステートメント
+  （`update ACT_HI_TASKINST set REMOVAL_TIME_ … where ROOT_PROC_INST_ID_ = ?`）でデッドロック
+  （`SQL0911N`）になります。これは Camunda 7.24 のノードでも起こり、新しくまだ空のデータベースで最も多く発生します
+  （テストでは、そこで同時に行ったタスク完了の大半が失敗しました）。テストは Db2 12.1 Community Edition、
+  4 K ページ、コードセット UTF-8、分離レベル CS、`CUR_COMMIT=ON` で行いました。Fasti のエンジンテストと、
+  エンジンのテストスイートの 15 パッケージも実行しています。`LOCKTIMEOUT` のデフォルトは -1
+  （ロック待ちが終わりません）なので、値を設定してください。ドライバー（`com.ibm.db2:jcc`）は同梱されていません。
+  `FASTI_EXTRA_LIB` で追加してください。未検証：Db2 11.5、Db2 for z/OS または IBM i、ほかのページサイズ、
+  データが入っている 7.23 データベースのアップグレード。
 
   また、MariaDB（MariaDB Connector/J）上の 2 つの Fasti ノードで、同じタスクの完了と外部タスクの取得を並行して行っても、消失や重複は発生しませんでした。競合に負けたトランザクションには楽観的ロックエラーが返されました。MySQL/MariaDB には `transaction-isolation=READ-COMMITTED` が必要です。MySQL では、
   エンジンごとに専用のデータベースを用意してください。エンジン（Camunda Run と Fasti の両方）は、そのアカウントから参照可能な

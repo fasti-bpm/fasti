@@ -86,8 +86,9 @@ Wenn Sie Camunda 7.24 betreiben, läuft Fasti auf derselben Datenbank, ohne dere
 Sie können die alten Knoten ersetzen, Fasti parallel dazu betreiben und jederzeit zu Camunda 7.24
 zurückwechseln. Das Fasti-Image wurde bei der Übernahme von Datenbanken getestet, die Camunda Run
 7.24 unter PostgreSQL 16, MariaDB 11.8, MySQL 8.4, SQL Server 2022 und Oracle Database 23ai erstellt
-hatte; die Rückkehr zu Camunda Run wurde auf denselben Datenbanken außer MySQL getestet. DB2 ist
-noch nicht getestet. Jeder REST-Client, External-Task-Worker eingeschlossen, muss nun
+hatte; die Rückkehr zu Camunda Run wurde auf denselben Datenbanken außer MySQL getestet. Db2 12.1 wurde auf
+dieselbe Weise getestet und benötigt drei Db2-Registry-Variablen
+([Einschränkungen](../migrate-from-camunda-7.de.md#limits)). Jeder REST-Client, External-Task-Worker eingeschlossen, muss nun
 Basic-Zugangsdaten oder ein Bearer-Token senden.
 
 Eingebettete Spring-Boot-Anwendungen wechseln außerdem auf Spring Boot 4.1 und Java 17; ältere
@@ -132,7 +133,7 @@ Helm-Chart und Kubernetes-Manifeste, Prometheus-Metriken, OpenTelemetry-Tracing,
 JSON-Logs, eine Vertretung bei Abwesenheit, das Vier-Augen-Prinzip für Freigaben, ein
 unveränderlicher Audit-Trail, ein MCP-Server für KI-Assistenten sowie Fälle (CMMN) in der neuen
 Oberfläche. Als Nächstes in `1.x`: die Veröffentlichung der Maven-Artefakte auf Maven Central, die
-Verifizierung mit DB2, die Durchsicht der Übersetzungen durch Muttersprachler und die Ablösung der
+Durchsicht der Übersetzungen durch Muttersprachler und die Ablösung der
 AngularJS-Anwendungen. Die Zeitleiste, vom Ende von Camunda 7 CE bis zu den Zielen für 2027:
 <https://fasti.dev/#timeline>.
 

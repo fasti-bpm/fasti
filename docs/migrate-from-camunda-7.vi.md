@@ -222,7 +222,17 @@ trị viên chạy (`/fasti/configuration/sql/optional/<database>_fasti_perf_ind
   | MySQL 8.4 | có sẵn | đạt | — | đạt | đạt |
   | SQL Server 2022 (Developer) | có sẵn (`encrypt=false`) | đạt | đạt | đạt | chưa thử |
   | Oracle Database 23ai Free | `ojdbc11` qua `FASTI_EXTRA_LIB` | đạt | đạt | đạt | chưa thử |
-  | DB2 | — | chưa thử | | | |
+  | Db2 12.1 (Community Edition) | `com.ibm.db2:jcc` 12.1.2.0 qua `FASTI_EXTRA_LIB` | đạt | đạt | đạt | đạt (chỉ schema) |
+
+  Db2: chạy `db2set DB2_EVALUNCOMMITTED=ON DB2_SKIPINSERTED=ON DB2_SKIPDELETED=ON` rồi khởi động
+  lại instance. Thiếu chúng, các lệnh chạy đồng thời bị deadlock (`SQL0911N`) ở một câu lệnh của
+  engine (`update ACT_HI_TASKINST set REMOVAL_TIME_ … where ROOT_PROC_INST_ID_ = ?`), cả trên node
+  Camunda 7.24, và nặng nhất trên cơ sở dữ liệu mới, còn trống (trong lần thử, phần lớn các lần
+  hoàn tất task đồng thời thất bại ở đó). Đã thử trên Db2 12.1 Community Edition, trang 4 K, bảng
+  mã UTF-8, isolation CS và `CUR_COMMIT=ON`; thêm cả test engine của Fasti và 15 gói của bộ test
+  engine. `LOCKTIMEOUT` mặc định là -1 (chờ khóa không bao giờ hết): hãy đặt một giá trị. Driver
+  (`com.ibm.db2:jcc`) không đi kèm; thêm bằng `FASTI_EXTRA_LIB`. Chưa thử: Db2 11.5, Db2 cho z/OS
+  hoặc IBM i, cỡ trang khác, nâng cấp một cơ sở dữ liệu 7.23 có dữ liệu.
 
   Ngoài ra: hai node Fasti trên MariaDB (MariaDB Connector/J) hoàn thành song song cùng một
   task và lấy external task song song (fetchAndLock) không mất hay trùng dữ liệu; giao dịch

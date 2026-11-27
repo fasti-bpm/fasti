@@ -456,5 +456,6 @@ dữ liệu Oracle để thử.
   mỗi lô trong một giao dịch riêng với bản ghi dọn riêng: lần dọn chỉ giữ một head mỗi lúc, trong
   một lô. Nếu một lô thất bại, các lô đã xong vẫn được dọn, mỗi lô có bản ghi dọn của nó, và các
   chuỗi khác vẫn được dọn; kết quả liệt kê các chuỗi thất bại.
-- Script cho Oracle, SQL Server và DB2 được viết theo kiểu script của engine nhưng chưa được kiểm
-  thử ở đây; H2, PostgreSQL 16 và MariaDB 11.4 đã được kiểm thử.
+- Script cho Oracle và SQL Server được viết theo kiểu script của engine nhưng chưa được kiểm thử
+  ở đây; H2, PostgreSQL 16, MariaDB 11.4 và Db2 12.1 đã được kiểm thử (trên Db2: tạo, xóa, nâng
+  cấp sau 1.1, hai engine trên một cơ sở dữ liệu, phát hiện sửa đổi).

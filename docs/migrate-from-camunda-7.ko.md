@@ -214,7 +214,18 @@ Camunda의 롤링 업데이트 규칙이 허용하는 경우를 제외하고 업
   | MySQL 8.4 | 기본 포함 | 통과 | — | 통과 | 통과 |
   | SQL Server 2022 (Developer) | 기본 포함(`encrypt=false`) | 통과 | 통과 | 통과 | 테스트하지 않음 |
   | Oracle Database 23ai Free | `FASTI_EXTRA_LIB`를 통한 `ojdbc11` | 통과 | 통과 | 통과 | 테스트하지 않음 |
-  | DB2 | — | 테스트하지 않음 | | | |
+  | Db2 12.1 (Community Edition) | `FASTI_EXTRA_LIB`를 통한 `com.ibm.db2:jcc` 12.1.2.0 | 통과 | 통과 | 통과 | 통과(스키마만) |
+
+  Db2: `db2set DB2_EVALUNCOMMITTED=ON DB2_SKIPINSERTED=ON DB2_SKIPDELETED=ON`을 실행하고
+  인스턴스를 다시 시작하십시오. 이 변수들이 없으면 동시에 실행되는 명령이 엔진의 한 구문
+  (`update ACT_HI_TASKINST set REMOVAL_TIME_ … where ROOT_PROC_INST_ID_ = ?`)에서 교착 상태
+  (`SQL0911N`)에 빠집니다. Camunda 7.24 노드에서도 마찬가지이며, 새로 만든 아직 비어 있는 데이터베이스에서 가장
+  많이 발생합니다(테스트에서는 그곳에서 동시에 수행한 작업 완료의 대부분이 실패했습니다). Db2 12.1 Community
+  Edition에서 4 K 페이지, 코드 세트 UTF-8, 격리 수준 CS, `CUR_COMMIT=ON`으로 테스트했습니다. Fasti의 엔진 테스트와
+  엔진 테스트 스위트의 15개 패키지도 함께 테스트했습니다. `LOCKTIMEOUT`의 기본값은 -1(잠금 대기가 끝나지
+  않음)이므로 값을 설정하십시오. 드라이버(`com.ibm.db2:jcc`)는 기본 포함되지 않습니다. `FASTI_EXTRA_LIB`로
+  추가하십시오. 테스트하지 않음: Db2 11.5, Db2 for z/OS 또는 IBM i, 다른 페이지 크기, 데이터가 들어 있는 7.23
+  데이터베이스의 업그레이드.
 
   추가로, MariaDB(MariaDB Connector/J)에서 두 Fasti 노드가 동일한 작업을 완료하고 외부 작업을 병렬로 가져오는 테스트에서도 손실이나 중복은 발생하지 않았습니다. 경합에서 진 트랜잭션은 낙관적 잠금 오류를 받았습니다. MySQL/MariaDB에는 `transaction-isolation=READ-COMMITTED`가 필요합니다. MySQL에서는
   각 엔진에 별도의 데이터베이스를 할당하십시오. 엔진은(Camunda Run과 Fasti 모두) 계정에서 볼 수 있는

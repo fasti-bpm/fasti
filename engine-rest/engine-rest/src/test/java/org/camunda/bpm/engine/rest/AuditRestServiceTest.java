@@ -364,9 +364,10 @@ public class AuditRestServiceTest extends AbstractRestServiceTest {
     given().then().expect()
         .statusCode(Status.OK.getStatusCode())
         .body("intact", equalTo(true))
-        .body("authenticated", equalTo(true))
+        // intact, but no checkpoint signs any record yet: not authenticated
+        .body("authenticated", equalTo(false))
         .body("chains[0].chainId", equalTo("rest/end-0"))
-        .body("chains[0].authenticated", equalTo(true))
+        .body("chains[0].authenticated", equalTo(false))
         .body("chains[0].authenticatedThrough", equalTo(0))
         .body("chains[0].purgeAttested", equalTo(false))
         .body("firstBreak", nullValue())

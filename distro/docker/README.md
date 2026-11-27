@@ -188,7 +188,7 @@ below `/fasti/...`.
 
 ## JDBC drivers
 
-Bundled (licences in the License Book and NOTICE): PostgreSQL 42.7.14 (BSD-2-Clause), MySQL
+Bundled (licences in the License Book and NOTICE): PostgreSQL 42.7.15 (BSD-2-Clause), MySQL
 Connector/J 9.7.0 (GPLv2 with the Universal FOSS Exception), MariaDB Connector/J 3.5.11
 (LGPL-2.1, unless built
 with `skipMariadbDriver`; then MariaDB is reached through MySQL Connector/J), SQL Server

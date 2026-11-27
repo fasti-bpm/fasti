@@ -195,7 +195,7 @@ deployment ở `/camunda/configuration/resources`. Đường dẫn riêng của 
 
 | Cơ sở dữ liệu | Trong image | Ghi chú |
 |---|---|---|
-| PostgreSQL | `postgresql` 42.7.14 | BSD-2-Clause |
+| PostgreSQL | `postgresql` 42.7.15 | BSD-2-Clause |
 | MySQL | `mysql-connector-j` 9.7.0 | GPLv2 + Universal FOSS Exception |
 | MariaDB | `mariadb-java-client` 3.5.11 (LGPL-2.1) | build offline bỏ qua: khi đó dùng MySQL Connector/J với `jdbc:mysql:` |
 | SQL Server | `mssql-jdbc` 13.6.2.jre11 | MIT; 13.x mã hóa mặc định: có thể cần `encrypt=false` hoặc `trustServerCertificate=true` |

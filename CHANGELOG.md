@@ -37,8 +37,8 @@ tuning of defaults that had been left at upstream values. Same database schema a
   node that stops without shutting down leaves its last records unsigned, and its chain is not
   authenticated if it never had a checkpoint. A purge that leaves only purge records in a chain
   signs them. A late checkpoint attests the records as they are when it is written.
-- **SSO module of Run ships nimbus-jose-jwt 10.9.1** (was 9.37.4 from a stale pin, while the
-  module is built against 10.9.1) and json-smart 2.6.1.
+- **SSO module of Run ships nimbus-jose-jwt 10.10** (was 9.37.4 from a stale pin, while the
+  module is built against it) and json-smart 2.6.1.
 - REST and MCP Basic authentication caches no longer keep a check that ran while users, groups
   or tenants changed.
 

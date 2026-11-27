@@ -29,7 +29,7 @@
     <!-- Fasti: the driver Db2 12.1 was tested with -->
     <version.db2-12.1>12.1.2.0</version.db2-12.1>
     <version.db2>${version.db2-12.1}</version.db2>
-    <version.postgresql>42.7.14</version.postgresql>
+    <version.postgresql>42.7.15</version.postgresql>
     <version.liquibase>4.33.0</version.liquibase>
 
     <!-- version of the database schema that this code base creates and expects. It names the SQL

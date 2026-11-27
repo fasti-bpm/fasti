@@ -1362,8 +1362,8 @@ Copyright 2012-2022, Connect2id Ltd.
 Licensed under Apache 2.0
 
 ===========================================================================================
-com.nimbusds:nimbus-jose-jwt:jar:10.9.1
-https://bitbucket.org/connect2id/nimbus-jose-jwt/src/10.9.1/
+com.nimbusds:nimbus-jose-jwt:jar:10.10
+https://bitbucket.org/connect2id/nimbus-jose-jwt/src/10.10/
 Copyright: 2012 - 2026, Connect2id Ltd.
 Licensed under Apache 2.0
 
@@ -2338,14 +2338,14 @@ package in the Spring Framework library, distributed by VMware, Inc:
 Licensed under Apache 2.0
 
 ===========================================================================================
-io.modelcontextprotocol.sdk:mcp-core:jar:2.1.0
+io.modelcontextprotocol.sdk:mcp-core:jar:2.2.0
 https://github.com/modelcontextprotocol/java-sdk/tree/v2.1.0
 
 Copyright (c) 2025 the original author or authors.
 Licensed under MIT
 
 ===========================================================================================
-io.modelcontextprotocol.sdk:mcp-json-jackson3:jar:2.1.0
+io.modelcontextprotocol.sdk:mcp-json-jackson3:jar:2.2.0
 https://github.com/modelcontextprotocol/java-sdk/tree/v2.1.0
 
 Copyright (c) 2025 the original author or authors.
@@ -2357,72 +2357,72 @@ https://github.com/open-telemetry/semantic-conventions-java
 Licensed under Apache 2.0
 
 ===========================================================================================
-io.opentelemetry:opentelemetry-api:jar:1.62.0
+io.opentelemetry:opentelemetry-api:jar:1.68.0
 https://github.com/open-telemetry/opentelemetry-java
 Licensed under Apache 2.0
 
 ===========================================================================================
-io.opentelemetry:opentelemetry-common:jar:1.62.0
+io.opentelemetry:opentelemetry-common:jar:1.68.0
 https://github.com/open-telemetry/opentelemetry-java
 Licensed under Apache 2.0
 
 ===========================================================================================
-io.opentelemetry:opentelemetry-context:jar:1.62.0
+io.opentelemetry:opentelemetry-context:jar:1.68.0
 https://github.com/open-telemetry/opentelemetry-java
 Licensed under Apache 2.0
 
 ===========================================================================================
-io.opentelemetry:opentelemetry-exporter-common:jar:1.62.0
+io.opentelemetry:opentelemetry-exporter-common:jar:1.68.0
 https://github.com/open-telemetry/opentelemetry-java
 Licensed under Apache 2.0
 
 ===========================================================================================
-io.opentelemetry:opentelemetry-exporter-otlp-common:jar:1.62.0
+io.opentelemetry:opentelemetry-exporter-otlp-common:jar:1.68.0
 https://github.com/open-telemetry/opentelemetry-java
 Licensed under Apache 2.0
 
 ===========================================================================================
-io.opentelemetry:opentelemetry-exporter-otlp:jar:1.62.0
+io.opentelemetry:opentelemetry-exporter-otlp:jar:1.68.0
 https://github.com/open-telemetry/opentelemetry-java
 Licensed under Apache 2.0
 
 ===========================================================================================
-io.opentelemetry:opentelemetry-exporter-sender-jdk:jar:1.62.0
+io.opentelemetry:opentelemetry-exporter-sender-jdk:jar:1.68.0
 https://github.com/open-telemetry/opentelemetry-java
 Licensed under Apache 2.0
 
 ===========================================================================================
-io.opentelemetry:opentelemetry-extension-trace-propagators:jar:1.62.0
+io.opentelemetry:opentelemetry-extension-trace-propagators:jar:1.68.0
 https://github.com/open-telemetry/opentelemetry-java
 Licensed under Apache 2.0
 
 ===========================================================================================
-io.opentelemetry:opentelemetry-sdk-common:jar:1.62.0
+io.opentelemetry:opentelemetry-sdk-common:jar:1.68.0
 https://github.com/open-telemetry/opentelemetry-java
 Licensed under Apache 2.0
 
 ===========================================================================================
-io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:jar:1.62.0
+io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:jar:1.68.0
 https://github.com/open-telemetry/opentelemetry-java
 Licensed under Apache 2.0
 
 ===========================================================================================
-io.opentelemetry:opentelemetry-sdk-logs:jar:1.62.0
+io.opentelemetry:opentelemetry-sdk-logs:jar:1.68.0
 https://github.com/open-telemetry/opentelemetry-java
 Licensed under Apache 2.0
 
 ===========================================================================================
-io.opentelemetry:opentelemetry-sdk-metrics:jar:1.62.0
+io.opentelemetry:opentelemetry-sdk-metrics:jar:1.68.0
 https://github.com/open-telemetry/opentelemetry-java
 Licensed under Apache 2.0
 
 ===========================================================================================
-io.opentelemetry:opentelemetry-sdk-trace:jar:1.62.0
+io.opentelemetry:opentelemetry-sdk-trace:jar:1.68.0
 https://github.com/open-telemetry/opentelemetry-java
 Licensed under Apache 2.0
 
 ===========================================================================================
-io.opentelemetry:opentelemetry-sdk:jar:1.62.0
+io.opentelemetry:opentelemetry-sdk:jar:1.68.0
 https://github.com/open-telemetry/opentelemetry-java
 Licensed under Apache 2.0
 
@@ -15861,7 +15861,7 @@ The container image (distro/docker) copies the following JDBC drivers, unmodifie
 /fasti/configuration/drivers. They are separate works loaded at run time and keep their own
 licences. Oracle and IBM Db2 drivers are not bundled.
 
-org.postgresql:postgresql:jar:42.7.14
+org.postgresql:postgresql:jar:42.7.15
 https://jdbc.postgresql.org/
 BSD 2-Clause License (https://jdbc.postgresql.org/license/)
 

@@ -21,7 +21,7 @@ import org.camunda.bpm.engine.impl.util.ProductPropertiesUtil;
 
 /**
  * Lets browsers keep the static files of the web applications that cannot go stale, cached for
- * a year without revalidation (<code>Cache-Control: public, max-age=31536000, immutable</code>):
+ * a year without revalidation (<code>Cache-Control: private, max-age=31536000, immutable</code>; private, because the first response of a browser can carry its session cookie):
  * <ul>
  *   <li>the content-hashed build output of the new web UI
  *   (<code>/app/next/assets/name-HASH.ext</code>, without query string): a changed file gets a
@@ -44,7 +44,11 @@ import org.camunda.bpm.engine.impl.util.ProductPropertiesUtil;
  */
 public class StaticAssetCacheFilter implements Filter {
 
-  public static final String IMMUTABLE = "public, max-age=31536000, immutable";
+  /**
+   * {@code private}: the first request of a browser without a session can get its session and
+   * XSRF cookies with a static file; a shared cache must not hand that response to others.
+   */
+  public static final String IMMUTABLE = "private, max-age=31536000, immutable";
 
   /** init parameter: the path of the web applications within the servlet context */
   public static final String APPLICATION_PATH_PARAM = "applicationPath";
@@ -118,7 +122,8 @@ public class StaticAssetCacheFilter implements Filter {
   }
 
   protected static String versionQuery(String version) {
-    return version == null || version.isBlank() ? null : "bust=" + version;
+    // a snapshot names no fixed content: its files change under the same version
+    return version == null || version.isBlank() || version.endsWith("-SNAPSHOT") ? null : "bust=" + version;
   }
 
   @Override

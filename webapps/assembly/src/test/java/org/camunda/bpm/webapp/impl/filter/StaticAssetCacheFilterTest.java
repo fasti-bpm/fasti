@@ -114,6 +114,19 @@ public class StaticAssetCacheFilterTest {
   }
 
   @Test
+  public void shouldNotCacheFilesOfASnapshotForGood() throws Exception {
+    filter.versionQuery = StaticAssetCacheFilter.versionQuery("1.4.0-SNAPSHOT");
+
+    assertThat(get("/lib/deps.js", "bust=1.4.0-SNAPSHOT").getHeader("Cache-Control")).isNull();
+  }
+
+  @Test
+  public void shouldKeepTheFilesOutOfSharedCaches() {
+    // the first response of a browser can carry its session cookie
+    assertThat(StaticAssetCacheFilter.IMMUTABLE).startsWith("private,");
+  }
+
+  @Test
   public void shouldRevalidatePagesOfTheNewWebUi() throws Exception {
     assertThat(get("/app/next/default/", null).getHeader("Cache-Control")).isEqualTo("no-cache");
   }

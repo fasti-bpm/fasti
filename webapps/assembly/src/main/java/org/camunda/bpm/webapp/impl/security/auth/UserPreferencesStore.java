@@ -122,11 +122,13 @@ public class UserPreferencesStore {
         // repaired by a write in the meantime
         return;
       }
-      String document = resolve(rows);
+      int[] budget = { MAX_CANDIDATES };
+      String document = resolve(rows, budget);
       if (document != null) {
         write(commandContext, userId, rows, document);
-      } else {
-        // nothing readable is left: start afresh
+      } else if (budget[0] >= 0) {
+        // every combination was tried and nothing readable is left: start afresh (rows whose
+        // combinations were not all tried are left as they are)
         IdentityInfoManager manager = commandContext.getIdentityInfoManager();
         for (IdentityInfoEntity row : rows) {
           manager.deleteIdentityInfo(row);
@@ -335,6 +337,11 @@ public class UserPreferencesStore {
    * its values are tried in turn, up to {@value #MAX_CANDIDATES} of them.
    */
   static String resolve(List<IdentityInfoEntity> rows) {
+    return resolve(rows, new int[] { MAX_CANDIDATES });
+  }
+
+  /** {@link #resolve(List)} within the given budget of combinations, which is below 0 once used up. */
+  static String resolve(List<IdentityInfoEntity> rows, int[] budget) {
     Map<String, List<String>> values = new HashMap<>();
     for (IdentityInfoEntity row : rows) {
       List<String> known = values.computeIfAbsent(row.getKey(), key -> new ArrayList<>());
@@ -343,7 +350,6 @@ public class UserPreferencesStore {
       }
     }
     List<String> checksums = values.getOrDefault(CHECKSUM_KEY, List.of());
-    int[] budget = { MAX_CANDIDATES };
     candidates:
     for (String countValue : values.getOrDefault(COUNT_KEY, List.of())) {
       int count;

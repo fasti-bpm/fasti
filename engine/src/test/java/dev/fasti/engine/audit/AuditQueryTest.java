@@ -285,7 +285,9 @@ public class AuditQueryTest {
 
   @Test
   public void shouldNotTellWhatTheDatabaseSaid() {
-    sql(engine, "alter table FASTI_AUDIT_EVENT rename to FASTI_AUDIT_GONE");
+    // Db2 renames a table with RENAME TABLE; it has no ALTER TABLE ... RENAME TO
+    boolean db2 = "db2".equals(((ProcessEngineConfigurationImpl) engine.getProcessEngineConfiguration()).getDatabaseType());
+    sql(engine, db2 ? "rename table FASTI_AUDIT_EVENT to FASTI_AUDIT_GONE" : "alter table FASTI_AUDIT_EVENT rename to FASTI_AUDIT_GONE");
     try {
       assertThatThrownBy(() -> audit.createQuery().count()).isInstanceOf(ProcessEngineException.class)
           .hasMessageContaining("could not count records")
@@ -298,7 +300,7 @@ public class AuditQueryTest {
           .isInstanceOf(ProcessEngineException.class).hasMessageContaining("could not write its records")
           .satisfies(e -> assertThat(e.getMessage().toUpperCase()).doesNotContain("FASTI_AUDIT", "INSERT", "TABLE"));
     } finally {
-      sql(engine, "alter table FASTI_AUDIT_GONE rename to FASTI_AUDIT_EVENT");
+      sql(engine, db2 ? "rename table FASTI_AUDIT_GONE to FASTI_AUDIT_EVENT" : "alter table FASTI_AUDIT_GONE rename to FASTI_AUDIT_EVENT");
     }
     assertThat(audit.createQuery().count()).isPositive();
   }

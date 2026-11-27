@@ -5,14 +5,15 @@
 -- runs this script: a database administrator does. Camunda 7.24 nodes and Fasti nodes work on the
 -- same database with or without these indexes; db2_fasti_perf_indexes_drop.sql removes them.
 --
--- NOT YET VERIFIED ON DB2: the index definitions were measured on PostgreSQL 16 and
--- MariaDB 11.4 (docs/performance.md); this script was only reviewed for syntax. Run it on a test
--- system first and compare the plans of the queries named below.
+-- Run on Db2 12.1 (Community Edition, 4 K pages): created, dropped and created again; with
+-- FASTI_IDX_JOB_DUEDATE the job acquisition read 0 to 38 rows instead of 200,000. The other
+-- definitions were measured on PostgreSQL 16 and MariaDB 11.4 (docs/performance.md); compare the
+-- plans of the queries named below on a test system first.
 --
 -- Run it with the schema of the engine tables as current schema (db2 -tvf <file>). Plain
--- statements: run again, an index that exists is refused with SQL0601N and an index with the
--- same columns as an existing one gives the warning SQL0605W; both mean the index is there, and
--- the command line processor goes on with the next statement. A table that does not exist gives
+-- statements: run again, an index that exists gives the warning SQL0605W (SQLSTATE 01550), and
+-- a name that exists with other columns is refused with SQL0601N; both mean an index of that name
+-- is there, and the command line processor goes on with the next statement. A table that does not exist gives
 -- SQL0204N (ACT_ID_INFO is missing where the engine never used its identity tables, for example
 -- with LDAP); ignore it. Db2 builds indexes while reads and writes go on. Run RUNSTATS on the
 -- tables afterwards.

@@ -26,7 +26,9 @@
     <version.mysql>9.7.0</version.mysql>
     <version.sqlserver>13.6.2.jre11</version.sqlserver>
     <version.db2-11.5>11.5.0.0</version.db2-11.5>
-    <version.db2>${version.db2-11.5}</version.db2>
+    <!-- Fasti: the driver Db2 12.1 was tested with -->
+    <version.db2-12.1>12.1.2.0</version.db2-12.1>
+    <version.db2>${version.db2-12.1}</version.db2>
     <version.postgresql>42.7.14</version.postgresql>
     <version.liquibase>4.33.0</version.liquibase>
 

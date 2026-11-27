@@ -34,8 +34,8 @@
 --
 -- Run it with the Db2 command line (db2 -tvf <file>) as the owner of the audit tables. Db2 builds
 -- an index while inserts go on. It has no IF [NOT] EXISTS for indexes: run again, a statement
--- fails with SQLSTATE 42710 (the index exists) or 42704 (it is gone), which does no harm, and the
--- command line goes on with the next one. The lock timeout lets a statement that waits for a lock
+-- gives the warning SQL0605W (SQLSTATE 01550, the index exists) or fails with 42704 (it is
+-- gone), which does no harm, and the command line goes on with the next one. The lock timeout lets a statement that waits for a lock
 -- give up after 10 seconds: run the script again later. Run RUNSTATS on the table afterwards.
 
 set current lock timeout 10;

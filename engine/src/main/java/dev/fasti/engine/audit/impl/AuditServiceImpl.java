@@ -284,7 +284,31 @@ public class AuditServiceImpl implements AuditService {
     // the purge record first, then the records it attests
     AuditStore.append(commandContext, settings, chainId, List.of(purge));
     long deleted = AuditStore.deleteThrough(commandContext, settings, chainId, through);
+    if (range.complete && onlyPurgeRecordsAfter(commandContext, settings, chainId, through, purge.getSequence())) {
+      // nothing is left but purge records (of a chain whose node is gone, often): sign them, so that
+      // the chain is not left without a checkpoint; a chain with other records is left to its node
+      AuditStore.checkpointTail(commandContext, settings, chainId, AuditCheckpointer.LOCK_TIMEOUT_SECONDS);
+    }
     LOG.info("Audit trail chain {}: purged records {} to {} (last hash {})", chainId, from, through, range.throughHash);
     return new long[] { through, deleted, range.complete ? 1 : 0 };
+  }
+
+  /** At most this many records after a purge are read to see whether they are all purge records. */
+  static final int PURGE_RECORDS_READ = 1000;
+
+  /** Whether every record of the chain after {@code through}, up to {@code last}, is a purge record or a checkpoint. */
+  protected boolean onlyPurgeRecordsAfter(CommandContext commandContext, AuditSettings settings, String chainId, long through,
+      long last) {
+    if (last - through > PURGE_RECORDS_READ) {
+      return false;
+    }
+    for (long sequence = through + 1; sequence <= last; sequence++) {
+      AuditRecord record = AuditStore.find(commandContext, settings, chainId, sequence);
+      if (record == null || !AuditService.TYPE_AUDIT.equals(record.getType())
+          || !(AuditService.ACTION_PURGE.equals(record.getAction()) || AuditService.ACTION_CHECKPOINT.equals(record.getAction()))) {
+        return false;
+      }
+    }
+    return true;
   }
 }

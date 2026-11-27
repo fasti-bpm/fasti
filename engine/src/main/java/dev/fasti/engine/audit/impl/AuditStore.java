@@ -231,23 +231,13 @@ public final class AuditStore {
    */
   public static AuditRecord checkpointTail(CommandContext commandContext, AuditSettings settings, String chainId,
       int lockTimeoutSeconds) {
-    return checkpointTail(commandContext, settings, chainId, lockTimeoutSeconds, -1);
-  }
-
-  /**
-   * {@link #checkpointTail(CommandContext, AuditSettings, String, int)}, only if the head is still
-   * at {@code expectedSequence} once it is locked (any position with a negative one): a chain that
-   * moved meanwhile is written to, and left to its writer.
-   */
-  public static AuditRecord checkpointTail(CommandContext commandContext, AuditSettings settings, String chainId,
-      int lockTimeoutSeconds, long expectedSequence) {
     if (!settings.isSigned() || settings.getCheckpointInterval() <= 0) {
       return null;
     }
     Connection connection = connection(commandContext);
     try {
       Head head = lockHead(commandContext, settings, chainId, false, lockTimeoutSeconds);
-      if (head == null || head.sequence <= 0 || (expectedSequence >= 0 && head.sequence != expectedSequence)) {
+      if (head == null || head.sequence <= 0) {
         return null;
       }
       AuditRecord last = find(commandContext, settings, chainId, head.sequence);

@@ -122,6 +122,52 @@ public class AuditPurgeTest {
   }
 
   @Test
+  public void shouldSignAChainThatAPurgeLeavesWithPurgeRecordsOnly() {
+    start("purgedonly", plugin -> {
+      plugin.setChains(1);
+      plugin.setPurgeBatchSize(3);
+      plugin.setCheckpointInterval(1000);
+      plugin.setCheckpointIntervalSeconds(0);
+    });
+    writeOldRecords(() -> {
+      engine.getRepositoryService().createDeployment().addModelInstance("p.bpmn", userTaskProcess("p")).deploy();
+      engine.getRuntimeService().startProcessInstanceByKey("p", "old");
+    });
+    String chainId = "node-purgedonly/end-0";
+    // no checkpoint yet (a node that went away before it signed its chain)
+    assertThat(audit.verify(chainId).isAuthenticated()).isFalse();
+
+    assertThat(audit.purge(new Date()).isComplete()).isTrue();
+    List<AuditEvent> left = audit.createQuery().chainId(chainId).list();
+    assertThat(left).allSatisfy(event -> assertThat(event.getType()).isEqualTo(AuditService.TYPE_AUDIT));
+    assertThat(left).anySatisfy(event -> assertThat(event.getAction()).isEqualTo(AuditService.ACTION_CHECKPOINT));
+    AuditVerification verification = audit.verify(chainId);
+    assertThat(verification.getFirstBreak()).isNull();
+    assertThat(verification.isAuthenticated()).isTrue();
+  }
+
+  @Test
+  public void shouldNotSignAChainWithRecordsLeftAfterAPurge() {
+    start("purgedsome", plugin -> {
+      plugin.setChains(1);
+      plugin.setCheckpointInterval(1000);
+      plugin.setCheckpointIntervalSeconds(0);
+    });
+    writeOldRecords(() -> {
+      engine.getRepositoryService().createDeployment().addModelInstance("q.bpmn", userTaskProcess("q")).deploy();
+      engine.getRuntimeService().startProcessInstanceByKey("q", "old");
+    });
+    engine.getRuntimeService().startProcessInstanceByKey("q", "recent");
+    String chainId = "node-purgedsome/end-0";
+
+    assertThat(audit.purge(new Date(System.currentTimeMillis() - 1_800_000)).isComplete()).isTrue();
+    // the recent records are not attested by a purge: they are left to the node that wrote them
+    assertThat(audit.createQuery().chainId(chainId).list())
+        .noneSatisfy(event -> assertThat(event.getAction()).isEqualTo(AuditService.ACTION_CHECKPOINT));
+    assertThat(audit.verify(chainId).isAuthenticated()).isFalse();
+  }
+
+  @Test
   public void shouldPurgeUpToTheFirstRecordThatIsNotOldEnough() {
     start("boundary", plugin -> {
       plugin.setChains(1);

@@ -22,8 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -267,92 +265,25 @@ public class AuditCheckpointTest {
   }
 
   @Test
-  public void shouldSignAChainThatAnotherNodeLeftBehindOnceItIsIdle() {
+  public void shouldNeverSignAChainThatAnotherNodeLeftBehind() {
     start(plugin -> plugin.setCheckpointInterval(1000));
     String orphan = orphan();
     work(engine, "active", 1);
     AuditCheckpointer checkpointer = checkpointer(engine);
     try {
-      // just written: it may still be in use
-      checkpointer.sign();
+      // however long it has been idle: this node cannot tell it from records written into the database
+      ClockUtil.setCurrentTime(new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30)));
+      assertThat(checkpointer.sign()).isEqualTo(1);
       assertThat(checkpoints(engine, orphan)).isZero();
-      assertThat(AuditTrail.of(engine).verify(orphan).isAuthenticated()).isFalse();
-
-      ClockUtil.setCurrentTime(new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(16)));
-      AuditEvent last = last(engine, orphan);
-      assertThat(checkpointer.sign()).isPositive();
-      AuditEvent checkpoint = last(engine, orphan);
-      assertThat(isCheckpoint(checkpoint)).isTrue();
-      assertThat(checkpoint.getSequence()).isEqualTo(last.getSequence() + 1);
-      // once: the end is a checkpoint now
-      checkpointer.sign();
-      assertThat(checkpoints(engine, orphan)).isEqualTo(1);
     } finally {
       ClockUtil.reset();
     }
-    // the own chains are signed when the engine closes: then the whole trail is authenticated
     restart(plugin -> plugin.setCheckpointInterval(1000));
-    AuditVerification verification = AuditTrail.of(engine).verify();
-    assertThat(verification.getFirstBreak()).isNull();
-    assertThat(verification.isAuthenticated()).isTrue();
-  }
-
-  @Test
-  public void shouldNotSignAChainOfAnotherNodeThatIsInUse() {
-    start(plugin -> plugin.setCheckpointInterval(1000));
-    other = AuditTestSupport.engine(name, plugin -> {
-      plugin.setNodeId("node-busy-" + name);
-      plugin.setChains(1);
-      plugin.setHmacKey(KEY);
-      plugin.setCheckpointIntervalSeconds(0);
-    }, configuration -> configuration.setProcessEngineName("audit-busy-" + name));
-    String busy = "node-busy-" + name + "/end-0";
-    try {
-      ClockUtil.setCurrentTime(new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(16)));
-      // written now (by the clock of the engines): not idle
-      work(other, "busy", 2);
-      checkpointer(engine).sign();
-      assertThat(checkpoints(engine, busy)).isZero();
-    } finally {
-      ClockUtil.reset();
-    }
-  }
-
-  @Test
-  public void shouldSignALeftChainOnceWhenTwoNodesSignItAtTheSameTime() throws Exception {
-    start(plugin -> plugin.setCheckpointInterval(1000));
-    String orphan = orphan();
-    other = AuditTestSupport.engine(name, plugin -> {
-      plugin.setNodeId("node-third-" + name);
-      plugin.setChains(1);
-      plugin.setHmacKey(KEY);
-      plugin.setCheckpointIntervalSeconds(0);
-    }, configuration -> configuration.setProcessEngineName("audit-third-" + name));
-    AuditCheckpointer first = checkpointer(engine);
-    AuditCheckpointer second = checkpointer(other);
-    ClockUtil.setCurrentTime(new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(16)));
-    try {
-      for (int round = 0; round < 5; round++) {
-        CyclicBarrier together = new CyclicBarrier(2);
-        FutureTask<Integer> a = new FutureTask<>(() -> {
-          together.await(30, TimeUnit.SECONDS);
-          return first.sign();
-        });
-        FutureTask<Integer> b = new FutureTask<>(() -> {
-          together.await(30, TimeUnit.SECONDS);
-          return second.sign();
-        });
-        new Thread(a, "audit-sign-a").start();
-        new Thread(b, "audit-sign-b").start();
-        a.get(60, TimeUnit.SECONDS);
-        b.get(60, TimeUnit.SECONDS);
-      }
-    } finally {
-      ClockUtil.reset();
-    }
-    assertThat(checkpoints(engine, orphan)).isEqualTo(1);
-    AuditVerification verification = AuditTrail.of(engine).verify(orphan);
-    assertThat(verification.getFirstBreak()).isNull();
-    assertThat(verification.isAuthenticated()).isTrue();
+    assertThat(checkpoints(engine, orphan)).isZero();
+    AuditVerification left = AuditTrail.of(engine).verify(orphan);
+    assertThat(left.getFirstBreak()).isNull();
+    assertThat(left.isAuthenticated()).isFalse();
+    // the chains of this node are signed
+    assertThat(AuditTrail.of(engine).verify(chainId()).isAuthenticated()).isTrue();
   }
 }

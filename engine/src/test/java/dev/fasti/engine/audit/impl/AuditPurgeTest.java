@@ -132,10 +132,11 @@ public class AuditPurgeTest {
     writeOldRecords(() -> {
       engine.getRepositoryService().createDeployment().addModelInstance("p.bpmn", userTaskProcess("p")).deploy();
       engine.getRuntimeService().startProcessInstanceByKey("p", "old");
+      // no checkpoint yet (a node that went away before it signed its chain); the verification
+      // writes a record of its own, which is old enough to be purged as well
+      assertThat(audit.verify("node-purgedonly/end-0").isAuthenticated()).isFalse();
     });
     String chainId = "node-purgedonly/end-0";
-    // no checkpoint yet (a node that went away before it signed its chain)
-    assertThat(audit.verify(chainId).isAuthenticated()).isFalse();
 
     assertThat(audit.purge(new Date()).isComplete()).isTrue();
     List<AuditEvent> left = audit.createQuery().chainId(chainId).list();

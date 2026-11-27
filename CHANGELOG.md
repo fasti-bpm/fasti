@@ -12,7 +12,7 @@ các mục dưới đây là khác biệt so với bản đó.
 
 ## [Unreleased]
 
-## [1.3.2] - 2026-11-26
+## [1.3.2] - 2026-11-27
 
 Maintenance release from a full review of the 1.3.1 code (engine features, engine performance,
 REST and web application, new web UI, distributions and CI), with fixes for what it found and
